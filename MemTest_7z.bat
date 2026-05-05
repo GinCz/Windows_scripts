@@ -1,15 +1,19 @@
+:: ============================================================
+:: FILE: MemTest_7z.bat
+:: DESC: RAM & CPU Hardware Stress Test via 7-Zip benchmark
+:: AUTH: = Rooted by VladiMIR | AI =
+:: DATE: v2026-05-05
+:: REPO: github.com/GinCz/Windows_scripts
+:: ============================================================
 @echo off
 chcp 65001 >nul
 cls
 setlocal EnableDelayedExpansion
 
-:: Versioning: v2026-05-05 | github.com/GinCz/Windows_scripts
-:: Author: = Rooted by VladiMIR | AI =
-
 :: Admin check
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [!] PLEASE RUN AS ADMINISTRATOR TO INSTALL SOFTWARE AND RUN TESTS.
+    echo [!] PLEASE RUN AS ADMINISTRATOR.
     pause
     exit /b 1
 )
@@ -20,56 +24,67 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 set "Y=%ESC%[33m" & set "B=%ESC%[96m" & set "W=%ESC%[37m" & set "G=%ESC%[92m" & set "R=%ESC%[31m" & set "X=%ESC%[0m"
 
 :: ---------------------------------------------------------------
-:: 1. ARCHITECTURE DETECTION & AUTO-INSTALL 7-Zip
+:: HEADER
 :: ---------------------------------------------------------------
-set "INSTALL_DIR=C:\Program Files\7-Zip"
-set "INSTALL_PATH=!INSTALL_DIR!\7z.exe"
+echo %Y%================================================================================%X%
+echo %B%       MemTest_7z.bat  ^|  RAM ^& CPU Hardware Stress Test%X%
+echo %W%       = Rooted by VladiMIR ^| AI =  ^|  v2026-05-05%X%
+echo %Y%================================================================================%X%
+echo.
 
-:: Prefer x64 path, fallback to x86
-if not exist "!INSTALL_PATH!" (
-    set "INSTALL_DIR=C:\Program Files (x86)\7-Zip"
-    set "INSTALL_PATH=!INSTALL_DIR!\7z.exe"
+:: ---------------------------------------------------------------
+:: 1. REAL ARCHITECTURE DETECTION
+::    PROCESSOR_ARCHITEW6432 only exists in WOW64 (32-bit CMD on 64-bit OS)
+:: ---------------------------------------------------------------
+set "REAL_ARCH=x86"
+if defined PROCESSOR_ARCHITEW6432 (
+    if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "REAL_ARCH=x64"
+    if "%PROCESSOR_ARCHITEW6432%"=="ARM64" set "REAL_ARCH=arm64"
+) else (
+    if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "REAL_ARCH=x64"
+    if "%PROCESSOR_ARCHITECTURE%"=="ARM64" set "REAL_ARCH=arm64"
 )
+
+:: ---------------------------------------------------------------
+:: 2. FIND 7-Zip (x64 first, then x86)
+:: ---------------------------------------------------------------
+set "INSTALL_PATH=C:\Program Files\7-Zip\7z.exe"
+if not exist "!INSTALL_PATH!" set "INSTALL_PATH=C:\Program Files (x86)\7-Zip\7z.exe"
 
 if not exist "!INSTALL_PATH!" (
     echo %Y%[!] 7-Zip NOT detected. Preparing installation...%X%
 
-    if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
-        set "ARCH=x64"
+    if "!REAL_ARCH!"=="x64" (
         set "DL_URL=https://www.7-zip.org/a/7z2601-x64.exe"
-        set "INSTALL_DIR=C:\Program Files\7-Zip"
-    ) else if "%PROCESSOR_ARCHITECTURE%"=="ARM64" (
-        set "ARCH=arm64"
+        set "INSTALL_PATH=C:\Program Files\7-Zip\7z.exe"
+    ) else if "!REAL_ARCH!"=="arm64" (
         set "DL_URL=https://www.7-zip.org/a/7z2601-arm64.exe"
-        set "INSTALL_DIR=C:\Program Files\7-Zip"
+        set "INSTALL_PATH=C:\Program Files\7-Zip\7z.exe"
     ) else (
-        set "ARCH=x86"
         set "DL_URL=https://www.7-zip.org/a/7z2601.exe"
-        set "INSTALL_DIR=C:\Program Files (x86)\7-Zip"
+        set "INSTALL_PATH=C:\Program Files (x86)\7-Zip\7z.exe"
     )
-    set "INSTALL_PATH=!INSTALL_DIR!\7z.exe"
 
-    echo %W%[-] Detected Architecture: !ARCH!%X%
-    echo %W%[-] Downloading: !DL_URL!%X%
+    echo %W%[-] Real OS Architecture : %Y%!REAL_ARCH!%X%
+    echo %W%[-] Downloading          : !DL_URL!%X%
     curl -L -o "%TEMP%\7z_setup.exe" "!DL_URL!"
 
     if not exist "%TEMP%\7z_setup.exe" (
-        echo %R%[!] DOWNLOAD FAILED. Check internet connection.%X%
-        pause
-        exit /b 1
+        echo %R%[!] DOWNLOAD FAILED.%X%
+        pause & exit /b 1
     )
 
-    echo %W%[-] Installing silently...%X%
     start /wait "" "%TEMP%\7z_setup.exe" /S
-    del "%TEMP%\7z_setup.exe"
+    del "%TEMP%\7z_setup.exe" >nul 2>&1
 
-    if exist "!INSTALL_PATH!" (
-        echo %G%[OK] 7-Zip installed: !INSTALL_PATH!%X%
-    ) else (
-        echo %R%[!] INSTALLATION FAILED. Please install manually from 7-zip.org%X%
-        pause
-        exit /b 1
+    set "INSTALL_PATH=C:\Program Files\7-Zip\7z.exe"
+    if not exist "!INSTALL_PATH!" set "INSTALL_PATH=C:\Program Files (x86)\7-Zip\7z.exe"
+
+    if not exist "!INSTALL_PATH!" (
+        echo %R%[!] INSTALLATION FAILED. Install manually: https://www.7-zip.org%X%
+        pause & exit /b 1
     )
+    echo %G%[OK] 7-Zip installed: !INSTALL_PATH!%X%
     echo.
 ) else (
     echo %G%[OK] 7-Zip found: !INSTALL_PATH!%X%
@@ -77,20 +92,46 @@ if not exist "!INSTALL_PATH!" (
 )
 
 :: ---------------------------------------------------------------
-:: 2. DETECT AVAILABLE RAM -> choose dictionary size automatically
-::
-::   RAM < 4 GB  -> 32m  (safe for 2 GB machines, ~800 MB usage)
-::   RAM < 8 GB  -> 64m  (~1.6 GB usage on 4 threads)
-::   RAM < 16 GB -> 128m (~3.2 GB usage on 4 threads)
-::   RAM >= 16GB -> 256m (~6.5 GB usage on 4 threads)
+:: 3. DETECT RAM via 7-Zip probe (no WMI/PowerShell/systeminfo)
+::    Runs a quick 1-thread 1m-dict benchmark, parses "RAM size:" line
+::    Works on ANY Windows machine regardless of policies
 :: ---------------------------------------------------------------
-echo %W%[-] Detecting RAM...%X%
+echo %W%[-] Detecting RAM via 7-Zip probe...%X%
+set "RAM_MB=0"
+set "PROBE_OUT=%TEMP%\mtest_probe.txt"
 
-for /f "skip=1 tokens=2" %%M in ('wmic OS get TotalVisibleMemorySize') do (
-    if not defined RAM_KB set "RAM_KB=%%M"
+"!INSTALL_PATH!" b -mmt1 -md=1m 1>"!PROBE_OUT!" 2>nul
+
+for /f "tokens=1,2,3" %%A in ('findstr /i "RAM size" "!PROBE_OUT!" 2^>nul') do (
+    set "RAM_MB=%%C"
 )
-set /a RAM_MB=RAM_KB/1024
+del "!PROBE_OUT!" >nul 2>&1
 
+set "RAM_MB=!RAM_MB:,=!"
+
+if "!RAM_MB!"=="0" (
+    echo %R%[!] RAM detection failed - using safe fallback 3800 MB%X%
+    set "RAM_MB=3800"
+) else (
+    echo %G%[OK] RAM detected: !RAM_MB! MB%X%
+)
+
+:: ---------------------------------------------------------------
+:: 4. DETECT CPU THREADS
+::    NUMBER_OF_PROCESSORS is always present in Windows
+:: ---------------------------------------------------------------
+set "CPU_THREADS=%NUMBER_OF_PROCESSORS%"
+if "!CPU_THREADS!"=="" set "CPU_THREADS=2"
+if !CPU_THREADS! GTR 8 set "CPU_THREADS=8"
+
+:: ---------------------------------------------------------------
+:: 5. CHOOSE DICTIONARY SIZE based on detected RAM
+::
+::   RAM < 4 GB  -> 32m  (~800 MB  on 4 threads)
+::   RAM < 8 GB  -> 64m  (~1.6 GB on 4 threads)
+::   RAM < 16 GB -> 128m (~3.2 GB on 4 threads)
+::   RAM >= 16GB -> 256m (~6.5 GB on 4 threads)
+:: ---------------------------------------------------------------
 if !RAM_MB! LSS 4096 (
     set "DICT=32m"
     set "RAM_NOTE=!RAM_MB! MB (LOW) - safe 32m dictionary"
@@ -105,20 +146,17 @@ if !RAM_MB! LSS 4096 (
     set "RAM_NOTE=!RAM_MB! MB - full 256m dictionary"
 )
 
-:: Detect logical CPU thread count, cap at 8
-for /f "skip=1" %%C in ('wmic cpu get NumberOfLogicalProcessors') do (
-    if not defined CPU_THREADS if not "%%C"=="" set "CPU_THREADS=%%C"
-)
-if not defined CPU_THREADS set "CPU_THREADS=4"
-if !CPU_THREADS! GTR 8 set "CPU_THREADS=8"
-
 :: ---------------------------------------------------------------
-:: 3. HARDWARE STRESS TEST - 10 passes
+:: 6. HARDWARE STRESS TEST - 10 passes
 :: ---------------------------------------------------------------
+echo.
 echo %Y%================================================================================%X%
-echo %B%  HARDWARE DIAGNOSTIC: RAM ^& CPU STRESS TEST v2026-05-05%X%
+echo %B%       MemTest_7z.bat  ^|  RAM ^& CPU Hardware Stress Test%X%
+echo %W%       = Rooted by VladiMIR ^| AI =  ^|  v2026-05-05%X%
 echo %Y%================================================================================%X%
 echo.
+echo %W%  7-Zip Path  : !INSTALL_PATH!%X%
+echo %W%  OS Arch     : !REAL_ARCH!%X%
 echo %W%  CPU Threads : !CPU_THREADS!%X%
 echo %W%  RAM         : !RAM_NOTE!%X%
 echo %W%  Dictionary  : !DICT! per thread%X%
