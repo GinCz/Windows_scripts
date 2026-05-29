@@ -1,3 +1,36 @@
+:: ==========================================================================================
+:: FILE    : SMB_Test.bat
+:: VERSION : v2026.05.29d
+:: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
+:: REPO    : github.com/GinCz/Windows_scripts
+:: ==========================================================================================
+:: DESCRIPTION:
+::   Live SMB (Samba/Windows Share) network performance benchmark tool.
+::   Measures real-world upload and download speed to a network share.
+::   Supports two test modes:
+::     [FAST]  50MB test file   - quick connectivity check
+::     [DEEP]  5GB test file    - accurate throughput measurement
+::   Includes a real-time ASCII progress bar and MD5 integrity verification
+::   to ensure data was written and read correctly without corruption.
+::   Auto-elevates to Administrator via PowerShell if not already elevated.
+::
+:: REQUIREMENTS:
+::   - Windows 10 / Windows 11
+::   - Accessible SMB share (local network or VPN)
+::   - Must be run as Administrator
+::
+:: USAGE:
+::   1. Right-click SMB_Test.bat -> Run as administrator
+::   2. Select the target SMB share (preset or custom path)
+::   3. Select test mode: FAST (50MB) or DEEP (5GB)
+::   4. Upload and download speeds are measured and displayed
+::   5. MD5 checksum verification is performed automatically
+::
+:: NOTES:
+::   - Preset paths are tailored for gincz.com infrastructure
+::   - For custom environments: select option 5 and enter your SMB path
+::   - Test files are deleted automatically after the benchmark completes
+:: ==========================================================================================
 @echo off
 chcp 65001 >nul
 cls
