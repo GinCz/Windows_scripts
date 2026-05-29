@@ -1,3 +1,47 @@
+:: ==========================================================================================
+:: FILE    : WIN_Optimize.bat
+:: VERSION : v2026.05.29d
+:: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
+:: REPO    : github.com/GinCz/Windows_scripts
+:: ==========================================================================================
+:: DESCRIPTION:
+::   Comprehensive 15-step Windows deep optimizer for Windows 10 and 11.
+::   Performs system cleanup, performance tuning, and service optimization
+::   to reduce disk usage, improve responsiveness, and free up system resources.
+::
+::   OPTIMIZATION STEPS:
+::     01. Disable Reserved Storage (frees disk space reserved by Windows)
+::     02. Disable Hibernation (removes hiberfil.sys, frees ~4-32GB)
+::     03. Disable unnecessary startup services
+::     04. Enable SSD TRIM (ensures optimal SSD performance and longevity)
+::     05. Disable visual effects (maximizes performance, reduces GPU load)
+::     06. Clean Temp folders (removes user and system temporary files)
+::     07. Run Disk Cleanup with extended CleanMgr flags
+::     08. Fix network stack (reset Winsock, TCP/IP, DNS cache)
+::     09. Set High Performance power plan
+::     10. Disable Windows Telemetry and data collection
+::     11. DISM: Analyze and cleanup WinSxS component store
+::     12. DISM: RestoreHealth - repairs Windows image from Windows Update
+::     13. DISM: StartComponentCleanup - removes superseded components
+::     14. SFC: System File Checker - repairs corrupted system files
+::     15. CompactOS: Compresses the OS install (saves ~1.5-2.5GB)
+::
+:: REQUIREMENTS:
+::   - Windows 10 / Windows 11
+::   - Must be run as Administrator
+::   - Active internet connection (for DISM RestoreHealth step)
+::   - Reboot is recommended after completion
+::
+:: USAGE:
+::   1. Right-click WIN_Optimize.bat -> Run as administrator
+::   2. Each step runs sequentially with status output
+::   3. Restart Windows after the script completes for full effect
+::
+:: WARNING:
+::   - Step 02 (Hibernation OFF) removes hiberfil.sys permanently
+::   - Step 10 (Telemetry OFF) disables DiagTrack and related services
+::   - Step 15 (CompactOS) may take 15-60 min depending on disk speed
+:: ==========================================================================================
 @echo off
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
