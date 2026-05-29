@@ -3,8 +3,31 @@ chcp 65001 >nul
 cls
 setlocal EnableDelayedExpansion
 
-:: Versioning: v2026-05-05 | github.com/GinCz/Windows_scripts
-:: Author: = Rooted by VladiMIR | AI =
+:: ==========================================================================================
+:: FILE    : Install_7zip_Universal.bat
+:: VERSION : v2026.05.29d
+:: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
+:: REPO    : github.com/GinCz/Windows_scripts
+:: ==========================================================================================
+:: DESCRIPTION:
+::   Universal 7-Zip auto-installer for Windows.
+::   Automatically detects the CPU architecture (x64, ARM64, or x86),
+::   fetches the latest 7-Zip version number directly from 7-zip.org,
+::   constructs the correct download URL, downloads the installer,
+::   and performs a silent installation without user interaction.
+::   Supports all modern Windows platforms including ARM64 laptops.
+::
+:: REQUIREMENTS:
+::   - Windows 10 / Windows 11 (x64, ARM64, or x86)
+::   - Active internet connection
+::   - Must be run as Administrator
+::
+:: USAGE:
+::   1. Right-click Install_7zip_Universal.bat -> Run as administrator
+::   2. Architecture is detected automatically
+::   3. Latest 7-Zip version is fetched from 7-zip.org
+::   4. Silent installation completes without prompts
+:: ==========================================================================================
 
 :: Admin check
 net session >nul 2>&1
@@ -20,7 +43,7 @@ for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 set "Y=%ESC%[33m" & set "B=%ESC%[96m" & set "W=%ESC%[37m" & set "G=%ESC%[92m" & set "R=%ESC%[31m" & set "X=%ESC%[0m"
 
 echo %Y%================================================================================%X%
-echo %B%   7-Zip Universal Auto-Installer v2026-05-05  ^|  = Rooted by VladiMIR ^| AI =%X%
+echo %B%   7-Zip Universal Auto-Installer v2026.05.29 ^|  = Rooted by VladiMIR ^| AI =%X%
 echo %Y%================================================================================%X%
 echo.
 
@@ -35,89 +58,53 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
     set "ARCH=x86"
     set "INSTALL_DIR=C:\Program Files (x86)\7-Zip"
 )
-set "INSTALL_PATH=!INSTALL_DIR!\7z.exe"
-echo %W%[-] Detected Architecture : %Y%!ARCH!%X%
 
-:: Check if already installed
-if exist "!INSTALL_PATH!" (
-    for /f "tokens=*" %%v in ('"!INSTALL_PATH!" i 2^>nul ^| findstr /i "7-Zip"') do set "INSTALLED_VER=%%v"
-    echo %G%[OK] 7-Zip already installed: !INSTALL_PATH!%X%
-    echo %W%     Version: !INSTALLED_VER!%X%
-    echo.
-    set /p "REINSTALL=Reinstall / update? [Y/N]: "
-    if /i "!REINSTALL!" neq "Y" (
-        echo %G%[OK] Installation skipped.%X%
-        goto :EOF
-    )
-)
+echo %W% Detected architecture: %G%%ARCH%%X%
+echo.
 
 :: Fetch latest version from 7-zip.org
-echo %W%[-] Fetching latest version from 7-zip.org...%X%
-set "TMPHTML=%TEMP%\7zip_dl.html"
-curl -s -L -o "!TMPHTML!" "https://www.7-zip.org/download.html"
-if not exist "!TMPHTML!" (
-    echo %R%[!] Failed to fetch 7-zip.org. Check internet connection.%X%
+echo %W% Fetching latest 7-Zip version from 7-zip.org...%X%
+for /f "tokens=*" %%i in ('powershell -NoProfile -Command "(Invoke-WebRequest -Uri 'https://www.7-zip.org/download.html' -UseBasicParsing).Content -match '7-Zip ([0-9]+\.[0-9]+)' | Out-Null; $Matches[1]"') do set "VER=%%i"
+
+if "%VER%"=="" (
+    echo %R% [!] Failed to fetch version. Check internet connection.%X%
     pause
     exit /b 1
 )
 
-:: Parse version number via PowerShell regex
-set "VER="
-for /f "tokens=*" %%L in ('findstr /i "7z[0-9][0-9][0-9][0-9]" "!TMPHTML!"') do (
-    if not defined VER (
-        for /f "delims=" %%V in ('powershell -NoProfile -Command "if ('%%L' -match '7z(\d{4})') { $matches[1] }"') do (
-            if not defined VER set "VER=%%V"
-        )
-    )
-)
+set "VER_NODOT=%VER:.=%"
+set "DL_URL=https://www.7-zip.org/a/7z%VER_NODOT%-%ARCH%.exe"
 
-if not defined VER (
-    echo %R%[!] Could not auto-detect version. Using fallback: 2601%X%
-    set "VER=2601"
-)
-echo %G%[OK] Latest 7-Zip version detected: %Y%7z!VER!%X%
-
-:: Build download URL
-if "!ARCH!"=="x64"   set "DL_URL=https://www.7-zip.org/a/7z!VER!-x64.exe"
-if "!ARCH!"=="arm64" set "DL_URL=https://www.7-zip.org/a/7z!VER!-arm64.exe"
-if "!ARCH!"=="x86"   set "DL_URL=https://www.7-zip.org/a/7z!VER!.exe"
-
-echo %W%[-] Download URL : !DL_URL!%X%
+echo %W% Latest version: %G%%VER%%X%
+echo %W% Download URL:   %B%%DL_URL%%X%
 echo.
 
-:: Download
-set "SETUP=%TEMP%\7z_setup.exe"
-echo %W%[-] Downloading...%X%
-curl -L --progress-bar -o "!SETUP!" "!DL_URL!"
+:: Download installer
+set "TMP_FILE=%TEMP%\7z_setup_%ARCH%.exe"
+echo %W% Downloading installer...%X%
+powershell -NoProfile -Command "(New-Object System.Net.WebClient).DownloadFile('%DL_URL%', '%TMP_FILE%')"
 
-if not exist "!SETUP!" (
-    echo %R%[!] Download failed!%X%
+if not exist "%TMP_FILE%" (
+    echo %R% [!] Download failed.%X%
     pause
     exit /b 1
 )
 
 :: Silent install
-echo %W%[-] Installing silently...%X%
-start /wait "" "!SETUP!" /S
-del "!SETUP!" >nul 2>&1
+echo %W% Installing 7-Zip %VER% silently...%X%
+start /wait "" "%TMP_FILE%" /S
 
-:: Verify installation
-if exist "!INSTALL_PATH!" (
-    for /f "tokens=*" %%v in ('"!INSTALL_PATH!" i 2^>nul ^| findstr /i "7-Zip"') do set "NEW_VER=%%v"
+if exist "%INSTALL_DIR%\7z.exe" (
     echo.
-    echo %G%[OK] 7-Zip successfully installed!%X%
-    echo %G%     Path    : !INSTALL_PATH!%X%
-    echo %G%     Version : !NEW_VER!%X%
+    echo %G% [OK] 7-Zip %VER% installed successfully!%X%
+    echo %W%       Location: %INSTALL_DIR%%X%
 ) else (
-    echo %R%[!] Installation failed! Please install manually from https://www.7-zip.org%X%
-    pause
-    exit /b 1
+    echo %R% [!] Installation may have failed. Check manually.%X%
 )
 
-del "!TMPHTML!" >nul 2>&1
+del /f /q "%TMP_FILE%" 2>nul
 echo.
-echo %Y%================================================================================%X%
-echo %G%  DONE  ^|  = Rooted by VladiMIR ^| AI =%X%
-echo %Y%================================================================================%X%
+echo %Y% = Rooted by VladiMIR ^| AI =%X%
 echo.
 pause
+endlocal
