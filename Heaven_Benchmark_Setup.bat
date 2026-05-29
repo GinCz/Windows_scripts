@@ -3,9 +3,30 @@ chcp 65001 >nul
 cls
 setlocal
 
-:: Versioning: v2026-05-05 | github.com/GinCz/Windows_scripts
-:: Author: = Rooted by VladiMIR | AI =
-:: Downloads and launches UNIGINE Heaven Benchmark 4.0 GPU stress test installer
+:: ==========================================================================================
+:: FILE    : Heaven_Benchmark_Setup.bat
+:: VERSION : v2026.05.29d
+:: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
+:: REPO    : github.com/GinCz/Windows_scripts
+:: ==========================================================================================
+:: DESCRIPTION:
+::   Downloads and launches the UNIGINE Heaven Benchmark 4.0 installer.
+::   Heaven Benchmark is a GPU stress test tool used to assess graphics card
+::   stability, performance, and temperature under heavy rendering load.
+::   Fetches the official installer from assets.unigine.com.
+::   Creates a timestamped temporary folder and launches the installer automatically.
+::
+:: REQUIREMENTS:
+::   - Windows 10 / Windows 11
+::   - Active internet connection
+::   - Dedicated GPU recommended (AMD / NVIDIA / Intel Arc)
+::   - No administrator rights required
+::
+:: USAGE:
+::   1. Double-click Heaven_Benchmark_Setup.bat
+::   2. Wait for the download to complete
+::   3. The UNIGINE Heaven 4.0 installer launches automatically
+:: ==========================================================================================
 
 set "download_url=https://assets.unigine.com/d/Unigine_Heaven-4.0.exe"
 
