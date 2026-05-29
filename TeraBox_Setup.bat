@@ -3,9 +3,29 @@ chcp 65001 >nul
 cls
 setlocal
 
-:: Versioning: v2026-05-05 | github.com/GinCz/Windows_scripts
-:: Author: = Rooted by VladiMIR | AI =
-:: Downloads and launches TeraBox PC installer
+:: ==========================================================================================
+:: FILE    : TeraBox_Setup.bat
+:: VERSION : v2026.05.29d
+:: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
+:: REPO    : github.com/GinCz/Windows_scripts
+:: ==========================================================================================
+:: DESCRIPTION:
+::   Downloads and launches the TeraBox PC (Windows) installer.
+::   TeraBox is a cloud storage service offering up to 1TB of free storage.
+::   Fetches the installer from the official TeraBox CDN (freeterabox.com),
+::   saves to a timestamped temporary folder in C:\Windows\Temp,
+::   then launches the installer automatically.
+::
+:: REQUIREMENTS:
+::   - Windows 10 / Windows 11
+::   - Active internet connection
+::   - No administrator rights required
+::
+:: USAGE:
+::   1. Double-click TeraBox_Setup.bat
+::   2. Wait for the download to complete
+::   3. TeraBox installer launches automatically
+:: ==========================================================================================
 
 set "download_url=https://issuepcdn.freeterabox.com/issue/terabox/PCTeraBox/TeraBox_1.38.0.102.exe"
 
