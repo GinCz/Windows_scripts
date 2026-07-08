@@ -24,7 +24,7 @@ setlocal enabledelayedexpansion
 ::     A: — AWS_42        3.79.14.42
 ::     E: — IONOS_38      82.223.116.38
 ::     I: — ILYA_176      146.103.110.176
-::     N: — PILIK_178     91.84.118.178
+::     N: — PILIK_33      195.63.138.33
 ::     O: — 4TON_237      144.124.228.237
 ::     Q: — SO_38         144.124.233.38
 ::     T: — TATRA_9       144.124.232.9
@@ -58,7 +58,7 @@ cmdkey /add:144.124.228.237  /user:vlad /pass:sa4434 >nul 2>&1
 cmdkey /add:144.124.232.9    /user:vlad /pass:sa4434 >nul 2>&1
 cmdkey /add:144.124.228.227  /user:vlad /pass:sa4434 >nul 2>&1
 cmdkey /add:144.124.239.24   /user:vlad /pass:sa4434 >nul 2>&1
-cmdkey /add:91.84.118.178    /user:vlad /pass:sa4434 >nul 2>&1
+cmdkey /add:195.63.138.33    /user:vlad /pass:sa4434 >nul 2>&1
 cmdkey /add:146.103.110.176  /user:vlad /pass:sa4434 >nul 2>&1
 cmdkey /add:144.124.233.38   /user:vlad /pass:sa4434 >nul 2>&1
 
@@ -81,7 +81,7 @@ start /b cmd /c "net use E: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 82.223.11
 
 start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 146.103.110.176 >nul 2>&1 && (net use I: \\146.103.110.176\soft /persistent:yes >nul 2>&1 && reg add \"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##146.103.110.176#soft\" /v _LabelFromReg /t REG_SZ /d \"ILYA_176\" /f >nul 2>&1 && echo OK>""%TMPDIR%\I.txt"" || echo ОШИБКА>""%TMPDIR%\I.txt"") || echo ПРОПУСК>""%TMPDIR%\I.txt"""
 
-start /b cmd /c "net use N: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 91.84.118.178 >nul 2>&1 && (net use N: \\91.84.118.178\soft /persistent:yes >nul 2>&1 && reg add \"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##91.84.118.178#soft\" /v _LabelFromReg /t REG_SZ /d \"PILIK_178\" /f >nul 2>&1 && echo OK>""%TMPDIR%\N.txt"" || echo ОШИБКА>""%TMPDIR%\N.txt"") || echo ПРОПУСК>""%TMPDIR%\N.txt"""
+start /b cmd /c "net use N: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 195.63.138.33 >nul 2>&1 && (net use N: \\195.63.138.33\soft /persistent:yes >nul 2>&1 && reg add \"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##195.63.138.33#soft\" /v _LabelFromReg /t REG_SZ /d \"PILIK_33\" /f >nul 2>&1 && echo OK>""%TMPDIR%\N.txt"" || echo ОШИБКА>""%TMPDIR%\N.txt"") || echo ПРОПУСК>""%TMPDIR%\N.txt"""
 
 start /b cmd /c "net use O: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.228.237 >nul 2>&1 && (net use O: \\144.124.228.237\soft /persistent:yes >nul 2>&1 && reg add \"HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\##144.124.228.237#soft\" /v _LabelFromReg /t REG_SZ /d \"4TON_237\" /f >nul 2>&1 && echo OK>""%TMPDIR%\O.txt"" || echo ОШИБКА>""%TMPDIR%\O.txt"") || echo ПРОПУСК>""%TMPDIR%\O.txt"""
 
@@ -109,7 +109,7 @@ echo %CYAN%  ----------------------------------------------------------------%RE
 call :STATUS A  AWS_42      3.79.14.42
 call :STATUS E  IONOS_38    82.223.116.38
 call :STATUS I  ILYA_176    146.103.110.176
-call :STATUS N  PILIK_178   91.84.118.178
+call :STATUS N  PILIK_33    195.63.138.33
 call :STATUS O  4TON_237    144.124.228.237
 call :STATUS Q  SO_38       144.124.233.38
 call :STATUS T  TATRA_9     144.124.232.9
