@@ -5,13 +5,16 @@ setlocal enabledelayedexpansion
 
 :: ==========================================================================================
 :: FILE    : SMB_Connect.bat
-:: VERSION : v2026.06.14b
+:: VERSION : v2026.07.11
 :: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
 :: REPO    : github.com/GinCz/Windows_scripts
 :: ==========================================================================================
 :: DESCRIPTION:
 ::   Parallel mounting of all Samba shares for gincz.com infrastructure.
 ::   User: vlad / sa4434
+::
+::   CHANGES v2026.07.11:
+::     - AWS_42 (3.79.14.42) replaced with AWS_12 (18.195.117.12)
 ::
 ::   CHANGES v2026.06.14b:
 ::     - Before each mount, net use X: /delete is executed — fixes the error
@@ -21,7 +24,7 @@ setlocal enabledelayedexpansion
 ::     - connection timeout increased to 8 sec, ping to 1500ms
 ::
 ::   Drives:
-::     A: — AWS_42        3.79.14.42
+::     A: — AWS_12        18.195.117.12
 ::     E: — IONOS_38      82.223.116.38
 ::     I: — ILYA_176      146.103.110.176
 ::     N: — PILIK_33      195.63.138.33
@@ -49,12 +52,12 @@ if not exist "%TMPDIR%" mkdir "%TMPDIR%"
 
 echo.
 echo %YELLOW%=================================================================================%RESET%
-echo %YELLOW%                  CONNECTING NETWORK SHARES (v.2026.06.14b)                        %RESET%
+echo %YELLOW%                  CONNECTING NETWORK SHARES (v.2026.07.11)                          %RESET%
 echo %YELLOW%=================================================================================%RESET%
 echo.
 
 echo %YELLOW%[ STATUS ]%RESET% Saving credentials to the system...
-cmdkey /add:3.79.14.42        /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:18.195.117.12     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:82.223.116.38     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:146.103.110.176   /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:195.63.138.33     /user:%USER% /pass:%PASS% >nul 2>&1
@@ -71,11 +74,11 @@ echo.
 :: Each start /b cmd /c does:
 ::   1. net use DRIVE: /delete /yes  — disconnect if was connected (ignore error)
 ::   2. ping -n 1 -w 1500 IP         — check availability (1 packet, 1500ms timeout)
-::   3. If ping OK → net use   — mount the drive
-::   4. If ping failed → [SKIP]
+::   3. If ping OK -> net use        — mount the drive
+::   4. If ping failed -> [SKIP]
 ::   5. Save result to %TMPDIR%\DRIVE.txt for the final table
 
-start /b cmd /c "net use A: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 3.79.14.42 >nul 2>&1 && (net use A: \\3.79.14.42\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\A.txt\" || echo ERROR > \"%TMPDIR%\A.txt\") || echo SKIP > \"%TMPDIR%\A.txt\""
+start /b cmd /c "net use A: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 18.195.117.12 >nul 2>&1 && (net use A: \\18.195.117.12\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\A.txt\" || echo ERROR > \"%TMPDIR%\A.txt\") || echo SKIP > \"%TMPDIR%\A.txt\""
 
 start /b cmd /c "net use E: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 82.223.116.38 >nul 2>&1 && (net use E: \\82.223.116.38\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\E.txt\" || echo ERROR > \"%TMPDIR%\E.txt\") || echo SKIP > \"%TMPDIR%\E.txt\""
 
@@ -106,7 +109,7 @@ echo.
 echo %WHITE%  Drive  Server             IP                  Status%RESET%
 echo %WHITE%  ─────────────────────────────────────────────────────────────────%RESET%
 
-call :show_result A AWS_42      3.79.14.42
+call :show_result A AWS_12      18.195.117.12
 call :show_result E IONOS_38    82.223.116.38
 call :show_result I ILYA_176    146.103.110.176
 call :show_result N PILIK_33    195.63.138.33
