@@ -1,17 +1,11 @@
 @echo off
-rem = Rooted by VladiMIR + AI | v.2026.07.11 | github.com/GinCz =
+rem = Rooted by VladiMIR + AI | v.2026.07.05 =
 setlocal enabledelayedexpansion
 
-rem ---------------------------------------------------------------------------
-rem SCRIPT: BraveBrowser_Setup.bat
-rem DESCRIPTION: Downloads and installs the latest Brave Browser.
-rem              Auto-detects x86/x64 and fetches the correct build
-rem              from official Brave distribution servers.
-rem REQUIRES: Administrator privileges, Internet connection
-rem ---------------------------------------------------------------------------
-
+rem Set color: 0 = Black background, A = Light Green text
 color 0A
 
+rem Check for Administrator privileges
 net session >nul 2>&1
 if %errorlevel% neq 0 (
 echo ==========================================================================================
@@ -22,8 +16,9 @@ powershell -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb
 exit /b
 )
 
+rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated Administrator window
 @echo off
-cls
+clear || cls
 
 echo ==========================================================================================
 echo L O A D I N G ^| Universal Brave Browser Stable Installer Downloader
@@ -32,12 +27,15 @@ echo.
 
 echo [+] Analyzing system processor architecture...
 
+rem Force TLS 1.2 protocol for secure download
 set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
 
+rem Default fallback to standard x64 architecture link
 set "download_url=https://laptop-updates.brave.com/latest/winx64"
 set "filename=BraveBrowserSetup_x64.exe"
 set "arch_type=x64 (64-bit)"
 
+rem Check if the OS environment is 32-bit to swap to x86 build dynamically
 set "is_64=0"
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "is_64=1"
 if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "is_64=1"
@@ -66,6 +64,7 @@ echo.
 
 echo [+] Preparing unique temporary environment...
 
+rem Generate a triple-random unique dynamic folder to eliminate any write or access conflicts
 set "new_dir=C:\Windows\Temp\brave_dynamic_session_%RANDOM%_%RANDOM%_%RANDOM%"
 mkdir "%new_dir%" 2>nul
 
@@ -75,6 +74,7 @@ echo [+] Downloading the latest installer version from official Brave servers...
 echo.
 echo ==========================================================================================
 
+rem Safe PowerShell progress engine: Wait for connection, then draw exactly ONE dynamic bar
 set "ps_cmd=%ps_tls%; $ProgressPreference='SilentlyContinue'; $w = New-Object System.Net.WebClient; $w.DownloadFileAsync((New-Object System.Uri('%download_url%')), '%download_path%'); while (-not $w.ResponseHeaders) { Start-Sleep -Milliseconds 50 }; $t = $w.ResponseHeaders['Content-Length']; $last = -1; while ($w.IsBusy) { Start-Sleep -Milliseconds 50; if ($t) { $c = (Get-Item '%download_path%').Length; $p = [math]::Floor(($c / $t) * 100); $s = [math]::Floor(($p / 100) * 70); if ($s -gt $last) { if ($s -le 70) { $last = $s; $bar = '*' * $s + ' ' * (70 - $s); Write-Host ([char]13 + 'Progress: [' + $bar + '] ' + $p.ToString().PadLeft(3) + '%%') -NoNewline; } } } else { Write-Host ([char]13 + 'Progress: [ Streaming Direct Download Data Flow... ]') -NoNewline; } } Write-Host ([char]13 + 'Progress: [' + ('*' * 70) + '] 100%%')"
 
 powershell -Command "%ps_cmd%"

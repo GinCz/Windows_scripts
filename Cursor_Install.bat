@@ -1,14 +1,6 @@
 @echo off
-rem = Rooted by VladiMIR + AI | v.2026.07.11 | github.com/GinCz =
+rem = Rooted by VladiMIR + AI | v.2026.07.07 =
 setlocal enabledelayedexpansion
-
-rem ---------------------------------------------------------------------------
-rem SCRIPT: Cursor_Install.bat
-rem DESCRIPTION: Downloads and installs the latest Cursor AI Editor (x64 only).
-rem              Detects architecture, downloads from official servers,
-rem              unblocks the file and launches the interactive setup wizard.
-rem REQUIRES: Administrator privileges, Internet connection, x64 OS
-rem ---------------------------------------------------------------------------
 
 rem Set color: 0 = Black background, A = Light Green text
 color 0A
@@ -26,7 +18,7 @@ exit /b
 
 rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated Administrator window
 @echo off
-cls
+clear || cls
 
 echo ==========================================================================================
 echo L O A D I N G ^| Universal Cursor AI Editor Installer Downloader (Interactive Mode)
