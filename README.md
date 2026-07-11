@@ -1,18 +1,19 @@
 <div align="center">
 
-# Windows Scripts
+# Windows Scripts — VladiMIR Bulantsev (GinCz)
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows&logoColor=white)
 ![Language](https://img.shields.io/badge/Language-Batch%20%2F%20CMD-4D4D4D?logo=windowsterminal&logoColor=white)
-![Version](https://img.shields.io/badge/Version-v2026--05--05-brightgreen)
+![Version](https://img.shields.io/badge/Version-v2026--07--11-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
-![Scripts](https://img.shields.io/badge/Scripts-11-orange)
+![Scripts](https://img.shields.io/badge/Scripts-12-orange)
 
-**= Rooted by VladiMIR | AI =**
+**= Rooted by VladiMIR + AI | v.2026.07.11 | github.com/GinCz =**
 
-A collection of Windows CMD/BAT utility scripts for system optimization,
-diagnostics, benchmarking, and software installation.
-All scripts follow a unified code style and versioning convention.
+A collection of Windows CMD/BAT/PowerShell utility scripts for system optimization,
+diagnostics, benchmarking, software installation, and **Samba SMB network drive management**.
+
+> By **VladiMIR Bulantsev** (GinCz) — Linux sysadmin · IPGuard · Cloudflare · Samba · Linux server · Ubuntu 24 · XRAY VPN · CrowdSec · Czech Republic
 
 </div>
 
@@ -21,6 +22,7 @@ All scripts follow a unified code style and versioning convention.
 ## Table of Contents
 
 - [Scripts Overview](#scripts-overview)
+- [SMB Network Drives — SMB\_Connect](#smb-network-drives--smb_connect)
 - [Requirements](#requirements)
 - [Usage](#usage)
 - [Code Conventions](#code-conventions)
@@ -56,6 +58,34 @@ All scripts follow a unified code style and versioning convention.
 | 10 | `Google_Drive_Setup.bat` | Downloads and launches Google Drive for Desktop installer | no |
 | 11 | `Heaven_Benchmark_Setup.bat` | Downloads and launches UNIGINE Heaven Benchmark 4.0 GPU stress test installer | no |
 
+### SMB Network Drives
+
+| # | Script | Description | Admin |
+|---|--------|-------------|:-----:|
+| 12 | `SMB_Connect.bat` | Connects all 10 Samba servers as network drives (A: – Y:) in parallel, color-coded status report, ~8 sec total | YES |
+
+---
+
+## SMB Network Drives — SMB_Connect
+
+`SMB_Connect.bat` connects **10 Samba servers** simultaneously as Windows network drives.
+
+```
+[  OK  ]  A:  AWS_12       18.195.117.12
+[  OK  ]  E:  IONOS_38     82.223.116.38
+[  OK  ]  I:  ILYA_176     146.103.110.176
+[  OK  ]  N:  PILIK_33     195.63.138.33
+[  OK  ]  O:  4TON_237     144.124.228.237
+[  OK  ]  Q:  SO_38        144.124.233.38
+[  OK  ]  T:  TATRA_9      144.124.232.9
+[  OK  ]  V:  SHAHIN_227   144.124.228.227
+[  OK  ]  W:  STOLB_24     144.124.239.24
+[  OK  ]  Y:  ALEX_47      109.234.38.47
+```
+
+All servers run **Samba on Ubuntu 24 LTS** with IPGuard triple-layer security.
+See the full server-side setup in 👉 [GinCz/Linux_Server_Public](https://github.com/GinCz/Linux_Server_Public).
+
 ---
 
 ## Requirements
@@ -85,7 +115,7 @@ All scripts follow a unified code style and versioning convention.
 | Language | English only |
 | First lines | `@echo off` + `cls` |
 | Version format | `v2026-MM-DD` |
-| Author tag | `= Rooted by VladiMIR \| AI =` |
+| Author tag | `= Rooted by VladiMIR + AI \| vYYYY.MM.DD \| github.com/GinCz =` |
 | ANSI colors | Via `VirtualTerminalLevel` registry key |
 | Admin check | Via `net session` at the top of every privileged script |
 | Encoding | `chcp 65001` (UTF-8) |
@@ -94,9 +124,15 @@ All scripts follow a unified code style and versioning convention.
 
 ## Author
 
-**VladiMIR Bulantsev** | [github.com/GinCz](https://github.com/GinCz)
+**VladiMIR Bulantsev** (GinCz) — Linux sysadmin & DevOps, Czech Republic
 
-`= Rooted by VladiMIR | AI =`
+> IPGuard · Cloudflare · Samba · Linux server · Ubuntu 24 · XRAY VPN · CrowdSec · Fail2Ban · FastPanel · bash scripting
+
+- 🔗 GitHub: [github.com/GinCz](https://github.com/GinCz)
+- 🐧 Linux server scripts: [GinCz/Linux_Server_Public](https://github.com/GinCz/Linux_Server_Public)
+- 👨‍💻 Profile: [github.com/GinCz](https://github.com/GinCz)
+
+`= Rooted by VladiMIR + AI | v.2026.07.11 | github.com/GinCz =`
 
 ---
 
