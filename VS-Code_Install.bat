@@ -30,7 +30,7 @@ echo [+] Analyzing system processor architecture...
 rem Force TLS 1.2 protocol for secure download
 set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
 
-rem Default fallback to standard x64 architecture link (Specific version 1.118.1 requested)
+rem Default fallback to standard x64 architecture link (Specific version 1.118.1)
 set "download_url=https://update.code.visualstudio.com/1.118.1/win32-x64-user/stable"
 set "filename=VSCodeUserSetup-x64-1.118.1.exe"
 set "arch_type=x64 (64-bit)"

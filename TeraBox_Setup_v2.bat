@@ -30,7 +30,7 @@ echo [+] Analyzing system environment...
 rem Force TLS 1.2 protocol for secure download
 set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
 
-rem Static link to the dedicated version
+rem Static link to the dedicated stable version
 set "download_url=https://issuepcdn.freeterabox.com/issue/terabox/PCTeraBox/TeraBox_1.38.0.102.exe"
 set "filename=TeraBox_1.38.0.102.exe"
 
