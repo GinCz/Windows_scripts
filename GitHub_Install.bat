@@ -1,5 +1,5 @@
 @echo off
-rem = Rooted by VladiMIR + AI | v.2026.07.05 | github.com/GinCz =
+rem = Rooted by VladiMIR + AI | v.2026.07.07 | github.com/GinCz =
 setlocal enabledelayedexpansion
 
 rem Set color: 0 = Black background, A = Light Green text
@@ -21,7 +21,7 @@ rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated 
 clear || cls
 
 echo ==========================================================================================
-echo L O A D I N G   ^|   Universal Hiddify Client Stable Installer Downloader
+echo L O A D I N G   ^|   Universal Git SILENT Installer Downloader
 echo ==========================================================================================
 echo.
 
@@ -30,20 +30,20 @@ echo [+] Analyzing system processor architecture...
 rem Force TLS 1.2 protocol for secure download
 set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
 
-rem Default fallback to standard x64 architecture link
-set "download_url=https://github.com/hiddify/hiddify-app/releases/latest/download/Hiddify-Windows-Setup-x64.exe"
-set "filename=Hiddify-Windows-Setup-x64.exe"
+rem Default fallback to standard x64 architecture link (Specific version 2.54.0 requested)
+set "download_url=https://github.com/git-for-windows/git/releases/download/v2.54.0.windows.1/Git-2.54.0-64-bit.exe"
+set "filename=Git-2.54.0-64-bit.exe"
 set "arch_type=x64 (64-bit)"
 
-rem Check if the OS environment is 32-bit to swap to x86/ARM or notify (Note: Hiddify primarily targets x64)
+rem Check if the OS environment is 32-bit to swap to x86 build dynamically
 set "is_64=0"
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "is_64=1"
 if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "is_64=1"
 
 if "%is_64%"=="0" (
-    rem Fallback or placeholder link if x86 is ever deployed, keeping setup universal
-    set "download_url=https://github.com/hiddify/hiddify-app/releases/latest/download/Hiddify-Windows-Setup-x64.exe"
-    set "arch_type=x86 (32-bit) *Running x64 Framework emulation or check fallback*"
+    set "download_url=https://github.com/git-for-windows/git/releases/download/v2.54.0.windows.1/Git-2.54.0-32-bit.exe"
+    set "filename=Git-2.54.0-32-bit.exe"
+    set "arch_type=x86 (32-bit)"
 )
 
 echo.
@@ -51,8 +51,8 @@ echo ===========================================================================
 echo   SCRIPT DESCRIPTION:
 echo   --------------------------------------------------------------------------------------
 echo   * This automation script detects the host OS architecture (x86 or x64).
-echo   * It automatically fetches the LATEST stable release from official GitHub servers.
-echo   * It creates a secure temporary directory and executes the native installer.
+echo   * It automatically fetches the specific Git release (2.54.0) from GitHub.
+echo   * It executes a fully SILENT background installation with default configurations.
 echo.
 echo   ENVIRONMENT INFO:
 echo   --------------------------------------------------------------------------------------
@@ -65,12 +65,12 @@ echo.
 echo [+] Preparing unique temporary environment...
 
 rem Generate a triple-random unique dynamic folder to eliminate any write or access conflicts
-set "new_dir=C:\Windows\Temp\hiddify_dynamic_session_%RANDOM%_%RANDOM%_%RANDOM%"
+set "new_dir=C:\Windows\Temp\git_silent_session_%RANDOM%_%RANDOM%_%RANDOM%"
 mkdir "%new_dir%" 2>nul
 
 set "download_path=%new_dir%\%filename%"
 
-echo [+] Downloading the latest installer version from official GitHub servers...
+echo [+] Downloading Git for Windows v2.54.0 from official GitHub release assets...
 echo.
 echo ==========================================================================================
 
@@ -89,11 +89,25 @@ if errorlevel 1 (
 
 echo.
 echo ==========================================================================================
-echo SUCCESS: Download completed successfully! Launching installer execution...
+echo SUCCESS: Download completed successfully! Initializing SILENT execution...
 echo ==========================================================================================
 echo.
+echo [*] Installing Git in background mode (Default profile, no GUI popups)...
 
-start "" "%download_path%"
+rem Remove the internet block flag from the executable to ensure clean background execution
+powershell -Command "Unblock-File -Path '%download_path%'"
+
+rem EXECUTION FLAGS:
+rem /VERYSILENT - Fully silent mode, no installer UI windows shown (Inno Setup flag)
+rem /NORESTART  - Blocks forced system restart after deployment is complete
+rem /NOCANCEL   - Disables the cancel button, installation runs to completion guaranteed
+cmd.exe /c ""%download_path%" /VERYSILENT /NORESTART /NOCANCEL"
+
+echo.
+echo ==========================================================================================
+echo SUCCESS: Git deployment successfully finished on this system.
+echo ==========================================================================================
+echo.
 
 endlocal
 pause

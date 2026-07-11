@@ -1,5 +1,5 @@
 @echo off
-rem = Rooted by VladiMIR + AI | v.2026.07.05 | github.com/GinCz =
+rem = Rooted by VladiMIR + AI | v.2026.07.07 | github.com/GinCz =
 setlocal enabledelayedexpansion
 
 rem Set color: 0 = Black background, A = Light Green text
@@ -21,7 +21,7 @@ rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated 
 clear || cls
 
 echo ==========================================================================================
-echo L O A D I N G   ^|   Universal Hiddify Client Stable Installer Downloader
+echo L O A D I N G   ^|   Universal Cursor AI Editor SILENT Installer Downloader
 echo ==========================================================================================
 echo.
 
@@ -30,20 +30,22 @@ echo [+] Analyzing system processor architecture...
 rem Force TLS 1.2 protocol for secure download
 set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
 
-rem Default fallback to standard x64 architecture link
-set "download_url=https://github.com/hiddify/hiddify-app/releases/latest/download/Hiddify-Windows-Setup-x64.exe"
-set "filename=Hiddify-Windows-Setup-x64.exe"
+rem Official Cursor windows standalone x64 distribution link
+set "download_url=https://downloader.cursor.sh/windows/nsis/x64"
+set "filename=CursorUserSetup-x64.exe"
 set "arch_type=x64 (64-bit)"
 
-rem Check if the OS environment is 32-bit to swap to x86/ARM or notify (Note: Hiddify primarily targets x64)
+rem Check if the OS environment is 32-bit to notify architecture constraints
 set "is_64=0"
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "is_64=1"
 if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "is_64=1"
 
 if "%is_64%"=="0" (
-    rem Fallback or placeholder link if x86 is ever deployed, keeping setup universal
-    set "download_url=https://github.com/hiddify/hiddify-app/releases/latest/download/Hiddify-Windows-Setup-x64.exe"
-    set "arch_type=x86 (32-bit) *Running x64 Framework emulation or check fallback*"
+    echo ==========================================================================================
+    echo ERROR: Cursor AI Editor natively requires an x64 operating system environment.
+    echo ==========================================================================================
+    pause
+    exit /b 1
 )
 
 echo.
@@ -51,8 +53,8 @@ echo ===========================================================================
 echo   SCRIPT DESCRIPTION:
 echo   --------------------------------------------------------------------------------------
 echo   * This automation script detects the host OS architecture (x86 or x64).
-echo   * It automatically fetches the LATEST stable release from official GitHub servers.
-echo   * It creates a secure temporary directory and executes the native installer.
+echo   * It automatically fetches the LATEST stable Cursor AI release from official servers.
+echo   * It executes a fully SILENT background installation with default configurations.
 echo.
 echo   ENVIRONMENT INFO:
 echo   --------------------------------------------------------------------------------------
@@ -65,12 +67,12 @@ echo.
 echo [+] Preparing unique temporary environment...
 
 rem Generate a triple-random unique dynamic folder to eliminate any write or access conflicts
-set "new_dir=C:\Windows\Temp\hiddify_dynamic_session_%RANDOM%_%RANDOM%_%RANDOM%"
+set "new_dir=C:\Windows\Temp\cursor_silent_session_%RANDOM%_%RANDOM%_%RANDOM%"
 mkdir "%new_dir%" 2>nul
 
 set "download_path=%new_dir%\%filename%"
 
-echo [+] Downloading the latest installer version from official GitHub servers...
+echo [+] Downloading the latest Cursor User Setup package from official distribution servers...
 echo.
 echo ==========================================================================================
 
@@ -89,11 +91,22 @@ if errorlevel 1 (
 
 echo.
 echo ==========================================================================================
-echo SUCCESS: Download completed successfully! Launching installer execution...
+echo SUCCESS: Download completed successfully! Initializing SILENT execution...
 echo ==========================================================================================
 echo.
+echo [*] Installing Cursor AI in background mode (Default profile, no GUI popups)...
 
-start "" "%download_path%"
+rem Remove the internet block flag from the executable to ensure clean background execution
+powershell -Command "Unblock-File -Path '%download_path%'"
+
+rem EXECUTION FLAG: /S - Full silent automatic installation flag for NSIS (Nullsoft Scriptable Install System)
+cmd.exe /c ""%download_path%" /S"
+
+echo.
+echo ==========================================================================================
+echo SUCCESS: Cursor AI Editor deployment successfully finished on this system.
+echo ==========================================================================================
+echo.
 
 endlocal
 pause

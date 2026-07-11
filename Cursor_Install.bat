@@ -1,5 +1,5 @@
 @echo off
-rem = Rooted by VladiMIR + AI | v.2026.07.07 =
+rem = Rooted by VladiMIR + AI | v.2026.07.07 | github.com/GinCz =
 setlocal enabledelayedexpansion
 
 rem Set color: 0 = Black background, A = Light Green text
@@ -8,12 +8,12 @@ color 0A
 rem Check for Administrator privileges
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-echo ==========================================================================================
-echo WARNING: This script requires ADMINISTRATOR privileges to run correctly!
-echo ==========================================================================================
-echo Restarting with elevated privileges...
-powershell -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
-exit /b
+    echo ==========================================================================================
+    echo WARNING: This script requires ADMINISTRATOR privileges to run correctly!
+    echo ==========================================================================================
+    echo Restarting with elevated privileges...
+    powershell -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+    exit /b
 )
 
 rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated Administrator window
@@ -21,7 +21,7 @@ rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated 
 clear || cls
 
 echo ==========================================================================================
-echo L O A D I N G ^| Universal Cursor AI Editor Installer Downloader (Interactive Mode)
+echo L O A D I N G   ^|   Universal Cursor AI Editor Installer Downloader (Interactive Mode)
 echo ==========================================================================================
 echo.
 
@@ -41,26 +41,26 @@ if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "is_64=1"
 if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "is_64=1"
 
 if "%is_64%"=="0" (
-echo ==========================================================================================
-echo ERROR: Cursor AI Editor natively requires an x64 operating system environment.
-echo ==========================================================================================
-pause
-exit /b 1
+    echo ==========================================================================================
+    echo ERROR: Cursor AI Editor natively requires an x64 operating system environment.
+    echo ==========================================================================================
+    pause
+    exit /b 1
 )
 
 echo.
 echo ==========================================================================================
-echo SCRIPT DESCRIPTION:
-echo --------------------------------------------------------------------------------------
-echo * This automation script detects the host OS architecture (x86 or x64).
-echo * It automatically fetches the LATEST stable Cursor AI release from official servers.
-echo * It executes the GUI installer interactively so you can customize your preferences.
+echo   SCRIPT DESCRIPTION:
+echo   --------------------------------------------------------------------------------------
+echo   * This automation script detects the host OS architecture (x86 or x64).
+echo   * It automatically fetches the LATEST stable Cursor AI release from official servers.
+echo   * It executes the GUI installer interactively so you can customize your preferences.
 echo.
-echo ENVIRONMENT INFO:
-echo --------------------------------------------------------------------------------------
-echo Detected OS Architecture : %arch_type%
-echo Target File Name : %filename%
-echo Target Download URL : %download_url%
+echo   ENVIRONMENT INFO:
+echo   --------------------------------------------------------------------------------------
+echo   Detected OS Architecture : %arch_type%
+echo   Target File Name        : %filename%
+echo   Target Download URL     : %download_url%
 echo ==========================================================================================
 echo.
 
@@ -81,12 +81,12 @@ set "ps_cmd=%ps_tls%; $ProgressPreference='SilentlyContinue'; $w = New-Object Sy
 
 powershell -Command "%ps_cmd%"
 if errorlevel 1 (
-echo.
-echo ==========================================================================================
-echo ERROR: Download failed. Please verify internet connection or local TLS configurations.
-echo ==========================================================================================
-pause
-exit /b 1
+    echo.
+    echo ==========================================================================================
+    echo ERROR: Download failed. Please verify internet connection or local TLS configurations.
+    echo ==========================================================================================
+    pause
+    exit /b 1
 )
 
 echo.
