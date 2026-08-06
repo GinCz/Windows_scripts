@@ -7,7 +7,7 @@
 ## Mandatory rules
 
 1. Start every script with the exact initialization sequence below: `@echo off`, UTF-8 console activation, then `cls`.
-2. Check elevation with `fltmc`. If the process is not elevated, relaunch the same script through `powershell -NoProfile` and `Start-Process -Verb RunAs`; immediately terminate the unelevated process with `exit /b`.
+2. Check elevation with `fltmc`. If the process is not elevated, relaunch the same script through `powershell -NoProfile` with `Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs` (to safely support paths and filenames containing spaces and special characters like `&`); immediately terminate the unelevated process with `exit /b`.
 3. After elevation, always force the working directory to the directory containing the script: `cd /d "%~dp0"`. Never rely on the inherited directory, because an elevated process may otherwise run from `C:\Windows\System32`.
 4. Set a descriptive `title` in the form `<Script Purpose> - <MODE>` so the running window is recognizable in the taskbar.
 5. Render the Cyber Parking Zone before the main output: exactly four blank lines, one dark-gray 89-character parking line beginning with one leading space, then exactly three blank lines.
@@ -35,7 +35,7 @@ if %errorlevel% neq 0 goto :ELEVATE
 goto :ADMIN_OK
 
 :ELEVATE
-powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
 exit /b
 
 :ADMIN_OK

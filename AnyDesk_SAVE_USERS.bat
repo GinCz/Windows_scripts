@@ -5,13 +5,13 @@
 chcp 65001 >nul
 cls
 
-:: Auto-elevate to Administrator
+:: Auto-elevate to Administrator (Robust syntax for special characters like & and spaces)
 fltmc >nul 2>&1
 if %errorlevel% neq 0 goto :ELEVATE
 goto :ADMIN_OK
 
 :ELEVATE
-powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
 exit /b
 
 :ADMIN_OK
