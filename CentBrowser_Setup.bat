@@ -58,7 +58,7 @@ if not exist "%TEMP_DIR%" mkdir "%TEMP_DIR%" >nul 2>&1
 set "DOWNLOAD_PATH=%TEMP_DIR%\%FILENAME%"
 
 echo Downloading CentBrowser installer from official servers...
-powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (New-Object System.Net.WebClient).DownloadFile('%DOWNLOAD_URL%', '%DOWNLOAD_PATH%')"
+powershell -NoProfile -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $ProgressPreference = 'Continue'; Invoke-WebRequest -Uri '%DOWNLOAD_URL%' -OutFile '%DOWNLOAD_PATH%'"
 
 if %errorlevel% neq 0 (
     echo.
