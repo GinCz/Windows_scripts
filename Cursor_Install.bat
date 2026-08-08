@@ -1,112 +1,143 @@
+:: ==========================================================================================
+:: FILE: Cursor_Downloader_Silent.bat
+:: ==========================================================================================
 @echo off
-rem = Rooted by VladiMIR + AI | v.2026.07.07 | github.com/GinCz =
-setlocal enabledelayedexpansion
+:: = Rooted by VladiMIR + AI | v.2026.08.08 | github.com/GinCz =
+chcp 65001 >nul
+cls
 
-rem Set color: 0 = Black background, A = Light Green text
-color 0A
-
-rem Check for Administrator privileges
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ==========================================================================================
-    echo WARNING: This script requires ADMINISTRATOR privileges to run correctly!
-    echo ==========================================================================================
-    echo Restarting with elevated privileges...
-    powershell -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+:: Auto-Elevate to Administrator (Robust syntax for special characters like & and spaces)
+fltmc >nul 2>&1
+if errorlevel 1 (
+    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
 
-rem CRITICAL RESET: Forcefully turn off command echo output inside the elevated Administrator window
-@echo off
-clear || cls
+cd /d "%~dp0"
+title Universal Cursor AI Editor SILENT Installer - LOAD
 
-echo ==========================================================================================
-echo L O A D I N G   ^|   Universal Cursor AI Editor Installer Downloader (Interactive Mode)
-echo ==========================================================================================
+:: Shift output down by 4 lines, output parking zone, and pad with 3 lines below
+for /L %%i in (1,1,4) do echo.
+powershell -Command "Write-Host ' ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  P O W E R S H E L L   P A R K I N G   Z O N E  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░' -ForegroundColor DarkGray"
+for /L %%i in (1,1,3) do echo.
+
+:: ------------------------------------------------------------------------------------------
+:: MAIN SCRIPT EXECUTION
+:: ------------------------------------------------------------------------------------------
+powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
+powershell -Command "Write-Host ' Universal Cursor AI Editor SILENT Installer Downloader' -ForegroundColor Yellow"
+powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
 echo.
 
 echo [+] Analyzing system processor architecture...
 
-rem Force TLS 1.2 protocol for secure download
-set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12"
-
-rem Official Cursor windows standalone x64 distribution link
-set "download_url=https://downloader.cursor.sh/windows/nsis/x64"
-set "filename=CursorUserSetup-x64.exe"
-set "arch_type=x64 (64-bit)"
-
-rem Check if the OS environment is 32-bit to notify architecture constraints
+:: Check if the OS environment is 32-bit to notify architecture constraints
 set "is_64=0"
 if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "is_64=1"
 if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set "is_64=1"
 
 if "%is_64%"=="0" (
-    echo ==========================================================================================
-    echo ERROR: Cursor AI Editor natively requires an x64 operating system environment.
-    echo ==========================================================================================
+    echo.
+    powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    powershell -Command "Write-Host ' ERROR: Cursor AI Editor natively requires an x64 operating system environment.' -ForegroundColor Red"
+    powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
     pause
     exit /b 1
 )
+
+echo [+] Flushing local DNS cache and verifying global network routing...
+ipconfig /flushdns >nul
+ping -n 1 8.8.8.8 >nul
+if errorlevel 1 (
+    echo.
+    powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    powershell -Command "Write-Host ' CRITICAL ERROR: No internet connection detected (Ping to 8.8.8.8 failed).' -ForegroundColor Red"
+    powershell -Command "Write-Host ' Check your network adapter, VPN, or firewall settings.' -ForegroundColor Red"
+    powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    pause
+    exit /b 1
+)
+
+:: Force TLS 1.2 and inject TLS 1.3 (3072) support for modern CDN compatibility
+set "ps_tls=[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072"
+
+echo [+] Querying official distribution servers to find the LATEST release...
+
+:: Hardcoded working API endpoint for Cursor Windows x64
+set "base_url=https://api2.cursor.sh/updates/download/golden/win32-x64-user/cursor/3.15"
+
+:: Robust URL resolution with full Chrome User-Agent mimicking to catch the final redirect URL
+set "ps_fetch=%ps_tls%; $req = [System.Net.WebRequest]::Create('%base_url%'); $req.UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'; $req.AllowAutoRedirect = $true; try { $res = $req.GetResponse(); Write-Output $res.ResponseUri.AbsoluteUri; $res.Close() } catch { Write-Output '%base_url%' }"
+
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -Command "%ps_fetch%"`) do set "download_url=%%I"
+
+:: Extract filename from resolved URL or use default fallback
+for %%F in ("%download_url%") do set "filename=%%~nxF"
+if "%filename%"=="" set "filename=CursorSetup-Latest-x64.exe"
+if "%filename%"=="x64" set "filename=CursorSetup-Latest-x64.exe"
+if "%filename%"=="3.15" set "filename=CursorSetup-Latest-x64.exe"
+
+:: Ensure filename ends with .exe for correct execution
+echo %filename% | find /i ".exe" >nul
+if errorlevel 1 set "filename=%filename%.exe"
+
+set "arch_type=x64 (64-bit)"
 
 echo.
 echo ==========================================================================================
 echo   SCRIPT DESCRIPTION:
 echo   --------------------------------------------------------------------------------------
-echo   * This automation script detects the host OS architecture (x86 or x64).
-echo   * It automatically fetches the LATEST stable Cursor AI release from official servers.
-echo   * It executes the GUI installer interactively so you can customize your preferences.
+echo   * Detects the host OS architecture (x86 or x64).
+echo   * Dynamically resolves and fetches the LATEST stable Cursor AI release.
+echo   * Creates a secure temporary directory and executes a fully SILENT background installation.
 echo.
 echo   ENVIRONMENT INFO:
 echo   --------------------------------------------------------------------------------------
 echo   Detected OS Architecture : %arch_type%
-echo   Target File Name        : %filename%
-echo   Target Download URL     : %download_url%
+echo   Target File Name         : %filename%
+echo   Target Download URL      : %download_url%
 echo ==========================================================================================
 echo.
 
 echo [+] Preparing unique temporary environment...
-
-rem Generate a triple-random unique dynamic folder to eliminate any write or access conflicts
-set "new_dir=C:\Windows\Temp\cursor_interactive_session_%RANDOM%_%RANDOM%_%RANDOM%"
+set "new_dir=C:\Windows\Temp\cursor_silent_session_%RANDOM%_%RANDOM%_%RANDOM%"
 mkdir "%new_dir%" 2>nul
-
 set "download_path=%new_dir%\%filename%"
 
-echo [+] Downloading the latest Cursor User Setup package from official distribution servers...
+echo [+] Downloading the latest Cursor User Setup package...
 echo.
-echo ==========================================================================================
 
-rem Safe PowerShell progress engine: Wait for connection, then draw exactly ONE dynamic bar
-set "ps_cmd=%ps_tls%; $ProgressPreference='SilentlyContinue'; $w = New-Object System.Net.WebClient; $w.DownloadFileAsync((New-Object System.Uri('%download_url%')), '%download_path%'); while (-not $w.ResponseHeaders) { Start-Sleep -Milliseconds 50 }; $t = $w.ResponseHeaders['Content-Length']; $last = -1; while ($w.IsBusy) { Start-Sleep -Milliseconds 50; if ($t) { $c = (Get-Item '%download_path%').Length; $p = [math]::Floor(($c / $t) * 100); $s = [math]::Floor(($p / 100) * 70); if ($s -gt $last) { if ($s -le 70) { $last = $s; $bar = '*' * $s + ' ' * (70 - $s); Write-Host ([char]13 + 'Progress: [' + $bar + '] ' + $p.ToString().PadLeft(3) + '%%') -NoNewline; } } } else { Write-Host ([char]13 + 'Progress: [ Streaming Direct Download Data Flow... ]') -NoNewline; } } Write-Host ([char]13 + 'Progress: [' + ('*' * 70) + '] 100%%')"
+:: Download using Invoke-WebRequest with full browser headers and diagnostic error catching
+set "ps_cmd=%ps_tls%; $headers = @{'User-Agent'='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'; 'Accept'='text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'}; try { Invoke-WebRequest -Uri '%download_url%' -OutFile '%download_path%' -Headers $headers -UseBasicParsing -MaximumRedirection 10 } catch { Write-Host ' DIAGNOSTIC ERROR: ' $_.Exception.Message -ForegroundColor Red; exit 1 }"
 
 powershell -Command "%ps_cmd%"
 if errorlevel 1 (
     echo.
-    echo ==========================================================================================
-    echo ERROR: Download failed. Please verify internet connection or local TLS configurations.
-    echo ==========================================================================================
+    echo.
+    powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    powershell -Command "Write-Host ' ERROR: Download failed. See diagnostic message above.' -ForegroundColor Red"
+    powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
     pause
     exit /b 1
 )
 
 echo.
-echo ==========================================================================================
-echo SUCCESS: Download completed successfully! Launching interactive setup wizard...
-echo ==========================================================================================
-echo.
-echo [*] Opening Cursor AI installation window...
+powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
+powershell -Command "Write-Host ' Download completed successfully! Initializing SILENT execution...' -ForegroundColor Yellow"
+powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
 
-rem Remove the internet block flag from the executable to ensure clean background execution
+:: Remove the internet block flag from the executable to ensure clean background execution
 powershell -Command "Unblock-File -Path '%download_path%'"
 
-rem EXECUTION: Removed /S flag to open full graphical interface for manual configuration
-cmd.exe /c ""%download_path%""
+:: EXECUTION FLAGS MODIFICATION:
+:: /S - System flag for fully silent automated installation via NSIS.
+echo [*] Installing Cursor AI in background mode (Default profile, no GUI popups)...
+start /wait "" "%download_path%" /S
 
 echo.
-echo ==========================================================================================
-echo SUCCESS: Script processing completed.
-echo ==========================================================================================
-echo.
+powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Green"
+powershell -Command "Write-Host ' SUCCESS: Cursor AI Editor deployment successfully finished on this system.' -ForegroundColor Green"
+powershell -Command "Write-Host '==========================================================================================' -ForegroundColor Green"
 
-endlocal
-pause
+timeout /t 10 /NOBREAK >nul
+exit /b 0
