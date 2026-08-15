@@ -1,8 +1,8 @@
 // ==========================================================================================
-//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_f]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
+//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_g]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 // ==========================================================================================
 // Features:
-// 1. Push-to-Talk (Ctrl+D: hold to speak, release to send).
+// 1. Microphone Toggle (Ctrl+D or F4): 1st press = START, 2nd press = STOP/SEND.
 // 2. Custom Favorites Menu in Antigravity Sidebar (GitHub links & Server Info).
 // 3. Auto-terminates completely when Antigravity is closed (zero orphan background processes).
 
@@ -33,46 +33,29 @@ process.on('unhandledRejection', (reason) => {
 
 const INJECTION_CODE = `
 (() => {
-  // 1. Push-to-Talk setup
-  if (!window.__pushToTalkInstalled) {
-    window.__pushToTalkInstalled = true;
-    window.__isPTTActive = false;
+  // 1. Microphone Toggle Setup (Ctrl+D and F4)
+  if (!window.__antigravityMicToggleInstalled) {
+    window.__antigravityMicToggleInstalled = true;
 
     function getMicButton() {
-      return document.querySelector('button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"], button[aria-label*="micro"], button[aria-label*="Micro"]');
-    }
-
-    function getStopOrSendButton() {
-      return document.querySelector('button[aria-label*="Stop"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"]') || getMicButton();
+      return document.querySelector('button[aria-label*="Stop"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"], button[aria-label*="micro"], button[aria-label*="Micro"]');
     }
 
     window.addEventListener('keydown', (e) => {
       const isCtrl = e.ctrlKey || e.metaKey;
-      if (isCtrl && (e.key.toLowerCase() === 'd' || e.code === 'KeyD')) {
+      const isCtrlD = isCtrl && (e.key.toLowerCase() === 'd' || e.code === 'KeyD');
+      const isF4 = e.key === 'F4' || e.code === 'F4';
+
+      if (isCtrlD || isF4) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        if (!window.__isPTTActive) {
-          const mic = getMicButton();
-          if (mic) {
-            window.__isPTTActive = true;
-            mic.click();
-          }
+        const btn = getMicButton();
+        if (btn) {
+          btn.click();
         }
         return false;
-      }
-    }, true);
-
-    window.addEventListener('keyup', (e) => {
-      if (e.key.toLowerCase() === 'd' || e.code === 'KeyD' || e.key === 'Control' || e.key === 'Meta') {
-        if (window.__isPTTActive) {
-          window.__isPTTActive = false;
-          setTimeout(() => {
-            const stopBtn = getStopOrSendButton();
-            if (stopBtn) stopBtn.click();
-          }, 150);
-        }
       }
     }, true);
   }
@@ -229,7 +212,7 @@ async function checkAndInject() {
   }
 }
 
-log('Antigravity Helper Daemon started...');
+log('Antigravity Helper Daemon started (Toggle mode)...');
 checkAndInject();
 setInterval(checkAndInject, 2500);
 
