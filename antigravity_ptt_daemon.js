@@ -1,5 +1,5 @@
 // ==========================================================================================
-//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_c]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
+//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_d]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 // ==========================================================================================
 // Features:
 // 1. Push-to-Talk (Ctrl+D: hold to speak, release to send).
@@ -8,7 +8,27 @@
 const fs = require('fs');
 const path = require('path');
 
+// Ignore stdio write errors when running without console window
+if (process.stdout && process.stdout.on) process.stdout.on('error', () => {});
+if (process.stderr && process.stderr.on) process.stderr.on('error', () => {});
+
+const LOG_FILE = path.join(__dirname, 'antigravity_ptt_daemon.log');
 const PORT_FILE = path.join(process.env.APPDATA, 'Antigravity', 'DevToolsActivePort');
+
+function log(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  try {
+    fs.appendFileSync(LOG_FILE, line, 'utf8');
+  } catch {}
+}
+
+process.on('uncaughtException', (err) => {
+  log('Uncaught Exception: ' + (err?.stack || err));
+});
+
+process.on('unhandledRejection', (reason) => {
+  log('Unhandled Rejection: ' + (reason?.stack || reason));
+});
 
 const INJECTION_CODE = `
 (() => {
@@ -18,11 +38,11 @@ const INJECTION_CODE = `
     window.__isPTTActive = false;
 
     function getMicButton() {
-      return document.querySelector('button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"]');
+      return document.querySelector('button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"], button[aria-label*="micro"], button[aria-label*="Micro"]');
     }
 
     function getStopOrSendButton() {
-      return document.querySelector('button[aria-label*="Stop"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"]') || getMicButton();
+      return document.querySelector('button[aria-label*="Stop"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"]') || getMicButton();
     }
 
     window.addEventListener('keydown', (e) => {
@@ -105,11 +125,9 @@ const INJECTION_CODE = `
         btn.rel = 'noreferrer noopener';
         btn.title = item.desc;
         btn.className = 'flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-secondary-foreground hover:bg-secondary/70 hover:text-foreground transition-all duration-150 cursor-pointer no-underline group';
-        btn.innerHTML = \`
-          \${item.iconHtml}
-          <span class="truncate font-medium flex-1 text-xs">\${item.label}</span>
-          <svg class="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-        \`;
+        btn.innerHTML = item.iconHtml +
+          '<span class="truncate font-medium flex-1 text-xs">' + item.label + '</span>' +
+          '<svg class="w-3 h-3 opacity-0 group-hover:opacity-60 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>';
         
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -132,29 +150,39 @@ async function tryInject() {
     const port = lines[0].trim();
     if (!port) return false;
 
-    const res = await fetch(`http://127.0.0.1:${port}/json`);
+    const res = await fetch('http://127.0.0.1:' + port + '/json');
     const pages = await res.json();
-    const page = pages.find(p => p.type === 'page');
-    if (!page || !page.webSocketDebuggerUrl) return false;
+    const pageTargets = pages.filter(p => p.type === 'page' && p.webSocketDebuggerUrl);
+    if (pageTargets.length === 0) return false;
 
-    const ws = new WebSocket(page.webSocketDebuggerUrl);
-    ws.onopen = () => {
-      ws.send(JSON.stringify({
-        id: 1,
-        method: 'Runtime.evaluate',
-        params: { expression: INJECTION_CODE, returnByValue: true }
-      }));
-      setTimeout(() => ws.close(), 1000);
-    };
+    for (const page of pageTargets) {
+      try {
+        const ws = new WebSocket(page.webSocketDebuggerUrl);
+        ws.onerror = (e) => {};
+        ws.onopen = () => {
+          try {
+            ws.send(JSON.stringify({
+              id: 1,
+              method: 'Runtime.evaluate',
+              params: { expression: INJECTION_CODE, returnByValue: true }
+            }));
+            setTimeout(() => {
+              try { ws.close(); } catch {}
+            }, 1000);
+          } catch {}
+        };
+      } catch {}
+    }
     return true;
-  } catch {
+  } catch (err) {
     return false;
   }
 }
 
-// Check every 3 seconds in the background
-console.log('Antigravity Helper Daemon running...');
-setInterval(tryInject, 3000);
-tryInject();
+log('Antigravity Helper Daemon running...');
+setInterval(() => {
+  tryInject().catch(() => {});
+}, 3000);
+tryInject().catch(() => {});
 
 // # = Rooted by VladiMIR | AI = v2026-08-15 = github.com/GinCz

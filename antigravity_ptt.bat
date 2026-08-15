@@ -2,5 +2,5 @@
 :: ==========================================================================================
 ::  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity PTT Launcher | [v2026-08-15_a]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 :: ==========================================================================================
-node "D:\VS-Code\GitHub\Windows_scripts\antigravity_ptt_daemon.js"
+node "D:\AI\GitHub\Windows_scripts\antigravity_ptt_daemon.js"
 :: = Rooted by VladiMIR | AI = v2026-08-15 = github.com/GinCz
