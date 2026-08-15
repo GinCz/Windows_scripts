@@ -1,14 +1,15 @@
 // ==========================================================================================
-//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_d]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
+//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_f]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 // ==========================================================================================
 // Features:
 // 1. Push-to-Talk (Ctrl+D: hold to speak, release to send).
 // 2. Custom Favorites Menu in Antigravity Sidebar (GitHub links & Server Info).
+// 3. Auto-terminates completely when Antigravity is closed (zero orphan background processes).
 
 const fs = require('fs');
 const path = require('path');
 
-// Ignore stdio write errors when running without console window
+// Ignore stdio write errors when running in background
 if (process.stdout && process.stdout.on) process.stdout.on('error', () => {});
 if (process.stderr && process.stderr.on) process.stderr.on('error', () => {});
 
@@ -143,46 +144,93 @@ const INJECTION_CODE = `
 })()
 `;
 
-async function tryInject() {
-  if (!fs.existsSync(PORT_FILE)) return false;
+let activeSockets = new Map();
+let connectedOnce = false;
+let failCount = 0;
+
+async function checkAndInject() {
+  if (!fs.existsSync(PORT_FILE)) {
+    failCount++;
+    if (connectedOnce && failCount >= 2) {
+      log('Antigravity closed (port file missing). Exiting daemon.');
+      process.exit(0);
+    }
+    if (!connectedOnce && failCount >= 20) {
+      log('Antigravity not running after timeout. Exiting daemon.');
+      process.exit(0);
+    }
+    return;
+  }
+
   try {
     const lines = fs.readFileSync(PORT_FILE, 'utf8').split('\n');
     const port = lines[0].trim();
-    if (!port) return false;
+    if (!port) return;
 
     const res = await fetch('http://127.0.0.1:' + port + '/json');
     const pages = await res.json();
     const pageTargets = pages.filter(p => p.type === 'page' && p.webSocketDebuggerUrl);
-    if (pageTargets.length === 0) return false;
+
+    if (pageTargets.length > 0) {
+      connectedOnce = true;
+      failCount = 0;
+    } else {
+      failCount++;
+      if (connectedOnce && failCount >= 2) {
+        log('No active Antigravity pages found. Exiting daemon.');
+        process.exit(0);
+      }
+      return;
+    }
 
     for (const page of pageTargets) {
-      try {
-        const ws = new WebSocket(page.webSocketDebuggerUrl);
-        ws.onerror = (e) => {};
-        ws.onopen = () => {
-          try {
-            ws.send(JSON.stringify({
-              id: 1,
-              method: 'Runtime.evaluate',
-              params: { expression: INJECTION_CODE, returnByValue: true }
-            }));
-            setTimeout(() => {
-              try { ws.close(); } catch {}
-            }, 1000);
-          } catch {}
-        };
-      } catch {}
+      const url = page.webSocketDebuggerUrl;
+      let ws = activeSockets.get(url);
+
+      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        try {
+          ws = new WebSocket(url);
+          activeSockets.set(url, ws);
+
+          ws.addEventListener('error', () => {
+            activeSockets.delete(url);
+          });
+
+          ws.addEventListener('close', () => {
+            activeSockets.delete(url);
+          });
+
+          ws.addEventListener('open', () => {
+            try {
+              ws.send(JSON.stringify({
+                id: Date.now(),
+                method: 'Runtime.evaluate',
+                params: { expression: INJECTION_CODE, returnByValue: true }
+              }));
+            } catch {}
+          });
+        } catch {}
+      } else if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({
+            id: Date.now(),
+            method: 'Runtime.evaluate',
+            params: { expression: INJECTION_CODE, returnByValue: true }
+          }));
+        } catch {}
+      }
     }
-    return true;
   } catch (err) {
-    return false;
+    failCount++;
+    if (connectedOnce && failCount >= 2) {
+      log('Connection lost to Antigravity. Exiting daemon.');
+      process.exit(0);
+    }
   }
 }
 
-log('Antigravity Helper Daemon running...');
-setInterval(() => {
-  tryInject().catch(() => {});
-}, 3000);
-tryInject().catch(() => {});
+log('Antigravity Helper Daemon started...');
+checkAndInject();
+setInterval(checkAndInject, 2500);
 
 // # = Rooted by VladiMIR | AI = v2026-08-15 = github.com/GinCz
