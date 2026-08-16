@@ -33,7 +33,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 - [Detailed Script Documentation](#detailed-script-documentation)
   - [CLEAN.cmd — High-Performance System Sweeper](#1-cleancmd--system--security-sweeper)
   - [CentBrowser_CLEAN.bat — Multi-Profile Browser Cleaner](#2-centbrowser_cleanbat--multi-profile-cache-cleaner)
-  - [Error_80070002+.cmd — Windows Update Fast Repair Tool](#3-error_80070002cmd--windows-update-fast-repair-tool)
+  - [Error_80070002_AI.cmd — Windows Update Fast Repair Tool](#3-error_80070002_aicmd--windows-update-fast-repair-tool)
 - [SMB Network Drives — SMB_Connect](#smb-network-drives--smb_connect)
 - [Requirements & Usage](#requirements--usage)
 - [Code Conventions](#code-conventions)
@@ -49,7 +49,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 |---|--------|-------------|:-----:|:----------:|
 | 1 | [`CLEAN.cmd`](#1-cleancmd--system--security-sweeper) | High-performance system & user cache cleaner + security persistence sweeper | **YES** | Startup / Fast |
 | 2 | [`CentBrowser_CLEAN.bat`](#2-centbrowser_cleanbat--multi-profile-cache-cleaner) | Universal multi-profile cache cleaner for CentBrowser & Chromium (scans 1 to 500+ profiles) | **YES** | Manual / Auto |
-| 3 | [`Error_80070002+.cmd`](#3-error_80070002cmd--windows-update-fast-repair-tool) | Ultra-fast Windows Update error `0x80070002` / `0x80070003` reset & repair tool (~5s) | **YES** | Immediate |
+| 3 | [`Error_80070002_AI.cmd`](#3-error_80070002_aicmd--windows-update-fast-repair-tool) | Ultra-fast Windows Update error `0x80070002` / `0x80070003` reset & repair tool (~5s) | **YES** | Immediate |
 | 4 | `CMD_setting.bat` | Sets CMD font to Consolas 20pt, UTF-8 encoding, buffer size 120x9001 globally via registry | **YES** | Immediate |
 | 5 | `WIN_Optimize.bat` | 15-step deep optimizer: reserved storage, hibernation, services, SSD TRIM, visual effects, temp/disk cleanup, network, power plan, telemetry, DISM, WinSxS, SFC, CompactOS | **YES** | Immediate |
 | 6 | `AntiVir_OFF.bat` | Toggle Windows Defender real-time protection ON/OFF interactively | **YES** | Interactive |
@@ -132,9 +132,9 @@ CLEAN.cmd -Startup
 
 ---
 
-### 3. `Error_80070002+.cmd` — Windows Update Fast Repair Tool
+### 3. `Error_80070002_AI.cmd` — Windows Update Fast Repair Tool
 
-`Error_80070002+.cmd` is a rapid, non-destructive repair tool for Windows Update error codes (`0x80070002`, `0x80070003`, `0x80240020`, `0x80070057`) caused by corrupted download manifests or interrupted download states.
+`Error_80070002_AI.cmd` is a rapid, non-destructive repair tool for Windows Update error codes (`0x80070002`, `0x80070003`, `0x80240020`, `0x80070057`) caused by corrupted download manifests or interrupted download states.
 
 #### Execution Pipeline (~5 Seconds)
 1. **Service Suspension:** Gracefully stops `wuauserv`, `bits`, `cryptsvc`, `dosvc`, and `msiserver`.

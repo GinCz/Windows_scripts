@@ -1,6 +1,6 @@
 @echo off
 :: ==========================================================================================
-:: FILE    : Error_80070002+.cmd
+:: FILE    : Error_80070002_AI.cmd
 :: VERSION : v2026.08.16
 :: AUTHOR  : = Rooted by VladiMIR | AI =
 :: REPO    : github.com/GinCz/Windows_scripts
