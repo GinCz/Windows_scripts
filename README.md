@@ -36,9 +36,11 @@ diagnostics, benchmarking, software installation, and **Samba SMB network drive 
 
 | # | Script | Description | Admin |
 |---|--------|-------------|:-----:|
-| 1 | `CMD_setting.bat` | Sets CMD font to Consolas 20pt, UTF-8 encoding, buffer size 120x9001 globally via registry | YES |
-| 2 | `WIN_Optimize.bat` | 15-step deep optimizer: reserved storage, hibernation, services, SSD TRIM, visual effects, temp/disk cleanup, network, power plan, telemetry, DISM, WinSxS, SFC, CompactOS | YES |
-| 3 | `AntiVir_OFF.bat` | Toggle Windows Defender real-time protection ON/OFF interactively | YES |
+| 1 | `CLEAN.cmd` | High-performance system & user cache cleaner + security persistence sweeper with 30s boot delay mode | YES |
+| 2 | `CentBrowser_CLEAN.bat` | Universal multi-profile cache cleaner for CentBrowser & Chromium (scans 1 to 500+ profiles safely) | YES |
+| 3 | `CMD_setting.bat` | Sets CMD font to Consolas 20pt, UTF-8 encoding, buffer size 120x9001 globally via registry | YES |
+| 4 | `WIN_Optimize.bat` | 15-step deep optimizer: reserved storage, hibernation, services, SSD TRIM, visual effects, temp/disk cleanup, network, power plan, telemetry, DISM, WinSxS, SFC, CompactOS | YES |
+| 5 | `AntiVir_OFF.bat` | Toggle Windows Defender real-time protection ON/OFF interactively | YES |
 
 ### Diagnostics & Benchmarking
 
