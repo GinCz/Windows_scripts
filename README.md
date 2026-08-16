@@ -34,6 +34,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
   - [CLEAN.cmd — High-Performance System Sweeper](#1-cleancmd--system--security-sweeper)
   - [CentBrowser_CLEAN.bat — Multi-Profile Browser Cleaner](#2-centbrowser_cleanbat--multi-profile-cache-cleaner)
   - [Error_80070002_AI.cmd — Windows Update Fast Repair Tool](#3-error_80070002_aicmd--windows-update-fast-repair-tool)
+  - [Nox_AdBlock.cmd — NoxPlayer AdBlock & Privacy Tool](#4-nox_adblockcmd--noxplayer-adblock--privacy-tool)
 - [SMB Network Drives — SMB_Connect](#smb-network-drives--smb_connect)
 - [Requirements & Usage](#requirements--usage)
 - [Code Conventions](#code-conventions)
@@ -50,9 +51,10 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 | 1 | [`CLEAN.cmd`](#1-cleancmd--system--security-sweeper) | High-performance system & user cache cleaner + security persistence sweeper | **YES** | Startup / Fast |
 | 2 | [`CentBrowser_CLEAN.bat`](#2-centbrowser_cleanbat--multi-profile-cache-cleaner) | Universal multi-profile cache cleaner for CentBrowser & Chromium (scans 1 to 500+ profiles) | **YES** | Manual / Auto |
 | 3 | [`Error_80070002_AI.cmd`](#3-error_80070002_aicmd--windows-update-fast-repair-tool) | Ultra-fast Windows Update error `0x80070002` / `0x80070003` reset & repair tool (~5s) | **YES** | Immediate |
-| 4 | `CMD_setting.bat` | Sets CMD font to Consolas 20pt, UTF-8 encoding, buffer size 120x9001 globally via registry | **YES** | Immediate |
-| 5 | `WIN_Optimize.bat` | 15-step deep optimizer: reserved storage, hibernation, services, SSD TRIM, visual effects, temp/disk cleanup, network, power plan, telemetry, DISM, WinSxS, SFC, CompactOS | **YES** | Immediate |
-| 6 | `AntiVir_OFF.bat` | Toggle Windows Defender real-time protection ON/OFF interactively | **YES** | Interactive |
+| 4 | [`Nox_AdBlock.cmd`](#4-nox_adblockcmd--noxplayer-adblock--privacy-tool) | Blocks NoxPlayer ads, promo popups & telemetry while keeping Google Play 100% OK | **YES** | Immediate |
+| 5 | `CMD_setting.bat` | Sets CMD font to Consolas 20pt, UTF-8 encoding, buffer size 120x9001 globally via registry | **YES** | Immediate |
+| 6 | `WIN_Optimize.bat` | 15-step deep optimizer: reserved storage, hibernation, services, SSD TRIM, visual effects, temp/disk cleanup, network, power plan, telemetry, DISM, WinSxS, SFC, CompactOS | **YES** | Immediate |
+| 7 | `AntiVir_OFF.bat` | Toggle Windows Defender real-time protection ON/OFF interactively | **YES** | Interactive |
 
 ### Diagnostics & Benchmarking
 
@@ -145,6 +147,18 @@ CLEAN.cmd -Startup
 6. **Binary Re-Registration & Network Reset:** Re-registers essential update libraries (`wups2.dll`, `wuaueng.dll`, `urlmon.dll`, `atl.dll`) and resets the Winsock network catalog.
 7. **Service Activation:** Re-enables and starts all update services.
 8. **Immediate Detection:** Triggers a clean scan via Windows Update Orchestrator (`usoclient StartScan`).
+
+---
+
+### 4. `Nox_AdBlock.cmd` — NoxPlayer AdBlock & Privacy Tool
+
+`Nox_AdBlock.cmd` blocks intrusive advertising, sponsored game icons, popup recommendations, and analytics telemetry from NoxPlayer while strictly keeping Google Play Services and app downloads fully operational.
+
+#### Key Features
+* **DNS Sinkhole Blocking:** Redirects 13 known BigNox ad, popup, and telemetry domains (`advert.bignox.com`, `hotgames.bignox.com`, `res06.bignox.com`, `stat.bignox.com`, etc.) to `0.0.0.0` in the Windows `hosts` file.
+* **Google Play Compatibility:** Does NOT touch Google servers, Google Play Services, or APK repositories. Apps install and update without interruption.
+* **Config Hardening:** Patches `conf.ini` to disable `loadingpage_show`, `collect_behavior_enable`, and `app_notice_enable`.
+* **Ad Cache Purge:** Cleans all accumulated promo images in `app_images`, `loading`, `preview`, and `app_notice_list`.
 
 ---
 

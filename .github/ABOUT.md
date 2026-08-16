@@ -10,6 +10,7 @@ This repository contains a production-grade collection of Windows CMD/BAT/PowerS
 - **`CLEAN.cmd`**: High-performance system & user cache cleaner with anti-malware persistence sweeping.
 - **`CentBrowser_CLEAN.bat`**: Universal multi-profile cache cleaner (supporting 1 to 500+ client profiles safely).
 - **`Error_80070002_AI.cmd`**: Ultra-fast Windows Update error `0x80070002` reset and repair pipeline.
+- **`Nox_AdBlock.cmd`**: NoxPlayer ad blocking, popup suppression, and telemetry cleanup tool.
 - **`SMB_Connect.bat`**: 10-node Samba server parallel mounting with live status monitoring.
 
 The SMB infrastructure (10-node Samba servers on Ubuntu 24 LTS, secured with IPGuard + CrowdSec + XRAY VPN) is documented at ➡️ [GinCz/Linux_Server_Public](https://github.com/GinCz/Linux_Server_Public).
