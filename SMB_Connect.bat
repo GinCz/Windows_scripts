@@ -11,7 +11,7 @@ setlocal enabledelayedexpansion
 :: ==========================================================================================
 :: DESCRIPTION:
 ::   Parallel mounting of all Samba shares for gincz.com infrastructure.
-::   User: vlad / sa4434
+::   User: vlad
 ::
 ::   CHANGES v2026.07.11:
 ::     - AWS_42 (3.79.14.42) replaced with AWS_12 (18.195.117.12)
@@ -46,7 +46,11 @@ set "RED=%ESC%[91m"
 set "WHITE=%ESC%[97m"
 
 set "USER=vlad"
-set "PASS=sa4434"
+if defined SMB_PASS (
+    set "PASS=%SMB_PASS%"
+) else (
+    set /p "PASS=Enter Samba password for %USER%: "
+)
 set "TMPDIR=%TEMP%\smb_mount"
 if not exist "%TMPDIR%" mkdir "%TMPDIR%"
 
