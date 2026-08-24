@@ -2,7 +2,7 @@
 //  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-24]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 // ==========================================================================================
 // Features:
-// 1. Microphone Toggle (Alt+M / F4): 1st press = START RECORDING, 2nd press = STOP / SEND.
+// 1. Microphone Toggle (F4): 1st press = START RECORDING, 2nd press = STOP / SEND.
 // 2. Custom Favorites Menu in Antigravity Sidebar (GitHub links & Server Info).
 // 3. Persistent background loop: automatically reconnects whenever Antigravity is reopened.
 
@@ -33,19 +33,15 @@ process.on('unhandledRejection', (reason) => {
 
 const INJECTION_CODE = `
 (() => {
-  // 1. Microphone Toggle Setup (Alt+M and F4)
-  if (!window.__antigravityMicToggleInstalled) {
-    window.__antigravityMicToggleInstalled = true;
-
+  // 1. Microphone Toggle Setup (F4)
+  function setupMicToggle() {
     function getMicButton() {
-      return document.querySelector('button[aria-label*="Record voice memo"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Stop recording"], button[aria-label*="Record"], button[aria-label*="micro"], button[aria-label*="Micro"]');
+      return document.querySelector('button[aria-label*="Record voice memo"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Stop recording"], button[aria-label*="Record voice"], button[aria-label*="micro"], button[aria-label*="Micro"]');
     }
 
-    window.addEventListener('keydown', (e) => {
-      const isAltM = e.altKey && !e.ctrlKey && !e.shiftKey && (e.key.toLowerCase() === 'm' || e.code === 'KeyM');
-      const isF4 = !e.altKey && !e.ctrlKey && !e.shiftKey && (e.key === 'F4' || e.code === 'F4');
-
-      if (isAltM || isF4) {
+    function handleKey(e) {
+      const isF4 = (e.key === 'F4' || e.code === 'F4' || e.keyCode === 115) && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
+      if (isF4) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -56,12 +52,20 @@ const INJECTION_CODE = `
         }
         return false;
       }
-    }, true);
+    }
+
+    if (!window.__antigravityF4Installed) {
+      window.__antigravityF4Installed = true;
+      window.addEventListener('keydown', handleKey, true);
+      document.addEventListener('keydown', handleKey, true);
+    }
   }
 
   // 2. Favorites Sidebar Menu setup
-  if (!document.getElementById('antigravity-custom-favorites')) {
-    const scheduledTasksBtn = Array.from(document.querySelectorAll('span')).find(s => s.innerText.includes('Scheduled Tasks'))?.closest('button') || Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Scheduled Tasks'));
+  function setupFavorites() {
+    if (document.getElementById('antigravity-custom-favorites')) return;
+
+    const scheduledTasksBtn = Array.from(document.querySelectorAll('span')).find(s => s.innerText && s.innerText.includes('Scheduled Tasks'))?.closest('button') || Array.from(document.querySelectorAll('button')).find(b => b.innerText && b.innerText.includes('Scheduled Tasks'));
     if (scheduledTasksBtn && scheduledTasksBtn.parentElement) {
       const parentContainer = scheduledTasksBtn.parentElement;
 
@@ -123,6 +127,15 @@ const INJECTION_CODE = `
       parentContainer.appendChild(favContainer);
     }
   }
+
+  setupMicToggle();
+  setupFavorites();
+  if (!window.__antigravityInterval) {
+    window.__antigravityInterval = setInterval(() => {
+      setupMicToggle();
+      setupFavorites();
+    }, 2000);
+  }
 })()
 `;
 
@@ -181,8 +194,15 @@ async function checkAndInject() {
 
           ws.addEventListener('open', () => {
             try {
+              ws.send(JSON.stringify({ id: 1, method: 'Page.enable' }));
+              ws.send(JSON.stringify({ id: 2, method: 'Runtime.enable' }));
               ws.send(JSON.stringify({
-                id: Date.now(),
+                id: 3,
+                method: 'Page.addScriptToEvaluateOnNewDocument',
+                params: { source: INJECTION_CODE }
+              }));
+              ws.send(JSON.stringify({
+                id: 4,
                 method: 'Runtime.evaluate',
                 params: { expression: INJECTION_CODE, returnByValue: true }
               }));
