@@ -1,10 +1,10 @@
 // ==========================================================================================
-//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-15_g]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
+//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-24]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 // ==========================================================================================
 // Features:
-// 1. Microphone Toggle (Ctrl+D or F4): 1st press = START, 2nd press = STOP/SEND.
+// 1. Microphone Toggle (Alt+M / F4): 1st press = START RECORDING, 2nd press = STOP / SEND.
 // 2. Custom Favorites Menu in Antigravity Sidebar (GitHub links & Server Info).
-// 3. Auto-terminates completely when Antigravity is closed (zero orphan background processes).
+// 3. Persistent background loop: automatically reconnects whenever Antigravity is reopened.
 
 const fs = require('fs');
 const path = require('path');
@@ -33,20 +33,19 @@ process.on('unhandledRejection', (reason) => {
 
 const INJECTION_CODE = `
 (() => {
-  // 1. Microphone Toggle Setup (Ctrl+D and F4)
+  // 1. Microphone Toggle Setup (Alt+M and F4)
   if (!window.__antigravityMicToggleInstalled) {
     window.__antigravityMicToggleInstalled = true;
 
     function getMicButton() {
-      return document.querySelector('button[aria-label*="Stop"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Record"], button[aria-label*="micro"], button[aria-label*="Micro"]');
+      return document.querySelector('button[aria-label*="Record voice memo"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Record voice"], button[aria-label*="Stop recording"], button[aria-label*="Record"], button[aria-label*="micro"], button[aria-label*="Micro"]');
     }
 
     window.addEventListener('keydown', (e) => {
-      const isCtrl = e.ctrlKey || e.metaKey;
-      const isCtrlD = isCtrl && (e.key.toLowerCase() === 'd' || e.code === 'KeyD');
-      const isF4 = e.key === 'F4' || e.code === 'F4';
+      const isAltM = e.altKey && !e.ctrlKey && !e.shiftKey && (e.key.toLowerCase() === 'm' || e.code === 'KeyM');
+      const isF4 = !e.altKey && !e.ctrlKey && !e.shiftKey && (e.key === 'F4' || e.code === 'F4');
 
-      if (isCtrlD || isF4) {
+      if (isAltM || isF4) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -128,19 +127,14 @@ const INJECTION_CODE = `
 `;
 
 let activeSockets = new Map();
-let connectedOnce = false;
-let failCount = 0;
+let isConnected = false;
 
 async function checkAndInject() {
   if (!fs.existsSync(PORT_FILE)) {
-    failCount++;
-    if (connectedOnce && failCount >= 2) {
-      log('Antigravity closed (port file missing). Exiting daemon.');
-      process.exit(0);
-    }
-    if (!connectedOnce && failCount >= 20) {
-      log('Antigravity not running after timeout. Exiting daemon.');
-      process.exit(0);
+    if (isConnected) {
+      log('Antigravity closed. Waiting for next start...');
+      isConnected = false;
+      activeSockets.clear();
     }
     return;
   }
@@ -154,16 +148,18 @@ async function checkAndInject() {
     const pages = await res.json();
     const pageTargets = pages.filter(p => p.type === 'page' && p.webSocketDebuggerUrl);
 
-    if (pageTargets.length > 0) {
-      connectedOnce = true;
-      failCount = 0;
-    } else {
-      failCount++;
-      if (connectedOnce && failCount >= 2) {
-        log('No active Antigravity pages found. Exiting daemon.');
-        process.exit(0);
+    if (pageTargets.length === 0) {
+      if (isConnected) {
+        log('No active Antigravity pages found. Waiting...');
+        isConnected = false;
+        activeSockets.clear();
       }
       return;
+    }
+
+    if (!isConnected) {
+      log('Antigravity detected (port ' + port + '). Injecting handlers...');
+      isConnected = true;
     }
 
     for (const page of pageTargets) {
@@ -190,6 +186,7 @@ async function checkAndInject() {
                 method: 'Runtime.evaluate',
                 params: { expression: INJECTION_CODE, returnByValue: true }
               }));
+              log('Injected hotkey & favorites into page: ' + (page.title || page.url));
             } catch {}
           });
         } catch {}
@@ -204,16 +201,16 @@ async function checkAndInject() {
       }
     }
   } catch (err) {
-    failCount++;
-    if (connectedOnce && failCount >= 2) {
-      log('Connection lost to Antigravity. Exiting daemon.');
-      process.exit(0);
+    if (isConnected) {
+      log('Connection lost to Antigravity. Waiting for restart...');
+      isConnected = false;
+      activeSockets.clear();
     }
   }
 }
 
-log('Antigravity Helper Daemon started (Toggle mode)...');
+log('Antigravity Persistent Helper Daemon started...');
 checkAndInject();
 setInterval(checkAndInject, 2500);
 
-// # = Rooted by VladiMIR | AI = v2026-08-15 = github.com/GinCz
+// # = Rooted by VladiMIR | AI = v2026-08-24 = github.com/GinCz
