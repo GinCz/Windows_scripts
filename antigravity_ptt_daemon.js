@@ -35,9 +35,8 @@ const INJECTION_CODE = `
 (() => {
   // 1. Microphone Toggle Setup (F4)
   function setupMicToggle() {
-    function getMicButton() {
-      return document.querySelector('button[aria-label*="Record voice memo"], button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label*="Stop recording"], button[aria-label*="Record voice"], button[aria-label*="micro"], button[aria-label*="Micro"]');
-    }
+      // Strict microphone button selection: prevents accidental clicking of 'Stop generating / Stop task' buttons
+      return document.querySelector('button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label="Stop recording"], button[aria-label="Record voice"], button[aria-label*="Record voice memo"]');
 
     function handleKey(e) {
       const isF4 = (e.key === 'F4' || e.code === 'F4' || e.keyCode === 115) && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
