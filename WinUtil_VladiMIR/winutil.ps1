@@ -1703,52 +1703,31 @@ Function Invoke-WinUtilCurrentSystem {
     }
 
     if ($checkbox -eq "winget") {
-        $wingetFailed = $true
-        $installedProgramText = ""
-
-        $originalEncoding = [Console]::OutputEncoding
-        try {
-            [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
-            $installedProgramOutput = @(winget list --accept-source-agreements --disable-interactivity 2>&1)
-            if ($LASTEXITCODE -eq 0 -and $installedProgramOutput.Count -gt 0) {
-                $wingetFailed = $false
-                $installedProgramText = $installedProgramOutput -join "`n"
-            }
-        } catch {
-            $wingetFailed = $true
-        } finally {
-            [Console]::OutputEncoding = $originalEncoding
-        }
-
-        if ($wingetFailed) {
-            # Fallback to Registry if winget is missing or failed
-            $uninstallPaths = @(
-                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
-                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*",
-                "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
-            )
-            $regApps = Get-ItemProperty $uninstallPaths -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName
-            $installedProgramText = $regApps -join "`n"
-        }
+        $uninstallPaths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*",
+            "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        )
+        $regApps = Get-ItemProperty $uninstallPaths -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName
+        $regAppsText = $regApps -join "`n"
 
         $sync.configs.applicationsHashtable.GetEnumerator() | ForEach-Object {
             $packageId = (($_.Value.winget -split ";")[-1] -replace "^msstore:", "").Trim()
             $contentName = $_.Value.content
 
-            if ([string]::IsNullOrWhiteSpace($packageId) -or $packageId -eq "na") {
+            if ([string]::IsNullOrWhiteSpace($contentName)) {
                 return
             }
 
-            if ($wingetFailed) {
-                # In registry fallback, try to match by 'content' name (e.g. "7-Zip")
-                $escapedContent = [regex]::Escape($contentName)
-                $packagePattern = "(?i)$escapedContent"
-            } else {
-                $packagePattern = "(?im)[^\S\r\n]{2,}$([regex]::Escape($packageId))(?=[^\S\r\n]{2,}|$)"
-            }
-
-            if ($installedProgramText -match $packagePattern) {
+            # Match by content name or packageId in installed registry apps
+            $escapedContent = [regex]::Escape($contentName)
+            if ($regAppsText -match "(?i)$escapedContent") {
                 Write-Output $_.Key
+            } elseif (-not [string]::IsNullOrWhiteSpace($packageId) -and $packageId -ne "na") {
+                $escapedId = [regex]::Escape($packageId)
+                if ($regAppsText -match "(?i)$escapedId") {
+                    Write-Output $_.Key
+                }
             }
         }
     }
