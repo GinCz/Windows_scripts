@@ -39,14 +39,14 @@
         "Description": "Use Chocolatey for package management"
     },
     "WPFCollapseAllCategories": {
-        "Content": "Collapse All Categories",
+        "Content": "📁 Collapse All",
         "Category": "__Selection",
         "Type": "Button",
         "Order": "1",
         "Description": "Collapse all application categories"
     },
     "WPFExpandAllCategories": {
-        "Content": "Expand All Categories",
+        "Content": "📂 Expand All",
         "Category": "__Selection",
         "Type": "Button",
         "Order": "2",
