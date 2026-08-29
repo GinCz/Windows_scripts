@@ -358,39 +358,37 @@ $sync["SearchBar"].Add_TextChanged({
 $sync.AppCategoryChips = @(
     @{ Name = "WPFSearchChipFavorites";       Category = "Favorites" }
     @{ Name = "WPFSearchChipAll";             Category = "" }
-    @{ Name = "WPFSearchChipBrowsers";        Category = "Browsers" }
-    @{ Name = "WPFSearchChipCommunications";  Category = "Communications" }
-    @{ Name = "WPFSearchChipDevelopment";     Category = "Development" }
-    @{ Name = "WPFSearchChipDocument";        Category = "Document" }
-    @{ Name = "WPFSearchChipGames";           Category = "Games" }
-    @{ Name = "WPFSearchChipMicrosoftTools";  Category = "Microsoft Tools" }
-    @{ Name = "WPFSearchChipMultimediaTools"; Category = "Multimedia Tools" }
-    @{ Name = "WPFSearchChipProTools";        Category = "Pro Tools" }
-    @{ Name = "WPFSearchChipSelfhostedTools"; Category = "Selfhosted Tools" }
-    @{ Name = "WPFSearchChipUtilities";       Category = "Utilities" }
+    @{ Name = "WPFSearchChipAI";              Category = "AI" }
+    @{ Name = "WPFSearchChipAntivirus";       Category = "Antivirus + Firewall" }
+    @{ Name = "WPFSearchChipArchivers";       Category = "Archivers" }
+    @{ Name = "WPFSearchChipBenchmark";       Category = "Benchmark" }
+    @{ Name = "WPFSearchChipBIOS";            Category = "BIOS" }
+    @{ Name = "WPFSearchChipBlueScreen";      Category = "BlueScreen" }
+    @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
+    @{ Name = "WPFSearchChipCDDVD";           Category = "CD-DVD" }
+    @{ Name = "WPFSearchChipFanControl";      Category = "Fan Control" }
+    @{ Name = "WPFSearchChipGraphics";        Category = "Graphics" }
+    @{ Name = "WPFSearchChipHDDOptim";        Category = "HDD + SSD" }
+    @{ Name = "WPFSearchChipMusic";           Category = "Music" }
+    @{ Name = "WPFSearchChipNet";             Category = "Net" }
+    @{ Name = "WPFSearchChipOffice";          Category = "Office" }
+    @{ Name = "WPFSearchChipServer";          Category = "Server" }
+    @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
+    @{ Name = "WPFSearchChipTranslators";     Category = "Translators" }
+    @{ Name = "WPFSearchChipVideoCodecs";     Category = "Video + Codecs" }
+    @{ Name = "WPFSearchChipVM";              Category = "VM" }
+    @{ Name = "WPFSearchChipWinTweaks";       Category = "WinTweaks" }
+    @{ Name = "WPFSearchChipWinUpdate";       Category = "WinUpdate" }
 )
 $sync.SelectedAppCategories = [System.Collections.Generic.List[string]]::new()
 
 foreach ($appCategoryChip in $sync.AppCategoryChips) {
-    if ($sync[$appCategoryChip.Name]) {
-        $sync[$appCategoryChip.Name].Tag = $appCategoryChip.Category
+    $chipCtrl = $sync[$appCategoryChip.Name]
+    if ($chipCtrl) {
+        $chipCtrl.Tag = $appCategoryChip.Category
+        $chipCtrl.Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
     }
 }
-
-if ($sync["WPFSearchChipFavorites"]) {
-    $sync["WPFSearchChipFavorites"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-}
-$sync["WPFSearchChipAll"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipBrowsers"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipCommunications"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipDevelopment"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipDocument"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipGames"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipMicrosoftTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipMultimediaTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipProTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipSelfhostedTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipUtilities"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
 
 $sync["Form"].Add_Loaded({
     param($e)

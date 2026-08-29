@@ -481,6 +481,22 @@ function Invoke-WPFUIElements {
                         $stackPanelContainer.Children.Add($textBlock) | Out-Null
                     }
 
+                    "VersionNote" {
+                        $textBlock = New-Object Windows.Controls.TextBlock
+                        $textBlock.TextWrapping = "Wrap"
+                        $textBlock.Margin = "5,15,5,5"
+                        $textBlock.UseLayoutRounding = $true
+
+                        $textRun = New-Object Windows.Documents.Run
+                        $textRun.Text = "Version: $($entryInfo.Content)"
+                        $textRun.SetResourceReference([Windows.Controls.Control]::FontSizeProperty, "FontSize")
+                        $textRun.Foreground = [Windows.Media.SolidColorBrush]::new([Windows.Media.Color]::FromRgb(140, 140, 140))
+                        $textRun.FontWeight = [Windows.FontWeights]::SemiBold
+
+                        $textBlock.Inlines.Add($textRun)
+                        $stackPanelContainer.Children.Add($textBlock) | Out-Null
+                    }
+
                     default {
                         $horizontalStackPanel = New-Object Windows.Controls.StackPanel
                         $horizontalStackPanel.Orientation = "Horizontal"

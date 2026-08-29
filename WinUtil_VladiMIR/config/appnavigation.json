@@ -74,10 +74,17 @@
         "Description": "Show the selected applications"
     },
     "WPFInstallFOSSInfo": {
-        "Content": "Free and Open Source Software",
+        "Content": "Free and open source",
         "Category": "__Selection",
         "Type": "Note",
         "Order": "0",
-        "Description": "Information about the #FOSS label on application entries"
+        "Description": "Free and open source software"
+    },
+    "WPFInstallVersionInfo": {
+        "Content": "v2026-08-30",
+        "Category": "__Selection",
+        "Type": "VersionNote",
+        "Order": "99",
+        "Description": "Version information"
     }
 }

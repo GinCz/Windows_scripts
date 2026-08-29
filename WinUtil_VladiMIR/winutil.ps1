@@ -7566,6 +7566,22 @@ function Invoke-WPFUIElements {
                         $stackPanelContainer.Children.Add($textBlock) | Out-Null
                     }
 
+                    "VersionNote" {
+                        $textBlock = New-Object Windows.Controls.TextBlock
+                        $textBlock.TextWrapping = "Wrap"
+                        $textBlock.Margin = "5,15,5,5"
+                        $textBlock.UseLayoutRounding = $true
+
+                        $textRun = New-Object Windows.Documents.Run
+                        $textRun.Text = "Version: $($entryInfo.Content)"
+                        $textRun.SetResourceReference([Windows.Controls.Control]::FontSizeProperty, "FontSize")
+                        $textRun.Foreground = [Windows.Media.SolidColorBrush]::new([Windows.Media.Color]::FromRgb(140, 140, 140))
+                        $textRun.FontWeight = [Windows.FontWeights]::SemiBold
+
+                        $textBlock.Inlines.Add($textRun)
+                        $stackPanelContainer.Children.Add($textBlock) | Out-Null
+                    }
+
                     default {
                         $horizontalStackPanel = New-Object Windows.Controls.StackPanel
                         $horizontalStackPanel.Orientation = "Horizontal"
@@ -10250,12 +10266,19 @@ $sync.configs.appnavigation = @'
                                   "Description":  "Show the selected applications"
                               },
     "WPFInstallFOSSInfo":  {
-                               "Content":  "Free and Open Source Software",
+                               "Content":  "Free and open source",
                                "Category":  "__Selection",
                                "Type":  "Note",
                                "Order":  "0",
-                               "Description":  "Information about the #FOSS label on application entries"
-                           }
+                               "Description":  "Free and open source software"
+                           },
+    "WPFInstallVersionInfo":  {
+                                  "Content":  "v2026-08-30",
+                                  "Category":  "__Selection",
+                                  "Type":  "VersionNote",
+                                  "Order":  "99",
+                                  "Description":  "Version information"
+                              }
 }
 '@ | ConvertFrom-Json
 $sync.configs.appx = @'
@@ -14240,18 +14263,29 @@ $inputXML = @'
                                    VerticalAlignment="Center"
                                    Margin="10,0,10,0"
                                    ToolTip="Filter by category. Ctrl click to select more than one."/>
-                        <ToggleButton Name="WPFSearchChipFavorites"   Content="Favorites"         Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipAll"         Content="All"               Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
-                        <ToggleButton Name="WPFSearchChipBrowsers"        Content="Browsers"          Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipCommunications"  Content="Communications"    Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipDevelopment"     Content="Development"       Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipDocument"        Content="Document"          Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipGames"           Content="Games"             Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipMicrosoftTools"  Content="Microsoft Tools"   Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipMultimediaTools" Content="Multimedia Tools"  Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipProTools"        Content="Pro Tools"         Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipSelfhostedTools" Content="Selfhosted Tools"  Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipUtilities"       Content="Utilities"         Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipFavorites"       Content="Favorites"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipAll"             Content="All"                  Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
+                        <ToggleButton Name="WPFSearchChipAI"              Content="AI"                   Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipAntivirus"       Content="Antivirus + Firewall" Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipArchivers"       Content="Archivers"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipBenchmark"       Content="Benchmark"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipBIOS"            Content="BIOS"                 Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipBlueScreen"      Content="BlueScreen"           Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipDrivers"         Content="Drivers"              Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipCDDVD"           Content="CD-DVD"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipFanControl"      Content="Fan Control"          Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipGraphics"        Content="Graphics"             Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipHDDOptim"        Content="HDD + SSD"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipMusic"           Content="Music"                Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipNet"             Content="Net"                  Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipOffice"          Content="Office"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipServer"          Content="Server"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipMobile"          Content="Mobile"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipTranslators"     Content="Translators"          Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipVideoCodecs"     Content="Video + Codecs"       Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipVM"              Content="VM"                   Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipWinTweaks"       Content="WinTweaks"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipWinUpdate"       Content="WinUpdate"            Style="{StaticResource FilterChipToggleStyle}"/>
                     </WrapPanel>
 
                     <Grid Grid.Row="1" Margin="{DynamicResource TabContentMargin}">
@@ -15742,39 +15776,37 @@ $sync["SearchBar"].Add_TextChanged({
 $sync.AppCategoryChips = @(
     @{ Name = "WPFSearchChipFavorites";       Category = "Favorites" }
     @{ Name = "WPFSearchChipAll";             Category = "" }
-    @{ Name = "WPFSearchChipBrowsers";        Category = "Browsers" }
-    @{ Name = "WPFSearchChipCommunications";  Category = "Communications" }
-    @{ Name = "WPFSearchChipDevelopment";     Category = "Development" }
-    @{ Name = "WPFSearchChipDocument";        Category = "Document" }
-    @{ Name = "WPFSearchChipGames";           Category = "Games" }
-    @{ Name = "WPFSearchChipMicrosoftTools";  Category = "Microsoft Tools" }
-    @{ Name = "WPFSearchChipMultimediaTools"; Category = "Multimedia Tools" }
-    @{ Name = "WPFSearchChipProTools";        Category = "Pro Tools" }
-    @{ Name = "WPFSearchChipSelfhostedTools"; Category = "Selfhosted Tools" }
-    @{ Name = "WPFSearchChipUtilities";       Category = "Utilities" }
+    @{ Name = "WPFSearchChipAI";              Category = "AI" }
+    @{ Name = "WPFSearchChipAntivirus";       Category = "Antivirus + Firewall" }
+    @{ Name = "WPFSearchChipArchivers";       Category = "Archivers" }
+    @{ Name = "WPFSearchChipBenchmark";       Category = "Benchmark" }
+    @{ Name = "WPFSearchChipBIOS";            Category = "BIOS" }
+    @{ Name = "WPFSearchChipBlueScreen";      Category = "BlueScreen" }
+    @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
+    @{ Name = "WPFSearchChipCDDVD";           Category = "CD-DVD" }
+    @{ Name = "WPFSearchChipFanControl";      Category = "Fan Control" }
+    @{ Name = "WPFSearchChipGraphics";        Category = "Graphics" }
+    @{ Name = "WPFSearchChipHDDOptim";        Category = "HDD + SSD" }
+    @{ Name = "WPFSearchChipMusic";           Category = "Music" }
+    @{ Name = "WPFSearchChipNet";             Category = "Net" }
+    @{ Name = "WPFSearchChipOffice";          Category = "Office" }
+    @{ Name = "WPFSearchChipServer";          Category = "Server" }
+    @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
+    @{ Name = "WPFSearchChipTranslators";     Category = "Translators" }
+    @{ Name = "WPFSearchChipVideoCodecs";     Category = "Video + Codecs" }
+    @{ Name = "WPFSearchChipVM";              Category = "VM" }
+    @{ Name = "WPFSearchChipWinTweaks";       Category = "WinTweaks" }
+    @{ Name = "WPFSearchChipWinUpdate";       Category = "WinUpdate" }
 )
 $sync.SelectedAppCategories = [System.Collections.Generic.List[string]]::new()
 
 foreach ($appCategoryChip in $sync.AppCategoryChips) {
-    if ($sync[$appCategoryChip.Name]) {
-        $sync[$appCategoryChip.Name].Tag = $appCategoryChip.Category
+    $chipCtrl = $sync[$appCategoryChip.Name]
+    if ($chipCtrl) {
+        $chipCtrl.Tag = $appCategoryChip.Category
+        $chipCtrl.Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
     }
 }
-
-if ($sync["WPFSearchChipFavorites"]) {
-    $sync["WPFSearchChipFavorites"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-}
-$sync["WPFSearchChipAll"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipBrowsers"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipCommunications"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipDevelopment"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipDocument"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipGames"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipMicrosoftTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipMultimediaTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipProTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipSelfhostedTools"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
-$sync["WPFSearchChipUtilities"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
 
 $sync["Form"].Add_Loaded({
     param($e)
