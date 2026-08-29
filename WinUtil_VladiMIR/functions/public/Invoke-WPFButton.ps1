@@ -59,6 +59,16 @@ function Invoke-WPFButton {
         "WPFOOSUbutton" {Invoke-WPFOOSU}
         "WPFAddUltPerf" {Invoke-WPFUltimatePerformance -Enable}
         "WPFRemoveUltPerf" {Invoke-WPFUltimatePerformance}
+        "WPFDisableDefender" {
+            Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
+            New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -PropertyType DWORD -Force
+            [System.Windows.MessageBox]::Show("Windows Defender functions have been disabled.","WinUtil",0,64)
+        }
+        "WPFEnableDefender" {
+            Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction SilentlyContinue
+            Remove-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -ErrorAction SilentlyContinue
+            [System.Windows.MessageBox]::Show("Windows Defender functions have been enabled.","WinUtil",0,64)
+        }
         "WPFundoall" {Invoke-WPFundoall}
         "WPFUpdatesdefault" {Invoke-WPFUpdatesdefault}
         "WPFUpdatesdisable" {Invoke-WPFUpdatesdisable}

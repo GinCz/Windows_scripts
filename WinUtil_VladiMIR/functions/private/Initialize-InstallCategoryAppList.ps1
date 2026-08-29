@@ -43,7 +43,7 @@ function Initialize-InstallCategoryAppList {
 
             # Add category label to container
             $toggleButton = New-Object Windows.Controls.Label
-            $toggleButton.Content = "- $Category"
+            $toggleButton.Content = "+ $Category"
             $toggleButton.Tag = "CategoryToggleButton"
             $toggleButton.SetResourceReference([Windows.Controls.Control]::FontSizeProperty, "HeaderFontSize")
             $toggleButton.SetResourceReference([Windows.Controls.Control]::FontFamilyProperty, "HeaderFontFamily")
@@ -88,7 +88,7 @@ function Initialize-InstallCategoryAppList {
             $wrapPanel.HorizontalAlignment = "Left"
             $wrapPanel.VerticalAlignment = "Top"
             $wrapPanel.Margin = New-Object Windows.Thickness(0, 0, 0, 0)
-            $wrapPanel.Visibility = [Windows.Visibility]::Visible
+            $wrapPanel.Visibility = [Windows.Visibility]::Collapsed
             $wrapPanel.Tag = "CategoryWrapPanel_$category"
 
             $null = $categoryContainer.Children.Add($wrapPanel)
