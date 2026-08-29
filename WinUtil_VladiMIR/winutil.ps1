@@ -5743,7 +5743,7 @@ function Invoke-WPFButton {
                 $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
             }
             if ($sync.WPFDefenderInfoText) {
-                $sync.WPFDefenderInfoText.Text = "✓ Windows Defender real-time protection and AntiSpyware have been disabled."
+                $sync.WPFDefenderInfoText.Text = "$([char]0x2713) Windows Defender protection is disabled."
                 $sync.WPFDefenderInfoText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
             }
             if ($sync.WPFDisableDefender) {
@@ -5762,7 +5762,7 @@ function Invoke-WPFButton {
                 $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::LightGreen
             }
             if ($sync.WPFDefenderInfoText) {
-                $sync.WPFDefenderInfoText.Text = "✓ Windows Defender real-time protection is active."
+                $sync.WPFDefenderInfoText.Text = "$([char]0x2713) Windows Defender protection is active."
                 $sync.WPFDefenderInfoText.Foreground = [System.Windows.Media.Brushes]::LightGreen
             }
             if ($sync.WPFEnableDefender) {
