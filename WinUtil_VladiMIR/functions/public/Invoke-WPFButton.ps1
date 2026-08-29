@@ -62,13 +62,41 @@ function Invoke-WPFButton {
         "WPFRemoveUltPerf" {Invoke-WPFUltimatePerformance}
         "WPFDisableDefender" {
             Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
-            New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -PropertyType DWORD -Force
-            [System.Windows.MessageBox]::Show("Windows Defender functions have been disabled.","WinUtil",0,64)
+            New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -PropertyType DWORD -Force -ErrorAction SilentlyContinue | Out-Null
+            if ($sync.WPFDefenderStatusText) {
+                $sync.WPFDefenderStatusText.Text = "Status: Defender is DISABLED [OFF]"
+                $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+            }
+            if ($sync.WPFDefenderInfoText) {
+                $sync.WPFDefenderInfoText.Text = "✓ Windows Defender real-time protection and AntiSpyware have been disabled."
+                $sync.WPFDefenderInfoText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+            }
+            if ($sync.WPFDisableDefender) {
+                $sync.WPFDisableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(3)
+            }
+            if ($sync.WPFEnableDefender) {
+                $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(1)
+            }
         }
         "WPFEnableDefender" {
             Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction SilentlyContinue
             Remove-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -ErrorAction SilentlyContinue
-            [System.Windows.MessageBox]::Show("Windows Defender functions have been enabled.","WinUtil",0,64)
+            if ($sync.WPFDefenderStatusText) {
+                $sync.WPFDefenderStatusText.Text = "Status: Defender is ENABLED [ON]"
+                $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::LightGreen
+            }
+            if ($sync.WPFDefenderInfoText) {
+                $sync.WPFDefenderInfoText.Text = "✓ Windows Defender real-time protection is active."
+                $sync.WPFDefenderInfoText.Foreground = [System.Windows.Media.Brushes]::LightGreen
+            }
+            if ($sync.WPFEnableDefender) {
+                $sync.WPFEnableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(3)
+            }
+            if ($sync.WPFDisableDefender) {
+                $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(1)
+            }
         }
         "WPFundoall" {Invoke-WPFundoall}
         "WPFUpdatesdefault" {Invoke-WPFUpdatesdefault}

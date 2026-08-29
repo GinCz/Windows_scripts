@@ -356,6 +356,7 @@ $sync["SearchBar"].Add_TextChanged({
 
 # Category filter chips. The chip carries its category in Tag, so one handler covers all of them.
 $sync.AppCategoryChips = @(
+    @{ Name = "WPFSearchChipFavorites";       Category = "Favorites" }
     @{ Name = "WPFSearchChipAll";             Category = "" }
     @{ Name = "WPFSearchChipBrowsers";        Category = "Browsers" }
     @{ Name = "WPFSearchChipCommunications";  Category = "Communications" }
@@ -371,9 +372,14 @@ $sync.AppCategoryChips = @(
 $sync.SelectedAppCategories = [System.Collections.Generic.List[string]]::new()
 
 foreach ($appCategoryChip in $sync.AppCategoryChips) {
-    $sync[$appCategoryChip.Name].Tag = $appCategoryChip.Category
+    if ($sync[$appCategoryChip.Name]) {
+        $sync[$appCategoryChip.Name].Tag = $appCategoryChip.Category
+    }
 }
 
+if ($sync["WPFSearchChipFavorites"]) {
+    $sync["WPFSearchChipFavorites"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
+}
 $sync["WPFSearchChipAll"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
 $sync["WPFSearchChipBrowsers"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
 $sync["WPFSearchChipCommunications"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })

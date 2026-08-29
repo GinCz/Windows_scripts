@@ -9,14 +9,10 @@ function Invoke-WPFGetInstalled {
     #>
     param($checkbox)
     if ($sync.ProcessRunning) {
-        $msg = "[Invoke-WPFGetInstalled] Install process is currently running."
-        [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+        # Already running, quietly ignore extra clicks
         return
     }
 
-    if (($sync.ChocoRadioButton.IsChecked -eq $false) -and ((Test-WinUtilPackageManager -winget) -eq "not-installed") -and $checkbox -eq "winget") {
-        return
-    }
     $managerPreference = $sync.preferences.packagemanager
     $operation = [Hashtable]::Synchronized(@{
         Checkboxes = @()
@@ -48,11 +44,17 @@ function Invoke-WPFGetInstalled {
             }
         } finally {
             $sync.ProcessRunning = $false
+            if ($sync.WPFGetInstalled) {
+                $sync.WPFGetInstalled.Content = "Show Installed Apps"
+            }
             Set-WinUtilTaskbaritem -state "None"
         }
     }
 
     $sync.ProcessRunning = $true
+    if ($sync.WPFGetInstalled) {
+        $sync.WPFGetInstalled.Content = "Scanning Installed..."
+    }
     Set-WinUtilTaskbaritem -state "Indeterminate"
     try {
         Invoke-WPFRunspace -ParameterList @(

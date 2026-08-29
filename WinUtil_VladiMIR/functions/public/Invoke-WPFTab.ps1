@@ -41,6 +41,35 @@ function Invoke-WPFTab {
     } elseif ($sync.currentTab -eq "AppX") {
         # Reset AppX tab filter
         Find-TweaksByNameOrDescription -SearchString ""
+    } elseif ($sync.currentTab -eq "Defender") {
+        try {
+            $disabled = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -ErrorAction SilentlyContinue).DisableAntiSpyware -eq 1
+            if ($disabled) {
+                if ($sync.WPFDefenderStatusText) {
+                    $sync.WPFDefenderStatusText.Text = "Status: Defender is DISABLED [OFF]"
+                    $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                }
+                if ($sync.WPFDisableDefender) {
+                    $sync.WPFDisableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                    $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(3)
+                }
+                if ($sync.WPFEnableDefender) {
+                    $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(1)
+                }
+            } else {
+                if ($sync.WPFDefenderStatusText) {
+                    $sync.WPFDefenderStatusText.Text = "Status: Defender is ENABLED [ON]"
+                    $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::LightGreen
+                }
+                if ($sync.WPFEnableDefender) {
+                    $sync.WPFEnableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                    $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(3)
+                }
+                if ($sync.WPFDisableDefender) {
+                    $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(1)
+                }
+            }
+        } catch {}
     }
 
     # Show search bar in Install, Tweaks, and AppX tabs

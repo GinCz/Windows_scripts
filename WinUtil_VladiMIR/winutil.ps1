@@ -5723,13 +5723,41 @@ function Invoke-WPFButton {
         "WPFRemoveUltPerf" {Invoke-WPFUltimatePerformance}
         "WPFDisableDefender" {
             Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
-            New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -PropertyType DWORD -Force
-            [System.Windows.MessageBox]::Show("Windows Defender functions have been disabled.","WinUtil",0,64)
+            New-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -PropertyType DWORD -Force -ErrorAction SilentlyContinue | Out-Null
+            if ($sync.WPFDefenderStatusText) {
+                $sync.WPFDefenderStatusText.Text = "Status: Defender is DISABLED [OFF]"
+                $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+            }
+            if ($sync.WPFDefenderInfoText) {
+                $sync.WPFDefenderInfoText.Text = "✓ Windows Defender real-time protection and AntiSpyware have been disabled."
+                $sync.WPFDefenderInfoText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+            }
+            if ($sync.WPFDisableDefender) {
+                $sync.WPFDisableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(3)
+            }
+            if ($sync.WPFEnableDefender) {
+                $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(1)
+            }
         }
         "WPFEnableDefender" {
             Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction SilentlyContinue
             Remove-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -ErrorAction SilentlyContinue
-            [System.Windows.MessageBox]::Show("Windows Defender functions have been enabled.","WinUtil",0,64)
+            if ($sync.WPFDefenderStatusText) {
+                $sync.WPFDefenderStatusText.Text = "Status: Defender is ENABLED [ON]"
+                $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::LightGreen
+            }
+            if ($sync.WPFDefenderInfoText) {
+                $sync.WPFDefenderInfoText.Text = "✓ Windows Defender real-time protection is active."
+                $sync.WPFDefenderInfoText.Foreground = [System.Windows.Media.Brushes]::LightGreen
+            }
+            if ($sync.WPFEnableDefender) {
+                $sync.WPFEnableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(3)
+            }
+            if ($sync.WPFDisableDefender) {
+                $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(1)
+            }
         }
         "WPFundoall" {Invoke-WPFundoall}
         "WPFUpdatesdefault" {Invoke-WPFUpdatesdefault}
@@ -6099,14 +6127,10 @@ function Invoke-WPFGetInstalled {
     #>
     param($checkbox)
     if ($sync.ProcessRunning) {
-        $msg = "[Invoke-WPFGetInstalled] Install process is currently running."
-        [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
+        # Already running, quietly ignore extra clicks
         return
     }
 
-    if (($sync.ChocoRadioButton.IsChecked -eq $false) -and ((Test-WinUtilPackageManager -winget) -eq "not-installed") -and $checkbox -eq "winget") {
-        return
-    }
     $managerPreference = $sync.preferences.packagemanager
     $operation = [Hashtable]::Synchronized(@{
         Checkboxes = @()
@@ -6138,11 +6162,17 @@ function Invoke-WPFGetInstalled {
             }
         } finally {
             $sync.ProcessRunning = $false
+            if ($sync.WPFGetInstalled) {
+                $sync.WPFGetInstalled.Content = "Show Installed Apps"
+            }
             Set-WinUtilTaskbaritem -state "None"
         }
     }
 
     $sync.ProcessRunning = $true
+    if ($sync.WPFGetInstalled) {
+        $sync.WPFGetInstalled.Content = "Scanning Installed..."
+    }
     Set-WinUtilTaskbaritem -state "Indeterminate"
     try {
         Invoke-WPFRunspace -ParameterList @(
@@ -6837,6 +6867,35 @@ function Invoke-WPFTab {
     } elseif ($sync.currentTab -eq "AppX") {
         # Reset AppX tab filter
         Find-TweaksByNameOrDescription -SearchString ""
+    } elseif ($sync.currentTab -eq "Defender") {
+        try {
+            $disabled = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -ErrorAction SilentlyContinue).DisableAntiSpyware -eq 1
+            if ($disabled) {
+                if ($sync.WPFDefenderStatusText) {
+                    $sync.WPFDefenderStatusText.Text = "Status: Defender is DISABLED [OFF]"
+                    $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::OrangeRed
+                }
+                if ($sync.WPFDisableDefender) {
+                    $sync.WPFDisableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                    $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(3)
+                }
+                if ($sync.WPFEnableDefender) {
+                    $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(1)
+                }
+            } else {
+                if ($sync.WPFDefenderStatusText) {
+                    $sync.WPFDefenderStatusText.Text = "Status: Defender is ENABLED [ON]"
+                    $sync.WPFDefenderStatusText.Foreground = [System.Windows.Media.Brushes]::LightGreen
+                }
+                if ($sync.WPFEnableDefender) {
+                    $sync.WPFEnableDefender.BorderBrush = [System.Windows.Media.Brushes]::Black
+                    $sync.WPFEnableDefender.BorderThickness = New-Object Windows.Thickness(3)
+                }
+                if ($sync.WPFDisableDefender) {
+                    $sync.WPFDisableDefender.BorderThickness = New-Object Windows.Thickness(1)
+                }
+            }
+        } catch {}
     }
 
     # Show search bar in Install, Tweaks, and AppX tabs
@@ -14167,7 +14226,8 @@ $inputXML = @'
                                    VerticalAlignment="Center"
                                    Margin="10,0,10,0"
                                    ToolTip="Filter by category. Ctrl click to select more than one."/>
-                        <ToggleButton Name="WPFSearchChipAll"             Content="Favorites"         Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
+                        <ToggleButton Name="WPFSearchChipFavorites"   Content="Favorites"         Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipAll"         Content="All"               Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
                         <ToggleButton Name="WPFSearchChipBrowsers"        Content="Browsers"          Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipCommunications"  Content="Communications"    Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipDevelopment"     Content="Development"       Style="{StaticResource FilterChipToggleStyle}"/>
@@ -14760,12 +14820,13 @@ $inputXML = @'
             <TabItem Header="Defender" Visibility="Collapsed" Name="WPFTab7">
                 <Grid Margin="{DynamicResource TabContentMargin}" Background="Transparent">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="Windows Defender Control" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource MainForegroundColor}" Margin="0,0,0,20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Quickly disable or enable Windows Defender with Administrator privileges." FontSize="14" Foreground="{DynamicResource MainForegroundColor}" Margin="0,0,0,30" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Windows Defender Control" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource MainForegroundColor}" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+                        <TextBlock Name="WPFDefenderStatusText" Text="Status: Checking..." FontSize="18" FontWeight="Bold" Foreground="#FFAAAAAA" Margin="0,0,0,25" HorizontalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button Name="WPFDisableDefender" Content="Disable Defender" Width="180" Height="45" Margin="10" Foreground="Red" FontWeight="Bold" FontSize="15"/>
                             <Button Name="WPFEnableDefender" Content="Enable Defender" Width="180" Height="45" Margin="10" Foreground="#2ECC71" FontWeight="Bold" FontSize="15"/>
                         </StackPanel>
+                        <TextBlock Name="WPFDefenderInfoText" Text="" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -15665,6 +15726,7 @@ $sync["SearchBar"].Add_TextChanged({
 
 # Category filter chips. The chip carries its category in Tag, so one handler covers all of them.
 $sync.AppCategoryChips = @(
+    @{ Name = "WPFSearchChipFavorites";       Category = "Favorites" }
     @{ Name = "WPFSearchChipAll";             Category = "" }
     @{ Name = "WPFSearchChipBrowsers";        Category = "Browsers" }
     @{ Name = "WPFSearchChipCommunications";  Category = "Communications" }
@@ -15680,9 +15742,14 @@ $sync.AppCategoryChips = @(
 $sync.SelectedAppCategories = [System.Collections.Generic.List[string]]::new()
 
 foreach ($appCategoryChip in $sync.AppCategoryChips) {
-    $sync[$appCategoryChip.Name].Tag = $appCategoryChip.Category
+    if ($sync[$appCategoryChip.Name]) {
+        $sync[$appCategoryChip.Name].Tag = $appCategoryChip.Category
+    }
 }
 
+if ($sync["WPFSearchChipFavorites"]) {
+    $sync["WPFSearchChipFavorites"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
+}
 $sync["WPFSearchChipAll"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
 $sync["WPFSearchChipBrowsers"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })
 $sync["WPFSearchChipCommunications"].Add_Click({ Invoke-WinUtilAppCategoryChip -Chip $this })

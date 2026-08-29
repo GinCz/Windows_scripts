@@ -1376,7 +1376,8 @@
                                    VerticalAlignment="Center"
                                    Margin="10,0,10,0"
                                    ToolTip="Filter by category. Ctrl click to select more than one."/>
-                        <ToggleButton Name="WPFSearchChipAll"             Content="Favorites"         Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
+                        <ToggleButton Name="WPFSearchChipFavorites"   Content="Favorites"         Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipAll"         Content="All"               Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
                         <ToggleButton Name="WPFSearchChipBrowsers"        Content="Browsers"          Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipCommunications"  Content="Communications"    Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipDevelopment"     Content="Development"       Style="{StaticResource FilterChipToggleStyle}"/>
@@ -1969,12 +1970,13 @@
             <TabItem Header="Defender" Visibility="Collapsed" Name="WPFTab7">
                 <Grid Margin="{DynamicResource TabContentMargin}" Background="Transparent">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="Windows Defender Control" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource MainForegroundColor}" Margin="0,0,0,20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Quickly disable or enable Windows Defender with Administrator privileges." FontSize="14" Foreground="{DynamicResource MainForegroundColor}" Margin="0,0,0,30" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Windows Defender Control" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource MainForegroundColor}" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+                        <TextBlock Name="WPFDefenderStatusText" Text="Status: Checking..." FontSize="18" FontWeight="Bold" Foreground="#FFAAAAAA" Margin="0,0,0,25" HorizontalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button Name="WPFDisableDefender" Content="Disable Defender" Width="180" Height="45" Margin="10" Foreground="Red" FontWeight="Bold" FontSize="15"/>
                             <Button Name="WPFEnableDefender" Content="Enable Defender" Width="180" Height="45" Margin="10" Foreground="#2ECC71" FontWeight="Bold" FontSize="15"/>
                         </StackPanel>
+                        <TextBlock Name="WPFDefenderInfoText" Text="" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,20,0,0"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
