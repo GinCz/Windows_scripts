@@ -364,21 +364,24 @@ $sync.AppCategoryChips = @(
     @{ Name = "WPFSearchChipBenchmark";       Category = "Benchmark" }
     @{ Name = "WPFSearchChipBIOS";            Category = "BIOS" }
     @{ Name = "WPFSearchChipBlueScreen";      Category = "BlueScreen" }
-    @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
     @{ Name = "WPFSearchChipCDDVD";           Category = "CD-DVD" }
+    @{ Name = "WPFSearchChipCloud";           Category = "Cloud" }
+    @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
     @{ Name = "WPFSearchChipFanControl";      Category = "Fan Control" }
     @{ Name = "WPFSearchChipGraphics";        Category = "Graphics" }
     @{ Name = "WPFSearchChipHDDOptim";        Category = "HDD + SSD" }
+    @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
     @{ Name = "WPFSearchChipMusic";           Category = "Music" }
     @{ Name = "WPFSearchChipNet";             Category = "Net" }
     @{ Name = "WPFSearchChipOffice";          Category = "Office" }
+    @{ Name = "WPFSearchChipRemote";          Category = "Remote" }
     @{ Name = "WPFSearchChipServer";          Category = "Server" }
-    @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
     @{ Name = "WPFSearchChipTranslators";     Category = "Translators" }
     @{ Name = "WPFSearchChipVideoCodecs";     Category = "Video + Codecs" }
     @{ Name = "WPFSearchChipVM";              Category = "VM" }
     @{ Name = "WPFSearchChipWinTweaks";       Category = "WinTweaks" }
     @{ Name = "WPFSearchChipWinUpdate";       Category = "WinUpdate" }
+    @{ Name = "WPFSearchChipOther";           Category = "Other" }
 )
 $sync.SelectedAppCategories = [System.Collections.Generic.List[string]]::new()
 

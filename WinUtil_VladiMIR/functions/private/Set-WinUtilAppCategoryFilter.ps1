@@ -37,10 +37,8 @@ function Set-WinUtilAppCategoryFilter {
         } else {
             $selected.Add($Category)
         }
-    } elseif ($selected.Count -eq 1 -and $selected.Contains($Category)) {
-        # Clicking the only active category again clears the filter
-        $selected.Clear()
     } else {
+        # Normal click: always select this category and keep it selected
         $selected.Clear()
         $selected.Add($Category)
     }

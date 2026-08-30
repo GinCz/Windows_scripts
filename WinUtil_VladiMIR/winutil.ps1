@@ -4258,10 +4258,8 @@ function Set-WinUtilAppCategoryFilter {
         } else {
             $selected.Add($Category)
         }
-    } elseif ($selected.Count -eq 1 -and $selected.Contains($Category)) {
-        # Clicking the only active category again clears the filter
-        $selected.Clear()
     } else {
+        # Normal click: always select this category and keep it selected
         $selected.Clear()
         $selected.Add($Category)
     }
@@ -8155,7 +8153,7 @@ $sync.configs.applications = @'
                                      "foss":  true
                                  },
     "WPFInstallanydesk":  {
-                              "category":  "WinTweaks",
+                              "category":  "Remote",
                               "choco":  "anydesk",
                               "content":  "AnyDesk",
                               "description":  "AnyDesk is a remote desktop software that enables users to access and control computers remotely. It is known for its fast connection and low latency.",
@@ -8200,7 +8198,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallbattlenet":  {
-                                "category":  "WinTweaks",
+                                "category":  "Other",
                                 "choco":  "na",
                                 "winget":  "Blizzard.BattleNet",
                                 "content":  "Battle.net",
@@ -8254,7 +8252,7 @@ $sync.configs.applications = @'
                                           "foss":  true
                                       },
     "WPFInstallblurautoclicker":  {
-                                      "category":  "WinTweaks",
+                                      "category":  "Other",
                                       "choco":  "na",
                                       "content":  "BlurAutoClicker",
                                       "description":  "An Auto-clicker with a few advanced features and generally better performance than popular alternatives.",
@@ -8272,7 +8270,7 @@ $sync.configs.applications = @'
                               "foss":  true
                           },
     "WPFInstallcemu":  {
-                           "category":  "WinTweaks",
+                           "category":  "Other",
                            "choco":  "cemu",
                            "content":  "Cemu",
                            "description":  "Cemu is a highly experimental software to emulate Wii U applications on PC.",
@@ -8335,7 +8333,7 @@ $sync.configs.applications = @'
                              "foss":  false
                          },
     "WPFInstallclaude-code":  {
-                                  "category":  "AI",
+                                  "category":  "Server",
                                   "choco":  "claude-code",
                                   "content":  "Claude Code",
                                   "description":  "Anthropic\u0027s agentic coding tool for terminal and IDE development workflows.",
@@ -8353,7 +8351,7 @@ $sync.configs.applications = @'
                             "foss":  true
                         },
     "WPFInstallcodex":  {
-                            "category":  "AI",
+                            "category":  "Server",
                             "choco":  "codex",
                             "content":  "Codex",
                             "description":  "Codex CLI is an OpenAI coding agent that runs locally in your terminal.",
@@ -8488,16 +8486,16 @@ $sync.configs.applications = @'
                                "foss":  true
                            },
     "WPFInstalldropbox":  {
-                              "category":  "WinTweaks",
                               "choco":  "dropbox",
-                              "content":  "Dropbox",
-                              "description":  "Dropbox is a cloud storage client for syncing files, sharing content, and keeping documents available across devices.",
-                              "link":  "https://www.dropbox.com/desktop",
+                              "description":  "Dropbox is a cloud storage service that allows you to store and share files securely across devices.",
                               "winget":  "Dropbox.Dropbox",
-                              "foss":  false
+                              "content":  "Dropbox",
+                              "link":  "https://www.dropbox.com/",
+                              "foss":  false,
+                              "category":  "Cloud"
                           },
     "WPFInstalleaapp":  {
-                            "category":  "WinTweaks",
+                            "category":  "Other",
                             "choco":  "ea-app",
                             "content":  "EA App",
                             "description":  "EA App is a platform for accessing and playing Electronic Arts games.",
@@ -8524,7 +8522,7 @@ $sync.configs.applications = @'
                            "foss":  false
                        },
     "WPFInstalles-de":  {
-                            "category":  "WinTweaks",
+                            "category":  "Other",
                             "choco":  "",
                             "content":  "EmulationStation Desktop Edition",
                             "_comment":  "This and emulationstation are two completely different things. ES-DE is your frontend for everything and has its own set of emulators. Emulationstation is a graphical frontend for RetroArch.",
@@ -8543,7 +8541,7 @@ $sync.configs.applications = @'
                                "foss":  true
                            },
     "WPFInstallepicgames":  {
-                                "category":  "WinTweaks",
+                                "category":  "Other",
                                 "choco":  "epicgameslauncher",
                                 "content":  "Epic Games Launcher",
                                 "description":  "Epic Games Launcher is the client for accessing and playing games from the Epic Games Store.",
@@ -8588,7 +8586,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstallflux":  {
-                           "category":  "WinTweaks",
+                           "category":  "Other",
                            "choco":  "flux",
                            "content":  "F.lux",
                            "description":  "f.lux adjusts the color temperature of your screen to reduce eye strain during nighttime use.",
@@ -8624,7 +8622,7 @@ $sync.configs.applications = @'
                                    "foss":  false
                                },
     "WPFInstallgeforcenow":  {
-                                 "category":  "WinTweaks",
+                                 "category":  "Other",
                                  "choco":  "nvidia-geforce-now",
                                  "content":  "GeForce NOW",
                                  "description":  "GeForce NOW is a cloud gaming service that allows you to play high-quality PC games on your device.",
@@ -8678,7 +8676,7 @@ $sync.configs.applications = @'
                                     "foss":  true
                                 },
     "WPFInstallgog":  {
-                          "category":  "WinTweaks",
+                          "category":  "Other",
                           "choco":  "goggalaxy",
                           "content":  "GOG Galaxy",
                           "description":  "GOG Galaxy is a gaming client that offers DRM-free games, additional content, and more.",
@@ -8696,7 +8694,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstallgoogledrive":  {
-                                  "category":  "WinTweaks",
+                                  "category":  "Cloud",
                                   "choco":  "googledrive",
                                   "content":  "Google Drive",
                                   "description":  "File syncing across devices all tied to your Google account.",
@@ -8750,7 +8748,7 @@ $sync.configs.applications = @'
                                 "foss":  true
                             },
     "WPFInstallheroiclauncher":  {
-                                     "category":  "WinTweaks",
+                                     "category":  "Other",
                                      "choco":  "heroic-games-launcher",
                                      "content":  "Heroic Games Launcher",
                                      "description":  "Heroic Games Launcher is an open-source alternative game launcher for Epic Games Store.",
@@ -8804,7 +8802,7 @@ $sync.configs.applications = @'
                                 "foss":  false
                             },
     "WPFInstallitch":  {
-                           "category":  "WinTweaks",
+                           "category":  "Other",
                            "choco":  "itch",
                            "content":  "Itch.io",
                            "description":  "Itch.io is a digital distribution platform for indie games and creative projects.",
@@ -8992,7 +8990,7 @@ $sync.configs.applications = @'
                                               "foss":  false
                                           },
     "WPFInstallmodrinth":  {
-                               "category":  "WinTweaks",
+                               "category":  "Other",
                                "choco":  "modrinth-app",
                                "content":  "Modrinth App",
                                "description":  "Modrinth App is a desktop application for managing Minecraft mods and modpacks.",
@@ -9001,7 +8999,7 @@ $sync.configs.applications = @'
                                "foss":  true
                            },
     "WPFInstallmoonlight":  {
-                                "category":  "WinTweaks",
+                                "category":  "Remote",
                                 "choco":  "moonlight-qt",
                                 "content":  "Moonlight/GameStream Client",
                                 "description":  "Moonlight/GameStream Client allows you to stream PC games to other devices over your local network.",
@@ -9109,7 +9107,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstallnextclouddesktop":  {
-                                       "category":  "WinTweaks",
+                                       "category":  "Cloud",
                                        "choco":  "nextcloud-client",
                                        "content":  "Nextcloud Desktop",
                                        "description":  "Nextcloud Desktop is the official desktop client for the Nextcloud file synchronization and sharing platform.",
@@ -9207,7 +9205,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstallonedrive":  {
-                               "category":  "WinTweaks",
+                               "category":  "Cloud",
                                "choco":  "onedrive",
                                "content":  "OneDrive",
                                "description":  "OneDrive is a cloud storage service provided by Microsoft, allowing users to store and share files securely across devices.",
@@ -9225,7 +9223,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallOPAutoClicker":  {
-                                    "category":  "WinTweaks",
+                                    "category":  "Other",
                                     "choco":  "autoclicker",
                                     "content":  "OPAutoClicker",
                                     "description":  "A full-fledged autoclicker with two modes of autoclicking, at your dynamic cursor location or at a prespecified location.",
@@ -9288,7 +9286,7 @@ $sync.configs.applications = @'
                                   "foss":  false
                               },
     "WPFInstallparsec":  {
-                             "category":  "WinTweaks",
+                             "category":  "Remote",
                              "choco":  "parsec",
                              "content":  "Parsec",
                              "description":  "Parsec is a low-latency, high-quality remote desktop sharing application for collaborating and gaming across devices.",
@@ -9342,7 +9340,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstallplaynite":  {
-                               "category":  "WinTweaks",
+                               "category":  "Other",
                                "choco":  "playnite",
                                "content":  "Playnite",
                                "description":  "Playnite is an open-source video game library manager with one simple goal: To provide a unified interface for all of your games.",
@@ -9405,7 +9403,7 @@ $sync.configs.applications = @'
                                 "foss":  true
                             },
     "WPFInstallprismlauncher":  {
-                                    "category":  "WinTweaks",
+                                    "category":  "Other",
                                     "choco":  "prismlauncher",
                                     "content":  "Prism Launcher",
                                     "description":  "Prism Launcher is an open-source Minecraft launcher with the ability to manage multiple instances, accounts, and mods.",
@@ -9441,7 +9439,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallprotondrive":  {
-                                  "category":  "WinTweaks",
+                                  "category":  "Cloud",
                                   "choco":  "protondrive",
                                   "content":  "Proton Drive",
                                   "description":  "Proton Drive is an end-to-end encrypted Swiss vault for your files that protects your data.",
@@ -9486,13 +9484,13 @@ $sync.configs.applications = @'
                             "foss":  true
                         },
     "WPFInstallpython3":  {
-                              "category":  "WinTweaks",
-                              "choco":  "python",
-                              "content":  "Python3",
-                              "description":  "Python is a versatile programming language used for web development, data analysis, artificial intelligence, and more.",
+                              "choco":  "python3",
+                              "description":  "Python is a high-level, general-purpose programming language.",
+                              "winget":  "Python.Python.3.12",
+                              "content":  "Python 3",
                               "link":  "https://www.python.org/",
-                              "winget":  "Python.Python.3.14",
-                              "foss":  true
+                              "foss":  true,
+                              "category":  "Server"
                           },
     "WPFInstallqbittorrent":  {
                                   "category":  "Net",
@@ -9666,7 +9664,7 @@ $sync.configs.applications = @'
                             "foss":  false
                         },
     "WPFInstallroblox":  {
-                             "category":  "WinTweaks",
+                             "category":  "Other",
                              "choco":  "na",
                              "content":  "Roblox",
                              "description":  "Roblox is a platform and game creation system that allows users to create and play games developed by the community.",
@@ -9720,7 +9718,7 @@ $sync.configs.applications = @'
                             "foss":  false
                         },
     "WPFInstallteamviewer":  {
-                                 "category":  "WinTweaks",
+                                 "category":  "Remote",
                                  "choco":  "teamviewer9",
                                  "content":  "TeamViewer",
                                  "description":  "TeamViewer is a popular remote access and support software that allows you to connect to and control remote devices.",
@@ -9945,7 +9943,7 @@ $sync.configs.applications = @'
                           "foss":  true
                       },
     "WPFInstallvrdesktopstreamer":  {
-                                        "category":  "WinTweaks",
+                                        "category":  "Remote",
                                         "choco":  "na",
                                         "content":  "Virtual Desktop Streamer",
                                         "description":  "Virtual Desktop Streamer is a tool that allows you to stream your desktop screen to VR devices.",
@@ -10044,7 +10042,7 @@ $sync.configs.applications = @'
                               "foss":  false
                           },
     "WPFInstallxeheditor":  {
-                                "category":  "WinTweaks",
+                                "category":  "Other",
                                 "choco":  "HxD",
                                 "content":  "HxD Hex Editor",
                                 "description":  "HxD is a free hex editor that allows you to edit, view, search, and analyze binary files.",
@@ -10107,7 +10105,7 @@ $sync.configs.applications = @'
                               "foss":  true
                           },
     "WPFInstallOverwolf":  {
-                               "category":  "WinTweaks",
+                               "category":  "Other",
                                "choco":  "overwolf",
                                "content":  "Overwolf",
                                "description":  "Popular platform for game overlays and companion apps (mod managers, trackers, etc.), widely used by gamers.",
@@ -10152,7 +10150,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstalldeskflow":  {
-                               "category":  "WinTweaks",
+                               "category":  "Remote",
                                "choco":  "deskflow",
                                "content":  "Deskflow",
                                "description":  "Deskflow is a free and open-source software KVM that lets you share a single keyboard and mouse across multiple computers.",
@@ -10510,7 +10508,34 @@ $sync.configs.applications = @'
                               "link":  "https://github.com/WereDev/Wu10Man",
                               "foss":  true,
                               "category":  "WinUpdate"
-                          }
+                          },
+    "WPFInstallmegasync":  {
+                               "choco":  "megasync",
+                               "description":  "MEGAsync is the official desktop application for synchronized cloud storage with end-to-end encryption on MEGA.",
+                               "winget":  "Mega.MEGAsync",
+                               "content":  "MEGA Desktop (MEGAsync)",
+                               "link":  "https://mega.io/desktop",
+                               "foss":  false,
+                               "category":  "Cloud"
+                           },
+    "WPFInstallterabox":  {
+                              "choco":  "terabox",
+                              "description":  "TeraBox provides free 1024 GB cloud storage for safe backup and file sharing.",
+                              "winget":  "Flextech.TeraBox",
+                              "content":  "TeraBox",
+                              "link":  "https://www.terabox.com/",
+                              "foss":  false,
+                              "category":  "Cloud"
+                          },
+    "WPFInstallsyncthing":  {
+                                "choco":  "syncthing",
+                                "description":  "Syncthing is a continuous file synchronization program that synchronizes files between two or more computers securely and privately.",
+                                "winget":  "Syncthing.Syncthing",
+                                "content":  "Syncthing",
+                                "link":  "https://syncthing.net/",
+                                "foss":  true,
+                                "category":  "Cloud"
+                            }
 }
 '@ | ConvertFrom-Json
 $sync.configs.appnavigation = @'
@@ -14595,21 +14620,24 @@ $inputXML = @'
                         <ToggleButton Name="WPFSearchChipBenchmark"       Content="Benchmark"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipBIOS"            Content="BIOS"                 Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipBlueScreen"      Content="BlueScreen"           Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipDrivers"         Content="Drivers"              Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipCDDVD"           Content="CD-DVD"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipCloud"           Content="Cloud"                Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipDrivers"         Content="Drivers"              Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipFanControl"      Content="Fan Control"          Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipGraphics"        Content="Graphics"             Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipHDDOptim"        Content="HDD + SSD"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipMobile"          Content="Mobile"               Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipMusic"           Content="Music"                Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipNet"             Content="Net"                  Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipOffice"          Content="Office"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipRemote"          Content="Remote"               Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipServer"          Content="Server"               Style="{StaticResource FilterChipToggleStyle}"/>
-                        <ToggleButton Name="WPFSearchChipMobile"          Content="Mobile"               Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipTranslators"     Content="Translators"          Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipVideoCodecs"     Content="Video + Codecs"       Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipVM"              Content="VM"                   Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipWinTweaks"       Content="WinTweaks"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipWinUpdate"       Content="WinUpdate"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipOther"           Content="Other"                Style="{StaticResource FilterChipToggleStyle}"/>
                     </WrapPanel>
 
                     <Grid Grid.Row="1" Margin="{DynamicResource TabContentMargin}">
@@ -16106,21 +16134,24 @@ $sync.AppCategoryChips = @(
     @{ Name = "WPFSearchChipBenchmark";       Category = "Benchmark" }
     @{ Name = "WPFSearchChipBIOS";            Category = "BIOS" }
     @{ Name = "WPFSearchChipBlueScreen";      Category = "BlueScreen" }
-    @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
     @{ Name = "WPFSearchChipCDDVD";           Category = "CD-DVD" }
+    @{ Name = "WPFSearchChipCloud";           Category = "Cloud" }
+    @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
     @{ Name = "WPFSearchChipFanControl";      Category = "Fan Control" }
     @{ Name = "WPFSearchChipGraphics";        Category = "Graphics" }
     @{ Name = "WPFSearchChipHDDOptim";        Category = "HDD + SSD" }
+    @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
     @{ Name = "WPFSearchChipMusic";           Category = "Music" }
     @{ Name = "WPFSearchChipNet";             Category = "Net" }
     @{ Name = "WPFSearchChipOffice";          Category = "Office" }
+    @{ Name = "WPFSearchChipRemote";          Category = "Remote" }
     @{ Name = "WPFSearchChipServer";          Category = "Server" }
-    @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
     @{ Name = "WPFSearchChipTranslators";     Category = "Translators" }
     @{ Name = "WPFSearchChipVideoCodecs";     Category = "Video + Codecs" }
     @{ Name = "WPFSearchChipVM";              Category = "VM" }
     @{ Name = "WPFSearchChipWinTweaks";       Category = "WinTweaks" }
     @{ Name = "WPFSearchChipWinUpdate";       Category = "WinUpdate" }
+    @{ Name = "WPFSearchChipOther";           Category = "Other" }
 )
 $sync.SelectedAppCategories = [System.Collections.Generic.List[string]]::new()
 

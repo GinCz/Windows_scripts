@@ -54,7 +54,7 @@
                            "foss":  true
                        },
     "anydesk":  {
-                    "category":  "WinTweaks",
+                    "category":  "Remote",
                     "choco":  "anydesk",
                     "content":  "AnyDesk",
                     "description":  "AnyDesk is a remote desktop software that enables users to access and control computers remotely. It is known for its fast connection and low latency.",
@@ -99,7 +99,7 @@
                        "foss":  true
                    },
     "battlenet":  {
-                      "category":  "WinTweaks",
+                      "category":  "Other",
                       "choco":  "na",
                       "winget":  "Blizzard.BattleNet",
                       "content":  "Battle.net",
@@ -153,7 +153,7 @@
                                 "foss":  true
                             },
     "blurautoclicker":  {
-                            "category":  "WinTweaks",
+                            "category":  "Other",
                             "choco":  "na",
                             "content":  "BlurAutoClicker",
                             "description":  "An Auto-clicker with a few advanced features and generally better performance than popular alternatives.",
@@ -171,7 +171,7 @@
                     "foss":  true
                 },
     "cemu":  {
-                 "category":  "WinTweaks",
+                 "category":  "Other",
                  "choco":  "cemu",
                  "content":  "Cemu",
                  "description":  "Cemu is a highly experimental software to emulate Wii U applications on PC.",
@@ -234,7 +234,7 @@
                    "foss":  false
                },
     "claude-code":  {
-                        "category":  "AI",
+                        "category":  "Server",
                         "choco":  "claude-code",
                         "content":  "Claude Code",
                         "description":  "Anthropic\u0027s agentic coding tool for terminal and IDE development workflows.",
@@ -252,7 +252,7 @@
                   "foss":  true
               },
     "codex":  {
-                  "category":  "AI",
+                  "category":  "Server",
                   "choco":  "codex",
                   "content":  "Codex",
                   "description":  "Codex CLI is an OpenAI coding agent that runs locally in your terminal.",
@@ -387,16 +387,16 @@
                      "foss":  true
                  },
     "dropbox":  {
-                    "category":  "WinTweaks",
                     "choco":  "dropbox",
-                    "content":  "Dropbox",
-                    "description":  "Dropbox is a cloud storage client for syncing files, sharing content, and keeping documents available across devices.",
-                    "link":  "https://www.dropbox.com/desktop",
+                    "description":  "Dropbox is a cloud storage service that allows you to store and share files securely across devices.",
                     "winget":  "Dropbox.Dropbox",
-                    "foss":  false
+                    "content":  "Dropbox",
+                    "link":  "https://www.dropbox.com/",
+                    "foss":  false,
+                    "category":  "Cloud"
                 },
     "eaapp":  {
-                  "category":  "WinTweaks",
+                  "category":  "Other",
                   "choco":  "ea-app",
                   "content":  "EA App",
                   "description":  "EA App is a platform for accessing and playing Electronic Arts games.",
@@ -423,7 +423,7 @@
                  "foss":  false
              },
     "es-de":  {
-                  "category":  "WinTweaks",
+                  "category":  "Other",
                   "choco":  "",
                   "content":  "EmulationStation Desktop Edition",
                   "_comment":  "This and emulationstation are two completely different things. ES-DE is your frontend for everything and has its own set of emulators. Emulationstation is a graphical frontend for RetroArch.",
@@ -442,7 +442,7 @@
                      "foss":  true
                  },
     "epicgames":  {
-                      "category":  "WinTweaks",
+                      "category":  "Other",
                       "choco":  "epicgameslauncher",
                       "content":  "Epic Games Launcher",
                       "description":  "Epic Games Launcher is the client for accessing and playing games from the Epic Games Store.",
@@ -487,7 +487,7 @@
                    "foss":  true
                },
     "flux":  {
-                 "category":  "WinTweaks",
+                 "category":  "Other",
                  "choco":  "flux",
                  "content":  "F.lux",
                  "description":  "f.lux adjusts the color temperature of your screen to reduce eye strain during nighttime use.",
@@ -523,7 +523,7 @@
                          "foss":  false
                      },
     "geforcenow":  {
-                       "category":  "WinTweaks",
+                       "category":  "Other",
                        "choco":  "nvidia-geforce-now",
                        "content":  "GeForce NOW",
                        "description":  "GeForce NOW is a cloud gaming service that allows you to play high-quality PC games on your device.",
@@ -577,7 +577,7 @@
                           "foss":  true
                       },
     "gog":  {
-                "category":  "WinTweaks",
+                "category":  "Other",
                 "choco":  "goggalaxy",
                 "content":  "GOG Galaxy",
                 "description":  "GOG Galaxy is a gaming client that offers DRM-free games, additional content, and more.",
@@ -595,7 +595,7 @@
                    "foss":  true
                },
     "googledrive":  {
-                        "category":  "WinTweaks",
+                        "category":  "Cloud",
                         "choco":  "googledrive",
                         "content":  "Google Drive",
                         "description":  "File syncing across devices all tied to your Google account.",
@@ -649,7 +649,7 @@
                       "foss":  true
                   },
     "heroiclauncher":  {
-                           "category":  "WinTweaks",
+                           "category":  "Other",
                            "choco":  "heroic-games-launcher",
                            "content":  "Heroic Games Launcher",
                            "description":  "Heroic Games Launcher is an open-source alternative game launcher for Epic Games Store.",
@@ -703,7 +703,7 @@
                       "foss":  false
                   },
     "itch":  {
-                 "category":  "WinTweaks",
+                 "category":  "Other",
                  "choco":  "itch",
                  "content":  "Itch.io",
                  "description":  "Itch.io is a digital distribution platform for indie games and creative projects.",
@@ -891,7 +891,7 @@
                                     "foss":  false
                                 },
     "modrinth":  {
-                     "category":  "WinTweaks",
+                     "category":  "Other",
                      "choco":  "modrinth-app",
                      "content":  "Modrinth App",
                      "description":  "Modrinth App is a desktop application for managing Minecraft mods and modpacks.",
@@ -900,7 +900,7 @@
                      "foss":  true
                  },
     "moonlight":  {
-                      "category":  "WinTweaks",
+                      "category":  "Remote",
                       "choco":  "moonlight-qt",
                       "content":  "Moonlight/GameStream Client",
                       "description":  "Moonlight/GameStream Client allows you to stream PC games to other devices over your local network.",
@@ -1008,7 +1008,7 @@
                    "foss":  true
                },
     "nextclouddesktop":  {
-                             "category":  "WinTweaks",
+                             "category":  "Cloud",
                              "choco":  "nextcloud-client",
                              "content":  "Nextcloud Desktop",
                              "description":  "Nextcloud Desktop is the official desktop client for the Nextcloud file synchronization and sharing platform.",
@@ -1106,7 +1106,7 @@
                    "foss":  true
                },
     "onedrive":  {
-                     "category":  "WinTweaks",
+                     "category":  "Cloud",
                      "choco":  "onedrive",
                      "content":  "OneDrive",
                      "description":  "OneDrive is a cloud storage service provided by Microsoft, allowing users to store and share files securely across devices.",
@@ -1124,7 +1124,7 @@
                        "foss":  true
                    },
     "OPAutoClicker":  {
-                          "category":  "WinTweaks",
+                          "category":  "Other",
                           "choco":  "autoclicker",
                           "content":  "OPAutoClicker",
                           "description":  "A full-fledged autoclicker with two modes of autoclicking, at your dynamic cursor location or at a prespecified location.",
@@ -1187,7 +1187,7 @@
                         "foss":  false
                     },
     "parsec":  {
-                   "category":  "WinTweaks",
+                   "category":  "Remote",
                    "choco":  "parsec",
                    "content":  "Parsec",
                    "description":  "Parsec is a low-latency, high-quality remote desktop sharing application for collaborating and gaming across devices.",
@@ -1241,7 +1241,7 @@
                    "foss":  true
                },
     "playnite":  {
-                     "category":  "WinTweaks",
+                     "category":  "Other",
                      "choco":  "playnite",
                      "content":  "Playnite",
                      "description":  "Playnite is an open-source video game library manager with one simple goal: To provide a unified interface for all of your games.",
@@ -1304,7 +1304,7 @@
                       "foss":  true
                   },
     "prismlauncher":  {
-                          "category":  "WinTweaks",
+                          "category":  "Other",
                           "choco":  "prismlauncher",
                           "content":  "Prism Launcher",
                           "description":  "Prism Launcher is an open-source Minecraft launcher with the ability to manage multiple instances, accounts, and mods.",
@@ -1340,7 +1340,7 @@
                        "foss":  true
                    },
     "protondrive":  {
-                        "category":  "WinTweaks",
+                        "category":  "Cloud",
                         "choco":  "protondrive",
                         "content":  "Proton Drive",
                         "description":  "Proton Drive is an end-to-end encrypted Swiss vault for your files that protects your data.",
@@ -1385,13 +1385,13 @@
                   "foss":  true
               },
     "python3":  {
-                    "category":  "WinTweaks",
-                    "choco":  "python",
-                    "content":  "Python3",
-                    "description":  "Python is a versatile programming language used for web development, data analysis, artificial intelligence, and more.",
+                    "choco":  "python3",
+                    "description":  "Python is a high-level, general-purpose programming language.",
+                    "winget":  "Python.Python.3.12",
+                    "content":  "Python 3",
                     "link":  "https://www.python.org/",
-                    "winget":  "Python.Python.3.14",
-                    "foss":  true
+                    "foss":  true,
+                    "category":  "Server"
                 },
     "qbittorrent":  {
                         "category":  "Net",
@@ -1565,7 +1565,7 @@
                   "foss":  false
               },
     "roblox":  {
-                   "category":  "WinTweaks",
+                   "category":  "Other",
                    "choco":  "na",
                    "content":  "Roblox",
                    "description":  "Roblox is a platform and game creation system that allows users to create and play games developed by the community.",
@@ -1619,7 +1619,7 @@
                   "foss":  false
               },
     "teamviewer":  {
-                       "category":  "WinTweaks",
+                       "category":  "Remote",
                        "choco":  "teamviewer9",
                        "content":  "TeamViewer",
                        "description":  "TeamViewer is a popular remote access and support software that allows you to connect to and control remote devices.",
@@ -1844,7 +1844,7 @@
                 "foss":  true
             },
     "vrdesktopstreamer":  {
-                              "category":  "WinTweaks",
+                              "category":  "Remote",
                               "choco":  "na",
                               "content":  "Virtual Desktop Streamer",
                               "description":  "Virtual Desktop Streamer is a tool that allows you to stream your desktop screen to VR devices.",
@@ -1943,7 +1943,7 @@
                     "foss":  false
                 },
     "xeheditor":  {
-                      "category":  "WinTweaks",
+                      "category":  "Other",
                       "choco":  "HxD",
                       "content":  "HxD Hex Editor",
                       "description":  "HxD is a free hex editor that allows you to edit, view, search, and analyze binary files.",
@@ -2006,7 +2006,7 @@
                     "foss":  true
                 },
     "Overwolf":  {
-                     "category":  "WinTweaks",
+                     "category":  "Other",
                      "choco":  "overwolf",
                      "content":  "Overwolf",
                      "description":  "Popular platform for game overlays and companion apps (mod managers, trackers, etc.), widely used by gamers.",
@@ -2051,7 +2051,7 @@
                    "foss":  true
                },
     "deskflow":  {
-                     "category":  "WinTweaks",
+                     "category":  "Remote",
                      "choco":  "deskflow",
                      "content":  "Deskflow",
                      "description":  "Deskflow is a free and open-source software KVM that lets you share a single keyboard and mouse across multiple computers.",
@@ -2409,5 +2409,32 @@
                     "link":  "https://github.com/WereDev/Wu10Man",
                     "foss":  true,
                     "category":  "WinUpdate"
-                }
+                },
+    "megasync":  {
+                     "choco":  "megasync",
+                     "description":  "MEGAsync is the official desktop application for synchronized cloud storage with end-to-end encryption on MEGA.",
+                     "winget":  "Mega.MEGAsync",
+                     "content":  "MEGA Desktop (MEGAsync)",
+                     "link":  "https://mega.io/desktop",
+                     "foss":  false,
+                     "category":  "Cloud"
+                 },
+    "terabox":  {
+                    "choco":  "terabox",
+                    "description":  "TeraBox provides free 1024 GB cloud storage for safe backup and file sharing.",
+                    "winget":  "Flextech.TeraBox",
+                    "content":  "TeraBox",
+                    "link":  "https://www.terabox.com/",
+                    "foss":  false,
+                    "category":  "Cloud"
+                },
+    "syncthing":  {
+                      "choco":  "syncthing",
+                      "description":  "Syncthing is a continuous file synchronization program that synchronizes files between two or more computers securely and privately.",
+                      "winget":  "Syncthing.Syncthing",
+                      "content":  "Syncthing",
+                      "link":  "https://syncthing.net/",
+                      "foss":  true,
+                      "category":  "Cloud"
+                  }
 }
