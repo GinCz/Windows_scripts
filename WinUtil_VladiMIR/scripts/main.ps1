@@ -1,4 +1,4 @@
-Write-Host @"
+﻿Write-Host @"
     CCCCCCCCCCCCCTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
  CCC::::::::::::CT:::::::::::::::::::::TT:::::::::::::::::::::T
 CC:::::::::::::::CT:::::::::::::::::::::TT:::::::::::::::::::::T
@@ -513,7 +513,7 @@ $sync["FontScalingApplyButton"].Add_Click({
     Invoke-WPFPopup -Action "Hide" -Popups @("FontScaling")
 })
 
-# ── Win11ISO Tab button handlers ──────────────────────────────────────────────
+# -”--”- Win11ISO Tab button handlers -”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”-
 
 $sync["WPFWin11ISOBrowseButton"].Add_Click({
     Invoke-WinUtilISOBrowse
@@ -576,8 +576,9 @@ function Remove-WinUtilTempScript {
     }
 }
 
-# ──────────────────────────────────────────────────────────────────────────────
+# -”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”--”-
 
 $sync["Form"].ShowDialog() | out-null
 Remove-WinUtilTempScript
 Stop-Transcript
+
