@@ -358,27 +358,46 @@ $sync["SearchBar"].Add_TextChanged({
 $sync.AppCategoryChips = @(
     @{ Name = "WPFSearchChipFavorites";       Category = "Favorites" }
     @{ Name = "WPFSearchChipAll";             Category = "" }
+    @{ Name = "WPFSearchChipActivators";      Category = "Activators" }
     @{ Name = "WPFSearchChipAI";              Category = "AI" }
     @{ Name = "WPFSearchChipAntivirus";       Category = "Antivirus + Firewall" }
     @{ Name = "WPFSearchChipArchivers";       Category = "Archivers" }
+    @{ Name = "WPFSearchChipAuto";            Category = "Auto" }
+    @{ Name = "WPFSearchChipBackup";          Category = "Backup" }
     @{ Name = "WPFSearchChipBenchmark";       Category = "Benchmark" }
     @{ Name = "WPFSearchChipBIOS";            Category = "BIOS" }
+    @{ Name = "WPFSearchChipBitLocker";       Category = "BitLocker" }
     @{ Name = "WPFSearchChipBlueScreen";      Category = "BlueScreen" }
+    @{ Name = "WPFSearchChipBrowser";         Category = "Browser" }
     @{ Name = "WPFSearchChipCDDVD";           Category = "CD-DVD" }
+    @{ Name = "WPFSearchChipCleaners";        Category = "Cleaners" }
     @{ Name = "WPFSearchChipCloud";           Category = "Cloud" }
     @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
+    @{ Name = "WPFSearchChipEmail";           Category = "Email" }
     @{ Name = "WPFSearchChipFanControl";      Category = "Fan Control" }
+    @{ Name = "WPFSearchChipFlashBoot";       Category = "FlashBoot" }
     @{ Name = "WPFSearchChipGraphics";        Category = "Graphics" }
     @{ Name = "WPFSearchChipHDDOptim";        Category = "HDD + SSD" }
     @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
     @{ Name = "WPFSearchChipMusic";           Category = "Music" }
     @{ Name = "WPFSearchChipNet";             Category = "Net" }
     @{ Name = "WPFSearchChipOffice";          Category = "Office" }
+    @{ Name = "WPFSearchChipPartition";       Category = "Partition" }
+    @{ Name = "WPFSearchChipPasswords";       Category = "Passwords" }
+    @{ Name = "WPFSearchChipPDF";             Category = "PDF" }
+    @{ Name = "WPFSearchChipPhoneChat";       Category = "Phone + Chat" }
     @{ Name = "WPFSearchChipRemote";          Category = "Remote" }
+    @{ Name = "WPFSearchChipScreenSavers";    Category = "ScreenSavers" }
     @{ Name = "WPFSearchChipServer";          Category = "Server" }
+    @{ Name = "WPFSearchChipSQL";             Category = "SQL" }
+    @{ Name = "WPFSearchChipThemes";          Category = "Themes" }
     @{ Name = "WPFSearchChipTranslators";     Category = "Translators" }
+    @{ Name = "WPFSearchChipUndelete";        Category = "Undelete" }
     @{ Name = "WPFSearchChipVideoCodecs";     Category = "Video + Codecs" }
     @{ Name = "WPFSearchChipVM";              Category = "VM" }
+    @{ Name = "WPFSearchChipWebCam";          Category = "WebCam" }
+    @{ Name = "WPFSearchChipWiFi";            Category = "Wi-Fi" }
+    @{ Name = "WPFSearchChipWinAppStore";     Category = "Windows App Store" }
     @{ Name = "WPFSearchChipWinTweaks";       Category = "WinTweaks" }
     @{ Name = "WPFSearchChipWinUpdate";       Category = "WinUpdate" }
     @{ Name = "WPFSearchChipOther";           Category = "Other" }

@@ -8099,7 +8099,7 @@ function Invoke-WPFUpdatessecurity {
 $sync.configs.applications = @'
 {
     "WPFInstall1password":  {
-                                "category":  "WinTweaks",
+                                "category":  "Passwords",
                                 "choco":  "1password",
                                 "content":  "1Password",
                                 "description":  "1Password is a password manager that allows you to store and manage your passwords securely.",
@@ -8117,7 +8117,7 @@ $sync.configs.applications = @'
                            "foss":  true
                        },
     "WPFInstalladobe":  {
-                            "category":  "Office",
+                            "category":  "PDF",
                             "choco":  "adobereader",
                             "content":  "Adobe Acrobat Reader",
                             "description":  "Adobe Acrobat Reader is a free PDF viewer with essential features for viewing, printing, and annotating PDF documents.",
@@ -8126,7 +8126,7 @@ $sync.configs.applications = @'
                             "foss":  false
                         },
     "WPFInstalladvancedip":  {
-                                 "category":  "Net",
+                                 "category":  "Wi-Fi",
                                  "choco":  "advanced-ip-scanner",
                                  "content":  "Advanced IP Scanner",
                                  "description":  "Advanced IP Scanner is a fast and easy-to-use network scanner. It is designed to analyze LAN networks and provides information about connected devices.",
@@ -8144,7 +8144,7 @@ $sync.configs.applications = @'
                            "foss":  false
                        },
     "WPFInstallangryipscanner":  {
-                                     "category":  "Net",
+                                     "category":  "Wi-Fi",
                                      "choco":  "angryip",
                                      "content":  "Angry IP Scanner",
                                      "description":  "Angry IP Scanner is an open-source and cross-platform network scanner. It is used to scan IP addresses and ports, providing information about network connectivity.",
@@ -8207,7 +8207,7 @@ $sync.configs.applications = @'
                                 "foss":  false
                             },
     "WPFInstallbitwarden":  {
-                                "category":  "WinTweaks",
+                                "category":  "Passwords",
                                 "choco":  "bitwarden",
                                 "content":  "Bitwarden",
                                 "description":  "Bitwarden is an open-source password management solution. It allows users to store and manage their passwords in a secure and encrypted vault, accessible across multiple devices.",
@@ -8225,7 +8225,7 @@ $sync.configs.applications = @'
                               "foss":  true
                           },
     "WPFInstallbrave":  {
-                            "category":  "Net",
+                            "category":  "Browser",
                             "choco":  "brave",
                             "content":  "Brave",
                             "description":  "Brave is a privacy-focused web browser that blocks ads and trackers, offering a faster and safer browsing experience.",
@@ -8243,7 +8243,7 @@ $sync.configs.applications = @'
                             "foss":  true
                         },
     "WPFInstallbulkcrapuninstaller":  {
-                                          "category":  "WinTweaks",
+                                          "category":  "Cleaners",
                                           "choco":  "bulk-crap-uninstaller",
                                           "content":  "Bulk Crap Uninstaller",
                                           "description":  "Bulk Crap Uninstaller is a free and open-source uninstaller utility for Windows. It helps users remove unwanted programs and clean up their system by uninstalling multiple applications at once.",
@@ -8297,7 +8297,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallchrome":  {
-                             "category":  "Net",
+                             "category":  "Browser",
                              "choco":  "googlechrome",
                              "content":  "Chrome",
                              "description":  "Google Chrome is a widely used web browser known for its speed, simplicity, and seamless integration with Google services.",
@@ -8306,7 +8306,7 @@ $sync.configs.applications = @'
                              "foss":  false
                          },
     "WPFInstallchromium":  {
-                               "category":  "Net",
+                               "category":  "Browser",
                                "choco":  "chromium",
                                "content":  "Chromium",
                                "description":  "Chromium is the open-source project that serves as the foundation for various web browsers, including Chrome.",
@@ -8405,7 +8405,7 @@ $sync.configs.applications = @'
                           "category":  "Drivers"
                       },
     "WPFInstalldiscord":  {
-                              "category":  "Net",
+                              "category":  "Phone + Chat",
                               "choco":  "discord",
                               "content":  "Discord",
                               "description":  "Discord is a popular communication platform with voice, video, and text chat, designed for gamers but used by a wide range of communities.",
@@ -8432,7 +8432,7 @@ $sync.configs.applications = @'
                              "foss":  false
                          },
     "WPFInstalldorion":  {
-                             "category":  "Net",
+                             "category":  "Phone + Chat",
                              "choco":  "dorion",
                              "content":  "Dorion",
                              "description":  "Tiny alternative Discord client with a smaller footprint, snappier startup, themes, plugins and more!",
@@ -8513,7 +8513,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstalledge":  {
-                           "category":  "Net",
+                           "category":  "Browser",
                            "choco":  "microsoft-edge",
                            "content":  "Edge",
                            "description":  "Microsoft Edge is a modern web browser built on Chromium, offering performance, security, and integration with Microsoft services.",
@@ -8532,7 +8532,7 @@ $sync.configs.applications = @'
                             "foss":  true
                         },
     "WPFInstallenteauth":  {
-                               "category":  "WinTweaks",
+                               "category":  "Passwords",
                                "choco":  "ente-auth",
                                "content":  "Ente Auth",
                                "description":  "Ente Auth is a free, cross-platform, end-to-end encrypted authenticator app.",
@@ -8559,7 +8559,7 @@ $sync.configs.applications = @'
                             "foss":  true
                         },
     "WPFInstallfirefox":  {
-                              "category":  "Net",
+                              "category":  "Browser",
                               "choco":  "firefox",
                               "content":  "Firefox",
                               "description":  "Mozilla Firefox is an open-source web browser known for its customization options, privacy features, and extensions.",
@@ -8568,7 +8568,7 @@ $sync.configs.applications = @'
                               "foss":  true
                           },
     "WPFInstallfirefoxesr":  {
-                                 "category":  "Net",
+                                 "category":  "Browser",
                                  "choco":  "FirefoxESR",
                                  "content":  "Firefox ESR",
                                  "description":  "Mozilla Firefox is an open-source web browser known for its customization options, privacy features, and extensions. Firefox ESR (Extended Support Release) receives major updates every 42 weeks with minor updates such as crash fixes, security fixes and policy updates as needed, but at least every four weeks.",
@@ -8577,7 +8577,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallfloorp":  {
-                             "category":  "Net",
+                             "category":  "Browser",
                              "choco":  "floorp",
                              "content":  "Floorp",
                              "description":  "Floorp is an open-source web browser project that aims to provide a simple and fast browsing experience.",
@@ -8721,7 +8721,7 @@ $sync.configs.applications = @'
                             "foss":  true
                         },
     "WPFInstallhelium":  {
-                             "category":  "Net",
+                             "category":  "Browser",
                              "choco":  "helium",
                              "content":  "Helium",
                              "description":  "Private, fast, and honest web browser.",
@@ -8892,7 +8892,7 @@ $sync.configs.applications = @'
                              "foss":  true
                          },
     "WPFInstallkeepassxc":  {
-                                "category":  "WinTweaks",
+                                "category":  "Passwords",
                                 "choco":  "keepassxc",
                                 "content":  "KeePassXC",
                                 "description":  "KeePassXC is a modern, secure, and open-source password manager that stores and manages your most sensitive information. You can run KeePassXC on Windows, macOS, and Linux systems. KeePassXC is for people with extremely high demands of secure personal data management. It saves many different types of information, such as usernames, passwords, URLs, attachments, and notes in an offline, encrypted file that can be stored in any location, including private and public cloud solutions. For easy identification and management, user-defined titles and icons can be specified for entries. In addition, entries are sorted into customizable groups. An integrated search function allows you to use advanced patterns to easily find any entry in your database. A customizable, fast, and easy-to-use password generator utility allows you to create passwords with any combination of characters or easy to remember passphrases.",
@@ -8937,7 +8937,7 @@ $sync.configs.applications = @'
                                   "foss":  true
                               },
     "WPFInstalllibrewolf":  {
-                                "category":  "Net",
+                                "category":  "Browser",
                                 "choco":  "librewolf",
                                 "content":  "LibreWolf",
                                 "description":  "LibreWolf is a privacy-focused web browser based on Firefox, with additional privacy and security enhancements.",
@@ -8972,7 +8972,7 @@ $sync.configs.applications = @'
                           "foss":  true
                       },
     "WPFInstallmatrix":  {
-                             "category":  "Net",
+                             "category":  "Phone + Chat",
                              "choco":  "element-desktop",
                              "content":  "Element",
                              "description":  "Element is a client for Matrix; an open network for secure, decentralized communication.",
@@ -9044,7 +9044,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallmullvadbrowser":  {
-                                     "category":  "Net",
+                                     "category":  "Browser",
                                      "choco":  "na",
                                      "content":  "Mullvad Browser",
                                      "description":  "Mullvad Browser is a privacy-focused web browser, developed in partnership with the Tor Project.",
@@ -9116,7 +9116,7 @@ $sync.configs.applications = @'
                                        "foss":  true
                                    },
     "WPFInstallnmap":  {
-                           "category":  "Net",
+                           "category":  "Wi-Fi",
                            "choco":  "nmap",
                            "content":  "Nmap",
                            "description":  "Nmap (Network Mapper) is an open-source tool for network exploration and security auditing. It discovers devices on a network and provides information about their ports and services.",
@@ -9304,7 +9304,7 @@ $sync.configs.applications = @'
                              "category":  "Archivers"
                          },
     "WPFInstallpdf-xchange":  {
-                                  "category":  "Office",
+                                  "category":  "PDF",
                                   "choco":  "pdfxchangeeditor",
                                   "content":  "PDF-XChange Editor",
                                   "description":  "A comprehensive Windows-based software suite and editor for creating, viewing, editing, annotating, and signing PDF files.",
@@ -9313,7 +9313,7 @@ $sync.configs.applications = @'
                                   "foss":  false
                               },
     "WPFInstallpdf24creator":  {
-                                   "category":  "Office",
+                                   "category":  "PDF",
                                    "choco":  "pdf24",
                                    "content":  "PDF24 Creator",
                                    "description":  "Free and easy-to-use online/desktop PDF tools that make you more productive",
@@ -9322,7 +9322,7 @@ $sync.configs.applications = @'
                                    "foss":  false
                                },
     "WPFInstallpdfgear":  {
-                              "category":  "Office",
+                              "category":  "PDF",
                               "choco":  "pdfgear",
                               "content":  "PDFgear",
                               "description":  "PDFgear is a piece of full-featured PDF management software for Windows, macOS, and mobile, and it\u0027s completely free to use.",
@@ -9331,7 +9331,7 @@ $sync.configs.applications = @'
                               "foss":  false
                           },
     "WPFInstallpdfsam":  {
-                             "category":  "Office",
+                             "category":  "PDF",
                              "choco":  "pdfsam",
                              "content":  "PDFsam Basic",
                              "description":  "PDFsam Basic is a free and open-source tool for splitting, merging, and rotating PDF files.",
@@ -9421,7 +9421,7 @@ $sync.configs.applications = @'
                                    "foss":  false
                                },
     "WPFInstallprotonauth":  {
-                                 "category":  "WinTweaks",
+                                 "category":  "Passwords",
                                  "choco":  "protonauth",
                                  "content":  "Proton Authenticator",
                                  "description":  "2FA app from Proton to securely sync and backup 2FA codes.",
@@ -9430,7 +9430,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstallprotonmail":  {
-                                 "category":  "Net",
+                                 "category":  "Email",
                                  "choco":  "protonmail",
                                  "content":  "Proton Mail",
                                  "description":  "Proton Mail is an end-to-end encrypted email service by Proton, protecting your privacy with zero-access encryption.",
@@ -9448,7 +9448,7 @@ $sync.configs.applications = @'
                                   "foss":  true
                               },
     "WPFInstallprotonpass":  {
-                                 "category":  "WinTweaks",
+                                 "category":  "Passwords",
                                  "choco":  "protonpass",
                                  "content":  "Proton Pass",
                                  "description":  "Proton Pass is a cloud-based password manager with end-to-end encryption and unique email aliases.",
@@ -9511,7 +9511,7 @@ $sync.configs.applications = @'
                                 "foss":  true
                             },
     "WPFInstallqtox":  {
-                           "category":  "Net",
+                           "category":  "Phone + Chat",
                            "choco":  "qtox",
                            "content":  "QTox",
                            "description":  "QTox is a free and open-source messaging app that prioritizes user privacy and security in its design.",
@@ -9520,7 +9520,7 @@ $sync.configs.applications = @'
                            "foss":  true
                        },
     "WPFInstallrevo":  {
-                           "category":  "WinTweaks",
+                           "category":  "Cleaners",
                            "choco":  "revo-uninstaller",
                            "content":  "Revo Uninstaller",
                            "description":  "Revo Uninstaller is an advanced uninstaller tool that helps you remove unwanted software and clean up your system.",
@@ -9529,7 +9529,7 @@ $sync.configs.applications = @'
                            "foss":  false
                        },
     "WPFInstallWiseProgramUninstaller":  {
-                                             "category":  "WinTweaks",
+                                             "category":  "Cleaners",
                                              "choco":  "na",
                                              "content":  "Wise Program Uninstaller (WiseCleaner)",
                                              "description":  "Wise Program Uninstaller is the perfect solution for uninstalling Windows programs, allowing you to uninstall applications quickly and completely using its simple and user-friendly interface.",
@@ -9538,7 +9538,7 @@ $sync.configs.applications = @'
                                              "foss":  false
                                          },
     "WPFInstallrufus":  {
-                            "category":  "BIOS",
+                            "category":  "FlashBoot",
                             "choco":  "rufus",
                             "content":  "Rufus Imager",
                             "description":  "Rufus is a utility that helps format and create bootable USB drives, such as USB keys or pen drives.",
@@ -9592,7 +9592,7 @@ $sync.configs.applications = @'
                                      "foss":  true
                                  },
     "WPFInstallsignal":  {
-                             "category":  "Net",
+                             "category":  "Phone + Chat",
                              "choco":  "signal",
                              "content":  "Signal",
                              "description":  "Signal is a privacy-focused messaging app that offers end-to-end encryption for secure and private communication.",
@@ -9637,7 +9637,7 @@ $sync.configs.applications = @'
                             "foss":  false
                         },
     "WPFInstallstartallback":  {
-                                   "category":  "WinTweaks",
+                                   "category":  "Themes",
                                    "choco":  "StartAllBack",
                                    "content":  "StartAllBack",
                                    "description":  "StartAllBack restores and improves Windows taskbar, Start menu, File Explorer, and shell UI behavior.",
@@ -9682,7 +9682,7 @@ $sync.configs.applications = @'
                                   "foss":  false
                               },
     "WPFInstallsumatra":  {
-                              "category":  "Office",
+                              "category":  "PDF",
                               "choco":  "sumatrapdf",
                               "content":  "Sumatra PDF",
                               "description":  "Sumatra PDF is a lightweight and fast PDF viewer with minimalistic design.",
@@ -9709,7 +9709,7 @@ $sync.configs.applications = @'
                               "foss":  false
                           },
     "WPFInstallteams":  {
-                            "category":  "Net",
+                            "category":  "Phone + Chat",
                             "choco":  "microsoft-teams",
                             "content":  "Teams",
                             "description":  "Microsoft Teams is a collaboration platform that integrates with Office 365 and offers chat, video conferencing, file sharing, and more.",
@@ -9727,7 +9727,7 @@ $sync.configs.applications = @'
                                  "foss":  false
                              },
     "WPFInstallteamspeak3":  {
-                                 "category":  "Net",
+                                 "category":  "Phone + Chat",
                                  "choco":  "teamspeak",
                                  "content":  "TeamSpeak 3",
                                  "description":  "TEAMSPEAK. YOUR TEAM. YOUR RULES. Use crystal clear sound to communicate with your teammates cross-platform with military-grade security, lag-free performance \u0026 unparalleled reliability and uptime.",
@@ -9736,7 +9736,7 @@ $sync.configs.applications = @'
                                  "foss":  false
                              },
     "WPFInstallteamspeak6":  {
-                                 "category":  "Net",
+                                 "category":  "Phone + Chat",
                                  "choco":  "na",
                                  "content":  "TeamSpeak 6",
                                  "description":  "TEAMSPEAK. YOUR TEAM. YOUR RULES. Use crystal clear sound to communicate with your teammates cross-platform with military-grade security, lag-free performance \u0026 unparalleled reliability and uptime.",
@@ -9745,7 +9745,7 @@ $sync.configs.applications = @'
                                  "foss":  false
                              },
     "WPFInstalltelegram":  {
-                               "category":  "Net",
+                               "category":  "Phone + Chat",
                                "choco":  "telegram",
                                "content":  "Telegram",
                                "description":  "Telegram is a cloud-based instant messaging app known for its security features, speed, and simplicity.",
@@ -9763,7 +9763,7 @@ $sync.configs.applications = @'
                                "foss":  true
                            },
     "WPFInstallthunderbird":  {
-                                  "category":  "Net",
+                                  "category":  "Email",
                                   "choco":  "thunderbird",
                                   "content":  "Thunderbird",
                                   "description":  "Mozilla Thunderbird is a free and open-source email client, news client, and chat client with advanced features.",
@@ -9772,7 +9772,7 @@ $sync.configs.applications = @'
                                   "foss":  true
                               },
     "WPFInstallbetterbird":  {
-                                 "category":  "Net",
+                                 "category":  "Email",
                                  "choco":  "betterbird",
                                  "content":  "Betterbird",
                                  "description":  "Betterbird is a fork of Mozilla Thunderbird with additional features and bugfixes.",
@@ -9781,7 +9781,7 @@ $sync.configs.applications = @'
                                  "foss":  true
                              },
     "WPFInstalltor":  {
-                          "category":  "Net",
+                          "category":  "Browser",
                           "choco":  "tor-browser",
                           "content":  "Tor Browser",
                           "description":  "Tor Browser is designed for anonymous web browsing, utilizing the Tor network to protect user privacy and security.",
@@ -9826,7 +9826,7 @@ $sync.configs.applications = @'
                               "foss":  false
                           },
     "WPFInstallungoogled":  {
-                                "category":  "Net",
+                                "category":  "Browser",
                                 "choco":  "ungoogled-chromium",
                                 "content":  "Ungoogled Chromium",
                                 "description":  "Ungoogled Chromium is a version of Chromium without Google\u0027s integration for enhanced privacy and control.",
@@ -9880,16 +9880,16 @@ $sync.configs.applications = @'
                                 "foss":  false
                             },
     "WPFInstallventoy":  {
-                             "category":  "BIOS",
                              "choco":  "ventoy",
-                             "content":  "Ventoy",
-                             "description":  "Ventoy is an open-source tool for creating bootable USB drives. It supports multiple ISO files on a single USB drive, making it a versatile solution for installing operating systems.",
-                             "link":  "https://www.ventoy.net/",
+                             "description":  "Ventoy is an open source tool to create bootable USB drives for ISO/WIM/IMG/VHD(x)/EFI files without formatting.",
                              "winget":  "Ventoy.Ventoy",
-                             "foss":  true
+                             "content":  "Ventoy",
+                             "link":  "https://www.ventoy.net/",
+                             "foss":  true,
+                             "category":  "FlashBoot"
                          },
     "WPFInstallvesktop":  {
-                              "category":  "Net",
+                              "category":  "Phone + Chat",
                               "choco":  "na",
                               "content":  "Vesktop",
                               "description":  "A cross platform electron-based desktop app aiming to give you a snappier Discord experience with Vencord pre-installed.",
@@ -9898,7 +9898,7 @@ $sync.configs.applications = @'
                               "foss":  true
                           },
     "WPFInstallviber":  {
-                            "category":  "Net",
+                            "category":  "Phone + Chat",
                             "choco":  "viber",
                             "content":  "Viber",
                             "description":  "Viber is a free messaging and calling app with features like group chats, video calls, and more.",
@@ -9925,7 +9925,7 @@ $sync.configs.applications = @'
                                        "foss":  false
                                    },
     "WPFInstallvivaldi":  {
-                              "category":  "Net",
+                              "category":  "Browser",
                               "choco":  "vivaldi",
                               "content":  "Vivaldi",
                               "description":  "Vivaldi is a highly customizable web browser with a focus on user personalization and productivity features.",
@@ -9970,7 +9970,7 @@ $sync.configs.applications = @'
                                "foss":  true
                            },
     "WPFInstallwaterfox":  {
-                               "category":  "Net",
+                               "category":  "Browser",
                                "choco":  "waterfox",
                                "content":  "Waterfox",
                                "description":  "Waterfox is a fast, privacy-focused web browser based on Firefox, designed to preserve user choice and privacy.",
@@ -9979,7 +9979,7 @@ $sync.configs.applications = @'
                                "foss":  true
                            },
     "WPFInstallwhatsapp":  {
-                               "category":  "Net",
+                               "category":  "Phone + Chat",
                                "choco":  "na",
                                "content":  "WhatsApp Desktop",
                                "description":  "WhatsApp Desktop is the official Windows desktop messaging app from Meta, distributed through the Microsoft Store.",
@@ -9988,7 +9988,7 @@ $sync.configs.applications = @'
                                "foss":  false
                            },
     "WPFInstallwingetui":  {
-                               "category":  "WinTweaks",
+                               "category":  "Windows App Store",
                                "choco":  "wingetui",
                                "content":  "UniGetUI",
                                "description":  "UniGetUI is a GUI for WinGet, Chocolatey, and other Windows CLI package managers.",
@@ -10024,7 +10024,7 @@ $sync.configs.applications = @'
                                 "foss":  true
                             },
     "WPFInstallwireshark":  {
-                                "category":  "Net",
+                                "category":  "Wi-Fi",
                                 "choco":  "wireshark",
                                 "content":  "Wireshark",
                                 "description":  "Wireshark is a widely-used open-source network protocol analyzer. It allows users to capture and analyze network traffic in real-time, providing detailed insights into network activities.",
@@ -10069,7 +10069,7 @@ $sync.configs.applications = @'
                            "foss":  true
                        },
     "WPFInstallzoom":  {
-                           "category":  "Net",
+                           "category":  "Phone + Chat",
                            "choco":  "zoom",
                            "content":  "Zoom",
                            "description":  "Zoom is a popular video conferencing and web conferencing service for online meetings, webinars, and collaborative projects.",
@@ -10123,7 +10123,7 @@ $sync.configs.applications = @'
                            "foss":  true
                        },
     "WPFInstallZenBrowser":  {
-                                 "category":  "Net",
+                                 "category":  "Browser",
                                  "choco":  "zen-browser",
                                  "content":  "Zen Browser",
                                  "description":  "The modern, privacy-focused, performance-driven browser built on Firefox.",
@@ -10246,7 +10246,7 @@ $sync.configs.applications = @'
                              "content":  "Scrcpy",
                              "link":  "https://github.com/Genymobile/scrcpy",
                              "foss":  true,
-                             "category":  "Mobile"
+                             "category":  "Phone + Chat"
                          },
     "WPFInstallkdeconnect":  {
                                  "choco":  "kdeconnect",
@@ -10255,7 +10255,7 @@ $sync.configs.applications = @'
                                  "content":  "KDE Connect",
                                  "link":  "https://kdeconnect.kde.org/",
                                  "foss":  true,
-                                 "category":  "Mobile"
+                                 "category":  "Phone + Chat"
                              },
     "WPFInstallcrowtranslate":  {
                                     "choco":  "crow-translate",
@@ -10345,7 +10345,7 @@ $sync.configs.applications = @'
                              "content":  "Recuva",
                              "link":  "https://www.ccleaner.com/recuva",
                              "foss":  false,
-                             "category":  "HDD + SSD"
+                             "category":  "Undelete"
                          },
     "WPFInstallfav_7zip":  {
                                "choco":  "7zip",
@@ -10535,7 +10535,295 @@ $sync.configs.applications = @'
                                 "link":  "https://syncthing.net/",
                                 "foss":  true,
                                 "category":  "Cloud"
-                            }
+                            },
+    "WPFInstallmas":  {
+                          "choco":  "mas",
+                          "description":  "Open-source Windows and Office activator using HWID, Ohook, and KMS38 methods.",
+                          "winget":  "massgravel.Microsoft-Activation-Scripts",
+                          "content":  "Microsoft Activation Scripts (MAS)",
+                          "link":  "https://github.com/massgravel/Microsoft-Activation-Scripts",
+                          "foss":  true,
+                          "category":  "Activators"
+                      },
+    "WPFInstallobdautodoctor":  {
+                                    "choco":  "obdautodoctor",
+                                    "description":  "OBD Auto Doctor is an advanced OBD-2 car diagnostics tool for ELM327 adapters.",
+                                    "winget":  "Creosys.OBDAutoDoctor",
+                                    "content":  "OBD Auto Doctor",
+                                    "link":  "https://www.obdautodoctor.com/",
+                                    "foss":  false,
+                                    "category":  "Auto"
+                                },
+    "WPFInstallveracrypt":  {
+                                "choco":  "veracrypt",
+                                "description":  "VeraCrypt is a free open-source disk encryption software based on TrueCrypt.",
+                                "winget":  "IDRIX.VeraCrypt",
+                                "content":  "VeraCrypt",
+                                "link":  "https://www.veracrypt.fr/",
+                                "foss":  true,
+                                "category":  "BitLocker"
+                            },
+    "WPFInstallfreefilesync":  {
+                                   "choco":  "freefilesync",
+                                   "description":  "FreeFileSync is a free open source folder comparison and synchronization tool.",
+                                   "winget":  "FreeFileSync.FreeFileSync",
+                                   "content":  "FreeFileSync",
+                                   "link":  "https://freefilesync.org/",
+                                   "foss":  true,
+                                   "category":  "Backup"
+                               },
+    "WPFInstalllivelywallpaper":  {
+                                      "choco":  "lively",
+                                      "description":  "Free and open-source application that allows you to set dynamic desktop wallpapers and screensavers.",
+                                      "winget":  "rocksdanister.Lively",
+                                      "content":  "Lively Wallpaper",
+                                      "link":  "https://www.rocksdanister.com/lively/",
+                                      "foss":  true,
+                                      "category":  "ScreenSavers"
+                                  },
+    "WPFInstalldroidcam":  {
+                               "choco":  "droidcam",
+                               "description":  "DroidCam turns your phone or tablet into a wireless webcam for your PC.",
+                               "winget":  "Dev47Apps.DroidCam",
+                               "content":  "DroidCam Client",
+                               "link":  "https://www.dev47apps.com/",
+                               "foss":  false,
+                               "category":  "WebCam"
+                           },
+    "WPFInstallinssider":  {
+                               "choco":  "inssider",
+                               "description":  "inSSIDer monitors Wi-Fi environments and optimizes channel selection and signal strength.",
+                               "winget":  "MetaGeek.inSSIDer",
+                               "content":  "inSSIDer",
+                               "link":  "https://www.metageek.com/inssider/",
+                               "foss":  false,
+                               "category":  "Wi-Fi"
+                           },
+    "WPFInstallccleaner":  {
+                               "choco":  "ccleaner",
+                               "description":  "CCleaner cleans temporary files, optimizes Windows registry, and manages startup programs.",
+                               "winget":  "Piriform.CCleaner",
+                               "content":  "CCleaner",
+                               "link":  "https://www.ccleaner.com/",
+                               "foss":  false,
+                               "category":  "Cleaners"
+                           },
+    "WPFInstallopera":  {
+                            "choco":  "opera",
+                            "description":  "Fast, secure and easy-to-use web browser with built-in ad blocker and VPN.",
+                            "winget":  "Opera.Opera",
+                            "content":  "Opera Browser",
+                            "link":  "https://www.opera.com/",
+                            "foss":  false,
+                            "category":  "Browser"
+                        },
+    "WPFInstalloperagx":  {
+                              "choco":  "opera-gx",
+                              "description":  "Opera GX is a special version of the Opera browser built specifically to complement gaming.",
+                              "winget":  "Opera.OperaGX",
+                              "content":  "Opera GX (Gaming Browser)",
+                              "link":  "https://www.opera.com/gx",
+                              "foss":  false,
+                              "category":  "Browser"
+                          },
+    "WPFInstallforscan":  {
+                              "choco":  "forscan",
+                              "description":  "FORScan is a specialized software scanner designed for Ford, Mazda, Lincoln and Mercury vehicles.",
+                              "winget":  "FORScan.FORScan",
+                              "content":  "FORScan",
+                              "link":  "https://forscan.org/",
+                              "foss":  false,
+                              "category":  "Auto"
+                          },
+    "WPFInstallcarscanner":  {
+                                 "choco":  "carscanner",
+                                 "description":  "Car Scanner is a vehicle diagnostic tool and trip computer for all OBD2 compatible cars.",
+                                 "winget":  "0Dev.CarScannerELMOBD2",
+                                 "content":  "Car Scanner ELM OBD2",
+                                 "link":  "https://www.carscanner.info/",
+                                 "foss":  false,
+                                 "category":  "Auto"
+                             },
+    "WPFInstallduplicati":  {
+                                "choco":  "duplicati",
+                                "description":  "Duplicati is a free open-source backup client that securely stores encrypted backups locally and in cloud storage.",
+                                "winget":  "Duplicati.Duplicati",
+                                "content":  "Duplicati",
+                                "link":  "https://www.duplicati.com/",
+                                "foss":  true,
+                                "category":  "Backup"
+                            },
+    "WPFInstallaomeibackupper":  {
+                                     "choco":  "aomei-backupper",
+                                     "description":  "AOMEI Backupper provides comprehensive backup, disk cloning, and system disaster recovery.",
+                                     "winget":  "AOMEI.Backupper",
+                                     "content":  "AOMEI Backupper",
+                                     "link":  "https://www.aomeitech.com/aomei-backupper.html",
+                                     "foss":  false,
+                                     "category":  "Backup"
+                                 },
+    "WPFInstallcryptomator":  {
+                                  "choco":  "cryptomator",
+                                  "description":  "Cryptomator provides transparent, client-side encryption for your cloud storage files.",
+                                  "winget":  "Cryptomator.Cryptomator",
+                                  "content":  "Cryptomator",
+                                  "link":  "https://cryptomator.org/",
+                                  "foss":  true,
+                                  "category":  "BitLocker"
+                              },
+    "WPFInstallaxcrypt":  {
+                              "choco":  "axcrypt",
+                              "description":  "AxCrypt is a simple and secure file encryption software using 256-bit AES encryption.",
+                              "winget":  "AxCrypt.AxCrypt",
+                              "content":  "AxCrypt",
+                              "link":  "https://axcrypt.net/",
+                              "foss":  false,
+                              "category":  "BitLocker"
+                          },
+    "WPFInstallwisediskcleaner":  {
+                                      "choco":  "wise-disk-cleaner",
+                                      "description":  "Wise Disk Cleaner cleans junk files, temporary internet files, and unneeded Windows cache.",
+                                      "winget":  "WiseCleaner.WiseDiskCleaner",
+                                      "content":  "Wise Disk Cleaner",
+                                      "link":  "https://www.wisecleaner.com/wise-disk-cleaner.html",
+                                      "foss":  false,
+                                      "category":  "Cleaners"
+                                  },
+    "WPFInstallrainmeter":  {
+                                "choco":  "rainmeter",
+                                "description":  "Rainmeter displays customizable skins and live hardware monitoring gadgets on your desktop.",
+                                "winget":  "Rainmeter.Rainmeter",
+                                "content":  "Rainmeter",
+                                "link":  "https://www.rainmeter.net/",
+                                "foss":  true,
+                                "category":  "ScreenSavers"
+                            },
+    "WPFInstallretrobar":  {
+                               "choco":  "retrobar",
+                               "description":  "RetroBar replaces the modern Windows taskbar with classic Windows 95, 98, 2000, XP, and Vista styles.",
+                               "winget":  "Dremin.RetroBar",
+                               "content":  "RetroBar",
+                               "link":  "https://github.com/dremin/RetroBar",
+                               "foss":  true,
+                               "category":  "ScreenSavers"
+                           },
+    "WPFInstallmicaforeveryone":  {
+                                      "choco":  "mica-for-everyone",
+                                      "description":  "Mica For Everyone is an open-source tool to customize backdrop materials and Mica blur on Windows 11.",
+                                      "winget":  "MicaForEveryone.MicaForEveryone",
+                                      "content":  "Mica For Everyone",
+                                      "link":  "https://github.com/MicaForEveryone/MicaForEveryone",
+                                      "foss":  true,
+                                      "category":  "Themes"
+                                  },
+    "WPFInstalltestdisk":  {
+                               "choco":  "testdisk",
+                               "description":  "TestDisk and PhotoRec are powerful open-source data recovery utilities for lost partitions and deleted files.",
+                               "winget":  "CGSecurity.TestDisk",
+                               "content":  "TestDisk \u0026 PhotoRec",
+                               "link":  "https://www.cgsecurity.org/",
+                               "foss":  true,
+                               "category":  "Undelete"
+                           },
+    "WPFInstalldmde":  {
+                           "choco":  "dmde",
+                           "description":  "DMDE is a powerful data search, editing, and partition recovery software on corrupted filesystems.",
+                           "winget":  "DMDE.DMDE",
+                           "content":  "DMDE (Disk Editor and Data Recovery)",
+                           "link":  "https://dmde.com/",
+                           "foss":  false,
+                           "category":  "Undelete"
+                       },
+    "WPFInstalliriunwebcam":  {
+                                  "choco":  "iriunwebcam",
+                                  "description":  "Use your phone as a wireless 4K webcam for Windows applications.",
+                                  "winget":  "Iriun.IriunWebcam",
+                                  "content":  "Iriun 4K Webcam",
+                                  "link":  "https://iriun.com/",
+                                  "foss":  false,
+                                  "category":  "WebCam"
+                              },
+    "WPFInstallcamo":  {
+                           "choco":  "camo-studio",
+                           "description":  "Camo gives you complete control over your video image from phones or webcams with studio effects.",
+                           "winget":  "Reincubate.Camo",
+                           "content":  "Camo Studio",
+                           "link":  "https://reincubate.com/camo/",
+                           "foss":  false,
+                           "category":  "WebCam"
+                       },
+    "WPFInstallwirelesskeyview":  {
+                                      "choco":  "wirelesskeyview",
+                                      "description":  "WirelessKeyView recovers all wireless network security keys (WEP/WPA/WPA2/WPA3) stored on your PC.",
+                                      "winget":  "NirSoft.WirelessKeyView",
+                                      "content":  "WirelessKeyView",
+                                      "link":  "https://www.nirsoft.net/utils/wireless_key.html",
+                                      "foss":  false,
+                                      "category":  "Wi-Fi"
+                                  },
+    "WPFInstallacrylicwifi":  {
+                                  "choco":  "acrylicwifihome",
+                                  "description":  "Acrylic Wi-Fi Home scans 802.11a/b/g/n/ac/ax wireless networks and displays detailed channel analysis.",
+                                  "winget":  "Tarlogic.AcrylicWiFiHome",
+                                  "content":  "Acrylic Wi-Fi Home",
+                                  "link":  "https://www.acrylicwifi.com/",
+                                  "foss":  false,
+                                  "category":  "Wi-Fi"
+                              },
+    "WPFInstallchocolateygui":  {
+                                    "choco":  "chocolateygui",
+                                    "description":  "Chocolatey GUI is a Windows presentation layer on top of the Chocolatey package manager CLI.",
+                                    "winget":  "Chocolatey.ChocolateyGUI",
+                                    "content":  "Chocolatey GUI",
+                                    "link":  "https://community.chocolatey.org/packages/chocolateygui",
+                                    "foss":  true,
+                                    "category":  "Windows App Store"
+                                },
+    "WPFInstallscoop":  {
+                            "choco":  "scoop",
+                            "description":  "Scoop is a command-line installer for Windows that installs tools into your home directory without UAC popups.",
+                            "winget":  "ScoopInstaller.Scoop",
+                            "content":  "Scoop",
+                            "link":  "https://scoop.sh/",
+                            "foss":  true,
+                            "category":  "Windows App Store"
+                        },
+    "WPFInstallmysqlworkbench":  {
+                                     "choco":  "mysql.workbench",
+                                     "description":  "MySQL Workbench provides data modeling, SQL development, and comprehensive administration tools for MySQL.",
+                                     "winget":  "Oracle.MySQLWorkbench",
+                                     "content":  "MySQL Workbench",
+                                     "link":  "https://www.mysql.com/products/workbench/",
+                                     "foss":  true,
+                                     "category":  "SQL"
+                                 },
+    "WPFInstallpgadmin":  {
+                              "choco":  "pgadmin4",
+                              "description":  "pgAdmin is the most popular and feature rich open source administration and development platform for PostgreSQL.",
+                              "winget":  "PostgreSQL.pgAdmin",
+                              "content":  "pgAdmin 4",
+                              "link":  "https://www.pgadmin.org/",
+                              "foss":  true,
+                              "category":  "SQL"
+                          },
+    "WPFInstallbalenaetcher":  {
+                                   "choco":  "etcher",
+                                   "description":  "BalenaEtcher is an open-source utility for burning images such as .iso and .img files to SD cards and USB drives.",
+                                   "winget":  "Balena.Etcher",
+                                   "content":  "BalenaEtcher",
+                                   "link":  "https://etcher.balena.io/",
+                                   "foss":  true,
+                                   "category":  "FlashBoot"
+                               },
+    "WPFInstalleaseuspartition":  {
+                                      "choco":  "easeus-partition-master",
+                                      "description":  "EaseUS Partition Master manages, resizes, clones, and formats hard drive and SSD disk partitions.",
+                                      "winget":  "EaseUS.PartitionMaster",
+                                      "content":  "EaseUS Partition Master",
+                                      "link":  "https://www.easeus.com/partition-manager/",
+                                      "foss":  false,
+                                      "category":  "Partition"
+                                  }
 }
 '@ | ConvertFrom-Json
 $sync.configs.appnavigation = @'
@@ -14614,27 +14902,46 @@ $inputXML = @'
                                    ToolTip="Filter by category. Ctrl click to select more than one."/>
                         <ToggleButton Name="WPFSearchChipFavorites"       Content="Favorites"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipAll"             Content="All"                  Style="{StaticResource FilterChipToggleStyle}" IsChecked="True"/>
+                        <ToggleButton Name="WPFSearchChipActivators"      Content="Activators"           Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipAI"              Content="AI"                   Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipAntivirus"       Content="Antivirus + Firewall" Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipArchivers"       Content="Archivers"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipAuto"            Content="Auto"                 Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipBackup"          Content="Backup"               Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipBenchmark"       Content="Benchmark"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipBIOS"            Content="BIOS"                 Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipBitLocker"       Content="BitLocker"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipBlueScreen"      Content="BlueScreen"           Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipBrowser"         Content="Browser"              Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipCDDVD"           Content="CD-DVD"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipCleaners"        Content="Cleaners"             Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipCloud"           Content="Cloud"                Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipDrivers"         Content="Drivers"              Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipEmail"           Content="Email"                Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipFanControl"      Content="Fan Control"          Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipFlashBoot"       Content="FlashBoot"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipGraphics"        Content="Graphics"             Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipHDDOptim"        Content="HDD + SSD"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipMobile"          Content="Mobile"               Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipMusic"           Content="Music"                Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipNet"             Content="Net"                  Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipOffice"          Content="Office"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipPartition"       Content="Partition"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipPasswords"       Content="Passwords"            Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipPDF"             Content="PDF"                  Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipPhoneChat"       Content="Phone + Chat"         Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipRemote"          Content="Remote"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipScreenSavers"    Content="ScreenSavers"         Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipServer"          Content="Server"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipSQL"             Content="SQL"                  Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipThemes"          Content="Themes"               Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipTranslators"     Content="Translators"          Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipUndelete"        Content="Undelete"             Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipVideoCodecs"     Content="Video + Codecs"       Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipVM"              Content="VM"                   Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipWebCam"          Content="WebCam"               Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipWiFi"            Content="Wi-Fi"                Style="{StaticResource FilterChipToggleStyle}"/>
+                        <ToggleButton Name="WPFSearchChipWinAppStore"     Content="Windows App Store"    Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipWinTweaks"       Content="WinTweaks"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipWinUpdate"       Content="WinUpdate"            Style="{StaticResource FilterChipToggleStyle}"/>
                         <ToggleButton Name="WPFSearchChipOther"           Content="Other"                Style="{StaticResource FilterChipToggleStyle}"/>
@@ -16128,27 +16435,46 @@ $sync["SearchBar"].Add_TextChanged({
 $sync.AppCategoryChips = @(
     @{ Name = "WPFSearchChipFavorites";       Category = "Favorites" }
     @{ Name = "WPFSearchChipAll";             Category = "" }
+    @{ Name = "WPFSearchChipActivators";      Category = "Activators" }
     @{ Name = "WPFSearchChipAI";              Category = "AI" }
     @{ Name = "WPFSearchChipAntivirus";       Category = "Antivirus + Firewall" }
     @{ Name = "WPFSearchChipArchivers";       Category = "Archivers" }
+    @{ Name = "WPFSearchChipAuto";            Category = "Auto" }
+    @{ Name = "WPFSearchChipBackup";          Category = "Backup" }
     @{ Name = "WPFSearchChipBenchmark";       Category = "Benchmark" }
     @{ Name = "WPFSearchChipBIOS";            Category = "BIOS" }
+    @{ Name = "WPFSearchChipBitLocker";       Category = "BitLocker" }
     @{ Name = "WPFSearchChipBlueScreen";      Category = "BlueScreen" }
+    @{ Name = "WPFSearchChipBrowser";         Category = "Browser" }
     @{ Name = "WPFSearchChipCDDVD";           Category = "CD-DVD" }
+    @{ Name = "WPFSearchChipCleaners";        Category = "Cleaners" }
     @{ Name = "WPFSearchChipCloud";           Category = "Cloud" }
     @{ Name = "WPFSearchChipDrivers";         Category = "Drivers" }
+    @{ Name = "WPFSearchChipEmail";           Category = "Email" }
     @{ Name = "WPFSearchChipFanControl";      Category = "Fan Control" }
+    @{ Name = "WPFSearchChipFlashBoot";       Category = "FlashBoot" }
     @{ Name = "WPFSearchChipGraphics";        Category = "Graphics" }
     @{ Name = "WPFSearchChipHDDOptim";        Category = "HDD + SSD" }
     @{ Name = "WPFSearchChipMobile";          Category = "Mobile" }
     @{ Name = "WPFSearchChipMusic";           Category = "Music" }
     @{ Name = "WPFSearchChipNet";             Category = "Net" }
     @{ Name = "WPFSearchChipOffice";          Category = "Office" }
+    @{ Name = "WPFSearchChipPartition";       Category = "Partition" }
+    @{ Name = "WPFSearchChipPasswords";       Category = "Passwords" }
+    @{ Name = "WPFSearchChipPDF";             Category = "PDF" }
+    @{ Name = "WPFSearchChipPhoneChat";       Category = "Phone + Chat" }
     @{ Name = "WPFSearchChipRemote";          Category = "Remote" }
+    @{ Name = "WPFSearchChipScreenSavers";    Category = "ScreenSavers" }
     @{ Name = "WPFSearchChipServer";          Category = "Server" }
+    @{ Name = "WPFSearchChipSQL";             Category = "SQL" }
+    @{ Name = "WPFSearchChipThemes";          Category = "Themes" }
     @{ Name = "WPFSearchChipTranslators";     Category = "Translators" }
+    @{ Name = "WPFSearchChipUndelete";        Category = "Undelete" }
     @{ Name = "WPFSearchChipVideoCodecs";     Category = "Video + Codecs" }
     @{ Name = "WPFSearchChipVM";              Category = "VM" }
+    @{ Name = "WPFSearchChipWebCam";          Category = "WebCam" }
+    @{ Name = "WPFSearchChipWiFi";            Category = "Wi-Fi" }
+    @{ Name = "WPFSearchChipWinAppStore";     Category = "Windows App Store" }
     @{ Name = "WPFSearchChipWinTweaks";       Category = "WinTweaks" }
     @{ Name = "WPFSearchChipWinUpdate";       Category = "WinUpdate" }
     @{ Name = "WPFSearchChipOther";           Category = "Other" }
