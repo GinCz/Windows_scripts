@@ -13,6 +13,44 @@ Function Install-WinUtilProgramWinget {
             continue
         }
 
+        if ($program.StartsWith("installer:", [System.StringComparison]::OrdinalIgnoreCase) -or $program.StartsWith("custom:", [System.StringComparison]::OrdinalIgnoreCase)) {
+            $fileName = $program -replace '^(installer:|custom:)', ''
+            $localCandidates = @(
+                "D:\AI\GitHub\Windows_scripts\WinUtil_VladiMIR\installers\$fileName",
+                "$PSScriptRoot\installers\$fileName",
+                "$PSScriptRoot\..\installers\$fileName",
+                "$PSScriptRoot\..\..\installers\$fileName",
+                "C:\UTIL\$fileName",
+                "$env:TEMP\$fileName"
+            )
+            $targetExe = $localCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+            if (-not $targetExe) {
+                $targetExe = Join-Path $env:TEMP $fileName
+                $rawUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/WinUtil_VladiMIR/installers/$fileName"
+                Write-WinUtilLog -Component "Package" -Message "Downloading custom installer from GitHub: $rawUrl"
+                try {
+                    Invoke-WebRequest -Uri $rawUrl -OutFile $targetExe -UseBasicParsing -ErrorAction Stop
+                } catch {
+                    Write-WinUtilLog -Component "Package" -Level "ERROR" -Message "Failed to download $fileName : $($_.Exception.Message)"
+                }
+            }
+
+            if (Test-Path $targetExe) {
+                Write-WinUtilLog -Component "Package" -Message "Executing custom installer: $targetExe"
+                try {
+                    $proc = Start-Process -FilePath $targetExe -ArgumentList "/S", "/silent", "/VERYSILENT", "/quiet" -PassThru -ErrorAction SilentlyContinue
+                    if ($proc) {
+                        $exited = $proc.WaitForExit(300000)
+                    }
+                    Write-WinUtilLog -Component "Package" -Message "Custom installer finished: $fileName"
+                } catch {
+                    Start-Process -FilePath $targetExe
+                }
+            }
+            continue
+        }
+
         $source = "winget"
         if ($program.StartsWith("msstore:", [System.StringComparison]::OrdinalIgnoreCase)) {
             $source = "msstore"

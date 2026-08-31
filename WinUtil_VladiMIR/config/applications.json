@@ -2769,5 +2769,68 @@
                        "link":  "https://windirstat.net/",
                        "winget":  "WinDirStat.WinDirStat",
                        "foss":  true
-                   }
+                   },
+    "aida64":  {
+                   "category":  "Benchmark",
+                   "choco":  "aida64-extreme",
+                   "content":  "AIDA64 Extreme (6.90)",
+                   "description":  "AIDA64 Extreme provides diagnostics, hardware monitoring, and comprehensive benchmarks.",
+                   "link":  "https://www.aida64.com/",
+                   "winget":  "installer:Aida64_Setup_6.90.6500.exe",
+                   "foss":  false
+               },
+    "easycleaner":  {
+                        "category":  "Cleaners",
+                        "choco":  "na",
+                        "content":  "EasyCleaner",
+                        "description":  "EasyCleaner is a compact and fast system cleaner for registry, duplicate and temporary files.",
+                        "link":  "https://toniarts.com/",
+                        "winget":  "installer:Easy_Cleaner.exe",
+                        "foss":  false
+                    },
+    "easycontextmenu":  {
+                            "category":  "WinTweaks",
+                            "choco":  "na",
+                            "content":  "Easy Context Menu (1.6)",
+                            "description":  "Easy Context Menu lets you add useful commands and tools to Windows context menus.",
+                            "link":  "https://www.sordum.org/",
+                            "winget":  "installer:Easy_Context_Menu_v1.6_ALL.exe",
+                            "foss":  false
+                        },
+    "justmanager":  {
+                        "category":  "Office",
+                        "choco":  "justmanager",
+                        "content":  "Just Manager",
+                        "description":  "Just Manager is a free multi-tabbed, multi-pane file manager for Windows.",
+                        "link":  "http://justmanager.ru/",
+                        "winget":  "installer:Just_Manager.exe",
+                        "foss":  false
+                    },
+    "notepadplusplus5":  {
+                             "category":  "Office",
+                             "choco":  "notepadplusplus",
+                             "content":  "Notepad++ (v5.0.3 Classic)",
+                             "description":  "Classic lightweight Notepad++ source code editor.",
+                             "link":  "https://notepad-plus-plus.org/",
+                             "winget":  "installer:NOTEPAD++__5.0.3__Installer.exe",
+                             "foss":  true
+                         },
+    "uninstalltool":  {
+                          "category":  "Cleaners",
+                          "choco":  "uninstall-tool",
+                          "content":  "Uninstall Tool (3.7.3)",
+                          "description":  "Uninstall Tool is a fast, powerful uninstaller to completely remove unwanted applications.",
+                          "link":  "https://crystalidea.com/uninstall-tool",
+                          "winget":  "installer:Uninstall_Tool_3.7.3.exe",
+                          "foss":  false
+                      },
+    "wintoolsnet":  {
+                        "category":  "Cleaners",
+                        "choco":  "na",
+                        "content":  "WinTools.net Pro (4.1.1)",
+                        "description":  "WinTools.net Professional is a suite of tools for Windows optimization and registry cleaning.",
+                        "link":  "https://www.wintools.net/",
+                        "winget":  "installer:WinTools.net_Prof_4.1.1.exe",
+                        "foss":  false
+                    }
 }
