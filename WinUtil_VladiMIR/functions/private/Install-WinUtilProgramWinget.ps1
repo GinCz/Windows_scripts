@@ -27,13 +27,14 @@ Function Install-WinUtilProgramWinget {
 
         Write-WinUtilLog -Component "Package" -Message "$Action winget package: $program (source: $source)"
 
+        $timeoutMs = if ($Action -eq 'Install') { 300000 } else { 60000 }
         $executedSuccessfully = $false
         try {
             $process = Start-Process -FilePath winget -ArgumentList $arguments -NoNewWindow -PassThru -ErrorAction Stop
-            $exited = $process.WaitForExit(8000) # Max 8 seconds timeout
+            $exited = $process.WaitForExit($timeoutMs)
             if (-not $exited) {
                 $process.Kill()
-                Write-WinUtilLog -Component "Package" -Level "WARN" -Message "winget $Action timed out (8s) for $program"
+                Write-WinUtilLog -Component "Package" -Level "WARN" -Message "winget $Action timed out ($($timeoutMs/1000)s) for $program"
             } else {
                 $executedSuccessfully = ($process.ExitCode -eq 0)
                 Write-WinUtilLog -Component "Package" -Message "$Action winget package completed: $program (exit code: $($process.ExitCode))"

@@ -181,11 +181,11 @@
              },
     "chatgpt":  {
                     "category":  "AI",
-                    "choco":  "na",
-                    "content":  "ChatGPT Desktop",
-                    "description":  "The official ChatGPT desktop app for Windows, distributed through the Microsoft Store.",
-                    "link":  "https://openai.com/chatgpt/download/",
-                    "winget":  "msstore:9NT1R1C2HH7J",
+                    "choco":  "chatgpt",
+                    "content":  "ChatGPT Desktop (Codex)",
+                    "description":  "OpenAI official ChatGPT and Codex desktop application.",
+                    "link":  "https://chatgpt.com/",
+                    "winget":  "OpenAI.ChatGPT",
                     "foss":  false
                 },
     "chatterino":  {
@@ -225,19 +225,19 @@
                          "foss":  false
                      },
     "claude":  {
-                   "category":  "WinTweaks",
+                   "category":  "AI",
                    "choco":  "claude",
                    "content":  "Claude Desktop",
-                   "description":  "Anthropic\u0027s Claude desktop application for focused AI-assisted work and chat.",
+                   "description":  "Anthropic\u0027s Claude desktop application for AI chat and workflow assistance (Standalone / WinGet).",
                    "link":  "https://claude.ai/download",
                    "winget":  "Anthropic.Claude",
                    "foss":  false
                },
     "claude-code":  {
-                        "category":  "Server",
+                        "category":  "AI",
                         "choco":  "claude-code",
                         "content":  "Claude Code",
-                        "description":  "Anthropic\u0027s agentic coding tool for terminal and IDE development workflows.",
+                        "description":  "Anthropic\u0027s agentic coding CLI tool for terminal and IDE workflows.",
                         "link":  "https://code.claude.com/",
                         "winget":  "Anthropic.ClaudeCode",
                         "foss":  false
@@ -1853,10 +1853,10 @@
                               "foss":  false
                           },
     "vscode":  {
-                   "category":  "Office",
+                   "category":  "AI",
                    "choco":  "vscode",
                    "content":  "VS Code",
-                   "description":  "Visual Studio Code is a free, open-source code editor with support for multiple programming languages.",
+                   "description":  "Visual Studio Code is a powerful code editor with extensive AI extensions (Copilot, Codex, Gemini).",
                    "link":  "https://code.visualstudio.com/",
                    "winget":  "Microsoft.VisualStudioCode",
                    "foss":  true
@@ -2724,6 +2724,50 @@
                             "link":  "https://www.easeus.com/partition-manager/",
                             "foss":  false,
                             "category":  "Partition"
-                        }
+                        },
+    "antigravity":  {
+                        "category":  "AI",
+                        "choco":  "antigravity",
+                        "content":  "Google AntiGravity",
+                        "description":  "Google AntiGravity Advanced AI Agentic Coding Environment.",
+                        "link":  "https://antigravity.google/",
+                        "winget":  "Google.Antigravity",
+                        "foss":  false
+                    },
+    "drwebcureit":  {
+                        "category":  "Antivirus + Firewall",
+                        "choco":  "drweb-cureit",
+                        "content":  "Dr.Web CureIt! Scanner",
+                        "description":  "Dr.Web CureIt! is an emergency free antivirus scanner that does not require installation.",
+                        "link":  "https://free.drweb.ru/cureit/",
+                        "winget":  "DoctorWeb.CureIt",
+                        "foss":  false
+                    },
+    "centbrowser":  {
+                        "category":  "Browser",
+                        "choco":  "centbrowser",
+                        "content":  "Cent Browser",
+                        "description":  "Cent Browser is an enhanced Chromium-based browser with mouse gestures, tab scroll, and rich customization.",
+                        "link":  "https://www.centbrowser.com/",
+                        "winget":  "CentStudio.CentBrowser",
+                        "foss":  false
+                    },
+    "fav_centbrowser":  {
+                            "category":  "Favorites",
+                            "choco":  "centbrowser",
+                            "content":  "Cent Browser",
+                            "description":  "Cent Browser (Chromium with mouse gestures \u0026 custom tab controls).",
+                            "link":  "https://www.centbrowser.com/",
+                            "winget":  "CentStudio.CentBrowser",
+                            "foss":  false
+                        },
+    "windirstat":  {
+                       "category":  "HDD + SSD",
+                       "choco":  "windirstat",
+                       "content":  "WinDirStat",
+                       "description":  "WinDirStat is a disk usage statistics viewer and cleanup tool for Microsoft Windows.",
+                       "link":  "https://windirstat.net/",
+                       "winget":  "WinDirStat.WinDirStat",
+                       "foss":  true
+                   }
 }
-

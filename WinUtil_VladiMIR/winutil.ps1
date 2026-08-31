@@ -3,7 +3,7 @@
     Author         : Chris Titus @christitustech
     Runspace Author: @DeveloperDurp
     GitHub         : https://github.com/ChrisTitusTech
-    Version        : 26.08.30
+    Version        : 26.08.31
 #>
 
 param (
@@ -57,7 +57,7 @@ if (!([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]:
 
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
-$sync.version = "26.08.30"
+$sync.version = "26.08.31"
 $sync.configs = @{}
 $sync.Buttons = [System.Collections.Generic.List[PSObject]]::new()
 $sync.preferences = @{}
@@ -1414,13 +1414,14 @@ Function Install-WinUtilProgramWinget {
 
         Write-WinUtilLog -Component "Package" -Message "$Action winget package: $program (source: $source)"
 
+        $timeoutMs = if ($Action -eq 'Install') { 300000 } else { 60000 }
         $executedSuccessfully = $false
         try {
             $process = Start-Process -FilePath winget -ArgumentList $arguments -NoNewWindow -PassThru -ErrorAction Stop
-            $exited = $process.WaitForExit(8000) # Max 8 seconds timeout
+            $exited = $process.WaitForExit($timeoutMs)
             if (-not $exited) {
                 $process.Kill()
-                Write-WinUtilLog -Component "Package" -Level "WARN" -Message "winget $Action timed out (8s) for $program"
+                Write-WinUtilLog -Component "Package" -Level "WARN" -Message "winget $Action timed out ($($timeoutMs/1000)s) for $program"
             } else {
                 $executedSuccessfully = ($process.ExitCode -eq 0)
                 Write-WinUtilLog -Component "Package" -Message "$Action winget package completed: $program (exit code: $($process.ExitCode))"
@@ -8180,11 +8181,11 @@ $sync.configs.applications = @'
                        },
     "WPFInstallchatgpt":  {
                               "category":  "AI",
-                              "choco":  "na",
-                              "content":  "ChatGPT Desktop",
-                              "description":  "The official ChatGPT desktop app for Windows, distributed through the Microsoft Store.",
-                              "link":  "https://openai.com/chatgpt/download/",
-                              "winget":  "msstore:9NT1R1C2HH7J",
+                              "choco":  "chatgpt",
+                              "content":  "ChatGPT Desktop (Codex)",
+                              "description":  "OpenAI official ChatGPT and Codex desktop application.",
+                              "link":  "https://chatgpt.com/",
+                              "winget":  "OpenAI.ChatGPT",
                               "foss":  false
                           },
     "WPFInstallchatterino":  {
@@ -8224,19 +8225,19 @@ $sync.configs.applications = @'
                                    "foss":  false
                                },
     "WPFInstallclaude":  {
-                             "category":  "WinTweaks",
+                             "category":  "AI",
                              "choco":  "claude",
                              "content":  "Claude Desktop",
-                             "description":  "Anthropic\u0027s Claude desktop application for focused AI-assisted work and chat.",
+                             "description":  "Anthropic\u0027s Claude desktop application for AI chat and workflow assistance (Standalone / WinGet).",
                              "link":  "https://claude.ai/download",
                              "winget":  "Anthropic.Claude",
                              "foss":  false
                          },
     "WPFInstallclaude-code":  {
-                                  "category":  "Server",
+                                  "category":  "AI",
                                   "choco":  "claude-code",
                                   "content":  "Claude Code",
-                                  "description":  "Anthropic\u0027s agentic coding tool for terminal and IDE development workflows.",
+                                  "description":  "Anthropic\u0027s agentic coding CLI tool for terminal and IDE workflows.",
                                   "link":  "https://code.claude.com/",
                                   "winget":  "Anthropic.ClaudeCode",
                                   "foss":  false
@@ -9852,10 +9853,10 @@ $sync.configs.applications = @'
                                         "foss":  false
                                     },
     "WPFInstallvscode":  {
-                             "category":  "Office",
+                             "category":  "AI",
                              "choco":  "vscode",
                              "content":  "VS Code",
-                             "description":  "Visual Studio Code is a free, open-source code editor with support for multiple programming languages.",
+                             "description":  "Visual Studio Code is a powerful code editor with extensive AI extensions (Copilot, Codex, Gemini).",
                              "link":  "https://code.visualstudio.com/",
                              "winget":  "Microsoft.VisualStudioCode",
                              "foss":  true
@@ -10723,7 +10724,52 @@ $sync.configs.applications = @'
                                       "link":  "https://www.easeus.com/partition-manager/",
                                       "foss":  false,
                                       "category":  "Partition"
-                                  }
+                                  },
+    "WPFInstallantigravity":  {
+                                  "category":  "AI",
+                                  "choco":  "antigravity",
+                                  "content":  "Google AntiGravity",
+                                  "description":  "Google AntiGravity Advanced AI Agentic Coding Environment.",
+                                  "link":  "https://antigravity.google/",
+                                  "winget":  "Google.Antigravity",
+                                  "foss":  false
+                              },
+    "WPFInstalldrwebcureit":  {
+                                  "category":  "Antivirus + Firewall",
+                                  "choco":  "drweb-cureit",
+                                  "content":  "Dr.Web CureIt! Scanner",
+                                  "description":  "Dr.Web CureIt! is an emergency free antivirus scanner that does not require installation.",
+                                  "link":  "https://free.drweb.ru/cureit/",
+                                  "winget":  "DoctorWeb.CureIt",
+                                  "foss":  false
+                              },
+    "WPFInstallcentbrowser":  {
+                                  "category":  "Browser",
+                                  "choco":  "centbrowser",
+                                  "content":  "Cent Browser",
+                                  "description":  "Cent Browser is an enhanced Chromium-based browser with mouse gestures, tab scroll, and rich customization.",
+                                  "link":  "https://www.centbrowser.com/",
+                                  "winget":  "CentStudio.CentBrowser",
+                                  "foss":  false
+                              },
+    "WPFInstallfav_centbrowser":  {
+                                      "category":  "Favorites",
+                                      "choco":  "centbrowser",
+                                      "content":  "Cent Browser",
+                                      "description":  "Cent Browser (Chromium with mouse gestures \u0026 custom tab controls).",
+                                      "link":  "https://www.centbrowser.com/",
+                                      "winget":  "CentStudio.CentBrowser",
+                                      "foss":  false
+                                  },
+    "WPFInstallwindirstat":  {
+                                 "category":  "HDD + SSD",
+                                 "choco":  "windirstat",
+                                 "content":  "WinDirStat",
+                                 "description":  "WinDirStat is a disk usage statistics viewer and cleanup tool for Microsoft Windows.",
+                                 "link":  "https://windirstat.net/",
+                                 "winget":  "WinDirStat.WinDirStat",
+                                 "foss":  true
+                             }
 }
 '@ | ConvertFrom-Json
 $sync.configs.appnavigation = @'
