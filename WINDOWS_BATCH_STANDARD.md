@@ -97,11 +97,13 @@ exit /b 0
 - Prefer idempotent operations: a rerun should either converge to the desired state or fail with a precise explanation.
 - Do not suppress errors unless the failure is explicitly expected and handled.
 - Use `-NoProfile` for every non-interactive PowerShell call to keep behavior deterministic.
+- **Mandatory UTF-8 Encoding:** All script files, configs, and generated code must strictly be saved in **UTF-8** (without BOM) encoding.
 
 ## Review checklist
 
 Before committing a new or changed CMD script, verify:
 
+- File encoding is strictly **UTF-8** (without BOM).
 - It starts with `@echo off`, `chcp 65001 >nul`, and `cls`.
 - UAC self-elevation uses `fltmc` and exits the original unelevated process.
 - `cd /d "%~dp0"` executes only after elevation.
@@ -121,4 +123,4 @@ The Hiddify backup/restore scripts are the current functional reference for the 
 ---
 
 Maintainer: **VladiMIR Bulantsev (GinCz)**  
-Standard version: **2026.08.06
+Standard version: **2026.08.31**
