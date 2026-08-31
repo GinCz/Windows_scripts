@@ -1430,6 +1430,54 @@ Function Install-WinUtilProgramWinget {
                     if ($proc) {
                         $exited = $proc.WaitForExit(300000)
                     }
+
+                    # Custom configuration for Notepad++ 5.0.3 (match custom component tree)
+                    if ($fileName -like "*NOTEPAD++*") {
+                        $nppDirs = @(
+                            "C:\Program Files (x86)\Notepad++",
+                            "C:\Program Files\Notepad++"
+                        )
+                        $nppPath = $nppDirs | Where-Object { Test-Path $_ } | Select-Object -First 1
+                        if ($nppPath) {
+                            # 1. Don't use %APPDATA unchecked -> remove doLocalConf.xml so APPDATA is used
+                            $doLocal = Join-Path $nppPath "doLocalConf.xml"
+                            if (Test-Path $doLocal) { Remove-Item -Path $doLocal -Force -ErrorAction SilentlyContinue }
+
+                            # 2. Plugins & Auto-completion unchecked -> clean plugins folder
+                            $pluginsDir = Join-Path $nppPath "plugins"
+                            if (Test-Path $pluginsDir) {
+                                Get-ChildItem -Path $pluginsDir -Recurse -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+                                Get-ChildItem -Path $pluginsDir -Directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+                            }
+
+                            # 3. Auto-Updater unchecked -> remove updater folder
+                            $updaterDir = Join-Path $nppPath "updater"
+                            if (Test-Path $updaterDir) { Remove-Item -Path $updaterDir -Recurse -Force -ErrorAction SilentlyContinue }
+
+                            # 4. Context Menu Entry checked -> register context menu in Registry & shell DLL
+                            $nppExe = Join-Path $nppPath "notepad++.exe"
+                            $nppDll = Join-Path $nppPath "nppcm.dll"
+                            if (Test-Path $nppDll) {
+                                Start-Process -FilePath "regsvr32.exe" -ArgumentList "/s `"$nppDll`"" -Wait -ErrorAction SilentlyContinue
+                            }
+
+                            $regPaths = @(
+                                "HKLM:\SOFTWARE\Classes\*\shell\Open with Notepad++",
+                                "HKCU:\Software\Classes\*\shell\Open with Notepad++",
+                                "HKLM:\SOFTWARE\Classes\Directory\shell\Open with Notepad++"
+                            )
+                            foreach ($rp in $regPaths) {
+                                if (-not (Test-Path $rp)) { New-Item -Path $rp -Force -ErrorAction SilentlyContinue | Out-Null }
+                                Set-ItemProperty -Path $rp -Name "(default)" -Value "Edit with Notepad++" -Force -ErrorAction SilentlyContinue | Out-Null
+                                Set-ItemProperty -Path $rp -Name "Icon" -Value "`"$nppExe`"" -Force -ErrorAction SilentlyContinue | Out-Null
+                                $cmdPath = Join-Path $rp "command"
+                                if (-not (Test-Path $cmdPath)) { New-Item -Path $cmdPath -Force -ErrorAction SilentlyContinue | Out-Null }
+                                Set-ItemProperty -Path $cmdPath -Name "(default)" -Value "`"$nppExe`" `"%1`"" -Force -ErrorAction SilentlyContinue | Out-Null
+                            }
+                            Write-WinUtilLog -Component "Package" -Message "Notepad++ 5.0.3 custom component setup and Context Menu registered."
+                        }
+                    }
+
                     Write-WinUtilLog -Component "Package" -Message "Custom installer finished: $fileName"
                 } catch {
                     Start-Process -FilePath $targetExe
