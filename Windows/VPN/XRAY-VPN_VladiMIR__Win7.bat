@@ -50,17 +50,24 @@ Write-Host '[*] Running installer...' -ForegroundColor Cyan
 & "$env:TEMP\xray_install.ps1"
 Remove-Item "$env:TEMP\xray_install.ps1" -Force -ErrorAction SilentlyContinue
 
-# Save original external IP and Country before VPN connects
+# Save original external IP and Country Code before VPN connects
 try {
-    $rawOrig = (New-Object Net.WebClient).DownloadString('http://ip-api.com/line/?fields=query,country,countryCode').Trim()
+    $rawOrig = (New-Object Net.WebClient).DownloadString('http://ip-api.com/line/?fields=query,countryCode').Trim()
     $origLines = $rawOrig -split "?
 "
-    if ($origLines.Length -ge 3) {
-        [System.IO.File]::WriteAllLines("C:\XRAY_VPN\orig_ip.txt", @($origLines[0].Trim(), $origLines[1].Trim(), $origLines[2].Trim()), [System.Text.Encoding]::UTF8)
+    $ipFound = ""
+    $codeFound = ""
+    foreach ($l in $origLines) {
+        $t = $l.Trim()
+        if ($t -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$') { $ipFound = $t }
+        elseif ($t -match '^[A-Za-z]{2}$') { $codeFound = $t.ToUpper() }
+    }
+    if ($ipFound) {
+        [System.IO.File]::WriteAllLines("C:\XRAY_VPN\orig_ip.txt", @($ipFound, $codeFound), [System.Text.Encoding]::UTF8)
     }
 } catch {}
 
-# Deploy enhanced TrayVPN with dynamic shield icons (Green/Orange/Red), country in tooltip, and error handling
+# Deploy enhanced TrayVPN
 $trayScript = @'
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
 [void][System.Reflection.Assembly]::LoadWithPartialName("System.Drawing")
@@ -71,7 +78,7 @@ $origIpFile = "$baseDir\orig_ip.txt"
 $errorFile = "$baseDir\error.txt"
 $logFile = "$baseDir\vpn.log"
 
-# Parse Profile Name (#server-user) from link.txt
+# Parse Profile Name from link.txt
 $profileName = ""
 if (Test-Path $linkFile) {
     try {
@@ -83,16 +90,20 @@ if (Test-Path $linkFile) {
 }
 if (-not $profileName) { $profileName = $env:USERNAME }
 
-# Read Original IP and Country
+# Extract short user name for tooltip (e.g. 4er-33-VladiMIR -> VladiMIR)
+$shortName = if ($profileName -match "[-_]") { ($profileName -split "[-_]")[-1] } else { $profileName }
+
+# Read Original IP and Country Code
 $origIp = "Unknown"
-$origCountry = ""
 $origCode = ""
 if (Test-Path $origIpFile) {
     try {
         $origLines = [System.IO.File]::ReadAllLines($origIpFile, [System.Text.Encoding]::UTF8)
-        if ($origLines.Length -ge 1) { $origIp = $origLines[0].Trim() }
-        if ($origLines.Length -ge 2) { $origCountry = $origLines[1].Trim() }
-        if ($origLines.Length -ge 3) { $origCode = $origLines[2].Trim() }
+        foreach ($l in $origLines) {
+            $t = $l.Trim()
+            if ($t -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$') { $origIp = $t }
+            elseif ($t -match '^[A-Za-z]{2}$') { $origCode = $t.ToUpper() }
+        }
     } catch {}
 }
 
@@ -155,7 +166,7 @@ $notify.Icon = $iconOrange
 $notify.Visible = $true
 
 # Initial Tooltip
-$notify.Text = "Xray VPN: Connecting...`n$profileName"
+$notify.Text = "Xray VPN: Connecting...`n$shortName"
 
 # Context Menu
 $menu = New-Object System.Windows.Forms.ContextMenu
@@ -192,7 +203,6 @@ $notify.ContextMenu = $menu
 # State tracker
 $script:lastState = "Connecting"
 $script:vpnIp = ""
-$script:vpnCountry = ""
 $script:vpnCode = ""
 
 function Set-SafeTooltip([string]$line1, [string]$line2, [string]$line3) {
@@ -206,14 +216,14 @@ function Set-SafeTooltip([string]$line1, [string]$line2, [string]$line3) {
 # Double-click balloon with full details
 $notify.add_DoubleClick({
     if ($script:lastState -eq "Connected") {
-        $msg = "VPN IP: $script:vpnIp ($script:vpnCountry)`nOriginal: $origIp ($origCountry)`nProfile: $profileName"
-        $notify.ShowBalloonTip(4000, "Xray VPN - Connected", $msg, [System.Windows.Forms.ToolTipIcon]::Info)
+        $msg = "VPN: $script:vpnIp ($script:vpnCode)`nOrig: $origIp ($origCode)`nProfile: $profileName"
+        $notify.ShowBalloonTip(4000, "Xray VPN: Connected", $msg, [System.Windows.Forms.ToolTipIcon]::Info)
     } elseif ($script:lastState -eq "Error") {
         $errMsg = "Connection failed. Please check your VLESS key in link.txt or network."
         if (Test-Path $errorFile) {
             try { $errMsg = [System.IO.File]::ReadAllText($errorFile).Trim() } catch {}
         }
-        $notify.ShowBalloonTip(5000, "Xray VPN - Error", $errMsg, [System.Windows.Forms.ToolTipIcon]::Error)
+        $notify.ShowBalloonTip(5000, "Xray VPN: Error", $errMsg, [System.Windows.Forms.ToolTipIcon]::Error)
     } else {
         $notify.ShowBalloonTip(3000, "Xray VPN", "Connecting to $profileName...", [System.Windows.Forms.ToolTipIcon]::Warning)
     }
@@ -231,7 +241,7 @@ $ipTimer.add_Tick({
         try { $errMsg = [System.IO.File]::ReadAllText($errorFile).Trim() } catch {}
         $notify.Icon = $iconRed
         $mStatus.Text = "Status: Error"
-        Set-SafeTooltip "VPN: Error" $errMsg $profileName
+        Set-SafeTooltip "VPN: Error" $errMsg $shortName
         if ($script:lastState -ne "Error") {
             $script:lastState = "Error"
             $notify.ShowBalloonTip(5000, "Xray VPN: Error", $errMsg, [System.Windows.Forms.ToolTipIcon]::Error)
@@ -246,7 +256,7 @@ $ipTimer.add_Tick({
         if ($script:checkAttempts -ge 4) {
             $notify.Icon = $iconRed
             $mStatus.Text = "Status: Disconnected"
-            Set-SafeTooltip "VPN: Disconnected" "Xray process not running" $profileName
+            Set-SafeTooltip "VPN: Disconnected" "Xray process not running" $shortName
             if ($script:lastState -ne "Error") {
                 $script:lastState = "Error"
                 $notify.ShowBalloonTip(5000, "Xray VPN: Stopped", "Xray process stopped. Right-click to view log or restart.", [System.Windows.Forms.ToolTipIcon]::Error)
@@ -255,44 +265,53 @@ $ipTimer.add_Tick({
         return
     }
 
-    # Query IP through proxy
+    # Query IP and Country Code through proxy
     try {
         $wc = New-Object Net.WebClient
         $wc.Headers.Add("User-Agent", "Mozilla/5.0")
-        $raw = $wc.DownloadString("http://ip-api.com/line/?fields=country,countryCode,query").Trim()
+        $raw = $wc.DownloadString("http://ip-api.com/line/?fields=query,countryCode").Trim()
         $lines = $raw -split "`r?`n"
-        if ($lines.Length -ge 3 -and $lines[2].Trim()) {
-            $script:vpnCountry = $lines[0].Trim()
-            $script:vpnCode    = $lines[1].Trim()
-            $script:vpnIp      = $lines[2].Trim()
+        $ipFound = ""
+        $codeFound = ""
+        foreach ($l in $lines) {
+            $t = $l.Trim()
+            if ($t -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$') { $ipFound = $t }
+            elseif ($t -match '^[A-Za-z]{2}$') { $codeFound = $t.ToUpper() }
+        }
+        
+        if ($ipFound) {
+            $script:vpnIp   = $ipFound
+            $script:vpnCode = $codeFound
             
             # Switch to Green Shield
             $notify.Icon = $iconGreen
-            $mStatus.Text = "VPN: $script:vpnIp ($script:vpnCountry)"
+            $mStatus.Text = "VPN: $script:vpnIp ($script:vpnCode)"
             $ipTimer.Interval = 30000 # Check every 30s once connected
             
-            # Format tooltip safely within 63 characters
-            $origTag = if ($origCode) { "$origIp ($origCode)" } elseif ($origCountry) { "$origIp ($origCountry)" } else { $origIp }
-            $vpnTag  = if ($script:vpnCode) { "$script:vpnIp ($script:vpnCode)" } else { $script:vpnIp }
+            # Format tooltip cleanly:
+            # Line 1: VPN: 195.63.138.33 (NL)
+            # Line 2: Orig: 185.100.197.0 (CZ)
+            # Line 3: VladiMIR
+            $line1 = if ($script:vpnCode) { "VPN: $script:vpnIp ($script:vpnCode)" } else { "VPN: $script:vpnIp" }
+            $line2 = if ($origCode) { "Orig: $origIp ($origCode)" } else { "Orig: $origIp" }
             
-            Set-SafeTooltip "VPN: $vpnTag" "Org: $origTag" $profileName
+            Set-SafeTooltip $line1 $line2 $shortName
             
             if ($script:lastState -ne "Connected") {
                 $script:lastState = "Connected"
-                $balloon = "VPN IP: $script:vpnIp ($script:vpnCountry)`nOriginal: $origIp ($origCountry)`nProfile: $profileName"
+                $balloon = "$line1`n$line2`nProfile: $profileName"
                 $notify.ShowBalloonTip(4000, "Xray VPN: Connected", $balloon, [System.Windows.Forms.ToolTipIcon]::Info)
             }
         }
     } catch {
-        # If query fails while xray is running, keep waiting
         $script:checkAttempts++
         if ($script:checkAttempts -gt 10 -and $script:lastState -ne "Connected") {
             $notify.Icon = $iconRed
             $mStatus.Text = "Status: Cannot connect to server"
-            Set-SafeTooltip "VPN: Connection Timeout" "Cannot reach server" $profileName
+            Set-SafeTooltip "VPN: Connection Timeout" "Cannot reach server" $shortName
             if ($script:lastState -ne "Error") {
                 $script:lastState = "Error"
-                $notify.ShowBalloonTip(5000, "Xray VPN: Timeout", "Could not establish connection through server $profileName. Check network or key.", [System.Windows.Forms.ToolTipIcon]::Warning)
+                $notify.ShowBalloonTip(5000, "Xray VPN: Timeout", "Could not connect to server $profileName. Check network or key.", [System.Windows.Forms.ToolTipIcon]::Warning)
             }
         }
     }
@@ -300,21 +319,12 @@ $ipTimer.add_Tick({
 $ipTimer.Start()
 
 [System.Windows.Forms.Application]::Run()
+
 '@
 [System.IO.File]::WriteAllText("C:\XRAY_VPN\TrayVPN.ps1", $trayScript, [System.Text.Encoding]::UTF8)
 
-# Patch Start_VPN.ps1 to report errors to error.txt and launch TrayVPN on error
-$startPs1 = "C:\XRAY_VPN\Start_VPN.ps1"
-if (Test-Path $startPs1) {
-    $st = [System.IO.File]::ReadAllText($startPs1, [System.Text.Encoding]::UTF8)
-    $errPatch = 'if (-not (Test-Path )) { [System.IO.File]::WriteAllText("C:\XRAY_VPN\error.txt", "link.txt not found"); Start-Process "powershell.exe" -Args "-WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File C:\XRAY_VPN\TrayVPN.ps1" -WindowStyle Hidden; exit 1 }'
-    if ($st.Contains('if (-not (Test-Path )) {')) {
-        # clear any existing error
-        $st = $st.Replace('Write-Log "[START] Initializing VPN..."', 'Remove-Item "C:\XRAY_VPN\error.txt" -Force -EA SilentlyContinue
-Write-Log "[START] Initializing VPN..."')
-        [System.IO.File]::WriteAllText($startPs1, $st, [System.Text.Encoding]::UTF8)
-    }
-}
+# Clear any previous error file
+Remove-Item "C:\XRAY_VPN\error.txt" -Force -ErrorAction SilentlyContinue
 
 Write-Host ''
 Write-Host '==========================================================================================' -ForegroundColor Green
