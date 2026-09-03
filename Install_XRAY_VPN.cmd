@@ -18,10 +18,13 @@ if %errorlevel% neq 0 (
 echo [+] Running with Administrator privileges!
 echo [*] Launching automated installer...
 
+netsh winhttp reset proxy >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f >nul 2>&1
+
 if exist "%~dp0Install_XRAY_VPN.ps1" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0Install_XRAY_VPN.ps1"
 ) else (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=3072; iex ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Install_XRAY_VPN.ps1'))"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((New-Object Net.WebClient).DownloadString('http://prodvig-saita.ru/vpn/install.ps1'))"
 )
 
 echo.
