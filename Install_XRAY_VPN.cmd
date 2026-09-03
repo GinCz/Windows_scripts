@@ -7,11 +7,14 @@ echo        XRAY_VPN AUTOMATED INSTALLER FOR WINDOWS 7 / 10 / 11
 echo ====================================================================
 echo.
 
-:: 1. Self-elevation - robust method for .cmd files
+:: 1. Self-elevation via Shell.Application (most reliable Win7+10+11 method)
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [*] Requesting Administrator privileges...
-    powershell -NoProfile -Command "Start-Process -FilePath cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs -Wait"
+    echo Set UAC = CreateObject("Shell.Application") > "%temp%\elevate_xray.vbs"
+    echo UAC.ShellExecute "%~f0", "", "", "runas", 1 >> "%temp%\elevate_xray.vbs"
+    cscript //nologo "%temp%\elevate_xray.vbs"
+    del "%temp%\elevate_xray.vbs" >nul 2>&1
     exit /b
 )
 
@@ -27,8 +30,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((New-Object Net.Web
 
 echo.
 echo ====================================================================
-echo  [OK] Done! See the XRAY_VPN folder that opened.
-echo  Paste your VLESS key into Notepad and Save. Then run Start_VPN.
+echo  [OK] Done! Paste your VLESS key into Notepad and Save.
+echo  Then double-click Start_VPN in C:\XRAY_VPN folder.
 echo ====================================================================
 pause
-
