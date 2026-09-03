@@ -11,27 +11,15 @@ echo.
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [*] Requesting Administrator privileges...
-    powershell -NoProfile -Command "Start-Process cmd -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+    powershell -NoProfile -Command "Start-Process cmd -ArgumentList '/c ""%~f0""' -Verb RunAs"
     exit /b
 )
 
 echo [+] Running with Administrator privileges!
-echo [*] Installing XRAY_VPN into C:\XRAY_VPN...
+echo [*] Deploying XRAY_VPN components into C:\XRAY_VPN...
 
-:: 2. Setup directory
-if not exist "C:\XRAY_VPN" mkdir "C:\XRAY_VPN"
-
-:: 3. Migrate xray.exe and link.txt if available from C:\Xray or search disk
-if exist "C:\Xray\xray.exe" copy /y "C:\Xray\xray.exe" "C:\XRAY_VPN\xray.exe" >nul
-if exist "C:\Xray\link.txt" copy /y "C:\Xray\link.txt" "C:\XRAY_VPN\link.txt" >nul
-if not exist "C:\XRAY_VPN\xray.exe" (
-    echo [*] Searching for xray.exe on computer...
-    for /r "%USERPROFILE%" %%i in (xray.exe) do @if exist "%%i" copy /y "%%i" "C:\XRAY_VPN\xray.exe" >nul
-)
-if not exist "C:\XRAY_VPN\link.txt" type nul > "C:\XRAY_VPN\link.txt"
-
-:: 4. Deploy all scripts, VBS wrappers, and shortcuts via PowerShell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$d='C:/XRAY_VPN'; [System.IO.File]::WriteAllBytes('$d/Start_VPN.vbs',[Convert]::FromBase64String('U2V0IFdzaFNoZWxsID0gQ3JlYXRlT2JqZWN0KCJXU2NyaXB0LlNoZWxsIikKV3NoU2hlbGwuUnVuICJwb3dlcnNoZWxsIC1XaW5kb3dTdHlsZSBIaWRkZW4gLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtRmlsZSAiIkM6XFhSQVlfVlBOXFN0YXJ0X1ZQTi5wczEiIiIsIDAsIEZhbHNlCg==')); [System.IO.File]::WriteAllBytes('$d/Stop_VPN.vbs',[Convert]::FromBase64String('U2V0IFdzaFNoZWxsID0gQ3JlYXRlT2JqZWN0KCJXU2NyaXB0LlNoZWxsIikKV3NoU2hlbGwuUnVuICJwb3dlcnNoZWxsIC1XaW5kb3dTdHlsZSBIaWRkZW4gLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtRmlsZSAiIkM6XFhSQVlfVlBOXFN0b3BfVlBOLnBzMSIiIiwgMCwgRmFsc2UK')); if(Test-Path 'C:/Xray/Start_VPN.ps1'){(Get-Content 'C:/Xray/Start_VPN.ps1') -replace 'C:\\Xray','C:\XRAY_VPN'|Set-Content '$d/Start_VPN.ps1'}; if(Test-Path 'C:/Xray/Stop_VPN.ps1'){(Get-Content 'C:/Xray/Stop_VPN.ps1') -replace 'C:\\Xray','C:\XRAY_VPN'|Set-Content '$d/Stop_VPN.ps1'}; if(Test-Path 'C:/Xray/TrayVPN.ps1'){(Get-Content 'C:/Xray/TrayVPN.ps1') -replace 'C:\\Xray','C:\XRAY_VPN'|Set-Content '$d/TrayVPN.ps1'}; $w=New-Object -ComObject WScript.Shell; $s1=$w.CreateShortcut('$d/Start_VPN.lnk'); $s1.TargetPath='wscript.exe'; $s1.Arguments='\"C:\XRAY_VPN\Start_VPN.vbs\"'; $s1.WorkingDirectory='C:\XRAY_VPN'; $s1.IconLocation='shell32.dll,137'; $s1.Save(); $s2=$w.CreateShortcut('$d/Stop_VPN.lnk'); $s2.TargetPath='wscript.exe'; $s2.Arguments='\"C:\XRAY_VPN\Stop_VPN.vbs\"'; $s2.WorkingDirectory='C:\XRAY_VPN'; $s2.IconLocation='shell32.dll,27'; $s2.Save(); Start-Process 'explorer.exe' -ArgumentList 'C:\XRAY_VPN'; Start-Process 'notepad.exe' -ArgumentList 'C:\XRAY_VPN\link.txt'"
+:: 2. Execute PowerShell setup
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$c=[System.IO.File]::ReadAllText('%~f0'); $i=$c.IndexOf('###PS_PAYLOAD###'); if($i -ge 0){ Invoke-Expression $c.Substring($i+16) }"
 
 echo.
 echo ====================================================================
@@ -43,3 +31,49 @@ echo  The window will automatically close in 10 seconds...
 echo ====================================================================
 timeout /t 10
 exit
+
+###PS_PAYLOAD###
+# Setup script for XRAY_VPN
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$dir = 'C:\XRAY_VPN'
+if (-not (Test-Path $dir)) { [System.IO.Directory]::CreateDirectory($dir) | Out-Null }
+
+# 1. Base64 VBS wrappers
+$b1 = 'U2V0IFdzaFNoZWxsID0gQ3JlYXRlT2JqZWN0KCJXU2NyaXB0LlNoZWxsIikKV3NoU2hlbGwuUnVuICJwb3dlcnNoZWxsIC1XaW5kb3dTdHlsZSBIaWRkZW4gLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtRmlsZSAiIkM6XFhSQVlfVlBOXFN0YXJ0X1ZQTi5wczEiIiIsIDAsIEZhbHNlCg=='
+$b2 = 'U2V0IFdzaFNoZWxsID0gQ3JlYXRlT2JqZWN0KCJXU2NyaXB0LlNoZWxsIikKV3NoU2hlbGwuUnVuICJwb3dlcnNoZWxsIC1XaW5kb3dTdHlsZSBIaWRkZW4gLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtRmlsZSAiIkM6XFhSQVlfVlBOXFN0b3BfVlBOLnBzMSIiIiwgMCwgRmFsc2UK'
+[System.IO.File]::WriteAllBytes("$dir\Start_VPN.vbs", [Convert]::FromBase64String($b1))
+[System.IO.File]::WriteAllBytes("$dir\Stop_VPN.vbs", [Convert]::FromBase64String($b2))
+
+# 2. Migrate or Deploy core files
+if (Test-Path 'C:\Xray\Start_VPN.ps1') { (Get-Content 'C:\Xray\Start_VPN.ps1') -replace 'C:\\Xray', 'C:\XRAY_VPN' | Set-Content "$dir\Start_VPN.ps1" }
+if (Test-Path 'C:\Xray\Stop_VPN.ps1') { (Get-Content 'C:\Xray\Stop_VPN.ps1') -replace 'C:\\Xray', 'C:\XRAY_VPN' | Set-Content "$dir\Stop_VPN.ps1" }
+if (Test-Path 'C:\Xray\TrayVPN.ps1') { (Get-Content 'C:\Xray\TrayVPN.ps1') -replace 'C:\\Xray', 'C:\XRAY_VPN' | Set-Content "$dir\TrayVPN.ps1" }
+if (Test-Path 'C:\Xray\xray.exe') { Copy-Item 'C:\Xray\xray.exe' $dir -Force }
+if (Test-Path 'C:\Xray\link.txt') { Copy-Item 'C:\Xray\link.txt' $dir -Force }
+if (-not (Test-Path "$dir\link.txt")) { [System.IO.File]::WriteAllText("$dir\link.txt", '', [System.Text.Encoding]::UTF8) }
+
+# Search for xray.exe if still missing
+if (-not (Test-Path "$dir\xray.exe")) {
+    $f = Get-ChildItem -Path $env:USERPROFILE -Filter 'xray.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($f) { Copy-Item $f.FullName "$dir\xray.exe" -Force }
+}
+
+# 3. Create Shortcuts
+$w = New-Object -ComObject WScript.Shell
+$s1 = $w.CreateShortcut("$dir\Start_VPN.lnk")
+$s1.TargetPath = 'wscript.exe'
+$s1.Arguments = '"C:\XRAY_VPN\Start_VPN.vbs"'
+$s1.WorkingDirectory = $dir
+$s1.IconLocation = 'shell32.dll,137'
+$s1.Save()
+
+$s2 = $w.CreateShortcut("$dir\Stop_VPN.lnk")
+$s2.TargetPath = 'wscript.exe'
+$s2.Arguments = '"C:\XRAY_VPN\Stop_VPN.vbs"'
+$s2.WorkingDirectory = $dir
+$s2.IconLocation = 'shell32.dll,27'
+$s2.Save()
+
+Start-Process 'explorer.exe' -ArgumentList $dir
+Start-Process 'notepad.exe' -ArgumentList "$dir\link.txt"
+Write-Host "[OK] Installation completed successfully!" -ForegroundColor Green
