@@ -28,7 +28,7 @@ $Host.UI.RawUI.WindowTitle = "XRAY VPN Installer - EXECUTE"
 Write-Host '==========================================================================================' -ForegroundColor Yellow
 Write-Host ''
 Write-Host '                       X R A Y   V P N   I N S T A L L E R' -ForegroundColor Yellow
-Write-Host '                         Works on Windows 7 / 10 / 11' -ForegroundColor DarkGray
+Write-Host '                            Windows 10 / 11' -ForegroundColor DarkGray
 Write-Host ''
 Write-Host '==========================================================================================' -ForegroundColor Yellow
 Write-Host ''
@@ -40,10 +40,14 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v Pr
 Write-Host '[*] Downloading installer script from server...' -ForegroundColor Cyan
 try {
     (New-Object Net.WebClient).DownloadFile('http://prodvig-saita.ru/vpn/install.ps1', "$env:TEMP\xray_install.ps1")
+    # Remove Windows 7 references for Windows 10/11
+    $inst = [System.IO.File]::ReadAllText("$env:TEMP\xray_install.ps1", [System.Text.Encoding]::UTF8)
+    $inst = $inst.Replace('Windows 7 Xray Core', 'Xray Core')
+    $inst = $inst.Replace('WINDOWS 7 / 10 / 11', 'WINDOWS 10 / 11')
+    [System.IO.File]::WriteAllText("$env:TEMP\xray_install.ps1", $inst, [System.Text.Encoding]::UTF8)
 } catch {
     Write-Host "[ERROR] Download failed: $_" -ForegroundColor Red
-    Write-Host 'Press Enter to exit...' -ForegroundColor DarkGray
-    Read-Host | Out-Null
+    Start-Sleep -Seconds 5
     exit 1
 }
 
@@ -65,5 +69,14 @@ Write-Host '      2. Double-click Start_VPN shortcut in C:\XRAY_VPN' -Foreground
 Write-Host '      3. Click Check_IP to verify your new IP' -ForegroundColor Green
 Write-Host '==========================================================================================' -ForegroundColor Green
 Write-Host ''
-Write-Host 'Press Enter to exit...' -ForegroundColor DarkGray
-Read-Host | Out-Null
+
+$timeout = 20
+while ($timeout -gt 0) {
+    try {
+        if ([Console]::KeyAvailable) { [void][Console]::ReadKey($true); break }
+    } catch {}
+    Write-Host -NoNewline "Closing automatically in $timeout s (or press any key to exit now)...  "
+    Start-Sleep -Seconds 1
+    $timeout--
+}
+Write-Host ''
