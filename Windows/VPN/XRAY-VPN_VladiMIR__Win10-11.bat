@@ -2,88 +2,71 @@
 chcp 65001 >nul
 cls
 
-:: Auto-Elevate (fltmc - reliable Win10+11)
 fltmc >nul 2>&1
 if errorlevel 1 (
-    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"'+'%~f0'+'\"\"' -Verb RunAs"
     exit /b
 )
-
 cd /d "%~dp0"
-title XRAY VPN Installer - LOADING...
-for /L %%i in (1,1,4) do echo.
-powershell -Command "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; Write-Host ' ░▒▓█░▒▓█░▒▓█  P O W E R S H E L L   S T A R T I N G  █▓▒░█▓▒░█▓▒░' -ForegroundColor DarkGray"
-for /L %%i in (1,1,3) do echo.
-
-:: Run embedded PowerShell section
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; $s=[System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); Invoke-Expression $s.Substring($s.IndexOf('#'+'#PS_MAIN'))"
+title XRAY VPN Installer
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; $s=[System.IO.File]::ReadAllText('%~f0',[System.Text.Encoding]::UTF8); Invoke-Expression $s.Substring($s.IndexOf('#'+'#PS_MAIN'))"
 exit /b
 
 ##PS_MAIN
 clear
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$Host.UI.RawUI.WindowTitle = "XRAY VPN Installer - EXECUTE"
-
+[Console]::OutputEncoding=[System.Text.Encoding]::UTF8
+$Host.UI.RawUI.WindowTitle='XRAY VPN Installer - Win10/11'
 Write-Host '==========================================================================================' -ForegroundColor Yellow
-Write-Host '  ░▒▓█  X R A Y   V P N   I N S T A L L E R   -   Windows 10 / 11  ░▒▓█' -ForegroundColor Yellow
+Write-Host '  ░▒▓█  X R A Y   V P N   I N S T A L L E R  -  Windows 10 / 11  █▓▒░' -ForegroundColor Yellow
 Write-Host '  github.com/GinCz/Windows_scripts  |  Windows/VPN/' -ForegroundColor DarkGray
 Write-Host '==========================================================================================' -ForegroundColor Yellow
 Write-Host ''
-Write-Host '[*] Resetting proxy settings...' -ForegroundColor Cyan
+Write-Host '[*] Resetting proxy...' -ForegroundColor Cyan
 & netsh winhttp reset proxy | Out-Null
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f | Out-Null
 Write-Host '[+] Proxy cleared.' -ForegroundColor Green
-Write-Host '[*] Downloading VPN installer from server...' -ForegroundColor Cyan
+Write-Host '[*] Installing VPN core...' -ForegroundColor Cyan
 try {
-    (New-Object Net.WebClient).DownloadFile('http://prodvig-saita.ru/vpn/install.ps1', "$env:TEMP\xray_install.ps1")
-    Write-Host '[+] Downloaded.' -ForegroundColor Green
-} catch {
-    Write-Host "[ERROR] Download failed: $_" -ForegroundColor Red
-    Read-Host "Press Enter to exit"
-    exit 1
-}
-Write-Host '[*] Running VPN installer...' -ForegroundColor Cyan
-& "$env:TEMP\xray_install.ps1"
-Remove-Item "$env:TEMP\xray_install.ps1" -Force -ErrorAction SilentlyContinue
+    (New-Object Net.WebClient).DownloadFile('http://prodvig-saita.ru/vpn/install.ps1',"$env:TEMP\xray_install.ps1")
+    & "$env:TEMP\xray_install.ps1"
+    Remove-Item "$env:TEMP\xray_install.ps1" -Force -ErrorAction SilentlyContinue
+    Write-Host '[+] VPN installed.' -ForegroundColor Green
+} catch { Write-Host "[ERROR] $_" -ForegroundColor Red; Read-Host 'Press Enter'; exit 1 }
+
+Write-Host '[*] Patching tray tooltip (adding IP + username)...' -ForegroundColor Cyan
+$tray = "C:\XRAY_VPN\TrayVPN.ps1"
+if (Test-Path $tray) {
+    $content = Get-Content $tray -Raw
+    if ($content -notmatch "_ipt") {
+        $oip = try { (New-Object Net.WebClient).DownloadString("http://api.ipify.org").Trim() } catch { "Unknown" }
+        $usr = $env:USERNAME
+        $niVar = if ($content -match "(\`$\w+)\s*=\s*New-Object System\.Windows\.Forms\.NotifyIcon") { $matches[1] } else { "`$notifyIcon" }
+        $runLine = "[System.Windows.Forms.Application]::Run()"
+        if ($content.Contains($runLine)) {
+            $patch = "`r`n# IP Tooltip Patch`r`n`$_oip='$oip'; `$_usr='$usr'`r`n`$_ipt=New-Object System.Windows.Forms.Timer; `$_ipt.Interval=5000`r`n`$_ipt.add_Tick({`r`n  `$on=`$null -ne (Get-Process -Name xray,v2ray,wintun -EA SilentlyContinue)`r`n  if(`$on){`$ip=try{(New-Object Net.WebClient).DownloadString('http://api.ipify.org').Trim()}catch{'?'};`$t=`"Xray VPN: Connected | VPN: `$ip | Orig: `$_oip | `$_usr`"}`r`n  else{`$t=`"Xray VPN: Off | Orig: `$_oip | `$_usr`"}`r`n  if(`$t.Length -gt 63){`$t=`$t.Substring(0,60)+'...'}; $niVar.Text=`$t`r`n})`r`n`$_ipt.Start()`r`n"
+            Set-Content $tray ($content.Replace($runLine, $patch + $runLine)) -Encoding UTF8 -Force
+            Write-Host "[+] TrayVPN.ps1 patched!" -ForegroundColor Green
+        }
+    } else { Write-Host "[i] Already patched, skipping." -ForegroundColor DarkGray }
+    # Перезапуск трея
+    Get-Process powershell -EA SilentlyContinue | ForEach-Object {
+        try { $c=(Get-WmiObject Win32_Process -Filter "ProcessId=$($_.Id)").CommandLine; if($c -match "TrayVPN"){Stop-Process -Id $_.Id -Force -EA SilentlyContinue} } catch {} }
+    Start-Sleep 1
+    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$tray`"" -WindowStyle Hidden
+    Write-Host "[+] Tray restarted with IP tooltip!" -ForegroundColor Green
+    # Ярлык автозапуска
+    $sd = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+    if(-not(Test-Path $sd)){New-Item -Path $sd -ItemType Directory -Force|Out-Null}
+    $wsh=New-Object -ComObject WScript.Shell; $lnk=$wsh.CreateShortcut("$sd\XrayVPN_Tray.lnk"); $lnk.TargetPath="powershell.exe"; $lnk.Arguments="-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$tray`""; $lnk.WorkingDirectory="C:\XRAY_VPN"; $lnk.Save()
+    Write-Host "[+] Autostart: $sd\XrayVPN_Tray.lnk" -ForegroundColor Green
+} else { Write-Host "[!] TrayVPN.ps1 not found - install may have failed" -ForegroundColor Yellow }
 
 Write-Host ''
-Write-Host '[*] Downloading tray IP-tooltip helper from GitHub...' -ForegroundColor Cyan
-$trayPs1 = "C:\XRAY_VPN\TrayVPN.ps1"
-$githubRaw = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/VPN/tray_tooltip_helper.ps1"
-try {
-    [Net.ServicePointManager]::SecurityProtocol = [Enum]::ToObject([Net.SecurityProtocolType], 3072)
-    (New-Object Net.WebClient).DownloadFile($githubRaw, $trayPs1)
-    Write-Host "[+] Tray helper updated: $trayPs1" -ForegroundColor Green
-} catch {
-    Write-Host "[!] GitHub download failed: $_" -ForegroundColor Yellow
-}
-if (Test-Path $trayPs1) {
-    Write-Host '[*] Restarting tray with tooltip version...' -ForegroundColor Cyan
-    Get-Process powershell -ErrorAction SilentlyContinue | Where-Object {$_.MainWindowTitle -eq ""} | Stop-Process -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1
-    Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$trayPs1`"" -WindowStyle Hidden
-    Write-Host '[+] Tray restarted with IP tooltip!' -ForegroundColor Green
-}
-Write-Host '[*] Creating autostart shortcut...' -ForegroundColor Cyan
-$wsh = New-Object -ComObject WScript.Shell
-$startupDir = $wsh.SpecialFolders("AllUsersStartup")
-$lnk = $wsh.CreateShortcut("$startupDir\XrayVPN_Tray.lnk")
-$lnk.TargetPath = "powershell.exe"
-$lnk.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$trayPs1`""
-$lnk.WorkingDirectory = "C:\XRAY_VPN"
-$lnk.Description = "Xray VPN Tray | github.com/GinCz/Windows_scripts"
-$lnk.Save()
-Write-Host '[+] Autostart shortcut created.' -ForegroundColor Green
-Write-Host ''
 Write-Host '==========================================================================================' -ForegroundColor Green
-Write-Host ' [OK] Done! (Windows 10/11 edition)' -ForegroundColor Green
-Write-Host ''
-Write-Host '  Hover over tray icon:   VPN IP / Original IP / Username' -ForegroundColor Green
-Write-Host '  Double-click tray icon: Balloon with full IP info' -ForegroundColor Green
+Write-Host ' [OK] Done! Tray icon is now in system tray.' -ForegroundColor Green
+Write-Host '  Hover over icon:  VPN IP / Original IP / Username' -ForegroundColor Green
 Write-Host '  GREEN=Connected  ORANGE=Connecting  GREY=Off  RED=Error' -ForegroundColor Green
-Write-Host ''
-Write-Host '  Next:  VLESS key -> C:\XRAY_VPN\link.txt -> Save -> Start_VPN' -ForegroundColor Green
-Write-Host '  GitHub: https://github.com/GinCz/Windows_scripts/tree/main/Windows/VPN' -ForegroundColor DarkGray
+Write-Host '  Next: paste VLESS key into C:\XRAY_VPN\link.txt -> Start_VPN' -ForegroundColor Green
 Write-Host '==========================================================================================' -ForegroundColor Green
 Write-Host ''
-Read-Host "Press Enter to exit"
+Read-Host 'Press Enter to close'
