@@ -1,32 +1,337 @@
 ﻿@echo off
 chcp 65001 >nul
 cls
-echo ====================================================================
-echo        XRAY_VPN AUTOMATED INSTALLER FOR WINDOWS 7
-echo ====================================================================
-echo.
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [*] Requesting Administrator privileges...
-    powershell -NoProfile -Command "Start-Process -FilePath cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs -Wait"
+
+:: Auto-Elevate to Administrator (fltmc method - reliable Win7+10+11)
+fltmc >nul 2>&1
+if errorlevel 1 (
+    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
-echo [+] Running with Administrator privileges!
-netsh winhttp reset proxy >nul 2>&1
-reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f >nul 2>&1
-powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ((New-Object Net.WebClient).DownloadString('http://prodvig-saita.ru/vpn/install.ps1'))"
 
-:: Save original external IP before VPN connects
-powershell -NoProfile -ExecutionPolicy Bypass -Command "try { (New-Object Net.WebClient).DownloadString('http://api.ipify.org').Trim() | Out-File 'C:\XRAY_VPN\orig_ip.txt' -Encoding ASCII } catch {}"
+cd /d "%~dp0"
+title XRAY VPN Installer - LOADING...
 
-:: Deploy enhanced TrayVPN with bright green shield icon + IP tooltip
-powershell -NoProfile -ExecutionPolicy Bypass -Command "[System.IO.File]::WriteAllBytes('C:\XRAY_VPN\TrayVPN.ps1', [Convert]::FromBase64String('77u/W3ZvaWRdW1N5c3RlbS5SZWZsZWN0aW9uLkFzc2VtYmx5XTo6TG9hZFdpdGhQYXJ0aWFsTmFtZSgiU3lzdGVtLldpbmRvd3MuRm9ybXMiKQpbdm9pZF1bU3lzdGVtLlJlZmxlY3Rpb24uQXNzZW1ibHldOjpMb2FkV2l0aFBhcnRpYWxOYW1lKCJTeXN0ZW0uRHJhd2luZyIpCgojIENyZWF0ZSBjcmlzcCBncmVlbiBzaGllbGQgaWNvbiB3aXRoIGJsYWNrIG91dGxpbmUKZnVuY3Rpb24gR2V0LVNoaWVsZEljb24gewogICAgJGdyaWQgPSBAKAogICAgICAgICIuLi4uLi4uLi4uLi4uLi4uIiwKICAgICAgICAiLi4jIyMjIyMjIyMjIyMuLiIsCiAgICAgICAgIi4jSEhISEhISEhISEhIIy4iLAogICAgICAgICIuI0hHR0dHR0dHR0dHSCMuIiwKICAgICAgICAiLiNIR0dHR0dHR0dHR0gjLiIsCiAgICAgICAgIi4jSEdHR0dHR0dHR0dIIy4iLAogICAgICAgICIuI0hHR0dHR0dHR0dHSCMuIiwKICAgICAgICAiLiNIR0dHR0dHR0dHR0gjLiIsCiAgICAgICAgIi4uI0hHR0dHR0dHR0gjLi4iLAogICAgICAgICIuLiNIR0dHR0dHR0dIIy4uIiwKICAgICAgICAiLi4uI0hHR0dHR0dIIy4uLiIsCiAgICAgICAgIi4uLiNIR0dHR0dHSCMuLi4iLAogICAgICAgICIuLi4uI0hHR0dHSCMuLi4uIiwKICAgICAgICAiLi4uLi4jSEdHSCMuLi4uLiIsCiAgICAgICAgIi4uLi4uLiNISCMuLi4uLi4iLAogICAgICAgICIuLi4uLi4uIyMuLi4uLi4uIgogICAgKQogICAgJGJtcCA9IE5ldy1PYmplY3QgU3lzdGVtLkRyYXdpbmcuQml0bWFwIDE2LCAxNiwgKFtTeXN0ZW0uRHJhd2luZy5JbWFnaW5nLlBpeGVsRm9ybWF0XTo6Rm9ybWF0MzJicHBBcmdiKQogICAgJFQgPSBbU3lzdGVtLkRyYXdpbmcuQ29sb3JdOjpUcmFuc3BhcmVudAogICAgJEIgPSBbU3lzdGVtLkRyYXdpbmcuQ29sb3JdOjpGcm9tQXJnYigyNTUsIDEyLCAyOCwgMTIpCiAgICAkSCA9IFtTeXN0ZW0uRHJhd2luZy5Db2xvcl06OkZyb21BcmdiKDI1NSwgNjUsIDI0NSwgOTUpCiAgICAkRyA9IFtTeXN0ZW0uRHJhd2luZy5Db2xvcl06OkZyb21BcmdiKDI1NSwgMCwgMjA1LCA1MCkKICAgIGZvciAoJHkgPSAwOyAkeSAtbHQgMTY7ICR5KyspIHsKICAgICAgICAkcm93ID0gJGdyaWRbJHldCiAgICAgICAgZm9yICgkeCA9IDA7ICR4IC1sdCAxNjsgJHgrKykgewogICAgICAgICAgICAkYyA9IHN3aXRjaCAoJHJvd1skeF0pIHsKICAgICAgICAgICAgICAgICcjJyB7ICRCIH0KICAgICAgICAgICAgICAgICdIJyB7ICRIIH0KICAgICAgICAgICAgICAgICdHJyB7ICRHIH0KICAgICAgICAgICAgICAgIGRlZmF1bHQgeyAkVCB9CiAgICAgICAgICAgIH0KICAgICAgICAgICAgaWYgKCRjIC1uZSAkVCkgeyAkYm1wLlNldFBpeGVsKCR4LCAkeSwgJGMpIH0KICAgICAgICB9CiAgICB9CiAgICByZXR1cm4gW1N5c3RlbS5EcmF3aW5nLkljb25dOjpGcm9tSGFuZGxlKCRibXAuR2V0SGljb24oKSkKfQoKJG5vdGlmeSA9IE5ldy1PYmplY3QgU3lzdGVtLldpbmRvd3MuRm9ybXMuTm90aWZ5SWNvbgokbm90aWZ5Lkljb24gPSBHZXQtU2hpZWxkSWNvbgokbm90aWZ5LlZpc2libGUgPSAkdHJ1ZQoKIyBJUCBhbmQgVXNlcm5hbWUgVG9vbHRpcAokb3JpZ0lwID0gIlVua25vd24iCmlmIChUZXN0LVBhdGggIkM6XFhSQVlfVlBOXG9yaWdfaXAudHh0IikgewogICAgdHJ5IHsgJG9yaWdJcCA9IFtTeXN0ZW0uSU8uRmlsZV06OlJlYWRBbGxUZXh0KCJDOlxYUkFZX1ZQTlxvcmlnX2lwLnR4dCIpLlRyaW0oKSB9IGNhdGNoIHt9Cn0KJHVzZXIgPSAkZW52OlVTRVJOQU1FCiRub3RpZnkuVGV4dCA9ICJWUE46IENvbm5lY3RlZGBuT3JpZzogJG9yaWdJcGBuVXNlcjogJHVzZXIiCgokaXBUaW1lciA9IE5ldy1PYmplY3QgU3lzdGVtLldpbmRvd3MuRm9ybXMuVGltZXIKJGlwVGltZXIuSW50ZXJ2YWwgPSAxMDAwCiRpcFRpbWVyLmFkZF9UaWNrKHsKICAgICR2cG5JcCA9IHRyeSB7IChOZXctT2JqZWN0IE5ldC5XZWJDbGllbnQpLkRvd25sb2FkU3RyaW5nKCJodHRwOi8vYXBpLmlwaWZ5Lm9yZyIpLlRyaW0oKSB9IGNhdGNoIHsgIiIgfQogICAgaWYgKCR2cG5JcCkgewogICAgICAgICRpcFRpbWVyLkludGVydmFsID0gMzAwMDAKICAgICAgICAkc3RyID0gIlZQTjogJHZwbklwYG5PcmlnOiAkb3JpZ0lwYG5Vc2VyOiAkdXNlciIKICAgICAgICBpZiAoJHN0ci5MZW5ndGggLWd0IDYzKSB7ICRzdHIgPSAkc3RyLlN1YnN0cmluZygwLCA2MCkgKyAiLi4uIiB9CiAgICAgICAgJG5vdGlmeS5UZXh0ID0gJHN0cgogICAgfQp9KQokaXBUaW1lci5TdGFydCgpCgokbWVudSA9IE5ldy1PYmplY3QgU3lzdGVtLldpbmRvd3MuRm9ybXMuQ29udGV4dE1lbnUKJGl0ZW1TdGF0dXMgPSBOZXctT2JqZWN0IFN5c3RlbS5XaW5kb3dzLkZvcm1zLk1lbnVJdGVtICJYcmF5IFZQTjogQ29ubmVjdGVkIgokaXRlbVN0YXR1cy5FbmFibGVkID0gJGZhbHNlCiRpdGVtU2VwID0gTmV3LU9iamVjdCBTeXN0ZW0uV2luZG93cy5Gb3Jtcy5NZW51SXRlbSAiLSIKJGl0ZW1TdG9wID0gTmV3LU9iamVjdCBTeXN0ZW0uV2luZG93cy5Gb3Jtcy5NZW51SXRlbSAiRGlzY29ubmVjdCAmJiBFeGl0IgoKJGl0ZW1TdG9wLmFkZF9DbGljayh7CiAgICAkbm90aWZ5LlZpc2libGUgPSAkZmFsc2UKICAgICRub3RpZnkuRGlzcG9zZSgpCiAgICBTdGFydC1Qcm9jZXNzICJ3c2NyaXB0LmV4ZSIgLUFyZ3VtZW50TGlzdCAnIkM6XFhSQVlfVlBOXFN0b3BfVlBOLnZicyInIC1XaW5kb3dTdHlsZSBIaWRkZW4KICAgIFtTeXN0ZW0uV2luZG93cy5Gb3Jtcy5BcHBsaWNhdGlvbl06OkV4aXQoKQp9KQoKW3ZvaWRdJG1lbnUuTWVudUl0ZW1zLkFkZCgkaXRlbVN0YXR1cykKW3ZvaWRdJG1lbnUuTWVudUl0ZW1zLkFkZCgkaXRlbVNlcCkKW3ZvaWRdJG1lbnUuTWVudUl0ZW1zLkFkZCgkaXRlbVN0b3ApCiRub3RpZnkuQ29udGV4dE1lbnUgPSAkbWVudQoKIyBXYXRjaGRvZzogaWYgeHJheS5leGUgZGllcywgY2xvc2UgdHJheSB0b28KJHRpbWVyID0gTmV3LU9iamVjdCBTeXN0ZW0uV2luZG93cy5Gb3Jtcy5UaW1lcgokdGltZXIuSW50ZXJ2YWwgPSAyMDAwCiR0aW1lci5hZGRfVGljayh7CiAgICAkcHJvYyA9IEdldC1Qcm9jZXNzIHhyYXkgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUKICAgIGlmICgtbm90ICRwcm9jKSB7CiAgICAgICAgJHRpbWVyLlN0b3AoKQogICAgICAgICRub3RpZnkuVmlzaWJsZSA9ICRmYWxzZQogICAgICAgICRub3RpZnkuRGlzcG9zZSgpCiAgICAgICAgW1N5c3RlbS5XaW5kb3dzLkZvcm1zLkFwcGxpY2F0aW9uXTo6RXhpdCgpCiAgICB9Cn0pCiR0aW1lci5TdGFydCgpCgokbm90aWZ5LlNob3dCYWxsb29uVGlwKDMwMDAsICJYcmF5IFZQTiIsICJDb25uZWN0ZWQhIFNoaWVsZCBhY3RpdmUgaW4gdHJheS4iLCBbU3lzdGVtLldpbmRvd3MuRm9ybXMuVG9vbFRpcEljb25dOjpJbmZvKQpbU3lzdGVtLldpbmRvd3MuRm9ybXMuQXBwbGljYXRpb25dOjpSdW4oKQ=='))"
+for /L %%i in (1,1,4) do echo.
+powershell -Command "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8; Write-Host ' [POWERSHELL STARTING...]' -ForegroundColor DarkGray"
+for /L %%i in (1,1,3) do echo.
 
-echo.
-echo ====================================================================
-echo  [OK] Installation complete!
-echo  Paste your VLESS key into Notepad (link.txt) and Save (Ctrl+S).
-echo  Then run Start_VPN.
-echo ====================================================================
-echo.
-timeout /t 20
+:: Extract and run the embedded PowerShell section from this file
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ProgressPreference='SilentlyContinue'; $s=[System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); Invoke-Expression $s.Substring($s.IndexOf('#'+'#PS_MAIN'))"
+exit /b
+
+##PS_MAIN
+clear
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$Host.UI.RawUI.WindowTitle = "XRAY VPN Installer - EXECUTE"
+
+Write-Host '==========================================================================================' -ForegroundColor Yellow
+Write-Host ''
+Write-Host '                       X R A Y   V P N   I N S T A L L E R' -ForegroundColor Yellow
+Write-Host '                            Windows 7' -ForegroundColor DarkGray
+Write-Host ''
+Write-Host '==========================================================================================' -ForegroundColor Yellow
+Write-Host ''
+
+Write-Host '[*] Resetting proxy settings...' -ForegroundColor Cyan
+& netsh winhttp reset proxy | Out-Null
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f | Out-Null
+
+Write-Host '[*] Downloading installer script from server...' -ForegroundColor Cyan
+try {
+    (New-Object Net.WebClient).DownloadFile('http://prodvig-saita.ru/vpn/install.ps1', "$env:TEMP\xray_install.ps1")
+} catch {
+    Write-Host "[ERROR] Download failed: $_" -ForegroundColor Red
+    Start-Sleep -Seconds 5
+    exit 1
+}
+
+Write-Host '[*] Running installer...' -ForegroundColor Cyan
+& "$env:TEMP\xray_install.ps1"
+Remove-Item "$env:TEMP\xray_install.ps1" -Force -ErrorAction SilentlyContinue
+
+# Save original external IP and Country before VPN connects
+try {
+    $rawOrig = (New-Object Net.WebClient).DownloadString('http://ip-api.com/line/?fields=query,country,countryCode').Trim()
+    $origLines = $rawOrig -split "?
+"
+    if ($origLines.Length -ge 3) {
+        [System.IO.File]::WriteAllLines("C:\XRAY_VPN\orig_ip.txt", @($origLines[0].Trim(), $origLines[1].Trim(), $origLines[2].Trim()), [System.Text.Encoding]::UTF8)
+    }
+} catch {}
+
+# Deploy enhanced TrayVPN with dynamic shield icons (Green/Orange/Red), country in tooltip, and error handling
+$trayScript = @'
+[void][System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
+[void][System.Reflection.Assembly]::LoadWithPartialName("System.Drawing")
+
+$baseDir = "C:\XRAY_VPN"
+$linkFile = "$baseDir\link.txt"
+$origIpFile = "$baseDir\orig_ip.txt"
+$errorFile = "$baseDir\error.txt"
+$logFile = "$baseDir\vpn.log"
+
+# Parse Profile Name (#server-user) from link.txt
+$profileName = ""
+if (Test-Path $linkFile) {
+    try {
+        $linkContent = [System.IO.File]::ReadAllText($linkFile, [System.Text.Encoding]::UTF8).Trim()
+        if ($linkContent -match "#(.*)$") {
+            $profileName = [System.Uri]::UnescapeDataString($matches[1].Trim())
+        }
+    } catch {}
+}
+if (-not $profileName) { $profileName = $env:USERNAME }
+
+# Read Original IP and Country
+$origIp = "Unknown"
+$origCountry = ""
+$origCode = ""
+if (Test-Path $origIpFile) {
+    try {
+        $origLines = [System.IO.File]::ReadAllLines($origIpFile, [System.Text.Encoding]::UTF8)
+        if ($origLines.Length -ge 1) { $origIp = $origLines[0].Trim() }
+        if ($origLines.Length -ge 2) { $origCountry = $origLines[1].Trim() }
+        if ($origLines.Length -ge 3) { $origCode = $origLines[2].Trim() }
+    } catch {}
+}
+
+# Icon generator: Green, Orange, Red shield with thin black outline
+function Get-ShieldIcon([string]$colorName) {
+    $grid = @(
+        "................",
+        "..############..",
+        ".#HHHHHHHHHHHH#.",
+        ".#HGGGGGGGGGGH#.",
+        ".#HGGGGGGGGGGH#.",
+        ".#HGGGGGGGGGGH#.",
+        ".#HGGGGGGGGGGH#.",
+        ".#HGGGGGGGGGGH#.",
+        "..#HGGGGGGGGH#..",
+        "..#HGGGGGGGGH#..",
+        "...#HGGGGGGH#...",
+        "...#HGGGGGGH#...",
+        "....#HGGGGH#....",
+        ".....#HGGH#.....",
+        "......#HH#......",
+        ".......##......."
+    )
+    $bmp = New-Object System.Drawing.Bitmap 16, 16, ([System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+    $T = [System.Drawing.Color]::Transparent
+    $B = [System.Drawing.Color]::FromArgb(255, 12, 28, 12)
+    
+    $mainColor = switch ($colorName) {
+        "Green"  { [System.Drawing.Color]::FromArgb(255, 0, 205, 50) }
+        "Red"    { [System.Drawing.Color]::FromArgb(255, 225, 25, 25) }
+        default  { [System.Drawing.Color]::FromArgb(255, 240, 150, 0) } # Orange
+    }
+    $highColor = switch ($colorName) {
+        "Green"  { [System.Drawing.Color]::FromArgb(255, 65, 245, 95) }
+        "Red"    { [System.Drawing.Color]::FromArgb(255, 255, 95, 95) }
+        default  { [System.Drawing.Color]::FromArgb(255, 255, 205, 60) }
+    }
+    
+    for ($y = 0; $y -lt 16; $y++) {
+        $row = $grid[$y]
+        for ($x = 0; $x -lt 16; $x++) {
+            $c = switch ($row[$x]) {
+                '#' { $B }
+                'H' { $highColor }
+                'G' { $mainColor }
+                default { $T }
+            }
+            if ($c -ne $T) { $bmp.SetPixel($x, $y, $c) }
+        }
+    }
+    return [System.Drawing.Icon]::FromHandle($bmp.GetHicon())
+}
+
+$iconGreen  = Get-ShieldIcon "Green"
+$iconOrange = Get-ShieldIcon "Orange"
+$iconRed    = Get-ShieldIcon "Red"
+
+$notify = New-Object System.Windows.Forms.NotifyIcon
+$notify.Icon = $iconOrange
+$notify.Visible = $true
+
+# Initial Tooltip
+$notify.Text = "Xray VPN: Connecting...`n$profileName"
+
+# Context Menu
+$menu = New-Object System.Windows.Forms.ContextMenu
+$mStatus = New-Object System.Windows.Forms.MenuItem "Xray VPN: Connecting..."
+$mStatus.Enabled = $false
+$mProfile = New-Object System.Windows.Forms.MenuItem "ID: $profileName"
+$mProfile.Enabled = $false
+$mSep1 = New-Object System.Windows.Forms.MenuItem "-"
+$mEditLink = New-Object System.Windows.Forms.MenuItem "Edit VLESS Key (link.txt)"
+$mEditLink.add_Click({ Start-Process "notepad.exe" -ArgumentList "`"$linkFile`"" })
+$mViewLog = New-Object System.Windows.Forms.MenuItem "View Log (vpn.log)"
+$mViewLog.add_Click({ if (Test-Path $logFile) { Start-Process "notepad.exe" -ArgumentList "`"$logFile`"" } })
+$mRestart = New-Object System.Windows.Forms.MenuItem "Restart VPN"
+$mRestart.add_Click({ Start-Process "wscript.exe" -ArgumentList "`"$baseDir\Start_VPN.vbs`"" -WindowStyle Hidden })
+$mSep2 = New-Object System.Windows.Forms.MenuItem "-"
+$mStop = New-Object System.Windows.Forms.MenuItem "Disconnect && Exit"
+$mStop.add_Click({
+    $notify.Visible = $false
+    $notify.Dispose()
+    Start-Process "wscript.exe" -ArgumentList "`"$baseDir\Stop_VPN.vbs`"" -WindowStyle Hidden
+    [System.Windows.Forms.Application]::Exit()
+})
+
+[void]$menu.MenuItems.Add($mStatus)
+[void]$menu.MenuItems.Add($mProfile)
+[void]$menu.MenuItems.Add($mSep1)
+[void]$menu.MenuItems.Add($mEditLink)
+[void]$menu.MenuItems.Add($mViewLog)
+[void]$menu.MenuItems.Add($mRestart)
+[void]$menu.MenuItems.Add($mSep2)
+[void]$menu.MenuItems.Add($mStop)
+$notify.ContextMenu = $menu
+
+# State tracker
+$script:lastState = "Connecting"
+$script:vpnIp = ""
+$script:vpnCountry = ""
+$script:vpnCode = ""
+
+function Set-SafeTooltip([string]$line1, [string]$line2, [string]$line3) {
+    $t = "$line1`n$line2`n$line3"
+    if ($t.Length -gt 63) {
+        $t = $t.Substring(0, 60) + "..."
+    }
+    $notify.Text = $t
+}
+
+# Double-click balloon with full details
+$notify.add_DoubleClick({
+    if ($script:lastState -eq "Connected") {
+        $msg = "VPN IP: $script:vpnIp ($script:vpnCountry)`nOriginal: $origIp ($origCountry)`nProfile: $profileName"
+        $notify.ShowBalloonTip(4000, "Xray VPN - Connected", $msg, [System.Windows.Forms.ToolTipIcon]::Info)
+    } elseif ($script:lastState -eq "Error") {
+        $errMsg = "Connection failed. Please check your VLESS key in link.txt or network."
+        if (Test-Path $errorFile) {
+            try { $errMsg = [System.IO.File]::ReadAllText($errorFile).Trim() } catch {}
+        }
+        $notify.ShowBalloonTip(5000, "Xray VPN - Error", $errMsg, [System.Windows.Forms.ToolTipIcon]::Error)
+    } else {
+        $notify.ShowBalloonTip(3000, "Xray VPN", "Connecting to $profileName...", [System.Windows.Forms.ToolTipIcon]::Warning)
+    }
+})
+
+# Connection & IP resolution timer
+$ipTimer = New-Object System.Windows.Forms.Timer
+$ipTimer.Interval = 1500
+$script:checkAttempts = 0
+
+$ipTimer.add_Tick({
+    # Check if explicit error file exists
+    if (Test-Path $errorFile) {
+        $errMsg = "Error in link.txt"
+        try { $errMsg = [System.IO.File]::ReadAllText($errorFile).Trim() } catch {}
+        $notify.Icon = $iconRed
+        $mStatus.Text = "Status: Error"
+        Set-SafeTooltip "VPN: Error" $errMsg $profileName
+        if ($script:lastState -ne "Error") {
+            $script:lastState = "Error"
+            $notify.ShowBalloonTip(5000, "Xray VPN: Error", $errMsg, [System.Windows.Forms.ToolTipIcon]::Error)
+        }
+        return
+    }
+
+    # Check if xray process is alive
+    $proc = Get-Process xray -ErrorAction SilentlyContinue
+    if (-not $proc) {
+        $script:checkAttempts++
+        if ($script:checkAttempts -ge 4) {
+            $notify.Icon = $iconRed
+            $mStatus.Text = "Status: Disconnected"
+            Set-SafeTooltip "VPN: Disconnected" "Xray process not running" $profileName
+            if ($script:lastState -ne "Error") {
+                $script:lastState = "Error"
+                $notify.ShowBalloonTip(5000, "Xray VPN: Stopped", "Xray process stopped. Right-click to view log or restart.", [System.Windows.Forms.ToolTipIcon]::Error)
+            }
+        }
+        return
+    }
+
+    # Query IP through proxy
+    try {
+        $wc = New-Object Net.WebClient
+        $wc.Headers.Add("User-Agent", "Mozilla/5.0")
+        $raw = $wc.DownloadString("http://ip-api.com/line/?fields=country,countryCode,query").Trim()
+        $lines = $raw -split "`r?`n"
+        if ($lines.Length -ge 3 -and $lines[2].Trim()) {
+            $script:vpnCountry = $lines[0].Trim()
+            $script:vpnCode    = $lines[1].Trim()
+            $script:vpnIp      = $lines[2].Trim()
+            
+            # Switch to Green Shield
+            $notify.Icon = $iconGreen
+            $mStatus.Text = "VPN: $script:vpnIp ($script:vpnCountry)"
+            $ipTimer.Interval = 30000 # Check every 30s once connected
+            
+            # Format tooltip safely within 63 characters
+            $origTag = if ($origCode) { "$origIp ($origCode)" } elseif ($origCountry) { "$origIp ($origCountry)" } else { $origIp }
+            $vpnTag  = if ($script:vpnCode) { "$script:vpnIp ($script:vpnCode)" } else { $script:vpnIp }
+            
+            Set-SafeTooltip "VPN: $vpnTag" "Org: $origTag" $profileName
+            
+            if ($script:lastState -ne "Connected") {
+                $script:lastState = "Connected"
+                $balloon = "VPN IP: $script:vpnIp ($script:vpnCountry)`nOriginal: $origIp ($origCountry)`nProfile: $profileName"
+                $notify.ShowBalloonTip(4000, "Xray VPN: Connected", $balloon, [System.Windows.Forms.ToolTipIcon]::Info)
+            }
+        }
+    } catch {
+        # If query fails while xray is running, keep waiting
+        $script:checkAttempts++
+        if ($script:checkAttempts -gt 10 -and $script:lastState -ne "Connected") {
+            $notify.Icon = $iconRed
+            $mStatus.Text = "Status: Cannot connect to server"
+            Set-SafeTooltip "VPN: Connection Timeout" "Cannot reach server" $profileName
+            if ($script:lastState -ne "Error") {
+                $script:lastState = "Error"
+                $notify.ShowBalloonTip(5000, "Xray VPN: Timeout", "Could not establish connection through server $profileName. Check network or key.", [System.Windows.Forms.ToolTipIcon]::Warning)
+            }
+        }
+    }
+})
+$ipTimer.Start()
+
+[System.Windows.Forms.Application]::Run()
+'@
+[System.IO.File]::WriteAllText("C:\XRAY_VPN\TrayVPN.ps1", $trayScript, [System.Text.Encoding]::UTF8)
+
+# Patch Start_VPN.ps1 to report errors to error.txt and launch TrayVPN on error
+$startPs1 = "C:\XRAY_VPN\Start_VPN.ps1"
+if (Test-Path $startPs1) {
+    $st = [System.IO.File]::ReadAllText($startPs1, [System.Text.Encoding]::UTF8)
+    $errPatch = 'if (-not (Test-Path )) { [System.IO.File]::WriteAllText("C:\XRAY_VPN\error.txt", "link.txt not found"); Start-Process "powershell.exe" -Args "-WindowStyle Hidden -NoProfile -ExecutionPolicy Bypass -File C:\XRAY_VPN\TrayVPN.ps1" -WindowStyle Hidden; exit 1 }'
+    if ($st.Contains('if (-not (Test-Path )) {')) {
+        # clear any existing error
+        $st = $st.Replace('Write-Log "[START] Initializing VPN..."', 'Remove-Item "C:\XRAY_VPN\error.txt" -Force -EA SilentlyContinue
+Write-Log "[START] Initializing VPN..."')
+        [System.IO.File]::WriteAllText($startPs1, $st, [System.Text.Encoding]::UTF8)
+    }
+}
+
+Write-Host ''
+Write-Host '==========================================================================================' -ForegroundColor Green
+Write-Host ' [OK] Done! Next steps:' -ForegroundColor Green
+Write-Host '      1. Paste your VLESS key into Notepad (link.txt) and Save (Ctrl+S)' -ForegroundColor Green
+Write-Host '      2. Double-click Start_VPN shortcut in C:\XRAY_VPN' -ForegroundColor Green
+Write-Host '      3. Click Check_IP to verify your new IP' -ForegroundColor Green
+Write-Host '==========================================================================================' -ForegroundColor Green
+Write-Host ''
+
+$timeout = 20
+while ($timeout -gt 0) {
+    try {
+        if ([Console]::KeyAvailable) { [void][Console]::ReadKey($true); break }
+    } catch {}
+    Write-Host -NoNewline "Closing automatically in $timeout s (or press any key to exit now)...  "
+    Start-Sleep -Seconds 1
+    $timeout--
+}
+Write-Host ''
