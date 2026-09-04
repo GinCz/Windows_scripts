@@ -73,6 +73,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 | 12 | `TeraBox_Setup.bat` | Downloads and launches TeraBox PC installer | no |
 | 13 | `Google_Drive_Setup.bat` | Downloads and launches Google Drive for Desktop installer | no |
 | 14 | `Heaven_Benchmark_Setup.bat` | Downloads and launches UNIGINE Heaven Benchmark 4.0 GPU stress test | no |
+| 15 | [`Install_ChatGPT_Codex_Universal.cmd`](Windows/CODEX_ChatGPT/README.md) | Universal zero-dependency installer for **ChatGPT Desktop & Codex AI Agent** (direct Store CDN bypass) | **YES** |
 
 ### SMB Network Drives
 
