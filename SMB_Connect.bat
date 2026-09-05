@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 cls
 chcp 65001 >nul
 setlocal enabledelayedexpansion
@@ -33,7 +33,7 @@ setlocal enabledelayedexpansion
 ::     T: — TATRA_9       144.124.232.9
 ::     V: — SHAHIN_227    144.124.228.227
 ::     W: — STOLB_24      144.124.239.24
-::     Y: — ALEX_47       109.234.38.47
+::     Y: — ALEX_51       212.34.148.51
 :: ==========================================================================================
 
 :: Color codes (requires ANSI support — Windows 10+ with VT enabled)
@@ -70,7 +70,7 @@ cmdkey /add:144.124.233.38    /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.232.9     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.228.227   /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.239.24    /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:109.234.38.47     /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:212.34.148.51     /user:%USER% /pass:%PASS% >nul 2>&1
 echo %YELLOW%[ STATUS ]%RESET% Credentials saved.
 echo %YELLOW%[ STATUS ]%RESET% Disconnecting old drives and starting parallel mount...
 echo.
@@ -100,7 +100,7 @@ start /b cmd /c "net use V: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.2
 
 start /b cmd /c "net use W: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.239.24 >nul 2>&1 && (net use W: \\144.124.239.24\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\W.txt\" || echo ERROR > \"%TMPDIR%\W.txt\") || echo SKIP > \"%TMPDIR%\W.txt\""
 
-start /b cmd /c "net use Y: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 109.234.38.47 >nul 2>&1 && (net use Y: \\109.234.38.47\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Y.txt\" || echo ERROR > \"%TMPDIR%\Y.txt\") || echo SKIP > \"%TMPDIR%\Y.txt\""
+start /b cmd /c "net use Y: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 212.34.148.51 >nul 2>&1 && (net use Y: \\212.34.148.51\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Y.txt\" || echo ERROR > \"%TMPDIR%\Y.txt\") || echo SKIP > \"%TMPDIR%\Y.txt\""
 
 :: Wait for all background processes to finish (8 sec — buffer for slow servers)
 timeout /t 8 /nobreak >nul
@@ -122,7 +122,7 @@ call :show_result Q SO_38       144.124.233.38
 call :show_result T TATRA_9     144.124.232.9
 call :show_result V SHAHIN_227  144.124.228.227
 call :show_result W STOLB_24    144.124.239.24
-call :show_result Y ALEX_47     109.234.38.47
+call :show_result Y ALEX_51     212.34.148.51
 
 echo.
 echo %YELLOW%=================================================================================%RESET%
