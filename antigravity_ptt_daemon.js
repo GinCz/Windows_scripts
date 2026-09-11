@@ -1,5 +1,5 @@
 // ==========================================================================================
-//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-08-24]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
+//  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Helper Daemon | [v2026-09-11]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 // ==========================================================================================
 // Features:
 // 1. Microphone Toggle (F4): 1st press = START RECORDING, 2nd press = STOP / SEND.
@@ -33,14 +33,17 @@ process.on('unhandledRejection', (reason) => {
 
 const INJECTION_CODE = `
 (() => {
-  // 1. Microphone Toggle Setup (F4)
-  function setupMicToggle() {
-      // Strict microphone button selection: prevents accidental clicking of 'Stop generating / Stop task' buttons
-      return document.querySelector('button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label="Stop recording"], button[aria-label="Record voice"], button[aria-label*="Record voice memo"]');
+  // 1. Microphone Toggle Setup (F4 / Alt+M)
+  function getMicButton() {
+    // Strict microphone button selection: prevents accidental clicking of 'Stop generating / Stop task' buttons
+    return document.querySelector('button[data-tooltip-id="input-send-button-record-tooltip"], button[aria-label="Stop recording"], button[aria-label="Record voice"], button[aria-label*="Record voice memo"]');
+  }
 
+  function setupMicToggle() {
     function handleKey(e) {
-      const isF4 = (e.key === 'F4' || e.code === 'F4' || e.keyCode === 115) && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
-      if (isF4) {
+      const isF4   = (e.key === 'F4'  || e.code === 'F4'  || e.keyCode === 115) && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey;
+      const isAltM = (e.key === 'm'   || e.key === 'M')   && e.altKey  && !e.ctrlKey && !e.shiftKey && !e.metaKey;
+      if (isF4 || isAltM) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
