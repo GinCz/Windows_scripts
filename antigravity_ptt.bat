@@ -1,6 +1,6 @@
 @echo off
 :: ==========================================================================================
-::  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Launcher + PTT | [v2026-08-24]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
+::  ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  Antigravity Launcher + PTT | [v2026-09-20]  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░
 :: ==========================================================================================
 
 :: Start Antigravity IDE if not already running
@@ -12,7 +12,10 @@ if errorlevel 1 (
 )
 
 :: Start Helper Daemon hidden in background (persistent loop with auto-reconnect)
-wscript.exe "C:\UTIL\Antigravity_AI\GitHub\Windows_scripts\antigravity_ptt_hidden.vbs"
+if exist "D:\AI\GitHub\Windows_scripts\antigravity_ptt_hidden.vbs" (
+    wscript.exe "D:\AI\GitHub\Windows_scripts\antigravity_ptt_hidden.vbs"
+) else if exist "C:\UTIL\Antigravity_AI\GitHub\Windows_scripts\antigravity_ptt_hidden.vbs" (
+    wscript.exe "C:\UTIL\Antigravity_AI\GitHub\Windows_scripts\antigravity_ptt_hidden.vbs"
+)
 
 exit
-:: = Rooted by VladiMIR | AI = v2026-08-24 = github.com/GinCz

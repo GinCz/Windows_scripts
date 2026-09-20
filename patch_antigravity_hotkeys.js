@@ -7,33 +7,52 @@ const { execSync } = require('child_process');
 
 process.noAsar = true;
 
-const ASAR_TOOL = 'C:\\Users\\USER\\AppData\\Local\\npm-cache\\_npx\\4b0e2640fe917ac8\\node_modules\\@electron\\asar\\bin\\asar.mjs';
-const NODE_EXE = 'C:\\Users\\AI\\AppData\\Local\\Programs\\antigravity\\Antigravity.exe';
-const WORK_DIR = 'D:\\AI\\patch_antigravity_asar';
-const TARGET_ASARS = [
-  'C:\\Users\\AI\\AppData\\Local\\Programs\\antigravity\\resources\\app.asar',
-  'C:\\Users\\USER\\AppData\\Local\\Programs\\antigravity\\resources\\app.asar'
+const LOCALAPPDATA = process.env.LOCALAPPDATA || path.join(process.env.USERPROFILE, 'AppData', 'Local');
+const NODE_EXE = path.join(LOCALAPPDATA, 'Programs', 'antigravity', 'Antigravity.exe');
+const WORK_DIR = path.join(process.env.TEMP || 'C:\\Windows\\Temp', 'patch_antigravity_asar');
+const PRIMARY_ASAR = path.join(LOCALAPPDATA, 'Programs', 'antigravity', 'resources', 'app.asar');
+
+const ASAR_TOOL_CANDIDATES = [
+  path.join(LOCALAPPDATA, 'npm-cache', '_npx', '4b0e2640fe917ac8', 'node_modules', '@electron', 'asar', 'bin', 'asar.mjs'),
+  path.join(process.env.APPDATA || '', 'npm', 'node_modules', '@electron', 'asar', 'bin', 'asar.mjs')
 ];
+
+function findAsarTool() {
+  for (const p of ASAR_TOOL_CANDIDATES) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
 
 async function main() {
   console.log('=== Patching Antigravity Keybindings ===');
+  if (!fs.existsSync(PRIMARY_ASAR)) {
+    throw new Error('No app.asar found at: ' + PRIMARY_ASAR);
+  }
+
   if (fs.existsSync(WORK_DIR)) {
     fs.rmSync(WORK_DIR, { recursive: true, force: true });
   }
   fs.mkdirSync(WORK_DIR, { recursive: true });
 
-  const primaryAsar = TARGET_ASARS.find(p => fs.existsSync(p));
-  if (!primaryAsar) throw new Error('No app.asar found');
-
-  const bakPath = primaryAsar + '.bak';
+  const bakPath = PRIMARY_ASAR + '.bak';
   if (!fs.existsSync(bakPath)) {
-    fs.copyFileSync(primaryAsar, bakPath);
+    fs.copyFileSync(PRIMARY_ASAR, bakPath);
+    console.log('Backup created: ' + bakPath);
   }
 
+  const asarTool = findAsarTool();
   const unpackedDir = path.join(WORK_DIR, 'unpacked');
-  execSync(`"${NODE_EXE}" "${ASAR_TOOL}" extract "${primaryAsar}" "${unpackedDir}"`, {
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
-  });
+
+  if (asarTool) {
+    execSync(`"${NODE_EXE}" "${asarTool}" extract "${PRIMARY_ASAR}" "${unpackedDir}"`, {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+    });
+  } else {
+    execSync(`npx @electron/asar extract "${PRIMARY_ASAR}" "${unpackedDir}"`, {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+    });
+  }
 
   const keybindingsPath = path.join(unpackedDir, 'dist', 'keybindings.js');
   const fixedCode = `"use strict";
@@ -105,16 +124,18 @@ function registerKeybindings(win, actions) {
   fs.writeFileSync(keybindingsPath, fixedCode, 'utf8');
 
   const newAsarPath = path.join(WORK_DIR, 'app.asar');
-  execSync(`"${NODE_EXE}" "${ASAR_TOOL}" pack "${unpackedDir}" "${newAsarPath}"`, {
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
-  });
-
-  for (const asarPath of TARGET_ASARS) {
-    if (fs.existsSync(path.dirname(asarPath))) {
-      fs.copyFileSync(newAsarPath, asarPath);
-      console.log('Updated: ' + asarPath);
-    }
+  if (asarTool) {
+    execSync(`"${NODE_EXE}" "${asarTool}" pack "${unpackedDir}" "${newAsarPath}"`, {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+    });
+  } else {
+    execSync(`npx @electron/asar pack "${unpackedDir}" "${newAsarPath}"`, {
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
+    });
   }
+
+  fs.copyFileSync(newAsarPath, PRIMARY_ASAR);
+  console.log('Updated: ' + PRIMARY_ASAR);
 
   fs.rmSync(WORK_DIR, { recursive: true, force: true });
   console.log('Patch complete and verified.');
