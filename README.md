@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
 
 # Windows Scripts — VladiMIR Bulantsev (GinCz)
 
@@ -170,14 +170,14 @@ CLEAN.cmd -Startup
 ```text
 [  OK  ]  A:  AWS_12       18.195.117.12
 [  OK  ]  E:  IONOS_38     82.223.116.38
-[  OK  ]  I:  ILYA_176     146.103.110.176
+[  OK  ]  I:  ILYA_221     89.110.69.221
 [  OK  ]  N:  PILIK_33     195.63.138.33
 [  OK  ]  O:  4TON_237     144.124.228.237
 [  OK  ]  Q:  SO_38        144.124.233.38
 [  OK  ]  T:  TATRA_9      144.124.232.9
 [  OK  ]  V:  SHAHIN_227   144.124.228.227
 [  OK  ]  W:  STOLB_24     144.124.239.24
-[  OK  ]  Y:  ALEX_51      212.34.148.51
+[  OK  ]  Y:  ALEX_180     88.210.6.180
 ```
 
 All servers run **Samba on Ubuntu 24 LTS** with IPGuard triple-layer security.

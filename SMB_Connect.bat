@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 cls
 chcp 65001 >nul
 setlocal enabledelayedexpansion
@@ -26,14 +26,14 @@ setlocal enabledelayedexpansion
 ::   Drives:
 ::     A: — AWS_12        18.195.117.12
 ::     E: — IONOS_38      82.223.116.38
-::     I: — ILYA_176      146.103.110.176
+::     I: — ILYA_221      89.110.69.221
 ::     N: — PILIK_33      195.63.138.33
 ::     O: — 4TON_237      144.124.228.237
 ::     Q: — SO_38         144.124.233.38
 ::     T: — TATRA_9       144.124.232.9
 ::     V: — SHAHIN_227    144.124.228.227
 ::     W: — STOLB_24      144.124.239.24
-::     Y: — ALEX_51       212.34.148.51
+::     Y: — ALEX_180      88.210.6.180
 :: ==========================================================================================
 
 :: Color codes (requires ANSI support — Windows 10+ with VT enabled)
@@ -63,14 +63,14 @@ echo.
 echo %YELLOW%[ STATUS ]%RESET% Saving credentials to the system...
 cmdkey /add:18.195.117.12     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:82.223.116.38     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:146.103.110.176   /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:89.110.69.221     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:195.63.138.33     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.228.237   /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.233.38    /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.232.9     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.228.227   /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.239.24    /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:212.34.148.51     /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:88.210.6.180      /user:%USER% /pass:%PASS% >nul 2>&1
 echo %YELLOW%[ STATUS ]%RESET% Credentials saved.
 echo %YELLOW%[ STATUS ]%RESET% Disconnecting old drives and starting parallel mount...
 echo.
@@ -86,7 +86,7 @@ start /b cmd /c "net use A: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 18.195.11
 
 start /b cmd /c "net use E: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 82.223.116.38 >nul 2>&1 && (net use E: \\82.223.116.38\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\E.txt\" || echo ERROR > \"%TMPDIR%\E.txt\") || echo SKIP > \"%TMPDIR%\E.txt\""
 
-start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 146.103.110.176 >nul 2>&1 && (net use I: \\146.103.110.176\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\I.txt\" || echo ERROR > \"%TMPDIR%\I.txt\") || echo SKIP > \"%TMPDIR%\I.txt\""
+start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 89.110.69.221 >nul 2>&1 && (net use I: \\89.110.69.221\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\I.txt\" || echo ERROR > \"%TMPDIR%\I.txt\") || echo SKIP > \"%TMPDIR%\I.txt\""
 
 start /b cmd /c "net use N: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 195.63.138.33 >nul 2>&1 && (net use N: \\195.63.138.33\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\N.txt\" || echo ERROR > \"%TMPDIR%\N.txt\") || echo SKIP > \"%TMPDIR%\N.txt\""
 
@@ -100,7 +100,7 @@ start /b cmd /c "net use V: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.2
 
 start /b cmd /c "net use W: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.239.24 >nul 2>&1 && (net use W: \\144.124.239.24\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\W.txt\" || echo ERROR > \"%TMPDIR%\W.txt\") || echo SKIP > \"%TMPDIR%\W.txt\""
 
-start /b cmd /c "net use Y: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 212.34.148.51 >nul 2>&1 && (net use Y: \\212.34.148.51\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Y.txt\" || echo ERROR > \"%TMPDIR%\Y.txt\") || echo SKIP > \"%TMPDIR%\Y.txt\""
+start /b cmd /c "net use Y: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 88.210.6.180 >nul 2>&1 && (net use Y: \\88.210.6.180\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Y.txt\" || echo ERROR > \"%TMPDIR%\Y.txt\") || echo SKIP > \"%TMPDIR%\Y.txt\""
 
 :: Wait for all background processes to finish (8 sec — buffer for slow servers)
 timeout /t 8 /nobreak >nul
@@ -115,14 +115,14 @@ echo %WHITE%  ──────────────────────
 
 call :show_result A AWS_12      18.195.117.12
 call :show_result E IONOS_38    82.223.116.38
-call :show_result I ILYA_176    146.103.110.176
+call :show_result I ILYA_221    89.110.69.221
 call :show_result N PILIK_33    195.63.138.33
 call :show_result O 4TON_237    144.124.228.237
 call :show_result Q SO_38       144.124.233.38
 call :show_result T TATRA_9     144.124.232.9
 call :show_result V SHAHIN_227  144.124.228.227
 call :show_result W STOLB_24    144.124.239.24
-call :show_result Y ALEX_51     212.34.148.51
+call :show_result Y ALEX_180    88.210.6.180
 
 echo.
 echo %YELLOW%=================================================================================%RESET%
