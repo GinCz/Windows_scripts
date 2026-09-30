@@ -56,12 +56,13 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 | 6 | `WIN_Optimize.bat` | 15-step deep optimizer: reserved storage, hibernation, services, SSD TRIM, visual effects, temp/disk cleanup, network, power plan, telemetry, DISM, WinSxS, SFC, CompactOS | **YES** | Immediate |
 | 7 | `AntiVir_OFF.bat` | Toggle Windows Defender real-time protection ON/OFF interactively | **YES** | Interactive |
 
-### Diagnostics & Benchmarking
+### Diagnostics & Security Audit
 
 | # | Script | Description | Admin |
 |---|--------|-------------|:-----:|
-| 7 | `MemTest_7z.bat` | Hardware stress test via 7-Zip benchmark: auto-installs 7-Zip, 10 passes, 256MB dictionary, 4 threads | **YES** |
-| 8 | `SMB_Test.bat` | Live SMB network benchmark: 50MB/5GB modes, measures upload/download speed with MD5 integrity check | **YES** |
+| 7 | [`System_Security_Miner_Audit.cmd`](#5-system_security_miner_auditcmd--advanced-security--cryptominer-deep-audit) | **Windows Advanced Security & Cryptominer Deep Audit** (16 inspection vectors, CPU load sampling, hidden tunnels, WMI/IFEO persistence, Defender status & exclusions) | **YES** |
+| 8 | `MemTest_7z.bat` | Hardware stress test via 7-Zip benchmark: auto-installs 7-Zip, 10 passes, 256MB dictionary, 4 threads | **YES** |
+| 9 | `SMB_Test.bat` | Live SMB network benchmark: 50MB/5GB modes, measures upload/download speed with MD5 integrity check | **YES** |
 
 ### Software Installers
 
@@ -160,6 +161,41 @@ CLEAN.cmd -Startup
 * **Google Play Compatibility:** Does NOT touch Google servers, Google Play Services, or APK repositories. Apps install and update without interruption.
 * **Config Hardening:** Patches `conf.ini` to disable `loadingpage_show`, `collect_behavior_enable`, and `app_notice_enable`.
 * **Ad Cache Purge:** Cleans all accumulated promo images in `app_images`, `loading`, `preview`, and `app_notice_list`.
+
+---
+
+### 5. `System_Security_Miner_Audit.cmd` — Advanced Security & Cryptominer Deep Audit
+
+`System_Security_Miner_Audit.cmd` is a standalone, polyglot CMD/PowerShell audit suite designed to inspect Windows workstations and servers for covert background cryptocurrency miners, masquerading system binaries, unauthorized remote control tools, stealth reverse tunnels, persistence hooks, and compromised Windows Defender configurations.
+
+#### Core Security Vectors (16 Inspection Modules)
+
+| # | Check Vector | Description | Status Level |
+| :---: | :--- | :--- | :---: |
+| **`[01]`** | **CPU Load Sampling** | Samples all active processes over 5 seconds across logical CPU cores to detect silent CPU-throttling miners. | `WARN` |
+| **`[02]`** | **Cryptominer Signatures** | Scans process names, binary paths, and CLI parameters for 30+ mining engines (`xmrig`, `nbminer`, `phoenixminer`, `t-rex`, `lolminer`, `srbminer`, `cpuminer`, `randomx`, `cryptonight`, etc.). | `CRIT` |
+| **`[03]`** | **Process Integrity & Spoofing** | Validates Authenticode signatures and detects fake system binaries (`svchost.exe`, `lsass.exe`, `csrss.exe`) executing outside the `System32` directory. | `CRIT` / `WARN` |
+| **`[04]`** | **Mining Pool Sockets** | Inspects active TCP connections for standard Stratum mining ports (`3333`, `4444`, `5555`, `14444`, `45560`, etc.) connecting to public endpoints. | `WARN` |
+| **`[05]`** | **Mining Pool DNS Cache** | Audits the local Windows DNS Client Cache for queries to known cryptocurrency pools (`nanopool`, `minexmr`, `supportxmr`, `2miners`, `f2pool`, `unmineable`, `kryptex`, etc.). | `WARN` |
+| **`[06]`** | **Reverse Tunnels & Proxies** | Identifies active stealth reverse tunneling clients (`ngrok`, `cloudflared`, `frpc`, `chisel`, `ligolo`, `bore`, `localxpose`, `pagekite`). | `WARN` |
+| **`[07]`** | **Remote Access Software** | Detects remote administration and screen-sharing agents (`RustDesk`, `TeamViewer`, `AnyDesk`, `Radmin`, `Splashtop`, `ScreenConnect`, `VNC`, etc.) with process instance counts. | `INFO` / `OK` |
+| **`[08]`** | **Task Scheduler Triggers** | Audits Task Scheduler for suspicious download stagers (`-enc`, `certutil -urlcache`, `downloadstring`, `IEX`, `mshta`, `bitsadmin`) and untrusted tasks in user folders. | `CRIT` / `WARN` |
+| **`[09]`** | **Registry Autorun & Shell** | Scans `Run` / `RunOnce` registry keys and verifies that `Winlogon\Shell` (`explorer.exe`) and `Userinit` have not been hijacked. | `CRIT` / `WARN` |
+| **`[10]`** | **Startup Folders** | Inspects user and global `Startup` directories (`shell:startup` and `shell:common startup`) for unauthorized `.bat`, `.cmd`, `.vbs`, `.ps1`, or `.hta` scripts. | `WARN` |
+| **`[11]`** | **IFEO Process Hijacking** | Scans `Image File Execution Options` for debugger redirections used by malware to intercept task managers or security tools. | `CRIT` |
+| **`[12]`** | **Local Administrators** | Audits members of the local `Administrators` group (`SID S-1-5-32-544`) to detect unauthorized backdoor accounts. | `WARN` |
+| **`[13]`** | **WMI Event Persistence** | Queries `root\subscription:__EventConsumer` for hidden WMI event bindings used for stealth persistence across reboots. | `CRIT` |
+| **`[14]`** | **Windows Defender Health** | Verifies Real-Time Protection state, antivirus signature age, and detects dangerous path exclusions (e.g. `C:\`, `G:\`, `Temp`, `Downloads`). | `CRIT` / `WARN` |
+| **`[15]`** | **Low-Level Hardware Drivers** | Scans loaded kernel drivers for hardware-access exploits commonly bundled with miners (`WinRing0`, `InpOut`, `ProcessHacker`). | `WARN` |
+| **`[16]`** | **Hosts & Proxy Hijacking** | Detects blocked security vendor updates (`microsoft`, `windowsupdate`, `defender`, `virustotal`) in the `hosts` file. | `CRIT` |
+| **`[17]`** | **Dropped Miner Configs** | Recursively scans `AppData`, `ProgramData`, and `Temp` directories for orphaned miner configuration files (`config.json` containing pool or wallet signatures). | `CRIT` |
+
+#### Key Features
+* **Zero Dependencies & Polyglot Runtime:** Single file `.cmd` executable with seamless embedded UTF-8 PowerShell runtime.
+* **Auto UAC Elevation:** Automatically triggers Windows UAC prompt with zero configuration.
+* **Multi-Language Interface:** English *(Default)*, Česky, Русский.
+* **Minimalist High-Contrast UI:** Green `[ OK ]`, Yellow `[ NO ]` *(Warning)*, Red `[ NO ]` *(Critical)*.
+* **Automated Report Generation:** Automatically resolves the user's actual Desktop path (even if redirected to external drives or OneDrive) and exports `Security_Audit_Report.txt`.
 
 ---
 
