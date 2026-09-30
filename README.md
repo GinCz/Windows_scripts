@@ -27,7 +27,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 
 - [Scripts Overview](#scripts-overview)
   - [System Optimization & Sweepers](#system-optimization--sweepers)
-  - [Diagnostics & Benchmarking](#diagnostics--benchmarking)
+  - [Diagnostics & Security Audit](#diagnostics--security-audit)
   - [Software Installers](#software-installers)
   - [SMB Network Drives](#smb-network-drives)
 - [Detailed Script Documentation](#detailed-script-documentation)
@@ -35,6 +35,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
   - [CentBrowser_CLEAN.bat — Multi-Profile Browser Cleaner](#2-centbrowser_cleanbat--multi-profile-cache-cleaner)
   - [Error_80070002_AI.cmd — Windows Update Fast Repair Tool](#3-error_80070002_aicmd--windows-update-fast-repair-tool)
   - [Nox_AdBlock.cmd — NoxPlayer AdBlock & Privacy Tool](#4-nox_adblockcmd--noxplayer-adblock--privacy-tool)
+  - [System_Security_Miner_Audit.cmd — Advanced Security & Cryptominer Deep Audit](#5-system_security_miner_auditcmd--advanced-security--cryptominer-deep-audit)
 - [SMB Network Drives — SMB_Connect](#smb-network-drives--smb_connect)
 - [Requirements & Usage](#requirements--usage)
 - [Code Conventions](#code-conventions)
