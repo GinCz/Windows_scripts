@@ -202,17 +202,14 @@ CLEAN.cmd -Startup
 
 ## SMB Network Drives — SMB_Connect
 
-`SMB_Connect.bat` connects **10 Samba servers** simultaneously as Windows network drives.
+`SMB_Connect.bat` connects Samba servers simultaneously as Windows network drives.
 
 ```text
 [  OK  ]  A:  AWS_12       18.195.117.12
 [  OK  ]  E:  IONOS_38     82.223.116.38
 [  OK  ]  I:  ILYA_221     89.110.69.221
 [  OK  ]  N:  PILIK_33     195.63.138.33
-[  OK  ]  O:  4TON_237     144.124.228.237
 [  OK  ]  Q:  SO_38        144.124.233.38
-[  OK  ]  T:  TATRA_9      144.124.232.9
-[  OK  ]  V:  SHAHIN_227   144.124.228.227
 [  OK  ]  W:  STOLB_24     144.124.239.24
 [  OK  ]  Y:  ALEX_180     88.210.6.180
 ```

@@ -28,10 +28,7 @@ setlocal enabledelayedexpansion
 ::     E: — IONOS_38      82.223.116.38
 ::     I: — ILYA_221      89.110.69.221
 ::     N: — PILIK_33      195.63.138.33
-::     O: — 4TON_237      144.124.228.237
 ::     Q: — SO_38         144.124.233.38
-::     T: — TATRA_9       144.124.232.9
-::     V: — SHAHIN_227    144.124.228.227
 ::     W: — STOLB_24      144.124.239.24
 ::     Y: — ALEX_180      88.210.6.180
 :: ==========================================================================================
@@ -65,10 +62,7 @@ cmdkey /add:18.195.117.12     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:82.223.116.38     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:89.110.69.221     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:195.63.138.33     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:144.124.228.237   /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.233.38    /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:144.124.232.9     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:144.124.228.227   /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.239.24    /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:88.210.6.180      /user:%USER% /pass:%PASS% >nul 2>&1
 echo %YELLOW%[ STATUS ]%RESET% Credentials saved.
@@ -90,13 +84,7 @@ start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 89.110.69
 
 start /b cmd /c "net use N: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 195.63.138.33 >nul 2>&1 && (net use N: \\195.63.138.33\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\N.txt\" || echo ERROR > \"%TMPDIR%\N.txt\") || echo SKIP > \"%TMPDIR%\N.txt\""
 
-start /b cmd /c "net use O: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.228.237 >nul 2>&1 && (net use O: \\144.124.228.237\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\O.txt\" || echo ERROR > \"%TMPDIR%\O.txt\") || echo SKIP > \"%TMPDIR%\O.txt\""
-
 start /b cmd /c "net use Q: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.233.38 >nul 2>&1 && (net use Q: \\144.124.233.38\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Q.txt\" || echo ERROR > \"%TMPDIR%\Q.txt\") || echo SKIP > \"%TMPDIR%\Q.txt\""
-
-start /b cmd /c "net use T: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.232.9 >nul 2>&1 && (net use T: \\144.124.232.9\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\T.txt\" || echo ERROR > \"%TMPDIR%\T.txt\") || echo SKIP > \"%TMPDIR%\T.txt\""
-
-start /b cmd /c "net use V: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.228.227 >nul 2>&1 && (net use V: \\144.124.228.227\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\V.txt\" || echo ERROR > \"%TMPDIR%\V.txt\") || echo SKIP > \"%TMPDIR%\V.txt\""
 
 start /b cmd /c "net use W: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.239.24 >nul 2>&1 && (net use W: \\144.124.239.24\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\W.txt\" || echo ERROR > \"%TMPDIR%\W.txt\") || echo SKIP > \"%TMPDIR%\W.txt\""
 
@@ -117,10 +105,7 @@ call :show_result A AWS_12      18.195.117.12
 call :show_result E IONOS_38    82.223.116.38
 call :show_result I ILYA_221    89.110.69.221
 call :show_result N PILIK_33    195.63.138.33
-call :show_result O 4TON_237    144.124.228.237
 call :show_result Q SO_38       144.124.233.38
-call :show_result T TATRA_9     144.124.232.9
-call :show_result V SHAHIN_227  144.124.228.227
 call :show_result W STOLB_24    144.124.239.24
 call :show_result Y ALEX_180    88.210.6.180
 
