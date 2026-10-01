@@ -14,7 +14,11 @@ if (process.stdout && process.stdout.on) process.stdout.on('error', () => {});
 if (process.stderr && process.stderr.on) process.stderr.on('error', () => {});
 
 const LOG_FILE = path.join(__dirname, 'antigravity_ptt_daemon.log');
-const PORT_FILE = path.join(process.env.APPDATA, 'Antigravity', 'DevToolsActivePort');
+const PORT_FILES = [
+  path.join(process.env.APPDATA, 'Antigravity', 'DevToolsActivePort'),
+  'D:\\AI\\GEMINI\\Profiles\\Oracle_157\\data\\DevToolsActivePort',
+  'D:\\AI\\GEMINI\\Profiles\\Server_222\\data\\DevToolsActivePort'
+];
 
 function log(msg) {
   const line = `[${new Date().toISOString()}] ${msg}\n`;
@@ -142,96 +146,78 @@ const INJECTION_CODE = `
 `;
 
 let activeSockets = new Map();
-let isConnected = false;
+let connectedPorts = new Set();
 
 async function checkAndInject() {
-  if (!fs.existsSync(PORT_FILE)) {
-    if (isConnected) {
-      log('Antigravity closed. Waiting for next start...');
-      isConnected = false;
-      activeSockets.clear();
-    }
-    return;
-  }
+  for (const portFile of PORT_FILES) {
+    if (!fs.existsSync(portFile)) continue;
 
-  try {
-    const lines = fs.readFileSync(PORT_FILE, 'utf8').split('\n');
-    const port = lines[0].trim();
-    if (!port) return;
+    try {
+      const lines = fs.readFileSync(portFile, 'utf8').split('\n');
+      const port = lines[0].trim();
+      if (!port) continue;
 
-    const res = await fetch('http://127.0.0.1:' + port + '/json');
-    const pages = await res.json();
-    const pageTargets = pages.filter(p => p.type === 'page' && p.webSocketDebuggerUrl);
+      const res = await fetch('http://127.0.0.1:' + port + '/json');
+      const pages = await res.json();
+      const pageTargets = pages.filter(p => p.type === 'page' && p.webSocketDebuggerUrl);
 
-    if (pageTargets.length === 0) {
-      if (isConnected) {
-        log('No active Antigravity pages found. Waiting...');
-        isConnected = false;
-        activeSockets.clear();
+      if (pageTargets.length === 0) continue;
+
+      if (!connectedPorts.has(port)) {
+        log('Antigravity instance detected (port ' + port + '). Injecting handlers...');
+        connectedPorts.add(port);
       }
-      return;
-    }
 
-    if (!isConnected) {
-      log('Antigravity detected (port ' + port + '). Injecting handlers...');
-      isConnected = true;
-    }
+      for (const page of pageTargets) {
+        const url = page.webSocketDebuggerUrl;
+        let ws = activeSockets.get(url);
 
-    for (const page of pageTargets) {
-      const url = page.webSocketDebuggerUrl;
-      let ws = activeSockets.get(url);
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          try {
+            ws = new WebSocket(url);
+            activeSockets.set(url, ws);
 
-      if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-        try {
-          ws = new WebSocket(url);
-          activeSockets.set(url, ws);
+            ws.addEventListener('error', () => {
+              activeSockets.delete(url);
+            });
 
-          ws.addEventListener('error', () => {
-            activeSockets.delete(url);
-          });
+            ws.addEventListener('close', () => {
+              activeSockets.delete(url);
+            });
 
-          ws.addEventListener('close', () => {
-            activeSockets.delete(url);
-          });
-
-          ws.addEventListener('open', () => {
-            try {
-              ws.send(JSON.stringify({ id: 1, method: 'Page.enable' }));
-              ws.send(JSON.stringify({ id: 2, method: 'Runtime.enable' }));
-              ws.send(JSON.stringify({
-                id: 3,
-                method: 'Page.addScriptToEvaluateOnNewDocument',
-                params: { source: INJECTION_CODE }
-              }));
-              ws.send(JSON.stringify({
-                id: 4,
-                method: 'Runtime.evaluate',
-                params: { expression: INJECTION_CODE, returnByValue: true }
-              }));
-              log('Injected hotkey & favorites into page: ' + (page.title || page.url));
-            } catch {}
-          });
-        } catch {}
-      } else if (ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(JSON.stringify({
-            id: Date.now(),
-            method: 'Runtime.evaluate',
-            params: { expression: INJECTION_CODE, returnByValue: true }
-          }));
-        } catch {}
+            ws.addEventListener('open', () => {
+              try {
+                ws.send(JSON.stringify({ id: 1, method: 'Page.enable' }));
+                ws.send(JSON.stringify({ id: 2, method: 'Runtime.enable' }));
+                ws.send(JSON.stringify({
+                  id: 3,
+                  method: 'Page.addScriptToEvaluateOnNewDocument',
+                  params: { source: INJECTION_CODE }
+                }));
+                ws.send(JSON.stringify({
+                  id: 4,
+                  method: 'Runtime.evaluate',
+                  params: { expression: INJECTION_CODE, returnByValue: true }
+                }));
+                log(`[Port ${port}] Injected hotkey & favorites into page: ` + (page.title || page.url));
+              } catch {}
+            });
+          } catch {}
+        } else if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(JSON.stringify({
+              id: Date.now(),
+              method: 'Runtime.evaluate',
+              params: { expression: INJECTION_CODE, returnByValue: true }
+            }));
+          } catch {}
+        }
       }
-    }
-  } catch (err) {
-    if (isConnected) {
-      log('Connection lost to Antigravity. Waiting for restart...');
-      isConnected = false;
-      activeSockets.clear();
-    }
+    } catch (err) {}
   }
 }
 
-log('Antigravity Persistent Helper Daemon started...');
+log('Antigravity Persistent Helper Daemon started (Multi-Instance)...');
 checkAndInject();
 setInterval(checkAndInject, 2500);
 
