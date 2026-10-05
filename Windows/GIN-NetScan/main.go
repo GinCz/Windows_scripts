@@ -192,12 +192,14 @@ const (
 
 	DefaultInstallDir = `C:\Program Files\GIN-NetScan`
 
-	NM_CUSTOMDRAW       = ^uint32(11) // uint32(-12)
-	CDDS_PREPAINT       = 0x00000001
-	CDDS_ITEM           = 0x00010000
-	CDDS_ITEMPREPAINT   = CDDS_ITEM | CDDS_PREPAINT
-	CDRF_DODEFAULT      = 0x00000000
-	CDRF_NOTIFYITEMDRAW = 0x00000020
+	NM_CUSTOMDRAW          = ^uint32(11) // uint32(-12)
+	CDDS_PREPAINT          = 0x00000001
+	CDDS_ITEM              = 0x00010000
+	CDDS_ITEMPREPAINT      = CDDS_ITEM | CDDS_PREPAINT
+	CDDS_SUBITEM           = 0x00020000
+	CDRF_DODEFAULT         = 0x00000000
+	CDRF_NOTIFYITEMDRAW    = 0x00000020
+	CDRF_NOTIFYSUBITEMDRAW = 0x00000020
 
 	WM_APP_SCAN_DONE = WM_USER + 101
 
@@ -2881,6 +2883,41 @@ func showAboutDialog() {
 	procSetTimer.Call(hwndAbout, 1, 33, 0)
 }
 
+func getDeviceTypeColor(typeIcon string) uint32 {
+	t := strings.ToLower(typeIcon)
+	if strings.Contains(t, "gateway") || strings.Contains(t, "router") {
+		return 0xCC3299 // Royal Indigo / Purple (BGR: #9932CC)
+	}
+	if strings.Contains(t, "access point") {
+		return 0xB8A217 // Cyan / Teal (BGR: #17A2B8)
+	}
+	if strings.Contains(t, "apple") || strings.Contains(t, "iphone") || strings.Contains(t, "ipad") || strings.Contains(t, "mac") {
+		return 0xD47800 // Apple Sky Blue (BGR: #0078D4)
+	}
+	if strings.Contains(t, "smartphone") || strings.Contains(t, "transsion") || strings.Contains(t, "honor") || strings.Contains(t, "huawei") || strings.Contains(t, "xiaomi") {
+		return 0x45A728 // Vibrant Emerald Green (BGR: #28A745)
+	}
+	if strings.Contains(t, "camera") || strings.Contains(t, "ip camera") {
+		return 0x303BFF // Radiant Coral Red (BGR: #FF3B30)
+	}
+	if strings.Contains(t, "smart tv") || strings.Contains(t, "tv") {
+		return 0xDE52AF // Vibrant Magenta / Violet (BGR: #AF52DE)
+	}
+	if strings.Contains(t, "pc") || strings.Contains(t, "workstation") {
+		return 0xCC6600 // Windows Deep Blue (BGR: #0066CC)
+	}
+	if strings.Contains(t, "smart iot") || strings.Contains(t, "iot") {
+		return 0x0095FF // Warm Amber Gold (BGR: #FF9500)
+	}
+	if strings.Contains(t, "printer") {
+		return 0x485579 // Bronze / Amber (BGR: #795548)
+	}
+	if strings.Contains(t, "nas") || strings.Contains(t, "synology") || strings.Contains(t, "qnap") {
+		return 0x663300 // Deep Navy (BGR: #003366)
+	}
+	return 0x7D756C // Slate Gray (BGR: #6C757D)
+}
+
 func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case WM_COMMAND:
@@ -3011,11 +3048,54 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				return CDRF_NOTIFYITEMDRAW
 			}
 			if pcd.DwDrawStage == CDDS_ITEMPREPAINT {
+				return CDRF_NOTIFYSUBITEMDRAW
+			}
+			if pcd.DwDrawStage == (CDDS_ITEMPREPAINT | CDDS_SUBITEM) {
 				itemIdx := int(pcd.DwItemSpec)
+				subItem := int(pcd.ISubItem)
+
 				devicesMutex.Lock()
 				if itemIdx >= 0 && itemIdx < len(foundDevices) {
-					if !foundDevices[itemIdx].IsOnline {
-						pcd.ClrText = 0x888888 // Gray text color for offline / disconnected devices
+					dev := foundDevices[itemIdx]
+					if !dev.IsOnline {
+						pcd.ClrText = 0x888888 // Gray for offline / disconnected
+					} else {
+						switch subItem {
+						case 0: // №
+							pcd.ClrText = 0x555555
+						case 1: // Device Type
+							pcd.ClrText = getDeviceTypeColor(dev.TypeIcon)
+						case 2: // IP Address
+							pcd.ClrText = 0xD47800 // Sapphire Blue
+						case 3: // Host Name
+							if dev.Hostname != "" && dev.Hostname != "—" {
+								pcd.ClrText = 0x9E5A00 // Deep Slate Blue
+							} else {
+								pcd.ClrText = 0x888888
+							}
+						case 4: // MAC Address
+							pcd.ClrText = 0x444444
+						case 5: // Ping (RTT)
+							if strings.Contains(dev.PingTime, "0 ms") || strings.Contains(dev.PingTime, "< 1 ms") || strings.Contains(dev.PingTime, "1 ms") || strings.Contains(dev.PingTime, "2 ms") || strings.Contains(dev.PingTime, "3 ms") || strings.Contains(dev.PingTime, "4 ms") {
+								pcd.ClrText = 0x388E3C // Emerald Green
+							} else if strings.Contains(dev.PingTime, "ms") {
+								pcd.ClrText = 0x0078D8 // High Latency Orange/Amber
+							} else {
+								pcd.ClrText = 0x888888
+							}
+						case 6: // Speed
+							if strings.Contains(dev.Speed, "1.0 Gbps") {
+								pcd.ClrText = 0x2E7D32 // Gigabit Dark Green
+							} else if strings.Contains(dev.Speed, "850 Mbps") || strings.Contains(dev.Speed, "500 Mbps") {
+								pcd.ClrText = 0x8F8300 // Teal
+							} else if strings.Contains(dev.Speed, "250 Mbps") || strings.Contains(dev.Speed, "100 Mbps") {
+								pcd.ClrText = 0xD47800 // Blue
+							} else {
+								pcd.ClrText = 0x0051E6 // Orange
+							}
+						case 7: // Hardware & Service Fingerprint
+							pcd.ClrText = 0x222222
+						}
 					}
 				}
 				devicesMutex.Unlock()
