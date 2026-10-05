@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -373,7 +374,6 @@ var (
 	hwndThreads      uintptr
 	hwndBtnStart     uintptr
 	hwndBtnStop      uintptr
-	hwndBtnScanPorts uintptr
 	hwndBtnExport    uintptr
 	hwndProgress     uintptr
 	hwndListView     uintptr
@@ -432,14 +432,16 @@ func openBrowserURL(target string) {
 	if target == "" {
 		return
 	}
-	procShellExecuteW.Call(
-		0,
-		uintptr(unsafe.Pointer(strPtr("open"))),
-		uintptr(unsafe.Pointer(strPtr(target))),
-		0,
-		0,
-		1, // SW_SHOWNORMAL
-	)
+	go func(url string) {
+		procShellExecuteW.Call(
+			0,
+			uintptr(unsafe.Pointer(strPtr("open"))),
+			uintptr(unsafe.Pointer(strPtr(url))),
+			0,
+			0,
+			1, // SW_SHOWNORMAL
+		)
+	}(target)
 }
 
 // Apple Hardware Model Mapping
@@ -1402,7 +1404,6 @@ func startScanThread() {
 	procSendMessageW.Call(hwndListView, LVM_DELETEALLITEMS, 0, 0)
 	procSendMessageW.Call(hwndProgress, PBM_SETPOS, 0, 0)
 	procEnableWindow.Call(hwndBtnStart, 0)
-	procEnableWindow.Call(hwndBtnScanPorts, 0)
 	procEnableWindow.Call(hwndBtnStop, 1)
 
 	ipFromStr := getControlText(hwndIPFrom)
@@ -1651,7 +1652,6 @@ func startPortScanAllThread() {
 	scanMutex.Unlock()
 
 	procEnableWindow.Call(hwndBtnStart, 0)
-	procEnableWindow.Call(hwndBtnScanPorts, 0)
 	procEnableWindow.Call(hwndBtnStop, 1)
 
 	go func() {
@@ -1660,7 +1660,6 @@ func startPortScanAllThread() {
 			isScanning = false
 			scanMutex.Unlock()
 			procEnableWindow.Call(hwndBtnStart, 1)
-			procEnableWindow.Call(hwndBtnScanPorts, 1)
 			procEnableWindow.Call(hwndBtnStop, 0)
 		}()
 
@@ -2709,6 +2708,9 @@ func aboutWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 func animWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case 0x0014: // WM_ERASEBKGND
+		return 1
+
 	case WM_PAINT:
 		var ps PAINTSTRUCT
 		hdc, _, _ := procBeginPaint.Call(hwnd, uintptr(unsafe.Pointer(&ps)))
@@ -2782,9 +2784,12 @@ func procFillRect(hdc uintptr, rc *RECT, hbr uintptr) {
 	user32.NewProc("FillRect").Call(hdc, uintptr(unsafe.Pointer(rc)), hbr)
 }
 
+var registerAboutOnce sync.Once
+
 func showAboutDialog() {
 	if hwndAbout != 0 {
 		procShowWindow.Call(hwndAbout, 5)
+		procSetForegroundWindow.Call(hwndAbout)
 		return
 	}
 
@@ -2792,25 +2797,27 @@ func showAboutDialog() {
 	classNameAbout := strPtr("GINNetScanAboutWindow")
 	classNameAnim := strPtr("GINNetScanAnimCanvas")
 
-	var wcAbout WNDCLASSEXW
-	wcAbout.CbSize = uint32(unsafe.Sizeof(wcAbout))
-	wcAbout.Style = 0x0002 | 0x0001
-	wcAbout.LpfnWndProc = syscall.NewCallback(aboutWndProc)
-	wcAbout.HInstance = hInstance
-	wcAbout.HIcon = hIconApp
-	wcAbout.HIconSm = hIconApp
-	wcAbout.HbrBackground = hBrushWhite
-	wcAbout.LpszClassName = classNameAbout
-	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcAbout)))
+	registerAboutOnce.Do(func() {
+		var wcAbout WNDCLASSEXW
+		wcAbout.CbSize = uint32(unsafe.Sizeof(wcAbout))
+		wcAbout.Style = 0x0002 | 0x0001
+		wcAbout.LpfnWndProc = syscall.NewCallback(aboutWndProc)
+		wcAbout.HInstance = hInstance
+		wcAbout.HIcon = hIconApp
+		wcAbout.HIconSm = hIconApp
+		wcAbout.HbrBackground = hBrushWhite
+		wcAbout.LpszClassName = classNameAbout
+		procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcAbout)))
 
-	var wcAnim WNDCLASSEXW
-	wcAnim.CbSize = uint32(unsafe.Sizeof(wcAnim))
-	wcAnim.Style = 0x0002 | 0x0001
-	wcAnim.LpfnWndProc = syscall.NewCallback(animWndProc)
-	wcAnim.HInstance = hInstance
-	wcAnim.HbrBackground = hBrushBlack
-	wcAnim.LpszClassName = classNameAnim
-	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcAnim)))
+		var wcAnim WNDCLASSEXW
+		wcAnim.CbSize = uint32(unsafe.Sizeof(wcAnim))
+		wcAnim.Style = 0x0002 | 0x0001
+		wcAnim.LpfnWndProc = syscall.NewCallback(animWndProc)
+		wcAnim.HInstance = hInstance
+		wcAnim.HbrBackground = hBrushBlack
+		wcAnim.LpszClassName = classNameAnim
+		procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcAnim)))
+	})
 
 	hwndAboutRet, _, _ := procCreateWindowExW.Call(
 		0x00010000,
@@ -2940,7 +2947,6 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			scanMutex.Unlock()
 			setControlText(hwndStatus, "Scan stopped by user.")
 			procEnableWindow.Call(hwndBtnStart, 1)
-			procEnableWindow.Call(hwndBtnScanPorts, 1)
 			procEnableWindow.Call(hwndBtnStop, 0)
 		case 1003: // Save Log
 			exportReport()
@@ -3146,7 +3152,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		oldFont, _, _ := procSelectObject.Call(hDC, hFontBold)
 
 		textPtr := strPtr(btnText)
-		procDrawTextW.Call(hDC, uintptr(unsafe.Pointer(textPtr)), uintptr(len([]rune(btnText))), uintptr(unsafe.Pointer(&rc)), 0x00000001|0x00000004|0x00000020)
+		procDrawTextW.Call(hDC, uintptr(unsafe.Pointer(textPtr)), ^uintptr(0), uintptr(unsafe.Pointer(&rc)), 0x00000001|0x00000004|0x00000020)
 
 		procSelectObject.Call(hDC, oldFont)
 		return 1
@@ -3163,7 +3169,6 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_APP_SCAN_DONE:
 		procEnableWindow.Call(hwndBtnStart, 1)
-		procEnableWindow.Call(hwndBtnScanPorts, 1)
 		procEnableWindow.Call(hwndBtnStop, 0)
 		procSendMessageW.Call(hwndProgress, PBM_SETPOS, uintptr(atomic.LoadInt32(&totalHosts)), 0)
 
@@ -3197,6 +3202,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 }
 
 func main() {
+	runtime.LockOSThread()
 	loadSessionHistoryFromDisk()
 
 	// Set Below Normal Process Priority so network scanner never lags OS / CPU
@@ -3493,26 +3499,14 @@ func main() {
 	)
 	hwndBtnStop = hwndBtnStopRet
 	procEnableWindow.Call(hwndBtnStop, 0)
-	xOffset += 64
-
-	// Button: Scan Ports (🔍)
-	hwndBtnScanPortsRet, _, _ := procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🔍 Scan Ports"))),
-		WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP,
-		uintptr(xOffset), 9, 98, 26,
-		hwndMain, 1005, hInstance, 0,
-	)
-	hwndBtnScanPorts = hwndBtnScanPortsRet
-	procEnableWindow.Call(hwndBtnScanPorts, 0)
-	xOffset += 102
+	xOffset += 66
 
 	// Button: Save Log (💾)
 	hwndBtnExportRet, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr("💾 Save Log"))),
 		WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP,
-		uintptr(xOffset), 9, 88, 26,
+		uintptr(xOffset), 9, 110, 26,
 		hwndMain, 1003, hInstance, 0,
 	)
 	hwndBtnExport = hwndBtnExportRet
@@ -3564,7 +3558,7 @@ func main() {
 	}
 
 	// Status Bar Label (Left)
-	statusInitText := "Ready. Click '▶ Start Scan' to begin discovery.   |||   💡 (Tip: Click '🔍 Scan Ports' for full 36-port service audit)"
+	statusInitText := "Ready. Click '▶ Start Scan' to begin discovery.   |||   💡 (Tip: Right-click any device to scan its open ports)"
 	if hasNoNetwork {
 		statusInitText = "😢 ⚠️ No active network adapter or IP found! Network card not detected or drivers not installed."
 	} else if hasMultipleSubnets {
@@ -3593,7 +3587,7 @@ func main() {
 	// Dynamic Update Button (Owner-drawn, amber gold, shown when update available)
 	hwndBtnUpdateRet, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("⚡ New version v024"))),
+		uintptr(unsafe.Pointer(strPtr("⚡ New version v034"))),
 		WS_CHILD|BS_OWNERDRAW|WS_TABSTOP,
 		855, 606, 185, 25,
 		hwndMain, 1008, hInstance, 0,
@@ -3637,7 +3631,6 @@ func main() {
 			addTooltip(hwndTip, hwndBtnStart, "Start Scan (▶):\nPerform high-speed hardware ARP detection, ICMP latency measurement, mDNS Bonjour, Apple Model ID, and service fingerprinting.")
 		}
 		addTooltip(hwndTip, hwndBtnStop, "Stop Scan (⏹):\nAbort current scanning process immediately.")
-		addTooltip(hwndTip, hwndBtnScanPorts, "Scan All Ports (🔍):\nAudit 36 common service ports across all discovered online hosts in a dedicated window.")
 		addTooltip(hwndTip, hwndBtnExport, "Save Log (💾):\nExport full network inventory audit report to Desktop in UTF-8.")
 		addTooltip(hwndTip, hwndBtnInstall, "Install GIN-NetScan:\nPermanently install GIN-NetScan to C:\\Program Files with Desktop & Start Menu shortcuts.")
 		addTooltip(hwndTip, hwndBrand, "About GIN-NetScan")
@@ -3646,7 +3639,7 @@ func main() {
 	// Apply Fonts
 	allHwnds := []uintptr{
 		hwndIPFrom, hwndIPTo, hwndTimeout, hwndPacket, hwndThreads,
-		hwndBtnStart, hwndBtnStop, hwndBtnScanPorts, hwndBtnExport, hwndBtnInstall, hwndListView, hwndStatus,
+		hwndBtnStart, hwndBtnStop, hwndBtnExport, hwndBtnInstall, hwndListView, hwndStatus,
 	}
 	for _, h := range allHwnds {
 		procSendMessageW.Call(h, WM_SETFONT, hFontSegoe, 1)
