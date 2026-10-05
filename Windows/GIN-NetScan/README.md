@@ -1,4 +1,4 @@
-# 🌐 GIN-NetScan (v030)
+# 🌐 GIN-NetScan (v031)
 > **Ultra-Fast Multi-Subnet Hardware Network Discovery, Latency Profiler & Service Auditor for Windows 10/11**
 > *Developed by VladiMIR+AI (Vladimir Bulantsev — GinCz)*
 
