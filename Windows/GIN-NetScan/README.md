@@ -1,4 +1,4 @@
-# 🌐 GIN-NetScan (v033)
+# 🌐 GIN-NetScan (v034)
 > **Ultra-Fast Multi-Subnet Hardware Network Discovery, Latency Profiler & Service Auditor for Windows 10/11**
 > *Developed by VladiMIR+AI (Vladimir Bulantsev — GinCz)*
 
@@ -24,17 +24,17 @@
   * `< 30 ms`: Fluent Blue (Good connection)
   * `≥ 30 ms`: Orange (High latency)
 * **💾 Save Log:** 1-Click export of the network inventory table directly to Desktop in UTF-8 formatted text report.
-* **🔍 Full 36-Port Service Auditor:** Deep port scan for HTTP, HTTPS, SSH, RDP, SMB, RTSP, DNS, SNMP, MQTT, etc., with dedicated multi-threaded audit window.
+* **🔍 Context On-Demand Port Auditor:** Right-click any discovered device to run an instant deep port scan (36 common ports) with live latency, service names, and 1-Click web / SSH / RDP connect.
 * **📦 2-in-1 Portable + Permanent Installer:**
   * Runs instantly with zero dependencies.
   * Bottom dynamic action button:
     * **`Install` (Red):** Installs cleanly to `C:\Program Files\GIN-NetScan`, creates Desktop and Start Menu shortcuts, and registers in Windows Programs and Features.
-    * **`v033 Installed` (Green):** When already installed.
+    * **`v034 Installed` (Green):** When already installed.
     * **`⚡ Обновить` (Amber Gold):** Dynamic 1-click update when a new version is released.
 
 ---
 
 ## 📥 Download & Installation
 
-* Download the latest standalone installer executable: [`GIN-NetScan_v033.exe`](GIN-NetScan_v033.exe)
+* Download the latest standalone installer executable: [`GIN-NetScan_v034.exe`](GIN-NetScan_v034.exe)
 * Requires Windows 10 or Windows 11 (64-bit). No .NET or runtime installation needed.
