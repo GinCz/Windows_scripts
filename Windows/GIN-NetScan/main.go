@@ -1920,6 +1920,10 @@ func portScanWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			setControlText(hwndPortStatus, "Copied open ports audit to clipboard!")
 			return 0
 		}
+	case WM_CLOSE:
+		procDestroyWindow.Call(hwnd)
+		hwndPortScan = 0
+		return 0
 	case WM_DESTROY:
 		hwndPortScan = 0
 		return 0
@@ -1928,10 +1932,18 @@ func portScanWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	return ret
 }
 
+var registerPortScanOnce sync.Once
+
 func showPortScanDialog(targetIP, hostname string) {
 	if targetIP == "" {
 		return
 	}
+	if hwndPortScan != 0 {
+		procShowWindow.Call(hwndPortScan, 5)
+		procSetForegroundWindow.Call(hwndPortScan)
+		return
+	}
+
 	portScanTargetIP = targetIP
 	portScanTargetHost = hostname
 	if portScanTargetHost == "" || portScanTargetHost == "—" {
@@ -1939,16 +1951,18 @@ func showPortScanDialog(targetIP, hostname string) {
 	}
 
 	classNamePort := strPtr("GINNetScanPortScannerWindow")
-	var wcPort WNDCLASSEXW
-	wcPort.CbSize = uint32(unsafe.Sizeof(wcPort))
-	wcPort.Style = 0x0002 | 0x0001
-	wcPort.LpfnWndProc = syscall.NewCallback(portScanWndProc)
-	wcPort.HInstance = hInstance
-	wcPort.HIcon = hIconApp
-	wcPort.HIconSm = hIconApp
-	wcPort.HbrBackground = hBrushWhite
-	wcPort.LpszClassName = classNamePort
-	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcPort)))
+	registerPortScanOnce.Do(func() {
+		var wcPort WNDCLASSEXW
+		wcPort.CbSize = uint32(unsafe.Sizeof(wcPort))
+		wcPort.Style = 0x0002 | 0x0001
+		wcPort.LpfnWndProc = syscall.NewCallback(portScanWndProc)
+		wcPort.HInstance = hInstance
+		wcPort.HIcon = hIconApp
+		wcPort.HIconSm = hIconApp
+		wcPort.HbrBackground = hBrushWhite
+		wcPort.LpszClassName = classNamePort
+		procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcPort)))
+	})
 
 	title := fmt.Sprintf("Port Scanner — %s (%s)", targetIP, portScanTargetHost)
 	hwndPortRet, _, _ := procCreateWindowExW.Call(
@@ -2009,7 +2023,7 @@ func showPortScanDialog(targetIP, hostname string) {
 	// Status Label
 	hwndPortStatusRet, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("Scanning ports..."))),
+		uintptr(unsafe.Pointer(strPtr("⠋ Starting port audit..."))),
 		WS_CHILD|WS_VISIBLE,
 		15, 405, 340, 24,
 		hwndPortScan, 0, hInstance, 0,
@@ -2037,26 +2051,49 @@ func showPortScanDialog(targetIP, hostname string) {
 	)
 	procSendMessageW.Call(hBtnClose, WM_SETFONT, hFontSegoe, 1)
 
-	// Background Scanner Goroutine
+	// Background Scanner Goroutine with Live Spinner and Instant Row Insertion
 	go func(target string) {
 		type portResult struct {
 			port    int
 			service string
 			details string
 		}
-		resChan := make(chan portResult, len(commonPortsToScan))
+
+		var scannedCount int32
+		var openFoundCount int32
+		var scanActive int32 = 1
+
+		// Live spinner animation goroutine
+		go func() {
+			spinChars := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+			idx := 0
+			for atomic.LoadInt32(&scanActive) == 1 && hwndPortScan != 0 {
+				done := atomic.LoadInt32(&scannedCount)
+				found := atomic.LoadInt32(&openFoundCount)
+				spin := spinChars[idx%len(spinChars)]
+				setControlText(hwndPortStatus, fmt.Sprintf("%s Auditing ports: %d / %d (%d open found)...", spin, done, len(commonPortsToScan), found))
+				idx++
+				time.Sleep(90 * time.Millisecond)
+			}
+		}()
+
+		var openList []portResult
+		var muList sync.Mutex
 		var pwg sync.WaitGroup
-		sem := make(chan struct{}, 15)
+		sem := make(chan struct{}, 12)
 
 		for _, p := range commonPortsToScan {
 			pwg.Add(1)
 			go func(portNum int, svcName string) {
 				defer pwg.Done()
 				sem <- struct{}{}
-				defer func() { <-sem }()
+				defer func() {
+					<-sem
+					atomic.AddInt32(&scannedCount, 1)
+				}()
 
 				addr := fmt.Sprintf("%s:%d", target, portNum)
-				conn, err := net.DialTimeout("tcp", addr, 400*time.Millisecond)
+				conn, err := net.DialTimeout("tcp", addr, 350*time.Millisecond)
 				if err == nil {
 					conn.Close()
 					details := "Open / Listening"
@@ -2075,54 +2112,62 @@ func showPortScanDialog(targetIP, hostname string) {
 					} else if portNum == 53 {
 						details = "DNS Resolver Service"
 					}
-					resChan <- portResult{port: portNum, service: svcName, details: details}
+
+					res := portResult{port: portNum, service: svcName, details: details}
+					muList.Lock()
+					openList = append(openList, res)
+					rowIdx := len(openList) - 1
+
+					// Insert item live into Port Scanner ListView
+					if hwndPortList != 0 {
+						item := LVITEMW{
+							Mask:     0x0001,
+							IItem:    int32(rowIdx),
+							ISubItem: 0,
+							PszText:  strPtr(fmt.Sprintf("%d", res.port)),
+						}
+						procSendMessageW.Call(hwndPortList, LVM_INSERTITEMW, 0, uintptr(unsafe.Pointer(&item)))
+
+						sub1 := LVITEMW{Mask: 0x0001, IItem: int32(rowIdx), ISubItem: 1, PszText: strPtr(res.service)}
+						procSendMessageW.Call(hwndPortList, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&sub1)))
+
+						sub2 := LVITEMW{Mask: 0x0001, IItem: int32(rowIdx), ISubItem: 2, PszText: strPtr("OPEN")}
+						procSendMessageW.Call(hwndPortList, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&sub2)))
+
+						sub3 := LVITEMW{Mask: 0x0001, IItem: int32(rowIdx), ISubItem: 3, PszText: strPtr(res.details)}
+						procSendMessageW.Call(hwndPortList, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&sub3)))
+					}
+					muList.Unlock()
+					atomic.AddInt32(&openFoundCount, 1)
 				}
 			}(p.Port, p.Name)
 		}
 
 		pwg.Wait()
-		close(resChan)
+		atomic.StoreInt32(&scanActive, 0)
 
-		var openList []portResult
-		for r := range resChan {
-			openList = append(openList, r)
-		}
-		sort.Slice(openList, func(i, j int) bool {
-			return openList[i].port < openList[j].port
-		})
+		muList.Lock()
+		finalFound := len(openList)
+		muList.Unlock()
 
-		for idx, r := range openList {
-			item := LVITEMW{
-				Mask:     0x0001,
-				IItem:    int32(idx),
-				ISubItem: 0,
-				PszText:  strPtr(fmt.Sprintf("%d", r.port)),
+		if hwndPortScan != 0 {
+			if finalFound == 0 {
+				setControlText(hwndPortStatus, "Audit complete. No open ports found on this host.")
+			} else if finalFound == 1 {
+				setControlText(hwndPortStatus, "✅ Audit complete. Found 1 Open Port.")
+			} else {
+				setControlText(hwndPortStatus, fmt.Sprintf("✅ Audit complete. Found %d Open Ports.", finalFound))
 			}
-			procSendMessageW.Call(hwndPortList, LVM_INSERTITEMW, 0, uintptr(unsafe.Pointer(&item)))
-
-			sub1 := LVITEMW{Mask: 0x0001, IItem: int32(idx), ISubItem: 1, PszText: strPtr(r.service)}
-			procSendMessageW.Call(hwndPortList, LVM_SETITEMTEXTW, uintptr(idx), uintptr(unsafe.Pointer(&sub1)))
-
-			sub2 := LVITEMW{Mask: 0x0001, IItem: int32(idx), ISubItem: 2, PszText: strPtr("OPEN")}
-			procSendMessageW.Call(hwndPortList, LVM_SETITEMTEXTW, uintptr(idx), uintptr(unsafe.Pointer(&sub2)))
-
-			sub3 := LVITEMW{Mask: 0x0001, IItem: int32(idx), ISubItem: 3, PszText: strPtr(r.details)}
-			procSendMessageW.Call(hwndPortList, LVM_SETITEMTEXTW, uintptr(idx), uintptr(unsafe.Pointer(&sub3)))
 		}
 
-		if len(openList) == 0 {
-			setControlText(hwndPortStatus, "No open ports found.")
-		} else if len(openList) == 1 {
-			setControlText(hwndPortStatus, "Found 1 Open Port.")
-		} else {
-			setControlText(hwndPortStatus, fmt.Sprintf("Found %d Open Ports.", len(openList)))
-		}
-
-		if len(openList) > 0 {
+		if finalFound > 0 {
+			muList.Lock()
 			var openPortStrs []string
 			for _, r := range openList {
 				openPortStrs = append(openPortStrs, fmt.Sprintf("%s:%d", r.service, r.port))
 			}
+			muList.Unlock()
+
 			devicesMutex.Lock()
 			for i := range foundDevices {
 				if foundDevices[i].IP == target {
@@ -2140,7 +2185,6 @@ func showPortScanDialog(targetIP, hostname string) {
 				}
 			}
 			devicesMutex.Unlock()
-			autoFitListViewColumns()
 		}
 	}(targetIP)
 }
