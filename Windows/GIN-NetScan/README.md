@@ -1,4 +1,4 @@
-# 🌐 GIN-NetScan (v032)
+# 🌐 GIN-NetScan (v033)
 > **Ultra-Fast Multi-Subnet Hardware Network Discovery, Latency Profiler & Service Auditor for Windows 10/11**
 > *Developed by VladiMIR+AI (Vladimir Bulantsev — GinCz)*
 
@@ -29,12 +29,12 @@
   * Runs instantly with zero dependencies.
   * Bottom dynamic action button:
     * **`Install` (Red):** Installs cleanly to `C:\Program Files\GIN-NetScan`, creates Desktop and Start Menu shortcuts, and registers in Windows Programs and Features.
-    * **`v030 Installed` (Green):** When already installed.
+    * **`v033 Installed` (Green):** When already installed.
     * **`⚡ Обновить` (Amber Gold):** Dynamic 1-click update when a new version is released.
 
 ---
 
 ## 📥 Download & Installation
 
-* Download the latest standalone installer executable: [`GIN-NetScan_v030.exe`](GIN-NetScan_v030.exe)
+* Download the latest standalone installer executable: [`GIN-NetScan_v033.exe`](GIN-NetScan_v033.exe)
 * Requires Windows 10 or Windows 11 (64-bit). No .NET or runtime installation needed.
