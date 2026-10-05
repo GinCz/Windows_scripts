@@ -4,6 +4,8 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,6 +25,9 @@ import (
 	"time"
 	"unsafe"
 )
+
+//go:embed Gin-NetScan.ico
+var embeddedRadarIcon []byte
 
 const (
 	AppName       = "GIN-NetScan"
@@ -2168,23 +2173,29 @@ func showPortScanDialog(targetIP, hostname string) {
 			}
 			muList.Unlock()
 
+			var targetIdx int = -1
+			var newIcon, newFp string
+
 			devicesMutex.Lock()
 			for i := range foundDevices {
 				if foundDevices[i].IP == target {
 					vendor := resolveVendor(foundDevices[i].MAC)
-					newIcon, newFp := guessTypeAndFormatFingerprint(vendor, foundDevices[i].Hostname, "", openPortStrs, foundDevices[i].IP)
+					newIcon, newFp = guessTypeAndFormatFingerprint(vendor, foundDevices[i].Hostname, "", openPortStrs, foundDevices[i].IP)
 					foundDevices[i].TypeIcon = newIcon
 					foundDevices[i].Fingerprint = newFp
-
-					sub1 := LVITEMW{Mask: 0x0001, IItem: int32(i), ISubItem: 1, PszText: strPtr(newIcon)}
-					procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(i), uintptr(unsafe.Pointer(&sub1)))
-
-					sub7 := LVITEMW{Mask: 0x0001, IItem: int32(i), ISubItem: 7, PszText: strPtr(newFp)}
-					procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(i), uintptr(unsafe.Pointer(&sub7)))
+					targetIdx = i
 					break
 				}
 			}
 			devicesMutex.Unlock()
+
+			if targetIdx >= 0 {
+				sub1 := LVITEMW{Mask: 0x0001, IItem: int32(targetIdx), ISubItem: 1, PszText: strPtr(newIcon)}
+				procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(targetIdx), uintptr(unsafe.Pointer(&sub1)))
+
+				sub7 := LVITEMW{Mask: 0x0001, IItem: int32(targetIdx), ISubItem: 7, PszText: strPtr(newFp)}
+				procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(targetIdx), uintptr(unsafe.Pointer(&sub7)))
+			}
 		}
 	}(targetIP)
 }
@@ -2491,10 +2502,13 @@ func installApplication() {
 		return
 	}
 
+	icoB64 := base64.StdEncoding.EncodeToString(embeddedRadarIcon)
+
 	psInstallScript := fmt.Sprintf(`
 $ErrorActionPreference = 'Stop'
 $targetDir = '%s'
 $srcExe = '%s'
+$icoB64 = '%s'
 
 # 1. Create target directory
 if (-not (Test-Path $targetDir)) {
@@ -2504,22 +2518,26 @@ if (-not (Test-Path $targetDir)) {
 # 2. Grant full permissions to Users group
 & icacls "$targetDir" /grant "*S-1-5-32-545:(OI)(CI)F" /T /C /Q | Out-Null
 
-# 3. Copy executable & icon
+# 3. Copy executable & extract official Gin-NetScan.ico
 Copy-Item -Path $srcExe -Destination "$targetDir\GIN-NetScan.exe" -Force
-$srcDir = Split-Path -Parent $srcExe
-$icoPath = Join-Path $srcDir 'Gin-NetScan.ico'
-if (Test-Path $icoPath) {
-    Copy-Item -Path $icoPath -Destination "$targetDir\Gin-NetScan.ico" -Force
+if ($icoB64 -ne '') {
+    $icoBytes = [System.Convert]::FromBase64String($icoB64)
+    [System.IO.File]::WriteAllBytes("$targetDir\Gin-NetScan.ico", $icoBytes)
+} else {
+    $srcDir = Split-Path -Parent $srcExe
+    $icoPath = Join-Path $srcDir 'Gin-NetScan.ico'
+    if (Test-Path $icoPath) {
+        Copy-Item -Path $icoPath -Destination "$targetDir\Gin-NetScan.ico" -Force
+    }
 }
 
-# 4. Create Desktop & Start Menu Shortcuts
+# 4. Create Desktop & Start Menu Shortcuts with explicit Gin-NetScan.ico
 $w = New-Object -ComObject WScript.Shell
 $desktop = [Environment]::GetFolderPath('Desktop')
 $s = $w.CreateShortcut("$desktop\GIN-NetScan.lnk")
 $s.TargetPath = "$targetDir\GIN-NetScan.exe"
 $s.WorkingDirectory = $targetDir
-$s.IconLocation = "$targetDir\GIN-NetScan.exe,0"
-if (Test-Path "$targetDir\Gin-NetScan.ico") { $s.IconLocation = "$targetDir\Gin-NetScan.ico" }
+$s.IconLocation = "$targetDir\Gin-NetScan.ico"
 $s.Description = 'GIN-NetScan by VladiMIR+AI'
 $s.Save()
 
@@ -2529,8 +2547,7 @@ if (Test-Path $pubDesktop) {
         $s2 = $w.CreateShortcut("$pubDesktop\GIN-NetScan.lnk")
         $s2.TargetPath = "$targetDir\GIN-NetScan.exe"
         $s2.WorkingDirectory = $targetDir
-        $s2.IconLocation = "$targetDir\GIN-NetScan.exe,0"
-        if (Test-Path "$targetDir\Gin-NetScan.ico") { $s2.IconLocation = "$targetDir\Gin-NetScan.ico" }
+        $s2.IconLocation = "$targetDir\Gin-NetScan.ico"
         $s2.Description = 'GIN-NetScan by VladiMIR+AI'
         $s2.Save()
     } catch {}
@@ -2540,8 +2557,7 @@ $programsPath = [Environment]::GetFolderPath('Programs')
 $s3 = $w.CreateShortcut("$programsPath\GIN-NetScan.lnk")
 $s3.TargetPath = "$targetDir\GIN-NetScan.exe"
 $s3.WorkingDirectory = $targetDir
-$s3.IconLocation = "$targetDir\GIN-NetScan.exe,0"
-if (Test-Path "$targetDir\Gin-NetScan.ico") { $s3.IconLocation = "$targetDir\Gin-NetScan.ico" }
+$s3.IconLocation = "$targetDir\Gin-NetScan.ico"
 $s3.Description = 'GIN-NetScan by VladiMIR+AI'
 $s3.Save()
 
@@ -2594,9 +2610,9 @@ foreach ($regPath in $regPaths) {
             New-Item -Path $regPath -Force | Out-Null
         }
         Set-ItemProperty -Path $regPath -Name "DisplayName" -Value "GIN NetScan by VladiMIR+AI" -Type String
-        Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "v034" -Type String
+        Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "%s" -Type String
         Set-ItemProperty -Path $regPath -Name "Publisher" -Value "VladiMIR+AI (Vladimir Bulantsev - GinCz)" -Type String
-        Set-ItemProperty -Path $regPath -Name "DisplayIcon" -Value "$targetDir\GIN-NetScan.exe,0" -Type String
+        Set-ItemProperty -Path $regPath -Name "DisplayIcon" -Value "$targetDir\Gin-NetScan.ico" -Type String
         Set-ItemProperty -Path $regPath -Name "InstallLocation" -Value "$targetDir" -Type String
         Set-ItemProperty -Path $regPath -Name "UninstallString" -Value ('cmd.exe /c "' + $targetDir + '\uninstall.bat"') -Type String
         Set-ItemProperty -Path $regPath -Name "QuietUninstallString" -Value ('cmd.exe /c "' + $targetDir + '\uninstall.bat" /quiet') -Type String
@@ -2604,10 +2620,16 @@ foreach ($regPath in $regPaths) {
         Set-ItemProperty -Path $regPath -Name "HelpLink" -Value "https://github.com/GinCz" -Type String
         Set-ItemProperty -Path $regPath -Name "NoModify" -Value 1 -Type DWord
         Set-ItemProperty -Path $regPath -Name "NoRepair" -Value 0 -Type DWord
-        Set-ItemProperty -Path $regPath -Name "EstimatedSize" -Value 2800 -Type DWord
+        Set-ItemProperty -Path $regPath -Name "EstimatedSize" -Value 3200 -Type DWord
     } catch {}
 }
-`, DefaultInstallDir, exePath)
+
+# 7. Refresh Windows Shell Icon Cache
+try {
+    & ie4uinit.exe -ClearIconCache
+    & ie4uinit.exe -show
+} catch {}
+`, DefaultInstallDir, exePath, icoB64, AppVersion)
 
 	tmpPs1 := filepath.Join(os.TempDir(), "gin_netscan_installer.ps1")
 	_ = os.WriteFile(tmpPs1, []byte(psInstallScript), 0644)
@@ -2620,7 +2642,7 @@ foreach ($regPath in $regPaths) {
 		_ = os.Remove(tmpPs1)
 		procMessageBoxW.Call(
 			hwndMain,
-			uintptr(unsafe.Pointer(strPtr("GIN-NetScan has been installed successfully!\n\nInstalled Path: "+DefaultInstallDir+"\nDesktop Shortcut created with custom icon.\nOfficial Windows Uninstaller registered.\n\nThis portable launcher will now close."))),
+			uintptr(unsafe.Pointer(strPtr("GIN-NetScan has been installed successfully!\n\nInstalled Path: "+DefaultInstallDir+"\nDesktop Shortcut created with custom Gin-NetScan icon.\nOfficial Windows Uninstaller registered.\n\nThis portable launcher will now close."))),
 			uintptr(unsafe.Pointer(strPtr("GIN-NetScan Installed Successfully"))),
 			0x00000040, // MB_OK | MB_ICONINFORMATION
 		)
@@ -2636,9 +2658,13 @@ foreach ($regPath in $regPaths) {
 	_ = os.MkdirAll(localAppDir, 0755)
 	fallbackExe := filepath.Join(localAppDir, "GIN-NetScan.exe")
 	_ = copyFile(exePath, fallbackExe)
-	srcIco := filepath.Join(filepath.Dir(exePath), "Gin-NetScan.ico")
-	if fileExists(srcIco) {
-		_ = copyFile(srcIco, filepath.Join(localAppDir, "Gin-NetScan.ico"))
+	if len(embeddedRadarIcon) > 0 {
+		_ = os.WriteFile(filepath.Join(localAppDir, "Gin-NetScan.ico"), embeddedRadarIcon, 0644)
+	} else {
+		srcIco := filepath.Join(filepath.Dir(exePath), "Gin-NetScan.ico")
+		if fileExists(srcIco) {
+			_ = copyFile(srcIco, filepath.Join(localAppDir, "Gin-NetScan.ico"))
+		}
 	}
 
 	psFallback := fmt.Sprintf(`
@@ -2647,9 +2673,7 @@ $desktop = [Environment]::GetFolderPath('Desktop')
 $s = $w.CreateShortcut("$desktop\GIN-NetScan.lnk")
 $s.TargetPath = '%s'
 $s.WorkingDirectory = '%s'
-$s.IconLocation = '%s,0'
-$ico = Join-Path '%s' 'Gin-NetScan.ico'
-if (Test-Path $ico) { $s.IconLocation = $ico }
+$s.IconLocation = '%s\Gin-NetScan.ico'
 $s.Description = 'GIN-NetScan by VladiMIR+AI'
 $s.Save()
 
@@ -2692,9 +2716,9 @@ if (-not (Test-Path $regPathCU)) {
     New-Item -Path $regPathCU -Force | Out-Null
 }
 Set-ItemProperty -Path $regPathCU -Name "DisplayName" -Value "GIN NetScan by VladiMIR+AI" -Type String
-Set-ItemProperty -Path $regPathCU -Name "DisplayVersion" -Value "v034" -Type String
+Set-ItemProperty -Path $regPathCU -Name "DisplayVersion" -Value "%s" -Type String
 Set-ItemProperty -Path $regPathCU -Name "Publisher" -Value "VladiMIR+AI (Vladimir Bulantsev - GinCz)" -Type String
-Set-ItemProperty -Path $regPathCU -Name "DisplayIcon" -Value "%s,0" -Type String
+Set-ItemProperty -Path $regPathCU -Name "DisplayIcon" -Value "%s\Gin-NetScan.ico" -Type String
 Set-ItemProperty -Path $regPathCU -Name "InstallLocation" -Value "%s" -Type String
 Set-ItemProperty -Path $regPathCU -Name "UninstallString" -Value ('cmd.exe /c "' + '%s' + '\uninstall.bat"') -Type String
 Set-ItemProperty -Path $regPathCU -Name "QuietUninstallString" -Value ('cmd.exe /c "' + '%s' + '\uninstall.bat" /quiet') -Type String
@@ -2702,14 +2726,19 @@ Set-ItemProperty -Path $regPathCU -Name "URLInfoAbout" -Value "https://github.co
 Set-ItemProperty -Path $regPathCU -Name "HelpLink" -Value "https://github.com/GinCz" -Type String
 Set-ItemProperty -Path $regPathCU -Name "NoModify" -Value 1 -Type DWord
 Set-ItemProperty -Path $regPathCU -Name "NoRepair" -Value 0 -Type DWord
-Set-ItemProperty -Path $regPathCU -Name "EstimatedSize" -Value 2800 -Type DWord
-`, fallbackExe, localAppDir, fallbackExe, localAppDir, localAppDir, fallbackExe, localAppDir, localAppDir, localAppDir)
+Set-ItemProperty -Path $regPathCU -Name "EstimatedSize" -Value 3200 -Type DWord
+
+try {
+    & ie4uinit.exe -ClearIconCache
+    & ie4uinit.exe -show
+} catch {}
+`, fallbackExe, localAppDir, localAppDir, localAppDir, AppVersion, localAppDir, localAppDir, fallbackExe, localAppDir)
 	_ = exec.Command("powershell", "-NoProfile", "-Command", psFallback).Run()
 	_ = os.Remove(tmpPs1)
 
 	procMessageBoxW.Call(
 		hwndMain,
-		uintptr(unsafe.Pointer(strPtr("GIN-NetScan has been installed to your user profile!\n\nInstalled Path: "+localAppDir+"\nDesktop Shortcut created with custom icon.\nOfficial Windows Uninstaller registered.\n\nThis portable launcher will now close."))),
+		uintptr(unsafe.Pointer(strPtr("GIN-NetScan has been installed to your user profile!\n\nInstalled Path: "+localAppDir+"\nDesktop Shortcut created with custom Gin-NetScan icon.\nOfficial Windows Uninstaller registered.\n\nThis portable launcher will now close."))),
 		uintptr(unsafe.Pointer(strPtr("GIN-NetScan Installed Successfully"))),
 		0x00000040,
 	)
@@ -3371,6 +3400,15 @@ func main() {
 			}
 		}
 		hIconRet, _, _ := procLoadImageW.Call(0, uintptr(unsafe.Pointer(strPtr(icoPath))), uintptr(IMAGE_ICON), 0, 0, uintptr(LR_LOADFROMFILE|LR_DEFAULTSIZE))
+		if hIconRet != 0 {
+			hIconApp = hIconRet
+		}
+	}
+	// Fallback to embedded radar icon bytes
+	if hIconApp == 0 && len(embeddedRadarIcon) > 0 {
+		tmpIco := filepath.Join(os.TempDir(), "Gin-NetScan_Radar.ico")
+		_ = os.WriteFile(tmpIco, embeddedRadarIcon, 0644)
+		hIconRet, _, _ := procLoadImageW.Call(0, uintptr(unsafe.Pointer(strPtr(tmpIco))), uintptr(IMAGE_ICON), 0, 0, uintptr(LR_LOADFROMFILE|LR_DEFAULTSIZE))
 		if hIconRet != 0 {
 			hIconApp = hIconRet
 		}
