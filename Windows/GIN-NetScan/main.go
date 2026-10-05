@@ -31,8 +31,8 @@ var embeddedRadarIcon []byte
 
 const (
 	AppName       = "GIN-NetScan"
-	AppVersion    = "v034"
-	AppTitle      = "GIN NetScan by VladiMIR+AI_v034"
+	AppVersion    = "v035"
+	AppTitle      = "GIN NetScan by VladiMIR+AI_v035"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-NetScan"
 )
@@ -389,7 +389,7 @@ var (
 	hwndBtnUpdate    uintptr
 	hwndBrand        uintptr
 	hasUpdate        = false
-	updateBtnText    = "⚡ New version v034"
+	updateBtnText    = "⚡ New version v035"
 
 	hwndAbout     uintptr
 	hwndAboutAnim uintptr
@@ -2919,7 +2919,7 @@ func showAboutDialog() {
 
 	hTitle, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI_v034"))),
+		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI_v035"))),
 		WS_CHILD|WS_VISIBLE,
 		15, 162, 375, 24,
 		hwndAbout, 0, hInstance, 0,
@@ -2928,7 +2928,7 @@ func showAboutDialog() {
 
 	hSub, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("Version: v034 (Public Release)  |  100% Free & Open Source\nEngine: Ultra-Fast Hardware SendARP & Multi-Service Probe\nAuthor: Vladimir Bulantsev (GinCz)"))),
+		uintptr(unsafe.Pointer(strPtr("Version: v035 (Public Release)  |  100% Free & Open Source\nEngine: Ultra-Fast Hardware SendARP & Multi-Service Probe\nAuthor: Vladimir Bulantsev (GinCz)"))),
 		WS_CHILD|WS_VISIBLE,
 		15, 190, 375, 55,
 		hwndAbout, 0, hInstance, 0,
@@ -3469,11 +3469,11 @@ func main() {
 	}
 	hasMultipleSubnets := len(detectedSubnets) > 1
 
-	// Main Window (v034)
+	// Main Window (v035)
 	hwndMainRet, _, _ := procCreateWindowExW.Call(
 		0,
 		uintptr(unsafe.Pointer(className)),
-		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI_v034"))),
+		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI_v035"))),
 		WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,
 		40, 40, 1200, 680,
 		0, 0, hInstance, 0,
@@ -3749,7 +3749,7 @@ func main() {
 	// Dynamic Update Button (Owner-drawn, amber gold, shown when update available)
 	hwndBtnUpdateRet, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("⚡ New version v034"))),
+		uintptr(unsafe.Pointer(strPtr("⚡ New version v035"))),
 		WS_CHILD|BS_OWNERDRAW|WS_TABSTOP,
 		855, 606, 185, 25,
 		hwndMain, 1008, hInstance, 0,
