@@ -25,6 +25,11 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 
 ## Table of Contents
 
+- [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
+  - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
+  - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](Windows/VPN/GIN-VPN/README.md)
+  - [MEGA Drive — Universal Standalone Cloud Mount Engine](Windows/MEGA/README.md)
+  - [Xray VPN Suite — Automated Installers & Dynamic Tray Shield](Windows/VPN/README.md)
 - [Scripts Overview](#scripts-overview)
   - [System Optimization & Sweepers](#system-optimization--sweepers)
   - [Diagnostics & Security Audit](#diagnostics--security-audit)
@@ -38,8 +43,28 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
   - [System_Security_Miner_Audit.cmd — Advanced Security & Cryptominer Deep Audit](#5-system_security_miner_auditcmd--advanced-security--cryptominer-deep-audit)
 - [SMB Network Drives — SMB_Connect](#smb-network-drives--smb_connect)
 - [Requirements & Usage](#requirements--usage)
+- [Deployment Rules & Standards (MEGA Desktop Auto-Sync)](RULES.md)
 - [Code Conventions](#code-conventions)
 - [Author](#author)
+
+---
+
+## 🪟 Windows Applications & Executable Suite (.exe)
+
+All native Windows applications are developed with zero external runtime dependencies, standalone architecture, and compiled with custom embedded Windows PE icons.
+
+> [!IMPORTANT]
+> **MEGA Desktop Auto-Sync Standard:** Only the **single latest compiled version** of each executable (`GIN-NetScan_vXXX.exe`, `GIN-VPN_vXXX.exe`) is maintained on the user's Desktop via cloud folder `/MEGA/DOCS/desktop/` (`D:\MEGA\DOCS\desktop\`). Outdated versions are automatically purged upon release. See [RULES.md](RULES.md).
+
+| Application / Package | Binary (.exe) / Launcher | Description & Key Architecture | Release & Status |
+| :--- | :--- | :--- | :---: |
+| 🌐 **[GIN-NetScan](Windows/GIN-NetScan/README.md)** | `GIN-NetScan_v025.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v025`** |
+| 🛡️ **[GIN-VPN](Windows/VPN/GIN-VPN/README.md)** | `GIN-VPN_v013.exe`<br>`GIN-VPN.ps1` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v013`** |
+| ☁️ **[MEGA Drive](Windows/MEGA/README.md)** | `MEGA_Drive_Universal.cmd` | Standalone universal cloud drive mount engine (`M:`) with 2FA support and auto-reconnect. | 🟢 **Stable** |
+| 🛡️ **[Xray VPN Suite](Windows/VPN/README.md)** | `XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` | Universal automated Xray installer for Windows 7/10/11 with GDI+ dynamic tray shield. | 🟢 **Stable** |
+| 🤖 **[CODEX ChatGPT](Windows/CODEX_ChatGPT/README.md)** | `Install_ChatGPT_Codex_Universal.cmd` | Direct MS Store CDN bypass installer for ChatGPT Desktop & Codex. | 🟢 **Stable** |
+
+👉 **[Explore Full Windows Applications Catalog & Documentation ➔](Windows/README.md)**
 
 ---
 
