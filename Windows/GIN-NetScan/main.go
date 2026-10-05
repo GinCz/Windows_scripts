@@ -25,8 +25,8 @@ import (
 
 const (
 	AppName       = "GIN-NetScan"
-	AppVersion    = "v025"
-	AppTitle      = "GIN NetScan by VladiMIR+AI__v025"
+	AppVersion    = "v034"
+	AppTitle      = "GIN NetScan by VladiMIR+AI_v034"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-NetScan"
 )
@@ -45,6 +45,9 @@ var (
 	gdi32    = syscall.NewLazyDLL("gdi32.dll")
 	comctl32 = syscall.NewLazyDLL("comctl32.dll")
 	iphlpapi = syscall.NewLazyDLL("iphlpapi.dll")
+	shell32  = syscall.NewLazyDLL("shell32.dll")
+
+	procShellExecuteW        = shell32.NewProc("ShellExecuteW")
 
 	procRegisterClassExW     = user32.NewProc("RegisterClassExW")
 	procCreateWindowExW      = user32.NewProc("CreateWindowExW")
@@ -167,6 +170,7 @@ const (
 	PBM_SETPOS   = 0x0402
 
 	WM_DESTROY        = 0x0002
+	WM_CLOSE          = 0x0010
 	WM_PAINT          = 0x000F
 	WM_COMMAND        = 0x0111
 	WM_NOTIFY         = 0x004E
@@ -378,7 +382,7 @@ var (
 	hwndBtnUpdate    uintptr
 	hwndBrand        uintptr
 	hasUpdate        = false
-	updateBtnText    = "⚡ New version v024"
+	updateBtnText    = "⚡ New version v034"
 
 	hwndAbout     uintptr
 	hwndAboutAnim uintptr
@@ -393,13 +397,15 @@ var (
 	hwndAllPortsList   uintptr
 	hwndAllPortsStatus uintptr
 
-	hInstance   uintptr
-	hIconApp    uintptr
-	hFontSegoe  uintptr
-	hFontBold   uintptr
-	hBrushWhite uintptr
-	hBrushBlack uintptr
-	hCursorHand uintptr
+	hInstance      uintptr
+	hIconApp       uintptr
+	hFontSegoe     uintptr
+	hFontBold      uintptr
+	hBrushWhite    uintptr
+	hBrushBlack    uintptr
+	hCursorHand    uintptr
+	hPenCyan       uintptr
+	hBrushAnimBlue uintptr
 
 	detectedSubnets []SubnetInfo
 
@@ -421,6 +427,20 @@ var (
 
 	animAngle float64
 )
+
+func openBrowserURL(target string) {
+	if target == "" {
+		return
+	}
+	procShellExecuteW.Call(
+		0,
+		uintptr(unsafe.Pointer(strPtr("open"))),
+		uintptr(unsafe.Pointer(strPtr(target))),
+		0,
+		0,
+		1, // SW_SHOWNORMAL
+	)
+}
 
 // Apple Hardware Model Mapping
 var appleModelMap = map[string]string{
@@ -1010,11 +1030,11 @@ func queryNetBIOSName(ipStr string) string {
 	return ""
 }
 
-// Deep Multi-Service Fingerprinting: Fully Concurrent NetBIOS + mDNS + SSDP + DNS + HTTP Title + Port Sweep (Non-blocking <= 60ms)
-func deepFingerprintHost(ipStr string) (string, string, []string) {
+// Deep Multi-Service Fingerprinting: Fully Concurrent NetBIOS + mDNS + SSDP + DNS (UDP Non-blocking <= 40ms)
+// Note: TCP port sweep is intentionally excluded during fast scan to maximize speed and network safety.
+func deepFingerprintHost(ipStr string) (string, string) {
 	var hostname string
 	var banner string
-	var openPorts []string
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -1091,78 +1111,6 @@ func deepFingerprintHost(ipStr string) (string, string, []string) {
 		}
 	}()
 
-	// 5. Signature Port Sweep (Parallel)
-	targetPorts := []struct {
-		Port int
-		Name string
-	}{
-		{80, "HTTP"},
-		{443, "HTTPS"},
-		{554, "RTSP-Cam"},
-		{9100, "Printer-RAW"},
-		{5000, "DSM/AirPlay"},
-		{7000, "AirPlay"},
-		{8291, "MikroTik-WinBox"},
-		{3389, "RDP-PC"},
-		{445, "SMB-Share"},
-		{8008, "Cast-TV"},
-		{8080, "Web-UI"},
-		{22, "SSH"},
-		{53, "DNS"},
-		{62078, "Apple-Sync"},
-	}
-
-	for _, tp := range targetPorts {
-		wg.Add(1)
-		go func(p int, name string) {
-			defer wg.Done()
-			conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ipStr, p), 60*time.Millisecond)
-			if err == nil {
-				conn.Close()
-				mu.Lock()
-				openPorts = append(openPorts, fmt.Sprintf("%s:%d", name, p))
-				mu.Unlock()
-			}
-		}(tp.Port, tp.Name)
-	}
-
-	// 6. HTTP Banner Grab
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		conn, err := net.DialTimeout("tcp", ipStr+":80", 60*time.Millisecond)
-		if err == nil {
-			conn.SetDeadline(time.Now().Add(60 * time.Millisecond))
-			fmt.Fprintf(conn, "GET / HTTP/1.0\r\nHost: %s\r\nUser-Agent: Mozilla/5.0 (GIN-NetScan)\r\n\r\n", ipStr)
-			buf := make([]byte, 1500)
-			n, _ := conn.Read(buf)
-			conn.Close()
-			if n > 0 {
-				raw := string(buf[:n])
-				reTitle := regexp.MustCompile(`(?i)<title>(.*?)</title>`)
-				mTitle := reTitle.FindStringSubmatch(raw)
-				mu.Lock()
-				if len(mTitle) > 1 {
-					t := strings.TrimSpace(mTitle[1])
-					if len(t) > 0 && len(t) < 40 {
-						if banner == "" {
-							banner = t
-						}
-						if hostname == "" {
-							hostname = t
-						}
-					}
-				}
-				reServer := regexp.MustCompile(`(?i)Server:\s*([^\r\n]+)`)
-				mServer := reServer.FindStringSubmatch(raw)
-				if len(mServer) > 1 && banner == "" {
-					banner = strings.TrimSpace(mServer[1])
-				}
-				mu.Unlock()
-			}
-		}
-	}()
-
 	wg.Wait()
 
 	if hostname == "" {
@@ -1171,7 +1119,7 @@ func deepFingerprintHost(ipStr string) (string, string, []string) {
 		hostname = cleanHostname(hostname)
 	}
 
-	return hostname, banner, openPorts
+	return hostname, banner
 }
 
 func cleanHostname(h string) string {
@@ -1578,10 +1526,10 @@ func startScanThread() {
 					alive := arpOk || icmpOk
 
 					if alive {
-						hostname, banner, openPorts := deepFingerprintHost(target.ipStr)
+						hostname, banner := deepFingerprintHost(target.ipStr)
 						vendor := resolveVendor(mac)
 						hostname = cleanHostname(hostname)
-						icon, fingerprint := guessTypeAndFormatFingerprint(vendor, hostname, banner, openPorts, target.ipStr)
+						icon, fingerprint := guessTypeAndFormatFingerprint(vendor, hostname, banner, nil, target.ipStr)
 
 						pingDisplay := "0 ms"
 						if rtt >= 0 {
@@ -1839,7 +1787,7 @@ func exportReport() {
 	os.WriteFile(reportFile, content, 0644)
 	setControlText(hwndStatus, fmt.Sprintf("Log successfully saved and opened: %s", reportFile))
 
-	exec.Command("cmd.exe", "/c", "start", "", reportFile).Start()
+	openBrowserURL(reportFile)
 }
 
 func showContextMenu(x, y int32) {
@@ -2167,6 +2115,31 @@ func showPortScanDialog(targetIP, hostname string) {
 			setControlText(hwndPortStatus, "Found 1 Open Port.")
 		} else {
 			setControlText(hwndPortStatus, fmt.Sprintf("Found %d Open Ports.", len(openList)))
+		}
+
+		if len(openList) > 0 {
+			var openPortStrs []string
+			for _, r := range openList {
+				openPortStrs = append(openPortStrs, fmt.Sprintf("%s:%d", r.service, r.port))
+			}
+			devicesMutex.Lock()
+			for i := range foundDevices {
+				if foundDevices[i].IP == target {
+					vendor := resolveVendor(foundDevices[i].MAC)
+					newIcon, newFp := guessTypeAndFormatFingerprint(vendor, foundDevices[i].Hostname, "", openPortStrs, foundDevices[i].IP)
+					foundDevices[i].TypeIcon = newIcon
+					foundDevices[i].Fingerprint = newFp
+
+					sub1 := LVITEMW{Mask: 0x0001, IItem: int32(i), ISubItem: 1, PszText: strPtr(newIcon)}
+					procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(i), uintptr(unsafe.Pointer(&sub1)))
+
+					sub7 := LVITEMW{Mask: 0x0001, IItem: int32(i), ISubItem: 7, PszText: strPtr(newFp)}
+					procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(i), uintptr(unsafe.Pointer(&sub7)))
+					break
+				}
+			}
+			devicesMutex.Unlock()
+			autoFitListViewColumns()
 		}
 	}(targetIP)
 }
@@ -2576,7 +2549,7 @@ foreach ($regPath in $regPaths) {
             New-Item -Path $regPath -Force | Out-Null
         }
         Set-ItemProperty -Path $regPath -Name "DisplayName" -Value "GIN NetScan by VladiMIR+AI" -Type String
-        Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "v024" -Type String
+        Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "v034" -Type String
         Set-ItemProperty -Path $regPath -Name "Publisher" -Value "VladiMIR+AI (Vladimir Bulantsev - GinCz)" -Type String
         Set-ItemProperty -Path $regPath -Name "DisplayIcon" -Value "$targetDir\GIN-NetScan.exe,0" -Type String
         Set-ItemProperty -Path $regPath -Name "InstallLocation" -Value "$targetDir" -Type String
@@ -2674,7 +2647,7 @@ if (-not (Test-Path $regPathCU)) {
     New-Item -Path $regPathCU -Force | Out-Null
 }
 Set-ItemProperty -Path $regPathCU -Name "DisplayName" -Value "GIN NetScan by VladiMIR+AI" -Type String
-Set-ItemProperty -Path $regPathCU -Name "DisplayVersion" -Value "v024" -Type String
+Set-ItemProperty -Path $regPathCU -Name "DisplayVersion" -Value "v034" -Type String
 Set-ItemProperty -Path $regPathCU -Name "Publisher" -Value "VladiMIR+AI (Vladimir Bulantsev - GinCz)" -Type String
 Set-ItemProperty -Path $regPathCU -Name "DisplayIcon" -Value "%s,0" -Type String
 Set-ItemProperty -Path $regPathCU -Name "InstallLocation" -Value "%s" -Type String
@@ -2714,9 +2687,15 @@ func aboutWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			return 0
 		}
 		if controlId == 3002 {
-			exec.Command("cmd.exe", "/c", "start", "https://github.com/GinCz").Start()
+			openBrowserURL("https://github.com/GinCz")
 			return 0
 		}
+
+	case WM_CLOSE:
+		procKillTimer.Call(hwnd, 1)
+		procDestroyWindow.Call(hwnd)
+		hwndAbout = 0
+		return 0
 
 	case WM_DESTROY:
 		procKillTimer.Call(hwnd, 1)
@@ -2773,7 +2752,6 @@ func animWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			projected[i] = POINT{X: px, Y: py}
 		}
 
-		hPenCyan, _, _ := procCreatePen.Call(0, 2, 0x00FFFF)
 		hOldPen, _, _ := procSelectObject.Call(hdc, hPenCyan)
 
 		for _, e := range edges {
@@ -2783,16 +2761,14 @@ func animWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			procLineTo.Call(hdc, uintptr(p2.X), uintptr(p2.Y))
 		}
 
-		hBrushBlue, _, _ := procCreateSolidBrush.Call(0xFF9900)
-		procSelectObject.Call(hdc, hBrushBlue)
+		hOldBrush, _, _ := procSelectObject.Call(hdc, hBrushAnimBlue)
 
 		for _, p := range projected {
 			procEllipse.Call(hdc, uintptr(p.X-4), uintptr(p.Y-4), uintptr(p.X+4), uintptr(p.Y+4))
 		}
 
 		procSelectObject.Call(hdc, hOldPen)
-		procDeleteObject.Call(hPenCyan)
-		procDeleteObject.Call(hBrushBlue)
+		procSelectObject.Call(hdc, hOldBrush)
 
 		procEndPaint.Call(hwnd, uintptr(unsafe.Pointer(&ps)))
 		return 0
@@ -2861,7 +2837,7 @@ func showAboutDialog() {
 
 	hTitle, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI__v025"))),
+		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI_v034"))),
 		WS_CHILD|WS_VISIBLE,
 		15, 162, 375, 24,
 		hwndAbout, 0, hInstance, 0,
@@ -2870,7 +2846,7 @@ func showAboutDialog() {
 
 	hSub, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("Version: v025 (Public Release)  |  100% Free & Open Source\nEngine: Ultra-Fast Hardware SendARP & Multi-Service Probe\nAuthor: Vladimir Bulantsev (GinCz)"))),
+		uintptr(unsafe.Pointer(strPtr("Version: v034 (Public Release)  |  100% Free & Open Source\nEngine: Ultra-Fast Hardware SendARP & Multi-Service Probe\nAuthor: Vladimir Bulantsev (GinCz)"))),
 		WS_CHILD|WS_VISIBLE,
 		15, 190, 375, 55,
 		hwndAbout, 0, hInstance, 0,
@@ -2975,7 +2951,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		case 1007: // Red Install Button
 			installApplication()
 		case 1008: // Update Button
-			exec.Command("cmd.exe", "/c", "start", GitHubRepoURL).Start()
+			openBrowserURL(GitHubRepoURL)
 			setControlText(hwndStatus, "Opening GitHub repository to download latest GIN-NetScan update...")
 		case 2001: // Copy IP
 			copyToClipboard(selectedDevice.IP)
@@ -3010,7 +2986,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			copyToClipboard(cardText)
 			setControlText(hwndStatus, fmt.Sprintf("Copied all info for %s to clipboard (multiline format).", selectedDevice.IP))
 		case 2006: // Open Browser
-			exec.Command("cmd.exe", "/c", "start", fmt.Sprintf("http://%s", selectedDevice.IP)).Start()
+			openBrowserURL(fmt.Sprintf("http://%s", selectedDevice.IP))
 			setControlText(hwndStatus, fmt.Sprintf("Opening http://%s in web browser...", selectedDevice.IP))
 		case 2007: // Ping in CMD
 			exec.Command("cmd.exe", "/c", "start", "cmd.exe", "/k", fmt.Sprintf("ping -t %s", selectedDevice.IP)).Start()
@@ -3305,6 +3281,11 @@ func main() {
 		hFontBold = hFontSegoe
 	}
 
+	hPenCyanRet, _, _ := procCreatePen.Call(0, 2, 0x00FFFF)
+	hPenCyan = hPenCyanRet
+	hBrushAnimBlueRet, _, _ := procCreateSolidBrush.Call(0xFF9900)
+	hBrushAnimBlue = hBrushAnimBlueRet
+
 	detectedSubnets = detectAllSubnets()
 	hasNoNetwork := len(detectedSubnets) == 0
 	var activeSub SubnetInfo
@@ -3320,11 +3301,11 @@ func main() {
 	}
 	hasMultipleSubnets := len(detectedSubnets) > 1
 
-	// Main Window (v025)
+	// Main Window (v034)
 	hwndMainRet, _, _ := procCreateWindowExW.Call(
 		0,
 		uintptr(unsafe.Pointer(className)),
-		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI__v025"))),
+		uintptr(unsafe.Pointer(strPtr("GIN NetScan by VladiMIR+AI_v034"))),
 		WS_OVERLAPPEDWINDOW|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,
 		40, 40, 1200, 680,
 		0, 0, hInstance, 0,

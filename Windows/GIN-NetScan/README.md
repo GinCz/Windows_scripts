@@ -24,7 +24,7 @@
   * `< 30 ms`: Fluent Blue (Good connection)
   * `≥ 30 ms`: Orange (High latency)
 * **💾 Save Log:** 1-Click export of the network inventory table directly to Desktop in UTF-8 formatted text report.
-* **🔍 Context On-Demand Port Auditor:** Right-click any discovered device to run an instant deep port scan (36 common ports) with live latency, service names, and 1-Click web / SSH / RDP connect.
+* **🔍 Full 36-Port Service Auditor:** Deep port scan for HTTP, HTTPS, SSH, RDP, SMB, RTSP, DNS, SNMP, MQTT, etc., with dedicated multi-threaded audit window (on-demand manual port audit via right-click).
 * **📦 2-in-1 Portable + Permanent Installer:**
   * Runs instantly with zero dependencies.
   * Bottom dynamic action button:
