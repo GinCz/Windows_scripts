@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GIN-Chat | Защищенный приватный мессенджер</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#17212b">
+</head>
+<body class="dark-theme">
+  <div id="app">
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="auth-overlay">
+      <div class="auth-card">
+        <div class="auth-logo">
+          <div class="logo-icon"><i class="fa-solid fa-paper-plane"></i></div>
+          <h2>GIN-Chat</h2>
+          <p class="auth-subtitle">Приватный защищенный мессенджер Владимира Буланцева</p>
+        </div>
+
+        <!-- AUTH TABS -->
+        <div class="auth-tabs">
+          <button id="tabLoginBtn" class="tab-btn active" onclick="switchAuthTab('login')">Вход</button>
+          <button id="tabRegisterBtn" class="tab-btn" onclick="switchAuthTab('register')">Регистрация</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label><i class="fa-solid fa-user"></i> Логин или Email</label>
+            <input type="text" id="loginInput" placeholder="admin или your@email.com" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-lock"></i> Пароль</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="loginPassword" placeholder="Ваш пароль" required autocomplete="current-password">
+              <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPassword', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Войти в чат</button>
+          <div id="loginAlert" class="alert-box"></div>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" class="auth-form hidden" onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label><i class="fa-solid fa-id-card"></i> Имя и Фамилия</label>
+            <input type="text" id="regName" placeholder="Иван Иванов" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-envelope"></i> Email (виден только администратору)</label>
+            <input type="email" id="regEmail" placeholder="user@example.com" required oninput="autoSuggestUsername(this.value)">
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-phone"></i> Телефон (виден только администратору)</label>
+            <input type="tel" id="regPhone" placeholder="+7 (999) 000-00-00" required>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-at"></i> Логин / Username <span class="badge-hint">для поиска в чате</span></label>
+            <div class="input-with-prefix">
+              <span class="prefix">@</span>
+              <input type="text" id="regUsername" placeholder="ivan_ivanov" required>
+            </div>
+            <small class="form-hint">Можно изменить в любой момент в профиле</small>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-lock"></i> Пароль</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="regPassword" placeholder="Минимум 6 символов" required minlength="6">
+              <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('regPassword', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Отправить заявку на регистрацию</button>
+          <div id="regAlert" class="alert-box"></div>
+        </form>
+
+        <!-- GITHUB DOCS BUTTON & SIGNATURE -->
+        <div class="auth-footer-docs">
+          <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="btn-github-docs">
+            <i class="fa-brands fa-github"></i> Подробное описание всех функций ↗
+          </a>
+          <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v015</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CHAT INTERFACE -->
+    <div id="mainScreen" class="main-layout hidden">
+      <!-- SIDEBAR -->
+      <aside class="sidebar" id="sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+          <button class="icon-btn" id="menuBtn" onclick="toggleMainMenu()"><i class="fa-solid fa-bars"></i></button>
+          <div class="search-bar">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="globalSearchInput" placeholder="Поиск по диалогам и контактам..." oninput="handleGlobalSearch(this.value)">
+            <button class="clear-search-btn hidden" id="clearSearchBtn" onclick="clearGlobalSearch()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <button class="icon-btn" onclick="openNewDirectModal()" title="Все контакты / Написать"><i class="fa-solid fa-address-book"></i></button>
+        </div>
+
+        <!-- Main Burger Menu Dropdown -->
+        <div class="main-menu-dropdown hidden" id="mainMenu">
+          <div class="menu-user-profile" onclick="openProfileModal()">
+            <div class="avatar avatar-md" id="menuUserAvatar">ВБ</div>
+            <div class="menu-user-info">
+              <div class="user-fullname" id="menuUserName">Владимир</div>
+              <div class="user-handle" id="menuUserHandle">@admin</div>
+            </div>
+          </div>
+          <hr class="menu-divider">
+          <button class="menu-item" onclick="openNewDirectModal()"><i class="fa-solid fa-address-book text-primary"></i> Все контакты (Написать)</button>
+          <button class="menu-item" onclick="openNewGroupModal()"><i class="fa-solid fa-users text-primary"></i> Создать группу</button>
+          <button class="menu-item" id="adminPanelMenuBtn" onclick="openAdminModal()"><i class="fa-solid fa-shield-halved text-warning"></i> Панель администратора <span class="badge badge-warning hidden" id="pendingUsersBadge">0</span></button>
+          <button class="menu-item" onclick="openProfileModal()"><i class="fa-solid fa-gear"></i> Настройки профиля</button>
+          <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
+          <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
+          <hr class="menu-divider">
+          <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
+        </div>
+
+        <!-- Chat Filter Tabs -->
+        <div class="chat-tabs">
+          <button class="chat-tab active" data-filter="all" onclick="filterChats('all')">Все</button>
+          <button class="chat-tab" data-filter="direct" onclick="filterChats('direct')">Личные</button>
+          <button class="chat-tab" data-filter="group" onclick="filterChats('group')">Группы</button>
+        </div>
+
+        <!-- Search Results Panel (Dropdown) -->
+        <div class="search-results-panel hidden" id="searchResultsPanel">
+          <div class="section-title">Найденные контакты и пользователи</div>
+          <div id="searchUsersList" class="search-list"></div>
+        </div>
+
+        <!-- Chats List -->
+        <div class="chats-list" id="chatsList">
+          <div class="chats-loading"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка диалогов...</div>
+        </div>
+
+        <!-- Sidebar Footer Signature -->
+        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v015</div>
+
+        <!-- Floating Action Button for New Chat -->
+        <div class="fab-wrapper">
+          <button class="fab-btn fab-secondary" onclick="openNewDirectModal()" title="Написать пользователю"><i class="fa-solid fa-user-plus"></i></button>
+          <button class="fab-btn" onclick="openNewGroupModal()" title="Создать группу"><i class="fa-solid fa-users"></i></button>
+        </div>
+      </aside>
+
+      <!-- ACTIVE CHAT VIEW -->
+      <main class="chat-view" id="chatView">
+        <!-- NO CHAT SELECTED STATE -->
+        <div class="empty-chat-state" id="emptyChatState">
+          <div class="empty-icon"><i class="fa-regular fa-comments"></i></div>
+          <h3>Выберите или начните диалог</h3>
+          <p>Все сообщения защищены сквозным шифрованием и хранятся на вашем личном сервере.</p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button class="btn btn-primary" onclick="openNewDirectModal()"><i class="fa-solid fa-address-book"></i> Написать пользователю</button>
+            <button class="btn btn-secondary" onclick="openNewGroupModal()"><i class="fa-solid fa-users"></i> Создать группу</button>
+          </div>
+        </div>
+
+        <!-- ACTIVE CHAT CONTAINER -->
+        <div class="active-chat-container hidden" id="activeChatContainer">
+          <!-- Chat Top Header -->
+          <header class="chat-header">
+            <button class="icon-btn mobile-back-btn" onclick="backToChatsList()"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="chat-header-info" onclick="openChatDetailsModal()">
+              <div class="avatar avatar-sm" id="chatHeaderAvatar">ГР</div>
+              <div class="chat-titles">
+                <div class="chat-title-text" id="chatHeaderTitle">Название чата</div>
+                <div class="chat-subtitle-text" id="chatHeaderSubtitle">в сети</div>
+              </div>
+            </div>
+            <div class="chat-header-actions">
+              <button class="btn btn-sm btn-bronze-invite hidden" id="chatHeaderGroupInviteBtn" onclick="copyCurrentChatLink()" title="Скопировать ссылку-приглашение в группу"><i class="fa-solid fa-user-plus"></i> Ссылка в группу</button>
+              <button class="icon-btn" onclick="copyCurrentChatLink()" title="Скопировать ссылку на чат"><i class="fa-solid fa-link"></i></button>
+              <button class="icon-btn" onclick="openChatDetailsModal()" title="Информация о группе / собеседнике"><i class="fa-solid fa-circle-info"></i></button>
+            </div>
+          </header>
+
+          <!-- Pinned Message Bar -->
+          <div class="pinned-bar hidden" id="pinnedBar">
+            <i class="fa-solid fa-thumbtack pin-icon"></i>
+            <div class="pinned-content" onclick="scrollToPinnedMessage()">
+              <div class="pinned-label">Закрепленное сообщение</div>
+              <div class="pinned-text" id="pinnedText">Текст сообщения...</div>
+            </div>
+            <button class="icon-btn pin-close-btn" onclick="unpinCurrentMessage()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <!-- Messages Container -->
+          <div class="messages-container" id="messagesContainer">
+            <div class="messages-scroll" id="messagesScroll"></div>
+          </div>
+
+          <!-- Reply / Edit Preview Bar -->
+          <div class="reply-preview-bar hidden" id="replyPreviewBar">
+            <i class="fa-solid fa-reply reply-icon" id="replyPreviewIcon"></i>
+            <div class="reply-preview-content">
+              <div class="reply-to-name" id="replyToName">Имя</div>
+              <div class="reply-to-text" id="replyToText">Текст...</div>
+            </div>
+            <button class="icon-btn" onclick="cancelReplyOrEdit()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <!-- Upload Progress Indicator Bar -->
+          <div class="upload-progress-bar hidden" id="uploadProgressBar">
+            <div class="upload-progress-fill" id="uploadProgressFill"></div>
+            <div class="upload-progress-text" id="uploadProgressText">
+              <i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Загрузка файла: 0%
+            </div>
+            <button class="icon-btn upload-cancel-btn" onclick="cancelCurrentUpload()" title="Отменить загрузку"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+
+          <!-- Chat Input Area -->
+          <footer class="chat-input-area">
+            <!-- Attachment Menu -->
+            <div class="attachment-menu hidden" id="attachmentMenu">
+              <button class="attach-item" onclick="triggerFileInput('image/*')"><i class="fa-solid fa-image"></i> Фото или Картинка</button>
+              <button class="attach-item" onclick="triggerFileInput('*/*')"><i class="fa-solid fa-file"></i> Любой Документ / Файл</button>
+            </div>
+
+            <input type="file" id="hiddenFileInput" class="hidden" onchange="handleFileSelected(event)">
+
+            <button class="icon-btn" id="attachBtn" onclick="toggleAttachmentMenu()" title="Прикрепить файл"><i class="fa-solid fa-paperclip"></i></button>
+
+            <!-- Emoji Picker Trigger -->
+            <button class="icon-btn" id="emojiBtn" onclick="toggleEmojiPicker()" title="Смайлики"><i class="fa-regular fa-face-smile"></i></button>
+
+            <!-- Schedule Message Trigger -->
+            <button class="icon-btn schedule-btn" id="scheduleBtn" onclick="openScheduleModal()" title="Отправить позже (по времени)"><i class="fa-regular fa-clock"></i></button>
+
+            <!-- Emoji Picker Popup -->
+            <div class="emoji-picker-popup hidden" id="emojiPicker">
+              <div class="emoji-tabs">
+                <span class="emoji-category active" onclick="loadEmojiCategory('smileys')">😀</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('gestures')">👍</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('hearts')">❤️</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('animals')">🐱</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('objects')">🔥</span>
+              </div>
+              <div class="emoji-grid" id="emojiGrid"></div>
+            </div>
+
+            <!-- Message Input Box -->
+            <div class="input-wrapper">
+              <textarea id="messageInput" rows="1" placeholder="Напишите сообщение..." onkeydown="handleInputKeydown(event)" oninput="handleTypingEvent()"></textarea>
+            </div>
+
+            <!-- Voice Recording UI -->
+            <div class="voice-recording-bar hidden" id="voiceRecordingBar">
+              <div class="voice-indicator"><span class="pulse-red"></span> Запись: <span id="voiceTimer">00:00</span></div>
+              <button class="btn btn-sm btn-danger" onclick="cancelVoiceRecording()"><i class="fa-solid fa-trash"></i> Отмена</button>
+              <button class="btn btn-sm btn-success" onclick="stopAndSendVoice()"><i class="fa-solid fa-paper-plane"></i> Отправить</button>
+            </div>
+
+            <!-- Record Voice / Send Buttons -->
+            <button class="icon-btn send-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="Голосовое сообщение"><i class="fa-solid fa-microphone"></i></button>
+            <button class="icon-btn send-btn hidden" id="sendBtn" onclick="sendMessage()" title="Отправить"><i class="fa-solid fa-paper-plane"></i></button>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <!-- MODAL: SCHEDULE MESSAGE (Отправить позже) -->
+    <div class="modal-overlay hidden" id="scheduleModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3><i class="fa-regular fa-clock text-primary"></i> Отправить позже (по расписанию)</h3>
+          <button class="icon-btn" onclick="closeModal('scheduleModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-hint">Сообщение автоматически отправится в указанную дату и время, как в Telegram.</p>
+          <div class="form-group">
+            <label>Дата и время отправки:</label>
+            <input type="datetime-local" id="scheduleDatetimeInput" class="form-control" style="font-size: 14px; padding: 10px;">
+          </div>
+          <div class="schedule-quick-btns" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickScheduleTime(10)">Через 10 мин</button>
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickScheduleTime(60)">Через 1 час</button>
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickScheduleTime(180)">Через 3 часа</button>
+            <button type="button" class="btn btn-xs btn-outline" onclick="setQuickScheduleTomorrow()">Завтра в 09:00</button>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="submitScheduledMessage()"><i class="fa-solid fa-calendar-check"></i> Запланировать отправку</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADMIN MODERATION PANEL (Владимир) -->
+    <div class="modal-overlay hidden" id="adminModal">
+      <div class="modal-box modal-xl">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-shield-halved text-primary"></i> Панель Администратора (Владимир)</h3>
+          <button class="icon-btn" onclick="closeModal('adminModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <!-- Server Stats Cards -->
+          <div class="stats-row" id="adminStatsRow">
+            <div class="stat-card">
+              <div class="stat-val" id="statPendingCount">0</div>
+              <div class="stat-label">Ожидают проверки</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="statApprovedCount">0</div>
+              <div class="stat-label">Одобрено пользователей</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="statChatsCount">0</div>
+              <div class="stat-label">Всего чатов / групп</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-val" id="statMessagesCount">0</div>
+              <div class="stat-label">Зашифрованных сообщений</div>
+            </div>
+          </div>
+
+          <div class="admin-section">
+            <h4><i class="fa-solid fa-user-clock text-warning"></i> Заявки на регистрацию (Модерация)</h4>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 32%;">Пользователь</th>
+                    <th style="width: 32%;">Email / Телефон</th>
+                    <th style="width: 14%;">Статус</th>
+                    <th style="width: 22%;">Действия</th>
+                  </tr>
+                </thead>
+                <tbody id="adminPendingUsersTable">
+                  <tr><td colspan="4" class="text-center">Заявок на проверку нет</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-section">
+            <h4><i class="fa-solid fa-users text-primary"></i> Все пользователи системы (Компактный вид в 2 строчки)</h4>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 28%;">Пользователь</th>
+                    <th style="width: 28%;">Email / Телефон</th>
+                    <th style="width: 14%;">Роль / Статус</th>
+                    <th style="width: 30%;">Управление</th>
+                  </tr>
+                </thead>
+                <tbody id="adminAllUsersTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADMIN CHANGE PASSWORD -->
+    <div class="modal-overlay hidden" id="adminPassModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-key text-warning"></i> Смена пароля пользователя</h3>
+          <button class="icon-btn" onclick="closeModal('adminPassModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="handleAdminResetPassword(event)">
+            <input type="hidden" id="resetPassUserId">
+            <div class="form-group">
+              <label>Пользователь:</label>
+              <input type="text" id="resetPassUserName" disabled class="input-disabled">
+            </div>
+            <div class="form-group">
+              <label>Новый пароль:</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="resetPassNewVal" placeholder="Введите новый пароль (мин. 6 знаков)" required minlength="6">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('resetPassNewVal', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Установить новый пароль</button>
+            <div id="resetPassAlert" class="alert-box"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADMIN EDIT USER -->
+    <div class="modal-overlay hidden" id="adminEditUserModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-user-pen text-primary"></i> Редактирование пользователя</h3>
+          <button class="icon-btn" onclick="closeModal('adminEditUserModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <form onsubmit="handleAdminSaveUser(event)">
+            <input type="hidden" id="adminEditUserId">
+            <div class="form-group">
+              <label>Отображаемое Имя</label>
+              <input type="text" id="adminEditUserName" required>
+            </div>
+            <div class="form-group">
+              <label>Username / Логин</label>
+              <div class="input-with-prefix">
+                <span class="prefix">@</span>
+                <input type="text" id="adminEditUserLogin" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="adminEditUserEmail" required placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+              <label>Телефон</label>
+              <input type="tel" id="adminEditUserPhone" placeholder="+7 999 123-45-67">
+            </div>
+            <div class="form-group">
+              <label>О себе (Био)</label>
+              <input type="text" id="adminEditUserBio" placeholder="Информация...">
+            </div>
+            <div class="form-row" style="display: flex; gap: 12px;">
+              <div class="form-group" style="flex: 1;">
+                <label>Роль</label>
+                <select id="adminEditUserRole" class="form-select">
+                  <option value="user">Пользователь (user)</option>
+                  <option value="admin">Администратор (admin)</option>
+                  <option value="superadmin">Супер-админ (superadmin)</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label>Статус</label>
+                <select id="adminEditUserStatus" class="form-select">
+                  <option value="approved">Одобрен</option>
+                  <option value="pending">На проверке</option>
+                  <option value="rejected">Отклонен</option>
+                  <option value="banned">Заблокирован</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Новый пароль (оставьте пустым, если не меняется):</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="adminEditUserNewPass" placeholder="Сменить пароль (мин. 6 знаков)">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('adminEditUserNewPass', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block"><i class="fa-solid fa-floppy-disk"></i> Сохранить данные пользователя</button>
+            <div id="adminEditUserAlert" class="alert-box"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ALL CONTACTS & DIRECT CHAT (3 Columns Grid) -->
+    <div class="modal-overlay hidden" id="newDirectModal">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-address-book text-primary"></i> Все контакты (Написать)</h3>
+          <button class="icon-btn" onclick="closeModal('newDirectModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="text" id="directSearchInput" placeholder="Поиск контактов по имени или @логину..." oninput="searchUsersForDirect(this.value)">
+          </div>
+          <div class="user-select-grid" id="directUsersSelectList">
+            <div class="text-center text-muted" style="grid-column: 1 / -1; padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка контактов...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: CREATE GROUP (3 Columns Grid with Bright Green Glowing Outline) -->
+    <div class="modal-overlay hidden" id="newGroupModal">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-users text-primary"></i> Новая группа</h3>
+          <button class="icon-btn" onclick="closeModal('newGroupModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Название группы</label>
+            <input type="text" id="newGroupName" placeholder="Например: Семья, Рабочая группа, Друзья..." required>
+          </div>
+          <div class="form-group">
+            <label>Описание и полезные ссылки (необязательно)</label>
+            <textarea id="newGroupDesc" rows="2" placeholder="Тематика группы, правила, ссылки https://..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Добавить участников в группу (карточки в 3 столбика):</label>
+            <input type="text" placeholder="Поиск людей по имени или @логину..." oninput="searchUsersForGroup(this.value)">
+            <div class="selected-tags" id="selectedGroupMembers"></div>
+            <div class="user-select-grid" id="groupUsersSelectList"></div>
+          </div>
+          <button class="btn btn-primary btn-block mt-2" onclick="createGroupSubmit()"><i class="fa-solid fa-plus"></i> Создать группу</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: CHAT DETAILS & FULL GROUP MANAGEMENT -->
+    <div class="modal-overlay hidden" id="chatDetailsModal">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h3 id="detailsModalTitle">Настройки и участники группы</h3>
+          <button class="icon-btn" onclick="closeModal('chatDetailsModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="group-details-header">
+            <div class="avatar-edit-wrapper">
+              <div class="avatar avatar-lg" id="detailsAvatar">ГР</div>
+              <button class="avatar-edit-btn" id="groupAvatarEditBtn" onclick="chooseAvatarFor('group')" title="Сменить аватар группы">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+            </div>
+            <div class="group-details-fields" style="flex: 1; width: 100%;">
+              <div id="groupEditControls" class="group-edit-block">
+                <div class="form-group" style="margin-bottom: 8px;">
+                  <label style="font-size: 11px; color: var(--text-muted);">Название группы:</label>
+                  <input type="text" id="editGroupNameInput" placeholder="Название группы" style="font-weight: 600; font-size: 15px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 8px;">
+                  <label style="font-size: 11px; color: var(--text-muted);">Описание и ссылки:</label>
+                  <textarea id="editGroupDescInput" rows="2" placeholder="Описание группы, ссылки https://..."></textarea>
+                </div>
+                <div id="groupDescView" class="group-desc-rendered" style="margin-bottom: 10px; font-size: 13px; line-height: 1.4;"></div>
+                <button class="btn btn-sm btn-primary" id="saveGroupInfoBtn" onclick="saveGroupInfo()"><i class="fa-solid fa-floppy-disk"></i> Сохранить настройки</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Single-Row Compact Group Invite Link Box -->
+          <div class="invite-link-box" id="inviteLinkBox">
+            <label><i class="fa-solid fa-link"></i> Ссылка-приглашение в группу:</label>
+            <div class="invite-link-row-compact">
+              <input type="text" id="inviteLinkInput" class="invite-link-input" readonly>
+              <button class="btn btn-sm btn-primary" onclick="copyInviteLink()"><i class="fa-solid fa-copy"></i> Копировать</button>
+              <button class="btn btn-sm btn-secondary" id="regenInviteBtn" onclick="regenerateInviteLink()"><i class="fa-solid fa-arrows-rotate"></i> Сгенерировать новую</button>
+            </div>
+          </div>
+
+          <div class="members-section">
+            <div class="members-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <h4 style="margin: 0;"><i class="fa-solid fa-users"></i> Участники (<span id="membersCount">0</span>)</h4>
+              <button class="btn btn-sm btn-success" id="addGroupMembersBtn" onclick="openAddGroupMembersModal()"><i class="fa-solid fa-user-plus"></i> Добавить людей в группу</button>
+            </div>
+            <div class="members-list" id="chatMembersList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADD MEMBERS TO EXISTING GROUP (3 Columns Grid with Bright Green Border) -->
+    <div class="modal-overlay hidden" id="addGroupMembersModal">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-user-plus text-primary"></i> Добавить участников в группу</h3>
+          <button class="icon-btn" onclick="closeModal('addGroupMembersModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="text" id="searchAddMembersInput" placeholder="Поиск по контактам..." oninput="searchUsersForExistingGroup(this.value)">
+          </div>
+          <div class="user-select-grid" id="existingGroupUsersSelectList">
+            <div class="text-center text-muted" style="padding: 20px; grid-column: 1 / -1;"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка...</div>
+          </div>
+          <button class="btn btn-primary btn-block mt-2" id="submitAddMembersBtn" onclick="submitAddMembersToGroup()"><i class="fa-solid fa-check"></i> Добавить выбранных в группу</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PROFILE & SETTINGS -->
+    <div class="modal-overlay hidden" id="profileModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-gear text-primary"></i> Настройки профиля</h3>
+          <button class="icon-btn" onclick="closeModal('profileModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="profile-avatar-center">
+            <div class="avatar-edit-wrapper">
+              <div class="avatar avatar-lg" id="profileAvatarPreview">ВБ</div>
+              <button type="button" class="avatar-edit-btn" onclick="chooseAvatarFor('profile')" title="Выбрать и обрезать аватар">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+            </div>
+            <button type="button" class="btn btn-xs btn-outline mt-2" onclick="chooseAvatarFor('profile')">
+              <i class="fa-solid fa-crop-simple"></i> Выбрать / Сменить фото
+            </button>
+          </div>
+
+          <form onsubmit="saveProfile(event)">
+            <div class="form-group">
+              <label>Отображаемое Имя</label>
+              <input type="text" id="profileName" required>
+            </div>
+            <div class="form-group">
+              <label>Username / Логин</label>
+              <div class="input-with-prefix">
+                <span class="prefix">@</span>
+                <input type="text" id="profileUsername" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>О себе (Био)</label>
+              <input type="text" id="profileBio" placeholder="Статус или информация...">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="profileEmail" required placeholder="name@example.com">
+            </div>
+            <div class="form-group">
+              <label>Телефон</label>
+              <input type="tel" id="profilePhone" placeholder="+7 999 123-45-67">
+            </div>
+            <hr class="form-divider">
+            <h5>Смена своего пароля (необязательно)</h5>
+            <div class="form-group">
+              <label>Текущий пароль</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="profileOldPass" placeholder="Для подтверждения">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profileOldPass', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Новый пароль</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="profileNewPass" placeholder="Минимум 6 знаков">
+                <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('profileNewPass', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Сохранить изменения</button>
+            <div id="profileAlert" class="alert-box"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: CIRCULAR AVATAR CROPPER & COMPRESSOR (Black Background) -->
+    <div class="modal-overlay hidden" id="avatarCropperModal">
+      <div class="modal-box modal-cropper">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-crop-simple text-primary"></i> Обрезка кружком и сжатие</h3>
+          <button class="icon-btn" onclick="closeAvatarCropper()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="cropper-container">
+            <canvas id="cropCanvas" width="320" height="320"></canvas>
+            <div class="crop-circle-guide"></div>
+          </div>
+          <div class="cropper-controls">
+            <div class="zoom-control">
+              <i class="fa-solid fa-magnifying-glass-minus"></i>
+              <input type="range" id="cropZoomSlider" min="0.3" max="3" step="0.02" value="1" oninput="onCropZoomChange(this.value)">
+              <i class="fa-solid fa-magnifying-glass-plus"></i>
+            </div>
+            <p class="crop-hint"><i class="fa-solid fa-hand"></i> Двигайте фото мышкой или пальцем и настройте масштаб</p>
+          </div>
+          <div class="cropper-preview-bar">
+            <div class="crop-preview-wrap">
+              <canvas id="cropPreviewCanvas" width="64" height="64" class="crop-preview-round"></canvas>
+            </div>
+            <div class="crop-preview-info">
+              <div class="crop-preview-title">Предпросмотр аватара</div>
+              <div class="crop-preview-size" id="cropSizeInfo">Размер: ~5-10 КБ (WebP/JPG)</div>
+            </div>
+          </div>
+          <div class="cropper-actions">
+            <button class="btn btn-secondary" onclick="closeAvatarCropper()">Отмена</button>
+            <button class="btn btn-primary" id="cropSaveBtn" onclick="saveCroppedAvatar()"><i class="fa-solid fa-check"></i> Сохранить и применить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="avatarCropFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelected(event)">
+
+    <!-- IMAGE LIGHTBOX -->
+    <div class="lightbox-overlay hidden" id="lightbox" onclick="closeLightbox()">
+      <button class="icon-btn lightbox-close"><i class="fa-solid fa-xmark"></i></button>
+      <img id="lightboxImg" src="" alt="Full view" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toastNotification" class="toast-notification hidden"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

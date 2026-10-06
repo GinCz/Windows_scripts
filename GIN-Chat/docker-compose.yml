@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  gin-chat:
+    build: .
+    image: gin-chat_gin-chat:latest
+    container_name: gin-chat
+    restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - JWT_SECRET=gin_super_jwt_secret_chat_2026_oracle118
+      - ENCRYPT_SECRET=gin_encrypted_chat_db_key_2026
+      - ADMIN_PASSWORD=GinAdmin2026!
+      - TG_BOT_TOKEN=1226649515:AAF_jIP6ol767vCh9Ur__rEI5onTmIz2z2g
+      - TG_ADMIN_CHAT_ID=261784949
