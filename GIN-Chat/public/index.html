@@ -240,11 +240,11 @@
             <!-- Emoji Picker Popup -->
             <div class="emoji-picker-popup hidden" id="emojiPicker">
               <div class="emoji-tabs">
-                <span class="emoji-category active" onclick="loadEmojiCategory('smileys')">😀</span>
-                <span class="emoji-category" onclick="loadEmojiCategory('gestures')">👍</span>
-                <span class="emoji-category" onclick="loadEmojiCategory('hearts')">❤️</span>
-                <span class="emoji-category" onclick="loadEmojiCategory('animals')">🐱</span>
-                <span class="emoji-category" onclick="loadEmojiCategory('objects')">🔥</span>
+                <span class="emoji-category active" onclick="loadEmojiCategory('smileys', this)" title="Смайлики">😀</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('gestures', this)" title="Жесты">👍</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('hearts', this)" title="Сердца">❤️</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('animals', this)" title="Животные">🐱</span>
+                <span class="emoji-category" onclick="loadEmojiCategory('objects', this)" title="Объекты">🔥</span>
               </div>
               <div class="emoji-grid" id="emojiGrid"></div>
             </div>

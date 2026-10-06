@@ -14,13 +14,13 @@ let audioChunks = [];
 let voiceTimerInterval = null;
 let voiceStartTime = null;
 
-// Emoji sets
+// Emoji sets (Curated 25 standard emojis per category, 5x5 grid)
 const emojis = {
-  smileys: ['😀','😃','😄','😁','😆','😅','😂','🤣','🥲','🥹','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😮‍💨','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🫣','🤗','🫡','🤫','🫠','🤥','😶','🫥','😐','🫤','😑','🫨','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','😵‍💫','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕'],
-  gestures: ['👍','👎','👏','🙌','🤝','🙏','💪','✌️','🤞','🤟','🤘','👌','🤏','👈','👉','👆','👇','☝️','✋','🤚','🖐️','🖖','👋','🤙','✍️','💅'],
-  hearts: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❤️‍🩹','💖','💗','💓','💞','💕','💘','💝'],
-  animals: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🐙','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🐊','🐆','🐅','🐃','🐂','🐄','🐪','🐫','🦙','🐘','🦏','🦛','🐐','🐏','🐑','🐎','🐖'],
-  objects: ['🔥','✨','🎉','🎊','💡','⭐','🌟','⚡','💥','🚀','🛡️','🎯','👑','🏆','🎁','🎈','🔔','📱','💻','⌨️','📷','🎥','🎧','🎵','🎶','🔑','🔒','⚙️','💎','💣','☕','🍺','🍕','🍔']
+  smileys: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','😉','😌','😍','🥰','😘','😋','😛','😜','🤪','😎','🥳','😏','🥺','😭'],
+  gestures: ['👍','👎','👌','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','✋','🤚','🖐️','👋','🤝','👏','🙌','👐','🤲','🙏','💪','✍️','💅'],
+  hearts: ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','💋','💌','💐','🌹','✨','⭐'],
+  animals: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🐺','🦄','🐝','🦋'],
+  objects: ['🔥','🎉','🎊','💡','⚡','💥','🚀','🛡️','🎯','👑','🏆','🎁','🎈','🔔','📱','💻','⌨️','📷','🎥','🎧','🎵','🔑','🔒','⚙️','💎']
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -313,6 +313,26 @@ function connectSocket() {
     loadChats();
   });
 
+  socket.on('group_join_notification', ({ chatId, chatName, joinedUser }) => {
+    showToast(`🔔 ${joinedUser.name} (@${joinedUser.username}) вступил в группу «${chatName}»`);
+    loadChats();
+    if (activeChat && activeChat.id === chatId) {
+      selectChat(chatId);
+    }
+  });
+
+  socket.on('new_report_alert', (report) => {
+    showToast(`🚨 Поступила жалоба на @${report.reported_user.username} (${report.reasons[0] || 'нарушение'})`);
+    if (currentUser && (currentUser.role === 'superadmin' || currentUser.role === 'admin')) {
+      loadAdminData();
+    }
+  });
+
+  socket.on('user_banned', () => {
+    alert('Ваш аккаунт был заблокирован администратором.');
+    logout();
+  });
+
   socket.on('member_removed', ({ chatId, userId }) => {
     if (activeChat && activeChat.id === chatId) {
       if (userId === currentUser.id) {
@@ -465,7 +485,12 @@ async function selectChat(chatId) {
     }
 
     document.getElementById('emptyChatState').classList.add('hidden');
-    document.getElementById('activeChatContainer').classList.remove('hidden');
+    const activeChatEl = document.getElementById('activeChatContainer');
+    activeChatEl.classList.remove('hidden');
+    activeChatEl.className = activeChatEl.className.replace(/chat-theme-\d/g, '').trim();
+    const themeIdx = Math.abs(Number(chatId) || 0) % 8;
+    activeChatEl.classList.add(`chat-theme-${themeIdx}`);
+
     document.body.classList.add('mobile-chat-open');
 
     const displayName = activeChat.name || (activeChat.partner ? activeChat.partner.name : 'Личный диалог');
@@ -563,6 +588,8 @@ function appendMessageToView(msg) {
       <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '❤️')" title="Любовь ❤️">❤️</button>
       <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '🔥')" title="Огонь 🔥">🔥</button>
       <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '😂')" title="Смех 😂">😂</button>
+      <button class="msg-act-btn reaction-more" onclick="openReactionPicker(event, ${msg.id})" title="Все 25 реакций"><i class="fa-regular fa-face-smile"></i></button>
+      <button class="msg-act-btn forward" onclick="openForwardModal(${msg.id})" title="Переслать"><i class="fa-solid fa-share"></i></button>
       <button class="msg-act-btn" onclick="setReplyMessageById(${msg.id})" title="Ответить"><i class="fa-solid fa-reply"></i></button>
       ${(canModify && msg.type === 'text') ? `<button class="msg-act-btn" onclick="startEditMessage(${msg.id}, '${escapeForJs(msg.text)}')" title="Редактировать"><i class="fa-solid fa-pencil"></i></button>` : ''}
       ${canModify ? `<button class="msg-act-btn delete" onclick="deleteMessageById(${msg.id})" title="Удалить"><i class="fa-solid fa-trash"></i></button>` : ''}
@@ -602,13 +629,22 @@ function appendMessageToView(msg) {
       </div>
     `;
   } else if (msg.type === 'file') {
+    const fileMeta = getFileInfo(msg.file_name);
     contentHtml += `
-      <div class="msg-file-box">
-        <i class="fa-solid fa-file-arrow-down msg-file-icon"></i>
-        <div class="msg-file-info">
-          <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}" class="msg-file-name">${escapeHtml(msg.file_name)}</a>
-          <div class="msg-file-size">${formatFileSize(msg.file_size)}</div>
+      <div class="msg-file-card">
+        <div class="msg-file-badge" style="background: ${fileMeta.bg}; color: ${fileMeta.color}; border: 1px solid ${fileMeta.color}40;">
+          <i class="${fileMeta.icon}"></i>
+          <span class="msg-file-ext-tag">${fileMeta.label}</span>
         </div>
+        <div class="msg-file-details">
+          <div class="msg-file-title" title="${escapeHtml(msg.file_name)}">${escapeHtml(msg.file_name)}</div>
+          <div class="msg-file-meta-row">
+            <span class="msg-file-size-badge">${formatFileSize(msg.file_size)}</span>
+          </div>
+        </div>
+        <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}" class="btn-file-open" title="Открыть или скачать файл">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть
+        </a>
       </div>
     `;
   }
@@ -638,6 +674,41 @@ function appendMessageToView(msg) {
   container.appendChild(row);
 
   renderReactions(msg.id, msg.reactions);
+}
+
+function getFileInfo(fileName) {
+  const name = fileName || 'Файл';
+  const parts = name.split('.');
+  const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
+
+  if (['pdf'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-pdf', color: '#ef4444', label: 'PDF', bg: 'rgba(239, 68, 68, 0.16)' };
+  }
+  if (['doc', 'docx', 'rtf', 'odt', 'txt'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-word', color: '#3b82f6', label: ext ? ext.toUpperCase() : 'DOC', bg: 'rgba(59, 130, 246, 0.16)' };
+  }
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-excel', color: '#10b981', label: ext.toUpperCase(), bg: 'rgba(16, 185, 129, 0.16)' };
+  }
+  if (['ppt', 'pptx'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-powerpoint', color: '#f97316', label: ext.toUpperCase(), bg: 'rgba(249, 115, 22, 0.16)' };
+  }
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-zipper', color: '#f59e0b', label: ext.toUpperCase(), bg: 'rgba(245, 158, 11, 0.16)' };
+  }
+  if (['js', 'ts', 'py', 'json', 'html', 'css', 'php', 'sh', 'sql', 'cpp', 'c', 'yml', 'yaml'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-code', color: '#a855f7', label: ext.toUpperCase(), bg: 'rgba(168, 85, 247, 0.16)' };
+  }
+  if (['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-video', color: '#ec4899', label: ext.toUpperCase(), bg: 'rgba(236, 72, 153, 0.16)' };
+  }
+  if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-audio', color: '#06b6d4', label: ext.toUpperCase(), bg: 'rgba(6, 182, 212, 0.16)' };
+  }
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-image', color: '#38bdf8', label: ext.toUpperCase(), bg: 'rgba(56, 189, 248, 0.16)' };
+  }
+  return { icon: 'fa-solid fa-file-lines', color: '#94a3b8', label: ext ? ext.toUpperCase() : 'DOC', bg: 'rgba(148, 163, 184, 0.16)' };
 }
 
 function formatMessageText(text) {
@@ -1049,9 +1120,15 @@ function toggleEmojiPicker() {
   document.getElementById('emojiPicker').classList.toggle('hidden');
 }
 
-function loadEmojiCategory(cat) {
+function loadEmojiCategory(cat, btn) {
+  if (btn) {
+    document.querySelectorAll('.emoji-category').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+  }
   const grid = document.getElementById('emojiGrid');
-  grid.innerHTML = (emojis[cat] || []).map(e => `
+  if (!grid) return;
+  const list = (emojis[cat] || []).slice(0, 25);
+  grid.innerHTML = list.map(e => `
     <span onclick="insertEmoji('${e}')">${e}</span>
   `).join('');
 }
@@ -1084,6 +1161,250 @@ function renderReactions(messageId, reactionsMap) {
     tag.onclick = () => toggleReaction(messageId, emoji);
     container.appendChild(tag);
   });
+}
+
+// ----------------------------------------------------
+// 5x5 (25 EMOJIS) REACTION PICKER (NO SCROLLBAR)
+// ----------------------------------------------------
+const POPULAR_EMOJIS_25 = [
+  '👏','😮','😢','😍','🎉',
+  '🤔','🚀','💯','🤝','🙏',
+  '😎','🤣','🥳','🤩','😡',
+  '💩','🤯','😱','🤫','👀',
+  '💎','✨','⚡','🎯','👌'
+];
+
+let activeReactionMessageId = null;
+
+function openReactionPicker(e, messageId) {
+  if (e) e.stopPropagation();
+  activeReactionMessageId = messageId;
+  const popover = document.getElementById('reactionPopover');
+  const grid = document.getElementById('reactionGrid25');
+  if (!popover || !grid) return;
+
+  grid.innerHTML = POPULAR_EMOJIS_25.map(emoji => `
+    <div class="emoji-btn-25" onclick="select25Reaction('${emoji}')">${emoji}</div>
+  `).join('');
+
+  popover.classList.remove('hidden');
+
+  const target = e.currentTarget || e.target;
+  const rect = target.getBoundingClientRect();
+  const popoverWidth = 250;
+  const popoverHeight = 280;
+
+  let left = rect.left - 100;
+  let top = rect.top - popoverHeight - 8;
+
+  if (left < 10) left = 10;
+  if (left + popoverWidth > window.innerWidth - 10) left = window.innerWidth - popoverWidth - 10;
+  if (top < 10) top = rect.bottom + 8;
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+function select25Reaction(emoji) {
+  if (activeReactionMessageId) {
+    toggleReaction(activeReactionMessageId, emoji);
+  }
+  closeReactionPicker();
+}
+
+function closeReactionPicker() {
+  const popover = document.getElementById('reactionPopover');
+  if (popover) popover.classList.add('hidden');
+  activeReactionMessageId = null;
+}
+
+document.addEventListener('click', (e) => {
+  const popover = document.getElementById('reactionPopover');
+  if (popover && !popover.classList.contains('hidden')) {
+    if (!popover.contains(e.target) && !e.target.closest('.reaction-more')) {
+      closeReactionPicker();
+    }
+  }
+});
+
+// ----------------------------------------------------
+// FORWARD MESSAGE SYSTEM (Compact Vertical & Multi-Select)
+// ----------------------------------------------------
+let forwardMessageId = null;
+let forwardSelectedRecipients = new Set();
+let forwardAvailableItems = [];
+
+async function openForwardModal(messageId) {
+  forwardMessageId = messageId;
+  forwardSelectedRecipients.clear();
+  updateForwardSubmitButton();
+
+  const modal = document.getElementById('forwardModal');
+  const searchInput = document.getElementById('forwardSearchInput');
+  const listContainer = document.getElementById('forwardRecipientsList');
+  if (searchInput) searchInput.value = '';
+  modal.classList.remove('hidden');
+
+  listContainer.innerHTML = '<div class="text-center text-muted" style="padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка получателей...</div>';
+
+  try {
+    const chatsRes = await fetch('/api/chats', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const chatsData = await chatsRes.json();
+    const chats = chatsData.chats || [];
+
+    const usersRes = await fetch('/api/users/search?q=', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const usersData = await usersRes.json();
+    const users = usersData.users || [];
+
+    forwardAvailableItems = [];
+
+    chats.forEach(c => {
+      forwardAvailableItems.push({
+        key: `chat_${c.id}`,
+        type: 'chat',
+        chatId: c.id,
+        name: c.name,
+        handle: c.type === 'group' ? 'Группа' : `@${c.other_user?.username || 'диалог'}`,
+        avatar: c.avatar || (c.other_user ? c.other_user.avatar : null)
+      });
+    });
+
+    const chatUserIds = new Set(chats.filter(c => c.type === 'direct' && c.other_user).map(c => c.other_user.id));
+    users.forEach(u => {
+      if (!chatUserIds.has(u.id) && u.id !== currentUser.id) {
+        forwardAvailableItems.push({
+          key: `user_${u.id}`,
+          type: 'user',
+          userId: u.id,
+          name: u.name,
+          handle: `@${u.username}`,
+          avatar: u.avatar
+        });
+      }
+    });
+
+    renderForwardList(forwardAvailableItems);
+  } catch (err) {
+    listContainer.innerHTML = '<div class="text-center text-danger" style="padding: 16px;">Ошибка загрузки списка</div>';
+  }
+}
+
+function renderForwardList(items) {
+  const listContainer = document.getElementById('forwardRecipientsList');
+  if (!listContainer) return;
+
+  if (items.length === 0) {
+    listContainer.innerHTML = '<div class="text-center text-muted" style="padding: 20px;">Получатели не найдены</div>';
+    return;
+  }
+
+  listContainer.innerHTML = items.map(item => {
+    const isSelected = forwardSelectedRecipients.has(item.key);
+    return `
+      <div class="forward-recipient-row ${isSelected ? 'selected' : ''}" onclick="toggleForwardRecipient('${item.key}')">
+        <div class="forward-recipient-left">
+          ${renderAvatar(item.avatar, item.name, 'avatar-sm')}
+          <div style="min-width: 0;">
+            <div class="forward-recipient-name">${escapeHtml(item.name)}</div>
+            <div class="forward-recipient-handle">${escapeHtml(item.handle)}</div>
+          </div>
+        </div>
+        <div class="forward-checkbox">
+          <i class="fa-solid fa-check"></i>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterForwardRecipients(query) {
+  const q = (query || '').toLowerCase().trim();
+  if (!q) {
+    renderForwardList(forwardAvailableItems);
+    return;
+  }
+  const filtered = forwardAvailableItems.filter(item => 
+    item.name.toLowerCase().includes(q) || item.handle.toLowerCase().includes(q)
+  );
+  renderForwardList(filtered);
+}
+
+function toggleForwardRecipient(key) {
+  if (forwardSelectedRecipients.has(key)) {
+    forwardSelectedRecipients.delete(key);
+  } else {
+    forwardSelectedRecipients.add(key);
+  }
+  const searchVal = document.getElementById('forwardSearchInput').value;
+  filterForwardRecipients(searchVal);
+  updateForwardSubmitButton();
+}
+
+function updateForwardSubmitButton() {
+  const count = forwardSelectedRecipients.size;
+  const countEl = document.getElementById('forwardSelectedCount');
+  const btn = document.getElementById('submitForwardBtn');
+  if (countEl) countEl.innerText = count;
+  if (btn) btn.disabled = count === 0;
+}
+
+async function submitForwardMessage() {
+  if (!forwardMessageId || forwardSelectedRecipients.size === 0) return;
+
+  const btn = document.getElementById('submitForwardBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Пересылка...';
+
+  try {
+    const targetChatIds = [];
+
+    for (const key of forwardSelectedRecipients) {
+      if (key.startsWith('chat_')) {
+        targetChatIds.push(Number(key.replace('chat_', '')));
+      } else if (key.startsWith('user_')) {
+        const targetUserId = Number(key.replace('user_', ''));
+        const directRes = await fetch('/api/chats/direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ targetUserId })
+        });
+        const directData = await directRes.json();
+        if (directRes.ok && directData.chatId) {
+          targetChatIds.push(directData.chatId);
+        }
+      }
+    }
+
+    if (targetChatIds.length === 0) {
+      alert('Не удалось определить целевые чаты');
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">${forwardSelectedRecipients.size}</span>)`;
+      return;
+    }
+
+    socket.emit('forward_message', {
+      messageId: forwardMessageId,
+      targetChatIds
+    }, (resp) => {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)`;
+      if (resp && resp.error) {
+        alert(resp.error);
+      } else {
+        closeModal('forwardModal');
+        showToast(`Сообщение успешно переслано (${targetChatIds.length})!`);
+        loadChats();
+      }
+    });
+  } catch (err) {
+    alert('Ошибка пересылки сообщения');
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">${forwardSelectedRecipients.size}</span>)`;
+  }
 }
 
 // ----------------------------------------------------
@@ -1129,7 +1450,12 @@ async function searchUsersForDirect(q) {
           <div class="contact-card-name" title="${escapeHtml(u.name)}">${escapeHtml(u.name)}</div>
           <div class="contact-card-login">@${escapeHtml(u.username)}</div>
         </div>
-        <button class="btn btn-xs btn-primary contact-card-btn" onclick="event.stopPropagation(); startDirectWithUser(${u.id})" title="Написать"><i class="fa-solid fa-paper-plane"></i> Написать</button>
+        <div style="display: flex; gap: 5px; align-items: center;">
+          <button class="btn btn-xs btn-primary contact-card-btn" onclick="event.stopPropagation(); startDirectWithUser(${u.id})" title="Написать"><i class="fa-solid fa-paper-plane"></i> Написать</button>
+          ${u.id !== currentUser.id ? `
+            <button class="btn btn-xs btn-outline btn-report" onclick="event.stopPropagation(); openReportModal(${u.id}, '${escapeForJs(u.name)}', '${escapeForJs(u.username)}', '${escapeForJs(u.avatar || '')}', null, 'Контакты')" title="Пожаловаться на пользователя"><i class="fa-solid fa-triangle-exclamation"></i></button>
+          ` : ''}
+        </div>
       </div>
     `).join('');
   } catch (e) {
@@ -1316,8 +1642,182 @@ async function loadAdminData() {
         </td>
       </tr>
     `).join('');
+
+    // Fetch and render reports
+    try {
+      const reportsRes = await fetch('/api/admin/reports', { headers: { Authorization: `Bearer ${token}` } });
+      const { reports } = await reportsRes.json();
+      const reportsTable = document.getElementById('adminReportsTable');
+      const reportsCountEl = document.getElementById('adminReportsCount');
+
+      const pendingReports = (reports || []).filter(r => r.status === 'pending');
+      if (reportsCountEl) reportsCountEl.innerText = pendingReports.length;
+
+      if (!reports || reports.length === 0) {
+        if (reportsTable) reportsTable.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 16px;">Активных жалоб нет</td></tr>`;
+      } else {
+        if (reportsTable) {
+          reportsTable.innerHTML = reports.map(r => {
+            const isResolved = r.status === 'resolved';
+            const isDismissed = r.status === 'dismissed';
+            return `
+              <tr style="${isResolved || isDismissed ? 'opacity: 0.6;' : ''}">
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    ${renderAvatar(r.reported_avatar, r.reported_name, 'avatar-sm')}
+                    <div style="min-width: 0;">
+                      <div style="font-weight: 700; font-size: 13px;">${escapeHtml(r.reported_name)}</div>
+                      <div style="font-size: 11.5px; color: #ef4444;">@${escapeHtml(r.reported_username)}</div>
+                      <span class="badge ${r.reported_status === 'banned' ? 'badge-danger' : 'badge-primary'}" style="font-size: 10px;">${r.reported_status}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    ${renderAvatar(r.reporter_avatar, r.reporter_name, 'avatar-sm')}
+                    <div style="min-width: 0;">
+                      <div style="font-weight: 600; font-size: 13px;">${escapeHtml(r.reporter_name)}</div>
+                      <div style="font-size: 11.5px; color: var(--accent-color);">@${escapeHtml(r.reporter_username)}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px;">
+                    <i class="fa-solid fa-comments"></i> <b>Чат:</b> ${escapeHtml(r.chat_name || 'Личный диалог')}
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
+                    ${(r.reasons || []).map(reason => `<span class="badge badge-warning" style="font-size: 10.5px;">${escapeHtml(reason)}</span>`).join('')}
+                  </div>
+                  ${r.comment ? `<div style="font-size: 12px; font-style: italic; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">«${escapeHtml(r.comment)}»</div>` : ''}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    ${r.status === 'pending' ? `
+                      <button class="btn btn-xs btn-danger" onclick="adminBanUserFromReport(${r.id})" title="Заблокировать нарушителя"><i class="fa-solid fa-ban"></i> Бан</button>
+                      <button class="btn btn-xs btn-success" onclick="adminResolveReport(${r.id}, 'resolved')" title="Пометить решенной"><i class="fa-solid fa-check"></i> Закрыть</button>
+                      <button class="btn btn-xs btn-outline" onclick="adminResolveReport(${r.id}, 'dismissed')" title="Отклонить"><i class="fa-solid fa-xmark"></i></button>
+                    ` : `
+                      <span class="badge ${isResolved ? 'badge-success' : 'badge-muted'}">${r.status}</span>
+                    `}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    } catch(e) {}
   } catch (err) {
     console.error('Failed to load admin data:', err);
+  }
+}
+
+async function adminResolveReport(reportId, status) {
+  try {
+    const res = await fetch(`/api/admin/reports/${reportId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    if (res.ok) {
+      loadAdminData();
+      showToast('Статус жалобы обновлен');
+    }
+  } catch (e) {}
+}
+
+async function adminBanUserFromReport(reportId) {
+  if (!confirm('Вы уверены, что хотите навсегда заблокировать этого пользователя?')) return;
+  try {
+    const res = await fetch(`/api/admin/reports/${reportId}/ban`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      loadAdminData();
+      showToast('Пользователь заблокирован по жалобе');
+    }
+  } catch (e) {}
+}
+
+// ----------------------------------------------------
+// USER REPORTS SYSTEM (Пожаловаться)
+// ----------------------------------------------------
+let selectedReportReasons = new Set();
+
+function openReportModal(targetUserId, targetUserName, targetUserUsername, targetUserAvatar, chatId, chatName) {
+  selectedReportReasons.clear();
+  document.getElementById('reportTargetUserId').value = targetUserId;
+  document.getElementById('reportChatId').value = chatId || '';
+  
+  document.getElementById('reportUserName').innerText = targetUserName || 'Пользователь';
+  document.getElementById('reportUserHandle').innerText = `@${targetUserUsername || 'user'}`;
+  document.getElementById('reportChatContext').innerHTML = `<i class="fa-solid fa-users"></i> Контекст: ${escapeHtml(chatName || 'Личные контакты')}`;
+  updateAvatarElement('reportUserAvatar', targetUserAvatar, targetUserName, 'avatar-md');
+
+  document.querySelectorAll('.report-reason-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  document.getElementById('reportCommentInput').value = '';
+  updateReportSubmitButton();
+
+  document.getElementById('reportModal').classList.remove('hidden');
+}
+
+function toggleReportReason(el, reasonText) {
+  if (selectedReportReasons.has(reasonText)) {
+    selectedReportReasons.delete(reasonText);
+    el.classList.remove('selected');
+  } else {
+    selectedReportReasons.add(reasonText);
+    el.classList.add('selected');
+  }
+  updateReportSubmitButton();
+}
+
+function updateReportSubmitButton() {
+  const count = selectedReportReasons.size;
+  const countEl = document.getElementById('reportSelectedCount');
+  const btn = document.getElementById('submitReportBtn');
+  if (countEl) countEl.innerText = count;
+  if (btn) btn.disabled = count === 0;
+}
+
+async function submitUserReport() {
+  const reportedUserId = document.getElementById('reportTargetUserId').value;
+  const chatId = document.getElementById('reportChatId').value;
+  const comment = document.getElementById('reportCommentInput').value.trim();
+
+  if (!reportedUserId || selectedReportReasons.size === 0) return;
+
+  const btn = document.getElementById('submitReportBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Отправка жалобы...';
+
+  try {
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        reportedUserId: Number(reportedUserId),
+        chatId: chatId ? Number(chatId) : null,
+        reasons: Array.from(selectedReportReasons),
+        comment
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      closeModal('reportModal');
+      showToast('🚨 Жалоба отправлена! Все администраторы получили оповещение.');
+    } else {
+      alert(data.error || 'Ошибка отправки жалобы');
+    }
+  } catch (err) {
+    alert('Сетевая ошибка при отправке жалобы');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Отправить жалобу администраторам (<span id="reportSelectedCount">${selectedReportReasons.size}</span>)`;
   }
 }
 
@@ -1422,6 +1922,8 @@ async function openAdminEditUserModalById(userId) {
   }
 }
 
+let currentAdminEditingAvatar = null;
+
 function openAdminEditUserModal(user) {
   document.getElementById('adminEditUserId').value = user.id;
   document.getElementById('adminEditUserName').value = user.name || '';
@@ -1432,6 +1934,10 @@ function openAdminEditUserModal(user) {
   document.getElementById('adminEditUserRole').value = user.role || 'user';
   document.getElementById('adminEditUserStatus').value = user.status || 'approved';
   document.getElementById('adminEditUserNewPass').value = '';
+
+  currentAdminEditingAvatar = user.avatar || null;
+  updateAvatarElement('adminEditUserAvatarPreview', user.avatar, user.name, 'avatar-md');
+
   document.getElementById('adminEditUserAlert').className = 'alert-box';
   document.getElementById('adminEditUserModal').classList.remove('hidden');
 }
@@ -1453,7 +1959,7 @@ async function handleAdminSaveUser(e) {
     const res = await fetch(`/api/admin/users/${userId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name, username, email, phone, bio, role, status, newPassword })
+      body: JSON.stringify({ name, username, email, phone, bio, role, status, newPassword, avatar: currentAdminEditingAvatar })
     });
     const data = await res.json();
 
@@ -1667,6 +2173,8 @@ function renderChatMembersList() {
       if (currentUser && (currentUser.role === 'superadmin' || currentUser.role === 'admin')) {
         actionBtns += `<button class="btn btn-xs btn-outline" onclick="openAdminEditUserModalById(${m.id})" title="Редактировать"><i class="fa-solid fa-user-pen"></i></button>`;
       }
+
+      actionBtns += `<button class="btn btn-xs btn-outline btn-report" onclick="openReportModal(${m.id}, '${escapeForJs(m.name)}', '${escapeForJs(m.username)}', '${escapeForJs(m.avatar || '')}', ${activeChat.id}, '${escapeForJs(activeChat.name)}')" title="Пожаловаться на пользователя"><i class="fa-solid fa-triangle-exclamation"></i> Жалоба</button>`;
     }
 
     return `
@@ -2174,6 +2682,9 @@ async function saveCroppedAvatar() {
         updateAvatarElement('detailsAvatar', activeChat.avatar, activeChat.name, 'avatar-lg');
         updateAvatarElement('chatHeaderAvatar', activeChat.avatar, activeChat.name, 'avatar-md');
         loadChats();
+      } else if (cropTarget === 'adminUser') {
+        currentAdminEditingAvatar = avatarUrl;
+        updateAvatarElement('adminEditUserAvatarPreview', avatarUrl, 'User', 'avatar-md');
       }
 
       closeAvatarCropper();

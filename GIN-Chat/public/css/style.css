@@ -1367,59 +1367,72 @@ body {
   transform: scale(1.08);
 }
 
-/* EMOJI PICKER POPUP */
+/* EMOJI PICKER POPUP (SCROLLBAR-FREE 5x5 GRID) */
 .emoji-picker-popup {
   position: absolute;
   bottom: 64px;
-  left: 60px;
-  background: var(--bg-sidebar);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  left: 20px;
+  background: rgba(22, 28, 42, 0.98);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75);
   z-index: 100;
-  width: 280px;
+  width: 250px;
+  box-sizing: border-box;
+  overflow: hidden; /* Strict no scroll */
 }
 
 .emoji-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  justify-content: space-around;
+  gap: 2px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 6px;
 }
 
 .emoji-category {
   cursor: pointer;
-  font-size: 18px;
-  padding: 4px;
-  border-radius: 6px;
-  transition: all 0.15s;
+  font-size: 20px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  user-select: none;
+  line-height: 1;
 }
 
 .emoji-category:hover, .emoji-category.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
 }
 
 .emoji-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
-  max-height: 180px;
-  overflow-y: auto;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 3px;
+  overflow: hidden; /* Strict no scroll */
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .emoji-grid span {
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
   text-align: center;
-  padding: 4px;
-  border-radius: 6px;
-  transition: all 0.15s;
+  height: 38px;
+  line-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: transform 0.15s ease, background 0.15s ease;
+  user-select: none;
 }
 
 .emoji-grid span:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   transform: scale(1.2);
 }
 
