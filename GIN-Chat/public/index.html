@@ -234,6 +234,9 @@
             <!-- Emoji Picker Trigger -->
             <button class="icon-btn" id="emojiBtn" onclick="toggleEmojiPicker()" title="Смайлики"><i class="fa-regular fa-face-smile"></i></button>
 
+            <!-- GIF & Animated Stickers Trigger (/gif) -->
+            <button class="icon-btn gif-btn" id="gifBtn" onclick="toggleGifPicker()" title="GIF-анимации и стикеры (/gif)">GIF</button>
+
             <!-- Schedule Message Trigger -->
             <button class="icon-btn schedule-btn" id="scheduleBtn" onclick="openScheduleModal()" title="Отправить позже (по времени)"><i class="fa-regular fa-clock"></i></button>
 
@@ -247,6 +250,32 @@
                 <span class="emoji-category" onclick="loadEmojiCategory('objects', this)" title="Объекты">🔥</span>
               </div>
               <div class="emoji-grid" id="emojiGrid"></div>
+            </div>
+
+            <!-- GIF & Animated Stickers Popover (/gif) -->
+            <div class="gif-picker-popup hidden" id="gifPicker">
+              <div class="gif-picker-header">
+                <div class="gif-search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="gifSearchInput" placeholder="Поиск GIF (напр. /gif money, котики...)" oninput="handleGifSearchInput(event)">
+                  <button class="gif-clear-btn hidden" id="gifClearBtn" onclick="clearGifSearch()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <button class="gif-close-btn" onclick="closeGifPicker()" title="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="gif-categories-chips">
+                <button class="gif-chip active" onclick="selectGifCategory('trending', this)">🔥 Тренды</button>
+                <button class="gif-chip" onclick="selectGifCategory('money', this)">💰 Деньги / Crypto</button>
+                <button class="gif-chip" onclick="selectGifCategory('ninja', this)">🥷 Ниндзя</button>
+                <button class="gif-chip" onclick="selectGifCategory('win', this)">🎉 Победа / Win</button>
+                <button class="gif-chip" onclick="selectGifCategory('cats', this)">😹 Котики</button>
+                <button class="gif-chip" onclick="selectGifCategory('fire', this)">🔥 Огонь</button>
+                <button class="gif-chip" onclick="selectGifCategory('cool', this)">😎 Круто</button>
+                <button class="gif-chip" onclick="selectGifCategory('love', this)">❤️ Любовь</button>
+                <button class="gif-chip" onclick="selectGifCategory('laugh', this)">😂 Смех</button>
+                <button class="gif-chip" onclick="selectGifCategory('rocket', this)">🚀 Ракета</button>
+                <button class="gif-chip" onclick="selectGifCategory('coffee', this)">☕ Чай / Кофе</button>
+              </div>
+              <div class="gif-grid" id="gifGrid"></div>
             </div>
 
             <!-- Message Input Box -->

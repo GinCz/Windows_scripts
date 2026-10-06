@@ -581,13 +581,13 @@ function appendMessageToView(msg) {
 
   let contentHtml = '';
 
-  // Message Action Bar (Hover on bubble)
+  // Message Action Bar (Hover on bubble with 2x bigger reaction emojis)
   contentHtml += `
     <div class="msg-action-bar">
-      <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '👍')" title="Нравится 👍">👍</button>
-      <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '❤️')" title="Любовь ❤️">❤️</button>
-      <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '🔥')" title="Огонь 🔥">🔥</button>
-      <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '😂')" title="Смех 😂">😂</button>
+      <button class="msg-act-btn msg-act-emoji" onclick="toggleReaction(${msg.id}, '👍')" title="Нравится 👍">👍</button>
+      <button class="msg-act-btn msg-act-emoji" onclick="toggleReaction(${msg.id}, '❤️')" title="Любовь ❤️">❤️</button>
+      <button class="msg-act-btn msg-act-emoji" onclick="toggleReaction(${msg.id}, '🔥')" title="Огонь 🔥">🔥</button>
+      <button class="msg-act-btn msg-act-emoji" onclick="toggleReaction(${msg.id}, '😂')" title="Смех 😂">😂</button>
       <button class="msg-act-btn reaction-more" onclick="openReactionPicker(event, ${msg.id})" title="Все 25 реакций"><i class="fa-regular fa-face-smile"></i></button>
       <button class="msg-act-btn forward" onclick="openForwardModal(${msg.id})" title="Переслать"><i class="fa-solid fa-share"></i></button>
       <button class="msg-act-btn" onclick="setReplyMessageById(${msg.id})" title="Ответить"><i class="fa-solid fa-reply"></i></button>
@@ -618,6 +618,13 @@ function appendMessageToView(msg) {
     contentHtml += `<div class="msg-text-content">${formatMessageText(msg.text)}</div>`;
   } else if (msg.type === 'image') {
     contentHtml += `<img src="${msg.file_url}" class="msg-media-img" onclick="openLightbox('${msg.file_url}')" alt="Photo">`;
+  } else if (msg.type === 'gif') {
+    contentHtml += `
+      <div class="msg-gif-wrapper">
+        <img src="${escapeHtml(msg.file_url)}" class="msg-media-gif" onclick="openLightbox('${escapeHtml(msg.file_url)}')" alt="GIF" loading="lazy">
+        <span class="gif-badge">GIF</span>
+      </div>
+    `;
   } else if (msg.type === 'voice') {
     contentHtml += `
       <div class="msg-voice-box">
@@ -749,6 +756,12 @@ function backToChatsList() {
 // ----------------------------------------------------
 
 function handleInputKeydown(e) {
+  if (e.key === 'Escape') {
+    closeGifPicker();
+    const emojiPicker = document.getElementById('emojiPicker');
+    if (emojiPicker) emojiPicker.classList.add('hidden');
+    return;
+  }
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
@@ -757,6 +770,15 @@ function handleInputKeydown(e) {
 
 let typingTimeout = null;
 function handleTypingEvent() {
+  const input = document.getElementById('messageInput');
+  const val = input ? input.value : '';
+  
+  // Real-time Telegram-style /gif and /gif <keyword> detection
+  if (val.startsWith('/gif') || val.startsWith('@gif')) {
+    let query = val.replace(/^(\/gif\/|\/gif\s*|@gif\s*)/i, '').trim();
+    openGifPicker(query);
+  }
+
   if (!socket || !activeChat) return;
   socket.emit('typing', { chatId: activeChat.id, isTyping: true });
   clearTimeout(typingTimeout);
@@ -2873,4 +2895,225 @@ async function handleUrlRouting() {
 
 window.addEventListener('hashchange', () => {
   handleUrlRouting();
+});
+
+// ----------------------------------------------------
+// TELEGRAM-STYLE /gif & ANIMATED STICKERS ENGINE
+// ----------------------------------------------------
+const GIF_COLLECTION = [
+  // Money / Crypto / Rich
+  { url: 'https://media.giphy.com/media/67ThRZlYBvibtdF9JH/giphy.gif', tags: ['money', 'деньги', 'dollar', 'rich', 'cash', 'crypto', 'gold', 'trending'] },
+  { url: 'https://media.giphy.com/media/3o6gDWzmAzrpi5DQU8/giphy.gif', tags: ['money', 'деньги', 'rain', 'dollar', 'rich', 'trending'] },
+  { url: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif', tags: ['money', 'деньги', 'wolf', 'wallstreet', 'dollar', 'rich'] },
+  { url: 'https://media.giphy.com/media/xT5LMPj8P20jjOqZ5C/giphy.gif', tags: ['money', 'деньги', 'count', 'cash', 'dollars'] },
+  { url: 'https://media.giphy.com/media/jsl82uOLnCdAXBqBulk/giphy.gif', tags: ['money', 'crypto', 'bitcoin', 'btc', 'moon', 'rocket', 'деньги'] },
+  { url: 'https://media.giphy.com/media/sDcfxFDozb3bO/giphy.gif', tags: ['money', 'take', 'buy', 'деньги', 'купи', 'shut up'] },
+  { url: 'https://media.giphy.com/media/13yNFN1TlNCjC0/giphy.gif', tags: ['money', 'stacks', 'cash', 'деньги', 'богатство'] },
+
+  // Ninja / Stealth / Secret
+  { url: 'https://media.giphy.com/media/l0MYDGA3Du1hBR4xG/giphy.gif', tags: ['ninja', 'ниндзя', 'stealth', 'secret', 'smoke', 'vanish'] },
+  { url: 'https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif', tags: ['ninja', 'ниндзя', 'jump', 'shadow', 'katana', 'secret'] },
+  { url: 'https://media.giphy.com/media/26AHG5KGFxSkUWw1i/giphy.gif', tags: ['ninja', 'ниндзя', 'sword', 'strike', 'warrior'] },
+  { url: 'https://media.giphy.com/media/SEp6ZNTv426L6/giphy.gif', tags: ['ninja', 'secret', '007', 'agent', 'секрет', 'шпион'] },
+  { url: 'https://media.giphy.com/media/eIm624c8nnNbiG0V3g/giphy.gif', tags: ['ninja', 'hacker', 'matrix', 'code', 'хакер', 'matrix'] },
+
+  // Win / Celebration / Party
+  { url: 'https://media.giphy.com/media/BPJmthQ3YRwD6QqcVD/giphy.gif', tags: ['win', 'победа', 'gatsby', 'cheers', 'toast', 'celebrate', 'ура', 'trending'] },
+  { url: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif', tags: ['win', 'party', 'minions', 'celebrate', 'победа', 'праздник'] },
+  { url: 'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif', tags: ['win', 'confetti', 'dance', 'победа', 'party'] },
+  { url: 'https://media.giphy.com/media/nXxOjZrbnbRxS/giphy.gif', tags: ['win', 'success', 'kid', 'yes', 'победа', 'ура'] },
+  { url: 'https://media.giphy.com/media/peAFQfg7Ol6IE/giphy.gif', tags: ['win', 'fireworks', 'салют', 'праздник', 'celebrate'] },
+  { url: 'https://media.giphy.com/media/hryis7A55UXZNCUTNA/giphy.gif', tags: ['win', 'ronaldo', 'siuu', 'победа', 'goal'] },
+
+  // Cats / Animals
+  { url: 'https://media.giphy.com/media/BzyTuYCmvSORqs1ABM/giphy.gif', tags: ['cats', 'котики', 'cat', 'vibing', 'nod', 'кот', 'trending'] },
+  { url: 'https://media.giphy.com/media/mlvseq9yvZhba/giphy.gif', tags: ['cats', 'котики', 'cat', 'typing', 'fast', 'кот'] },
+  { url: 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif', tags: ['cats', 'котики', 'cat', 'work', 'кот', 'комп'] },
+  { url: 'https://media.giphy.com/media/ICOgUNjpvO0PC/giphy.gif', tags: ['cats', 'котики', 'kitten', 'cute', 'мило'] },
+  { url: 'https://media.giphy.com/media/oF5oUYTOhvFnO/giphy.gif', tags: ['cats', 'котики', 'popcat', 'meme'] },
+
+  // Fire / Rocket / Hype
+  { url: 'https://media.giphy.com/media/26AHONQ79FdWZhAI0/giphy.gif', tags: ['fire', 'огонь', 'flame', 'hype', 'жара', 'trending'] },
+  { url: 'https://media.giphy.com/media/l46CqLVMWzaJUFPLW/giphy.gif', tags: ['fire', 'огонь', 'hot', 'burn'] },
+  { url: 'https://media.giphy.com/media/mi6DsSSNKDbUY/giphy.gif', tags: ['rocket', 'space', 'ракета', 'moon', 'fly', 'взлет'] },
+  { url: 'https://media.giphy.com/media/9M5jK4GXmD5o1irGrF/giphy.gif', tags: ['fire', 'fine', 'dog', 'мем', 'огонь'] },
+  { url: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif', tags: ['mindblown', 'fire', 'explosion', 'шок', 'взрыв'] },
+
+  // Cool / Swagger / Memes
+  { url: 'https://media.giphy.com/media/1jnyRP4DorCh2/giphy.gif', tags: ['cool', 'круто', 'deal with it', 'glasses', 'очки'] },
+  { url: 'https://media.giphy.com/media/DHqth0hVQoIzS/giphy.gif', tags: ['cool', 'snoop', 'dance', 'круто', 'танцы'] },
+  { url: 'https://media.giphy.com/media/wEgs1VRJsAqg8/giphy.gif', tags: ['cool', 'ironman', 'superhero', 'круто'] },
+  { url: 'https://media.giphy.com/media/7TtvTUMm9mp20/giphy.gif', tags: ['cool', 'terminator', 'thumbsup', 'класс'] },
+
+  // Love / Hearts
+  { url: 'https://media.giphy.com/media/26FLdmIp6wJr91JAI/giphy.gif', tags: ['love', 'любовь', 'heart', 'сердце', 'влюблен'] },
+  { url: 'https://media.giphy.com/media/l8ooT55UMbTBIxgYWu/giphy.gif', tags: ['love', 'hug', 'обнимашки', 'любовь', 'мило'] },
+  { url: 'https://media.giphy.com/media/M90mJvfWfd5mbUuULX/giphy.gif', tags: ['love', 'kiss', 'поцелуй', 'любовь'] },
+  { url: 'https://media.giphy.com/media/L4lvBzeGQwpwc/giphy.gif', tags: ['love', 'heart', 'pulse', 'сердечко'] },
+
+  // Laugh / Funny
+  { url: 'https://media.giphy.com/media/10JhviFuU2gWD6/giphy.gif', tags: ['laugh', 'смех', 'lol', 'haha', 'ржу', 'funny'] },
+  { url: 'https://media.giphy.com/media/bC9czlgCMtw4cj8RgH/giphy.gif', tags: ['laugh', 'cat', 'haha', 'смех', 'кот'] },
+  { url: 'https://media.giphy.com/media/7J4Lvpz55rocO07QvI/giphy.gif', tags: ['laugh', 'stevecarell', 'смех', 'хаха'] },
+  { url: 'https://media.giphy.com/media/A7ZbCuv0fJ0POGucw4/giphy.gif', tags: ['laugh', 'joker', 'джокер', 'смех'] },
+
+  // Coffee / Relax
+  { url: 'https://media.giphy.com/media/oZEBLugoTgavS/giphy.gif', tags: ['coffee', 'кофе', 'morning', 'утро', 'чай'] },
+  { url: 'https://media.giphy.com/media/3o85xGocUH8RYoDKKs/giphy.gif', tags: ['coffee', 'relax', 'чай', 'отдых'] },
+  { url: 'https://media.giphy.com/media/l2Je4rm0DCduJ6QJG/giphy.gif', tags: ['coffee', 'homer', 'simpsons', 'кофе'] },
+
+  // Agree / Yes / Clapping
+  { url: 'https://media.giphy.com/media/gVoBC0SuaHStq/giphy.gif', tags: ['yes', 'да', 'nod', 'agree', 'согласен'] },
+  { url: 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif', tags: ['yes', 'thumbsup', 'лайк', 'класс', 'супер'] },
+  { url: 'https://media.giphy.com/media/g9582DNuQppxC/giphy.gif', tags: ['clap', 'applause', 'браво', 'аплодисменты'] }
+];
+
+let currentGifCategory = 'trending';
+let gifSearchQuery = '';
+
+function toggleGifPicker() {
+  const picker = document.getElementById('gifPicker');
+  if (!picker) return;
+  const isHidden = picker.classList.contains('hidden');
+  if (isHidden) {
+    openGifPicker();
+  } else {
+    closeGifPicker();
+  }
+}
+
+function openGifPicker(query = '') {
+  const picker = document.getElementById('gifPicker');
+  const emojiPicker = document.getElementById('emojiPicker');
+  if (emojiPicker) emojiPicker.classList.add('hidden');
+  if (!picker) return;
+
+  picker.classList.remove('hidden');
+  const btn = document.getElementById('gifBtn');
+  if (btn) btn.classList.add('active');
+
+  const searchInput = document.getElementById('gifSearchInput');
+  if (searchInput) {
+    searchInput.value = query;
+    gifSearchQuery = query;
+    const clearBtn = document.getElementById('gifClearBtn');
+    if (clearBtn) clearBtn.classList.toggle('hidden', !query);
+    if (!query) searchInput.focus();
+  }
+
+  renderGifGrid(query || currentGifCategory);
+}
+
+function closeGifPicker() {
+  const picker = document.getElementById('gifPicker');
+  if (picker) picker.classList.add('hidden');
+  const btn = document.getElementById('gifBtn');
+  if (btn) btn.classList.remove('active');
+}
+
+function selectGifCategory(cat, btn) {
+  currentGifCategory = cat;
+  gifSearchQuery = '';
+  const searchInput = document.getElementById('gifSearchInput');
+  if (searchInput) searchInput.value = '';
+  const clearBtn = document.getElementById('gifClearBtn');
+  if (clearBtn) clearBtn.classList.add('hidden');
+
+  if (btn) {
+    document.querySelectorAll('.gif-chip').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  renderGifGrid(cat);
+}
+
+function handleGifSearchInput(e) {
+  const query = e.target.value.trim().toLowerCase();
+  gifSearchQuery = query;
+  const clearBtn = document.getElementById('gifClearBtn');
+  if (clearBtn) clearBtn.classList.toggle('hidden', !query);
+  renderGifGrid(query || currentGifCategory);
+}
+
+function clearGifSearch() {
+  const searchInput = document.getElementById('gifSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+  const clearBtn = document.getElementById('gifClearBtn');
+  if (clearBtn) clearBtn.classList.add('hidden');
+  gifSearchQuery = '';
+  renderGifGrid(currentGifCategory);
+}
+
+function renderGifGrid(filter = '') {
+  const grid = document.getElementById('gifGrid');
+  if (!grid) return;
+
+  const f = filter.toLowerCase().trim();
+  let results = [];
+
+  if (!f || f === 'trending') {
+    results = GIF_COLLECTION;
+  } else {
+    results = GIF_COLLECTION.filter(item => 
+      item.tags.some(tag => tag.toLowerCase().includes(f)) ||
+      f.split(/[\s/]+/).some(w => w && item.tags.some(tag => tag.toLowerCase().includes(w)))
+    );
+  }
+
+  if (results.length === 0) {
+    grid.innerHTML = `
+      <div class="gif-empty-notice">
+        <i class="fa-solid fa-film" style="font-size: 28px; margin-bottom: 8px; opacity: 0.6; display: block;"></i>
+        Ничего не найдено по запросу "<b>${escapeHtml(filter)}</b>".<br>
+        Попробуйте: <i>money, котики, win, ninja, fire, rock, love</i>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = results.map(item => `
+    <div class="gif-grid-item" onclick="sendGif('${item.url}')" title="Отправить GIF в чат">
+      <img src="${item.url}" alt="GIF" loading="lazy">
+    </div>
+  `).join('');
+}
+
+function sendGif(gifUrl) {
+  if (!activeChat || !socket) return;
+
+  // Clear input of /gif commands
+  const input = document.getElementById('messageInput');
+  if (input) {
+    if (input.value.startsWith('/gif') || input.value.startsWith('@gif')) {
+      input.value = '';
+      input.style.height = 'auto';
+    }
+  }
+
+  socket.emit('send_message', {
+    chatId: activeChat.id,
+    type: 'gif',
+    fileUrl: gifUrl,
+    replyToId: replyMessage ? replyMessage.id : null
+  }, (res) => {
+    if (res && res.error) {
+      showToast(res.error, 'error');
+    }
+  });
+
+  cancelReply();
+  closeGifPicker();
+}
+
+// Global click to close GIF picker
+document.addEventListener('click', (e) => {
+  const picker = document.getElementById('gifPicker');
+  if (picker && !picker.classList.contains('hidden')) {
+    if (!picker.contains(e.target) && !e.target.closest('#gifBtn')) {
+      closeGifPicker();
+    }
+  }
 });

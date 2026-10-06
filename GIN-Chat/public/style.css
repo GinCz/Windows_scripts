@@ -1047,17 +1047,19 @@ body {
 }
 
 /* MESSAGE ACTION BAR (Hover / Actions) */
+/* MESSAGE ACTION BAR (2X BIGGER HOVER EMOJIS) */
 .msg-action-bar {
   position: absolute;
-  top: -14px;
+  top: -24px;
   display: none;
   align-items: center;
-  gap: 3px;
-  background: var(--bg-sidebar);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 18px;
-  padding: 2px 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  gap: 4px;
+  background: rgba(18, 24, 38, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  padding: 3px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 229, 255, 0.15);
   z-index: 10;
 }
 
@@ -1072,52 +1074,116 @@ body {
   background: transparent;
   border: none;
   color: var(--text-muted);
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .msg-act-btn:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-  transform: scale(1.15);
+  background: rgba(255, 255, 255, 0.16);
+  transform: scale(1.2);
+}
+
+/* 2X LARGER REACTION EMOJIS ON MESSAGE HOVER */
+.msg-act-btn.msg-act-emoji {
+  font-size: 24px; /* 2x size from original 12px */
+  width: 36px;
+  height: 36px;
+  line-height: 1;
+}
+
+.msg-act-btn.msg-act-emoji:hover {
+  transform: scale(1.35) translateY(-2px);
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.35);
 }
 
 .msg-act-btn.delete:hover {
   color: var(--danger);
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .msg-reactions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
   margin-top: 6px;
 }
 
 .reaction-tag {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 3px 10px;
+  border-radius: 14px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .reaction-tag:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+  border-color: #00e5ff;
 }
 
 .msg-media-img {
   max-width: 100%;
   max-height: 340px;
+  border-radius: 12px;
+  cursor: pointer;
+  display: block;
+}
+
+/* GIF MEDIA MESSAGE IN CHAT */
+.msg-gif-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.msg-media-gif {
+  max-width: 100%;
+  max-height: 320px;
+  min-height: 140px;
+  object-fit: cover;
+  border-radius: 14px;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.msg-media-gif:hover {
+  transform: scale(1.02);
+}
+
+.gif-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.8px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
   border-radius: 10px;
   cursor: pointer;
   display: block;
@@ -1434,6 +1500,184 @@ body {
 .emoji-grid span:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: scale(1.2);
+}
+
+/* ----------------------------------------------------
+   GIF & TELEGRAM PREMIUM ANIMATED STICKERS (/gif)
+---------------------------------------------------- */
+.gif-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #38bdf8;
+  padding: 0 6px;
+  transition: all 0.2s ease;
+}
+
+.gif-btn:hover, .gif-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #fff;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+  transform: scale(1.08);
+}
+
+.gif-picker-popup {
+  position: absolute;
+  bottom: 64px;
+  left: 20px;
+  background: rgba(18, 24, 38, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.2);
+  z-index: 105;
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  box-sizing: border-box;
+}
+
+.gif-picker-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.gif-search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 6px 10px;
+  color: #fff;
+}
+
+.gif-search-box i {
+  color: #38bdf8;
+  font-size: 13px;
+}
+
+.gif-search-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
+
+.gif-search-box input::placeholder {
+  color: var(--text-muted);
+}
+
+.gif-clear-btn, .gif-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.gif-clear-btn:hover, .gif-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.gif-categories-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  scrollbar-width: none;
+}
+
+.gif-categories-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.gif-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.gif-chip:hover, .gif-chip.active {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #fff;
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.gif-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.gif-grid::-webkit-scrollbar {
+  width: 5px;
+}
+.gif-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.gif-grid-item {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  height: 120px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gif-grid-item:hover {
+  transform: scale(1.04);
+  border-color: #38bdf8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.4);
+  z-index: 2;
+}
+
+.gif-grid-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gif-empty-notice {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 /* ----------------------------------------------------
