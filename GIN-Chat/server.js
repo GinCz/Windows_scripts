@@ -473,7 +473,7 @@ app.get('/api/admin/users/:id', authMiddleware, requireAdmin, (req, res) => {
 // Admin Update Any User Profile
 app.put('/api/admin/users/:id', authMiddleware, requireAdmin, (req, res) => {
   const targetId = req.params.id;
-  const { name, username, email, phone, bio, role, status, newPassword } = req.body;
+  const { name, username, email, phone, bio, role, status, newPassword, avatar } = req.body;
 
   const target = db.prepare('SELECT * FROM users WHERE id = ?').get(targetId);
   if (!target) return res.status(404).json({ error: 'Пользователь не найден' });
@@ -502,6 +502,7 @@ app.put('/api/admin/users/:id', authMiddleware, requireAdmin, (req, res) => {
   let finalBio = bio !== undefined ? bio.trim() : target.bio;
   let finalRole = role && ['user', 'admin', 'superadmin'].includes(role) ? role : target.role;
   let finalStatus = status && ['approved', 'pending', 'rejected', 'banned'].includes(status) ? status : target.status;
+  let finalAvatar = avatar !== undefined ? (avatar ? avatar.trim() : null) : target.avatar;
 
   if (newPassword && newPassword.trim().length >= 6) {
     const salt = bcrypt.genSaltSync(10);
@@ -511,9 +512,9 @@ app.put('/api/admin/users/:id', authMiddleware, requireAdmin, (req, res) => {
 
   db.prepare(`
     UPDATE users 
-    SET name = ?, username = ?, email = ?, phone = ?, bio = ?, role = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+    SET name = ?, username = ?, email = ?, phone = ?, bio = ?, role = ?, status = ?, avatar = ?, updated_at = CURRENT_TIMESTAMP 
     WHERE id = ?
-  `).run(finalName, finalUsername, finalEmail, finalPhone, finalBio, finalRole, finalStatus, targetId);
+  `).run(finalName, finalUsername, finalEmail, finalPhone, finalBio, finalRole, finalStatus, finalAvatar, targetId);
 
   const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(targetId);
   sendTelegramNotification(`✏️ <b>Администратор обновил данные:</b> ${escapeTgHtml(finalName)} (@${escapeTgHtml(finalUsername)})\nEmail: ${escapeTgHtml(finalEmail)} | Тел: ${escapeTgHtml(finalPhone)} | Роль: ${finalRole}`);
@@ -1384,6 +1385,67 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('Socket send_message error:', err);
       if (callback) callback({ error: 'Ошибка отправки' });
+    }
+  });
+
+  socket.on('forward_message', async ({ messageId, targetChatIds }, callback) => {
+    try {
+      if (!targetChatIds || !Array.isArray(targetChatIds) || targetChatIds.length === 0) {
+        if (callback) callback({ error: 'Не выбраны получатели' });
+        return;
+      }
+
+      const origMsg = db.prepare('SELECT * FROM messages WHERE id = ?').get(messageId);
+      if (!origMsg) {
+        if (callback) callback({ error: 'Сообщение не найдено' });
+        return;
+      }
+
+      const origSender = db.prepare('SELECT name, username FROM users WHERE id = ?').get(origMsg.sender_id);
+      const origSenderName = origSender ? origSender.name : 'Пользователь';
+      const textDecrypted = origMsg.type === 'text' && origMsg.text_encrypted ? decryptText(origMsg.text_encrypted) : '';
+      const forwardText = origMsg.type === 'text' ? `↪️ Переслано от ${origSenderName}:\n${textDecrypted}` : (origMsg.text_encrypted ? decryptText(origMsg.text_encrypted) : null);
+      const encryptedForwardText = forwardText ? encryptText(forwardText) : null;
+
+      const sender = db.prepare('SELECT id, name, username, avatar FROM users WHERE id = ?').get(userId);
+      let forwardedCount = 0;
+
+      for (const targetChatId of targetChatIds) {
+        const member = db.prepare('SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?').get(targetChatId, userId);
+        if (!member && user.role !== 'superadmin') continue;
+
+        const info = db.prepare(`
+          INSERT INTO messages (chat_id, sender_id, text_encrypted, reply_to_id, type, file_url, file_name, file_size, file_duration)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(targetChatId, userId, encryptedForwardText, null, origMsg.type, origMsg.file_url, origMsg.file_name, origMsg.file_size, origMsg.file_duration);
+
+        db.prepare('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(targetChatId);
+
+        const messagePayload = {
+          id: info.lastInsertRowid,
+          chat_id: targetChatId,
+          sender_id: userId,
+          sender,
+          text: forwardText || '',
+          type: origMsg.type,
+          file_url: origMsg.file_url,
+          file_name: origMsg.file_name,
+          file_size: origMsg.file_size,
+          file_duration: origMsg.file_duration,
+          reply_to: null,
+          reactions: {},
+          is_edited: false,
+          created_at: new Date().toISOString()
+        };
+
+        io.to('chat_' + targetChatId).emit('new_message', messagePayload);
+        forwardedCount++;
+      }
+
+      if (callback) callback({ success: true, count: forwardedCount });
+    } catch (err) {
+      console.error('Socket forward_message error:', err);
+      if (callback) callback({ error: 'Ошибка пересылки сообщения' });
     }
   });
 

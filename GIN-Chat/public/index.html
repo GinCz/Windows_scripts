@@ -15,7 +15,7 @@
     <div id="authScreen" class="auth-overlay">
       <div class="auth-card">
         <div class="auth-logo">
-          <div class="logo-icon"><i class="fa-solid fa-paper-plane"></i></div>
+          <div class="logo-icon logo-ninja"><i class="fa-solid fa-user-ninja"></i></div>
           <h2>GIN-Chat</h2>
           <p class="auth-subtitle">Приватный защищенный мессенджер Владимира Буланцева</p>
         </div>
@@ -313,7 +313,7 @@
             </div>
             <div class="stat-card">
               <div class="stat-val" id="statMessagesCount">0</div>
-              <div class="stat-label">Зашифрованных сообщений</div>
+              <div class="stat-label">Всего сообщений (100% зашифрованы AES-256)</div>
             </div>
           </div>
 
@@ -384,7 +384,7 @@
       </div>
     </div>
 
-    <!-- MODAL: ADMIN EDIT USER -->
+    <!-- MODAL: ADMIN EDIT USER (With Avatar Uploader) -->
     <div class="modal-overlay hidden" id="adminEditUserModal">
       <div class="modal-box">
         <div class="modal-header">
@@ -392,6 +392,18 @@
           <button class="icon-btn" onclick="closeModal('adminEditUserModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body">
+          <div class="profile-avatar-center mb-3">
+            <div class="avatar-edit-wrapper">
+              <div class="avatar avatar-md" id="adminEditUserAvatarPreview">ВБ</div>
+              <button type="button" class="avatar-edit-btn" onclick="chooseAvatarFor('adminUser')" title="Выбрать и обрезать аватар">
+                <i class="fa-solid fa-camera"></i>
+              </button>
+            </div>
+            <button type="button" class="btn btn-xs btn-outline mt-2" onclick="chooseAvatarFor('adminUser')">
+              <i class="fa-solid fa-crop-simple"></i> Выбрать / Сменить фото
+            </button>
+          </div>
+
           <form onsubmit="handleAdminSaveUser(event)">
             <input type="hidden" id="adminEditUserId">
             <div class="form-group">
@@ -675,6 +687,33 @@
     <div class="lightbox-overlay hidden" id="lightbox" onclick="closeLightbox()">
       <button class="icon-btn lightbox-close"><i class="fa-solid fa-xmark"></i></button>
       <img id="lightboxImg" src="" alt="Full view" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- MODAL: FORWARD MESSAGE (Vertical compact list with bright green glow) -->
+    <div class="modal-overlay hidden" id="forwardModal">
+      <div class="modal-box modal-md">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-share text-primary"></i> Переслать сообщение</h3>
+          <button class="icon-btn" onclick="closeModal('forwardModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <input type="text" id="forwardSearchInput" placeholder="Поиск контактов или групп..." oninput="filterForwardRecipients(this.value)">
+          </div>
+          <div class="forward-recipients-list" id="forwardRecipientsList">
+            <div class="text-center text-muted" style="padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка получателей...</div>
+          </div>
+          <button class="btn btn-primary btn-block mt-3" id="submitForwardBtn" onclick="submitForwardMessage()" disabled>
+            <i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5x5 (25 EMOJIS) REACTION POPOVER (NO SCROLLBAR) -->
+    <div class="reaction-popover hidden" id="reactionPopover" onclick="event.stopPropagation()">
+      <div class="reaction-popover-title">Выберите реакцию</div>
+      <div class="reaction-grid-25" id="reactionGrid25"></div>
     </div>
 
     <!-- TOAST NOTIFICATION -->

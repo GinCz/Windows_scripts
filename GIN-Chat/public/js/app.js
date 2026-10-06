@@ -465,7 +465,12 @@ async function selectChat(chatId) {
     }
 
     document.getElementById('emptyChatState').classList.add('hidden');
-    document.getElementById('activeChatContainer').classList.remove('hidden');
+    const activeChatEl = document.getElementById('activeChatContainer');
+    activeChatEl.classList.remove('hidden');
+    activeChatEl.className = activeChatEl.className.replace(/chat-theme-\d/g, '').trim();
+    const themeIdx = Math.abs(Number(chatId) || 0) % 8;
+    activeChatEl.classList.add(`chat-theme-${themeIdx}`);
+
     document.body.classList.add('mobile-chat-open');
 
     const displayName = activeChat.name || (activeChat.partner ? activeChat.partner.name : 'Личный диалог');
@@ -563,6 +568,8 @@ function appendMessageToView(msg) {
       <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '❤️')" title="Любовь ❤️">❤️</button>
       <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '🔥')" title="Огонь 🔥">🔥</button>
       <button class="msg-act-btn" onclick="toggleReaction(${msg.id}, '😂')" title="Смех 😂">😂</button>
+      <button class="msg-act-btn reaction-more" onclick="openReactionPicker(event, ${msg.id})" title="Все 25 реакций"><i class="fa-regular fa-face-smile"></i></button>
+      <button class="msg-act-btn forward" onclick="openForwardModal(${msg.id})" title="Переслать"><i class="fa-solid fa-share"></i></button>
       <button class="msg-act-btn" onclick="setReplyMessageById(${msg.id})" title="Ответить"><i class="fa-solid fa-reply"></i></button>
       ${(canModify && msg.type === 'text') ? `<button class="msg-act-btn" onclick="startEditMessage(${msg.id}, '${escapeForJs(msg.text)}')" title="Редактировать"><i class="fa-solid fa-pencil"></i></button>` : ''}
       ${canModify ? `<button class="msg-act-btn delete" onclick="deleteMessageById(${msg.id})" title="Удалить"><i class="fa-solid fa-trash"></i></button>` : ''}
@@ -1087,6 +1094,250 @@ function renderReactions(messageId, reactionsMap) {
 }
 
 // ----------------------------------------------------
+// 5x5 (25 EMOJIS) REACTION PICKER (NO SCROLLBAR)
+// ----------------------------------------------------
+const POPULAR_EMOJIS_25 = [
+  '👍','❤️','🔥','😂','👏',
+  '😮','😢','😍','🎉','🤔',
+  '🚀','💯','🤝','🙏','😎',
+  '🤣','🥳','🤩','😡','💩',
+  '🤯','😱','🤫','👀','💎'
+];
+
+let activeReactionMessageId = null;
+
+function openReactionPicker(e, messageId) {
+  if (e) e.stopPropagation();
+  activeReactionMessageId = messageId;
+  const popover = document.getElementById('reactionPopover');
+  const grid = document.getElementById('reactionGrid25');
+  if (!popover || !grid) return;
+
+  grid.innerHTML = POPULAR_EMOJIS_25.map(emoji => `
+    <div class="emoji-btn-25" onclick="select25Reaction('${emoji}')">${emoji}</div>
+  `).join('');
+
+  popover.classList.remove('hidden');
+
+  const target = e.currentTarget || e.target;
+  const rect = target.getBoundingClientRect();
+  const popoverWidth = 250;
+  const popoverHeight = 280;
+
+  let left = rect.left - 100;
+  let top = rect.top - popoverHeight - 8;
+
+  if (left < 10) left = 10;
+  if (left + popoverWidth > window.innerWidth - 10) left = window.innerWidth - popoverWidth - 10;
+  if (top < 10) top = rect.bottom + 8;
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+function select25Reaction(emoji) {
+  if (activeReactionMessageId) {
+    toggleReaction(activeReactionMessageId, emoji);
+  }
+  closeReactionPicker();
+}
+
+function closeReactionPicker() {
+  const popover = document.getElementById('reactionPopover');
+  if (popover) popover.classList.add('hidden');
+  activeReactionMessageId = null;
+}
+
+document.addEventListener('click', (e) => {
+  const popover = document.getElementById('reactionPopover');
+  if (popover && !popover.classList.contains('hidden')) {
+    if (!popover.contains(e.target) && !e.target.closest('.reaction-more')) {
+      closeReactionPicker();
+    }
+  }
+});
+
+// ----------------------------------------------------
+// FORWARD MESSAGE SYSTEM (Compact Vertical & Multi-Select)
+// ----------------------------------------------------
+let forwardMessageId = null;
+let forwardSelectedRecipients = new Set();
+let forwardAvailableItems = [];
+
+async function openForwardModal(messageId) {
+  forwardMessageId = messageId;
+  forwardSelectedRecipients.clear();
+  updateForwardSubmitButton();
+
+  const modal = document.getElementById('forwardModal');
+  const searchInput = document.getElementById('forwardSearchInput');
+  const listContainer = document.getElementById('forwardRecipientsList');
+  if (searchInput) searchInput.value = '';
+  modal.classList.remove('hidden');
+
+  listContainer.innerHTML = '<div class="text-center text-muted" style="padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Загрузка получателей...</div>';
+
+  try {
+    const chatsRes = await fetch('/api/chats', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const chatsData = await chatsRes.json();
+    const chats = chatsData.chats || [];
+
+    const usersRes = await fetch('/api/users/search?q=', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const usersData = await usersRes.json();
+    const users = usersData.users || [];
+
+    forwardAvailableItems = [];
+
+    chats.forEach(c => {
+      forwardAvailableItems.push({
+        key: `chat_${c.id}`,
+        type: 'chat',
+        chatId: c.id,
+        name: c.name,
+        handle: c.type === 'group' ? 'Группа' : `@${c.other_user?.username || 'диалог'}`,
+        avatar: c.avatar || (c.other_user ? c.other_user.avatar : null)
+      });
+    });
+
+    const chatUserIds = new Set(chats.filter(c => c.type === 'direct' && c.other_user).map(c => c.other_user.id));
+    users.forEach(u => {
+      if (!chatUserIds.has(u.id) && u.id !== currentUser.id) {
+        forwardAvailableItems.push({
+          key: `user_${u.id}`,
+          type: 'user',
+          userId: u.id,
+          name: u.name,
+          handle: `@${u.username}`,
+          avatar: u.avatar
+        });
+      }
+    });
+
+    renderForwardList(forwardAvailableItems);
+  } catch (err) {
+    listContainer.innerHTML = '<div class="text-center text-danger" style="padding: 16px;">Ошибка загрузки списка</div>';
+  }
+}
+
+function renderForwardList(items) {
+  const listContainer = document.getElementById('forwardRecipientsList');
+  if (!listContainer) return;
+
+  if (items.length === 0) {
+    listContainer.innerHTML = '<div class="text-center text-muted" style="padding: 20px;">Получатели не найдены</div>';
+    return;
+  }
+
+  listContainer.innerHTML = items.map(item => {
+    const isSelected = forwardSelectedRecipients.has(item.key);
+    return `
+      <div class="forward-recipient-row ${isSelected ? 'selected' : ''}" onclick="toggleForwardRecipient('${item.key}')">
+        <div class="forward-recipient-left">
+          ${renderAvatar(item.avatar, item.name, 'avatar-sm')}
+          <div style="min-width: 0;">
+            <div class="forward-recipient-name">${escapeHtml(item.name)}</div>
+            <div class="forward-recipient-handle">${escapeHtml(item.handle)}</div>
+          </div>
+        </div>
+        <div class="forward-checkbox">
+          <i class="fa-solid fa-check"></i>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterForwardRecipients(query) {
+  const q = (query || '').toLowerCase().trim();
+  if (!q) {
+    renderForwardList(forwardAvailableItems);
+    return;
+  }
+  const filtered = forwardAvailableItems.filter(item => 
+    item.name.toLowerCase().includes(q) || item.handle.toLowerCase().includes(q)
+  );
+  renderForwardList(filtered);
+}
+
+function toggleForwardRecipient(key) {
+  if (forwardSelectedRecipients.has(key)) {
+    forwardSelectedRecipients.delete(key);
+  } else {
+    forwardSelectedRecipients.add(key);
+  }
+  const searchVal = document.getElementById('forwardSearchInput').value;
+  filterForwardRecipients(searchVal);
+  updateForwardSubmitButton();
+}
+
+function updateForwardSubmitButton() {
+  const count = forwardSelectedRecipients.size;
+  const countEl = document.getElementById('forwardSelectedCount');
+  const btn = document.getElementById('submitForwardBtn');
+  if (countEl) countEl.innerText = count;
+  if (btn) btn.disabled = count === 0;
+}
+
+async function submitForwardMessage() {
+  if (!forwardMessageId || forwardSelectedRecipients.size === 0) return;
+
+  const btn = document.getElementById('submitForwardBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Пересылка...';
+
+  try {
+    const targetChatIds = [];
+
+    for (const key of forwardSelectedRecipients) {
+      if (key.startsWith('chat_')) {
+        targetChatIds.push(Number(key.replace('chat_', '')));
+      } else if (key.startsWith('user_')) {
+        const targetUserId = Number(key.replace('user_', ''));
+        const directRes = await fetch('/api/chats/direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ targetUserId })
+        });
+        const directData = await directRes.json();
+        if (directRes.ok && directData.chatId) {
+          targetChatIds.push(directData.chatId);
+        }
+      }
+    }
+
+    if (targetChatIds.length === 0) {
+      alert('Не удалось определить целевые чаты');
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">${forwardSelectedRecipients.size}</span>)`;
+      return;
+    }
+
+    socket.emit('forward_message', {
+      messageId: forwardMessageId,
+      targetChatIds
+    }, (resp) => {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)`;
+      if (resp && resp.error) {
+        alert(resp.error);
+      } else {
+        closeModal('forwardModal');
+        showToast(`Сообщение успешно переслано (${targetChatIds.length})!`);
+        loadChats();
+      }
+    });
+  } catch (err) {
+    alert('Ошибка пересылки сообщения');
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">${forwardSelectedRecipients.size}</span>)`;
+  }
+}
+
+// ----------------------------------------------------
 // ALL CONTACTS & DIRECT SEARCH (3 Columns Grid)
 // ----------------------------------------------------
 
@@ -1422,6 +1673,8 @@ async function openAdminEditUserModalById(userId) {
   }
 }
 
+let currentAdminEditingAvatar = null;
+
 function openAdminEditUserModal(user) {
   document.getElementById('adminEditUserId').value = user.id;
   document.getElementById('adminEditUserName').value = user.name || '';
@@ -1432,6 +1685,10 @@ function openAdminEditUserModal(user) {
   document.getElementById('adminEditUserRole').value = user.role || 'user';
   document.getElementById('adminEditUserStatus').value = user.status || 'approved';
   document.getElementById('adminEditUserNewPass').value = '';
+
+  currentAdminEditingAvatar = user.avatar || null;
+  updateAvatarElement('adminEditUserAvatarPreview', user.avatar, user.name, 'avatar-md');
+
   document.getElementById('adminEditUserAlert').className = 'alert-box';
   document.getElementById('adminEditUserModal').classList.remove('hidden');
 }
@@ -1453,7 +1710,7 @@ async function handleAdminSaveUser(e) {
     const res = await fetch(`/api/admin/users/${userId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name, username, email, phone, bio, role, status, newPassword })
+      body: JSON.stringify({ name, username, email, phone, bio, role, status, newPassword, avatar: currentAdminEditingAvatar })
     });
     const data = await res.json();
 
@@ -2174,6 +2431,9 @@ async function saveCroppedAvatar() {
         updateAvatarElement('detailsAvatar', activeChat.avatar, activeChat.name, 'avatar-lg');
         updateAvatarElement('chatHeaderAvatar', activeChat.avatar, activeChat.name, 'avatar-md');
         loadChats();
+      } else if (cropTarget === 'adminUser') {
+        currentAdminEditingAvatar = avatarUrl;
+        updateAvatarElement('adminEditUserAvatarPreview', avatarUrl, 'User', 'avatar-md');
       }
 
       closeAvatarCropper();
