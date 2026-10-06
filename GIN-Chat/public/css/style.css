@@ -273,17 +273,28 @@ body {
   transition: all 0.3s ease;
 }
 
-.logo-icon.logo-ninja {
-  background: linear-gradient(135deg, #180a2b 0%, #29104d 50%, #150824 100%);
-  color: #c084fc;
-  border: 2px solid #a855f7;
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.6), inset 0 0 16px rgba(192, 132, 252, 0.4);
-  font-size: 36px;
+.logo-ninja-wrap {
+  width: 80px;
+  height: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px auto;
+  background: transparent;
+  transition: transform 0.3s ease;
 }
 
-.logo-icon.logo-ninja:hover {
-  transform: scale(1.08) rotate(-4deg);
-  box-shadow: 0 0 32px rgba(168, 85, 247, 0.85), inset 0 0 20px rgba(192, 132, 252, 0.6);
+.ninja-auth-logo {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.7));
+  transition: all 0.3s ease;
+}
+
+.logo-ninja-wrap:hover .ninja-auth-logo {
+  transform: scale(1.1) rotate(-3deg);
+  filter: drop-shadow(0 6px 20px rgba(0, 229, 255, 0.5));
 }
 
 .auth-subtitle {
