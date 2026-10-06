@@ -609,13 +609,22 @@ function appendMessageToView(msg) {
       </div>
     `;
   } else if (msg.type === 'file') {
+    const fileMeta = getFileInfo(msg.file_name);
     contentHtml += `
-      <div class="msg-file-box">
-        <i class="fa-solid fa-file-arrow-down msg-file-icon"></i>
-        <div class="msg-file-info">
-          <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}" class="msg-file-name">${escapeHtml(msg.file_name)}</a>
-          <div class="msg-file-size">${formatFileSize(msg.file_size)}</div>
+      <div class="msg-file-card">
+        <div class="msg-file-badge" style="background: ${fileMeta.bg}; color: ${fileMeta.color}; border: 1px solid ${fileMeta.color}40;">
+          <i class="${fileMeta.icon}"></i>
+          <span class="msg-file-ext-tag">${fileMeta.label}</span>
         </div>
+        <div class="msg-file-details">
+          <div class="msg-file-title" title="${escapeHtml(msg.file_name)}">${escapeHtml(msg.file_name)}</div>
+          <div class="msg-file-meta-row">
+            <span class="msg-file-size-badge">${formatFileSize(msg.file_size)}</span>
+          </div>
+        </div>
+        <a href="${msg.file_url}" target="_blank" download="${escapeHtml(msg.file_name)}" class="btn-file-open" title="Открыть или скачать файл">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Открыть
+        </a>
       </div>
     `;
   }
@@ -645,6 +654,41 @@ function appendMessageToView(msg) {
   container.appendChild(row);
 
   renderReactions(msg.id, msg.reactions);
+}
+
+function getFileInfo(fileName) {
+  const name = fileName || 'Файл';
+  const parts = name.split('.');
+  const ext = parts.length > 1 ? parts.pop().toLowerCase() : '';
+
+  if (['pdf'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-pdf', color: '#ef4444', label: 'PDF', bg: 'rgba(239, 68, 68, 0.16)' };
+  }
+  if (['doc', 'docx', 'rtf', 'odt', 'txt'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-word', color: '#3b82f6', label: ext ? ext.toUpperCase() : 'DOC', bg: 'rgba(59, 130, 246, 0.16)' };
+  }
+  if (['xls', 'xlsx', 'csv'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-excel', color: '#10b981', label: ext.toUpperCase(), bg: 'rgba(16, 185, 129, 0.16)' };
+  }
+  if (['ppt', 'pptx'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-powerpoint', color: '#f97316', label: ext.toUpperCase(), bg: 'rgba(249, 115, 22, 0.16)' };
+  }
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-zipper', color: '#f59e0b', label: ext.toUpperCase(), bg: 'rgba(245, 158, 11, 0.16)' };
+  }
+  if (['js', 'ts', 'py', 'json', 'html', 'css', 'php', 'sh', 'sql', 'cpp', 'c', 'yml', 'yaml'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-code', color: '#a855f7', label: ext.toUpperCase(), bg: 'rgba(168, 85, 247, 0.16)' };
+  }
+  if (['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-video', color: '#ec4899', label: ext.toUpperCase(), bg: 'rgba(236, 72, 153, 0.16)' };
+  }
+  if (['mp3', 'wav', 'ogg', 'flac', 'm4a'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-audio', color: '#06b6d4', label: ext.toUpperCase(), bg: 'rgba(6, 182, 212, 0.16)' };
+  }
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+    return { icon: 'fa-solid fa-file-image', color: '#38bdf8', label: ext.toUpperCase(), bg: 'rgba(56, 189, 248, 0.16)' };
+  }
+  return { icon: 'fa-solid fa-file-lines', color: '#94a3b8', label: ext ? ext.toUpperCase() : 'DOC', bg: 'rgba(148, 163, 184, 0.16)' };
 }
 
 function formatMessageText(text) {
@@ -1097,11 +1141,11 @@ function renderReactions(messageId, reactionsMap) {
 // 5x5 (25 EMOJIS) REACTION PICKER (NO SCROLLBAR)
 // ----------------------------------------------------
 const POPULAR_EMOJIS_25 = [
-  '👍','❤️','🔥','😂','👏',
-  '😮','😢','😍','🎉','🤔',
-  '🚀','💯','🤝','🙏','😎',
-  '🤣','🥳','🤩','😡','💩',
-  '🤯','😱','🤫','👀','💎'
+  '👏','😮','😢','😍','🎉',
+  '🤔','🚀','💯','🤝','🙏',
+  '😎','🤣','🥳','🤩','😡',
+  '💩','🤯','😱','🤫','👀',
+  '💎','✨','⚡','🎯','👌'
 ];
 
 let activeReactionMessageId = null;
