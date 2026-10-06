@@ -313,6 +313,26 @@ function connectSocket() {
     loadChats();
   });
 
+  socket.on('group_join_notification', ({ chatId, chatName, joinedUser }) => {
+    showToast(`🔔 ${joinedUser.name} (@${joinedUser.username}) вступил в группу «${chatName}»`);
+    loadChats();
+    if (activeChat && activeChat.id === chatId) {
+      selectChat(chatId);
+    }
+  });
+
+  socket.on('new_report_alert', (report) => {
+    showToast(`🚨 Поступила жалоба на @${report.reported_user.username} (${report.reasons[0] || 'нарушение'})`);
+    if (currentUser && (currentUser.role === 'superadmin' || currentUser.role === 'admin')) {
+      loadAdminData();
+    }
+  });
+
+  socket.on('user_banned', () => {
+    alert('Ваш аккаунт был заблокирован администратором.');
+    logout();
+  });
+
   socket.on('member_removed', ({ chatId, userId }) => {
     if (activeChat && activeChat.id === chatId) {
       if (userId === currentUser.id) {
@@ -1424,7 +1444,12 @@ async function searchUsersForDirect(q) {
           <div class="contact-card-name" title="${escapeHtml(u.name)}">${escapeHtml(u.name)}</div>
           <div class="contact-card-login">@${escapeHtml(u.username)}</div>
         </div>
-        <button class="btn btn-xs btn-primary contact-card-btn" onclick="event.stopPropagation(); startDirectWithUser(${u.id})" title="Написать"><i class="fa-solid fa-paper-plane"></i> Написать</button>
+        <div style="display: flex; gap: 5px; align-items: center;">
+          <button class="btn btn-xs btn-primary contact-card-btn" onclick="event.stopPropagation(); startDirectWithUser(${u.id})" title="Написать"><i class="fa-solid fa-paper-plane"></i> Написать</button>
+          ${u.id !== currentUser.id ? `
+            <button class="btn btn-xs btn-outline btn-report" onclick="event.stopPropagation(); openReportModal(${u.id}, '${escapeForJs(u.name)}', '${escapeForJs(u.username)}', '${escapeForJs(u.avatar || '')}', null, 'Контакты')" title="Пожаловаться на пользователя"><i class="fa-solid fa-triangle-exclamation"></i></button>
+          ` : ''}
+        </div>
       </div>
     `).join('');
   } catch (e) {
@@ -1611,8 +1636,182 @@ async function loadAdminData() {
         </td>
       </tr>
     `).join('');
+
+    // Fetch and render reports
+    try {
+      const reportsRes = await fetch('/api/admin/reports', { headers: { Authorization: `Bearer ${token}` } });
+      const { reports } = await reportsRes.json();
+      const reportsTable = document.getElementById('adminReportsTable');
+      const reportsCountEl = document.getElementById('adminReportsCount');
+
+      const pendingReports = (reports || []).filter(r => r.status === 'pending');
+      if (reportsCountEl) reportsCountEl.innerText = pendingReports.length;
+
+      if (!reports || reports.length === 0) {
+        if (reportsTable) reportsTable.innerHTML = `<tr><td colspan="4" class="text-center text-muted" style="padding: 16px;">Активных жалоб нет</td></tr>`;
+      } else {
+        if (reportsTable) {
+          reportsTable.innerHTML = reports.map(r => {
+            const isResolved = r.status === 'resolved';
+            const isDismissed = r.status === 'dismissed';
+            return `
+              <tr style="${isResolved || isDismissed ? 'opacity: 0.6;' : ''}">
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    ${renderAvatar(r.reported_avatar, r.reported_name, 'avatar-sm')}
+                    <div style="min-width: 0;">
+                      <div style="font-weight: 700; font-size: 13px;">${escapeHtml(r.reported_name)}</div>
+                      <div style="font-size: 11.5px; color: #ef4444;">@${escapeHtml(r.reported_username)}</div>
+                      <span class="badge ${r.reported_status === 'banned' ? 'badge-danger' : 'badge-primary'}" style="font-size: 10px;">${r.reported_status}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    ${renderAvatar(r.reporter_avatar, r.reporter_name, 'avatar-sm')}
+                    <div style="min-width: 0;">
+                      <div style="font-weight: 600; font-size: 13px;">${escapeHtml(r.reporter_name)}</div>
+                      <div style="font-size: 11.5px; color: var(--accent-color);">@${escapeHtml(r.reporter_username)}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 4px;">
+                    <i class="fa-solid fa-comments"></i> <b>Чат:</b> ${escapeHtml(r.chat_name || 'Личный диалог')}
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;">
+                    ${(r.reasons || []).map(reason => `<span class="badge badge-warning" style="font-size: 10.5px;">${escapeHtml(reason)}</span>`).join('')}
+                  </div>
+                  ${r.comment ? `<div style="font-size: 12px; font-style: italic; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px;">«${escapeHtml(r.comment)}»</div>` : ''}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    ${r.status === 'pending' ? `
+                      <button class="btn btn-xs btn-danger" onclick="adminBanUserFromReport(${r.id})" title="Заблокировать нарушителя"><i class="fa-solid fa-ban"></i> Бан</button>
+                      <button class="btn btn-xs btn-success" onclick="adminResolveReport(${r.id}, 'resolved')" title="Пометить решенной"><i class="fa-solid fa-check"></i> Закрыть</button>
+                      <button class="btn btn-xs btn-outline" onclick="adminResolveReport(${r.id}, 'dismissed')" title="Отклонить"><i class="fa-solid fa-xmark"></i></button>
+                    ` : `
+                      <span class="badge ${isResolved ? 'badge-success' : 'badge-muted'}">${r.status}</span>
+                    `}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      }
+    } catch(e) {}
   } catch (err) {
     console.error('Failed to load admin data:', err);
+  }
+}
+
+async function adminResolveReport(reportId, status) {
+  try {
+    const res = await fetch(`/api/admin/reports/${reportId}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ status })
+    });
+    if (res.ok) {
+      loadAdminData();
+      showToast('Статус жалобы обновлен');
+    }
+  } catch (e) {}
+}
+
+async function adminBanUserFromReport(reportId) {
+  if (!confirm('Вы уверены, что хотите навсегда заблокировать этого пользователя?')) return;
+  try {
+    const res = await fetch(`/api/admin/reports/${reportId}/ban`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      loadAdminData();
+      showToast('Пользователь заблокирован по жалобе');
+    }
+  } catch (e) {}
+}
+
+// ----------------------------------------------------
+// USER REPORTS SYSTEM (Пожаловаться)
+// ----------------------------------------------------
+let selectedReportReasons = new Set();
+
+function openReportModal(targetUserId, targetUserName, targetUserUsername, targetUserAvatar, chatId, chatName) {
+  selectedReportReasons.clear();
+  document.getElementById('reportTargetUserId').value = targetUserId;
+  document.getElementById('reportChatId').value = chatId || '';
+  
+  document.getElementById('reportUserName').innerText = targetUserName || 'Пользователь';
+  document.getElementById('reportUserHandle').innerText = `@${targetUserUsername || 'user'}`;
+  document.getElementById('reportChatContext').innerHTML = `<i class="fa-solid fa-users"></i> Контекст: ${escapeHtml(chatName || 'Личные контакты')}`;
+  updateAvatarElement('reportUserAvatar', targetUserAvatar, targetUserName, 'avatar-md');
+
+  document.querySelectorAll('.report-reason-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  document.getElementById('reportCommentInput').value = '';
+  updateReportSubmitButton();
+
+  document.getElementById('reportModal').classList.remove('hidden');
+}
+
+function toggleReportReason(el, reasonText) {
+  if (selectedReportReasons.has(reasonText)) {
+    selectedReportReasons.delete(reasonText);
+    el.classList.remove('selected');
+  } else {
+    selectedReportReasons.add(reasonText);
+    el.classList.add('selected');
+  }
+  updateReportSubmitButton();
+}
+
+function updateReportSubmitButton() {
+  const count = selectedReportReasons.size;
+  const countEl = document.getElementById('reportSelectedCount');
+  const btn = document.getElementById('submitReportBtn');
+  if (countEl) countEl.innerText = count;
+  if (btn) btn.disabled = count === 0;
+}
+
+async function submitUserReport() {
+  const reportedUserId = document.getElementById('reportTargetUserId').value;
+  const chatId = document.getElementById('reportChatId').value;
+  const comment = document.getElementById('reportCommentInput').value.trim();
+
+  if (!reportedUserId || selectedReportReasons.size === 0) return;
+
+  const btn = document.getElementById('submitReportBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Отправка жалобы...';
+
+  try {
+    const res = await fetch('/api/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        reportedUserId: Number(reportedUserId),
+        chatId: chatId ? Number(chatId) : null,
+        reasons: Array.from(selectedReportReasons),
+        comment
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      closeModal('reportModal');
+      showToast('🚨 Жалоба отправлена! Все администраторы получили оповещение.');
+    } else {
+      alert(data.error || 'Ошибка отправки жалобы');
+    }
+  } catch (err) {
+    alert('Сетевая ошибка при отправке жалобы');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Отправить жалобу администраторам (<span id="reportSelectedCount">${selectedReportReasons.size}</span>)`;
   }
 }
 
@@ -1968,6 +2167,8 @@ function renderChatMembersList() {
       if (currentUser && (currentUser.role === 'superadmin' || currentUser.role === 'admin')) {
         actionBtns += `<button class="btn btn-xs btn-outline" onclick="openAdminEditUserModalById(${m.id})" title="Редактировать"><i class="fa-solid fa-user-pen"></i></button>`;
       }
+
+      actionBtns += `<button class="btn btn-xs btn-outline btn-report" onclick="openReportModal(${m.id}, '${escapeForJs(m.name)}', '${escapeForJs(m.username)}', '${escapeForJs(m.avatar || '')}', ${activeChat.id}, '${escapeForJs(activeChat.name)}')" title="Пожаловаться на пользователя"><i class="fa-solid fa-triangle-exclamation"></i> Жалоба</button>`;
     }
 
     return `

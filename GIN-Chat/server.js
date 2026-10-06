@@ -964,6 +964,22 @@ app.post('/api/chats/:id/join', authMiddleware, (req, res) => {
 
     io.to('chat_' + chatId).emit('member_joined', { chatId: Number(chatId), user: sanitizeUser(req.user) });
     io.emit('new_chat_created');
+
+    // Notify all admins and owner of this group in real time
+    const groupAdmins = db.prepare("SELECT user_id FROM chat_members WHERE chat_id = ? AND role IN ('owner', 'admin')").all(chatId);
+    groupAdmins.forEach(adm => {
+      io.to('user_' + adm.user_id).emit('group_join_notification', {
+        chatId: Number(chatId),
+        chatName: chat.name,
+        joinedUser: sanitizeUser(req.user)
+      });
+    });
+
+    sendTelegramNotification(
+      `🔔 <b>Новый участник в группе «${escapeTgHtml(chat.name)}»:</b>\n` +
+      `👤 <b>Имя:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
+      `Все администраторы группы оповещены.`
+    );
   }
 
   res.json({ success: true, chatId: Number(chatId), name: chat.name });
@@ -990,9 +1006,149 @@ app.post('/api/chats/join/:code', authMiddleware, (req, res) => {
 
     io.to('chat_' + chat.id).emit('member_joined', { chatId: chat.id, user: sanitizeUser(req.user) });
     io.emit('new_chat_created');
+
+    // Notify all admins and owner of this group in real time
+    const groupAdmins = db.prepare("SELECT user_id FROM chat_members WHERE chat_id = ? AND role IN ('owner', 'admin')").all(chat.id);
+    groupAdmins.forEach(adm => {
+      io.to('user_' + adm.user_id).emit('group_join_notification', {
+        chatId: chat.id,
+        chatName: chat.name,
+        joinedUser: sanitizeUser(req.user)
+      });
+    });
+
+    sendTelegramNotification(
+      `🔔 <b>Новый участник в группе «${escapeTgHtml(chat.name)}»:</b>\n` +
+      `👤 <b>Имя:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
+      `Все администраторы группы оповещены.`
+    );
   }
 
   res.json({ success: true, chatId: chat.id, name: chat.name });
+});
+
+// ----------------------------------------------------
+// USER REPORTS & COMPLAINTS (Пожаловаться)
+// ----------------------------------------------------
+
+// Submit a report on a user
+app.post('/api/reports', authMiddleware, (req, res) => {
+  const reporterId = req.user.id;
+  const { reportedUserId, chatId, reasons, comment } = req.body;
+
+  if (!reportedUserId) {
+    return res.status(400).json({ error: 'Не указан пользователь' });
+  }
+  if (Number(reportedUserId) === Number(reporterId)) {
+    return res.status(400).json({ error: 'Нельзя пожаловаться на самого себя' });
+  }
+  if (!reasons || !Array.isArray(reasons) || reasons.length === 0) {
+    return res.status(400).json({ error: 'Выберите хотя бы одну причину жалобы' });
+  }
+
+  const targetUser = db.prepare('SELECT id, name, username, email, phone FROM users WHERE id = ?').get(reportedUserId);
+  if (!targetUser) {
+    return res.status(404).json({ error: 'Пользователь не найден' });
+  }
+
+  let chatName = 'Личные сообщения / Контакты';
+  let groupAdmins = [];
+  if (chatId) {
+    const chat = db.prepare('SELECT id, name, type FROM chats WHERE id = ?').get(chatId);
+    if (chat) {
+      chatName = chat.name || 'Диалог';
+      groupAdmins = db.prepare("SELECT user_id FROM chat_members WHERE chat_id = ? AND role IN ('owner', 'admin')").all(chatId);
+    }
+  }
+
+  const reasonsJson = JSON.stringify(reasons);
+  const info = db.prepare(`
+    INSERT INTO reports (reporter_id, reported_user_id, chat_id, reasons, comment)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(reporterId, reportedUserId, chatId || null, reasonsJson, comment ? comment.trim() : null);
+
+  const reportId = info.lastInsertRowid;
+
+  // Notify all system superadmins and group admins
+  const systemAdmins = db.prepare("SELECT id FROM users WHERE role IN ('superadmin', 'admin')").all();
+  const notifyUserIds = new Set([
+    ...systemAdmins.map(a => a.id),
+    ...groupAdmins.map(g => g.user_id)
+  ]);
+
+  const reportPayload = {
+    id: reportId,
+    reporter: { id: req.user.id, name: req.user.name, username: req.user.username },
+    reported_user: { id: targetUser.id, name: targetUser.name, username: targetUser.username },
+    chat: { id: chatId, name: chatName },
+    reasons,
+    comment: comment ? comment.trim() : '',
+    created_at: new Date().toISOString()
+  };
+
+  notifyUserIds.forEach(uid => {
+    io.to('user_' + uid).emit('new_report_alert', reportPayload);
+  });
+
+  // Detailed Telegram notification for admin
+  const reasonsList = reasons.map(r => `• ${escapeTgHtml(r)}`).join('\n');
+  sendTelegramNotification(
+    `🚨 <b>НОВАЯ ЖАЛОБА НА ПОЛЬЗОВАТЕЛЯ!</b>\n` +
+    `👤 <b>Нарушитель:</b> ${escapeTgHtml(targetUser.name)} (@${escapeTgHtml(targetUser.username)}) [ID: ${targetUser.id}]\n` +
+    `👮 <b>Заявитель:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
+    `📌 <b>Контекст:</b> ${escapeTgHtml(chatName)}\n` +
+    `📋 <b>Причины:</b>\n${reasonsList}\n` +
+    `💬 <b>Комментарий:</b> ${escapeTgHtml(comment || '—')}`
+  );
+
+  res.json({ success: true, message: 'Жалоба успешно отправлена администраторам' });
+});
+
+// List all reports for Admin
+app.get('/api/admin/reports', authMiddleware, requireAdmin, (req, res) => {
+  const reports = db.prepare(`
+    SELECT r.id, r.reporter_id, r.reported_user_id, r.chat_id, r.reasons, r.comment, r.status, r.created_at,
+           u1.name as reporter_name, u1.username as reporter_username, u1.avatar as reporter_avatar,
+           u2.name as reported_name, u2.username as reported_username, u2.avatar as reported_avatar, u2.status as reported_status,
+           c.name as chat_name, c.type as chat_type
+    FROM reports r
+    LEFT JOIN users u1 ON r.reporter_id = u1.id
+    LEFT JOIN users u2 ON r.reported_user_id = u2.id
+    LEFT JOIN chats c ON r.chat_id = c.id
+    ORDER BY CASE r.status WHEN 'pending' THEN 0 ELSE 1 END, r.id DESC
+  `).all();
+
+  const parsed = reports.map(r => ({
+    ...r,
+    reasons: (() => { try { return JSON.parse(r.reasons); } catch(e) { return [r.reasons]; } })()
+  }));
+
+  res.json({ reports: parsed });
+});
+
+// Update report status (resolve / dismiss)
+app.post('/api/admin/reports/:id/status', authMiddleware, requireAdmin, (req, res) => {
+  const reportId = req.params.id;
+  const { status } = req.body;
+  if (!['pending', 'resolved', 'dismissed'].includes(status)) {
+    return res.status(400).json({ error: 'Неверный статус' });
+  }
+  db.prepare('UPDATE reports SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(status, reportId);
+  res.json({ success: true });
+});
+
+// Ban user directly from report
+app.post('/api/admin/reports/:id/ban', authMiddleware, requireAdmin, (req, res) => {
+  const reportId = req.params.id;
+  const report = db.prepare('SELECT reported_user_id FROM reports WHERE id = ?').get(reportId);
+  if (!report) return res.status(404).json({ error: 'Жалоба не найдена' });
+
+  db.prepare("UPDATE users SET status = 'banned', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(report.reported_user_id);
+  db.prepare("UPDATE reports SET status = 'resolved', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(reportId);
+
+  io.to('user_' + report.reported_user_id).emit('user_banned');
+  sendTelegramNotification(`🚫 <b>Пользователь заблокирован по жалобе #${reportId}!</b>`);
+  res.json({ success: true });
 });
 
 // Pin / Unpin Message

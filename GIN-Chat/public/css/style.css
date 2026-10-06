@@ -1855,6 +1855,125 @@ body {
 }
 
 /* ----------------------------------------------------
+   REPORT / COMPLAINTS SYSTEM STYLES
+---------------------------------------------------- */
+.report-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.report-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.report-user-name {
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--text-main);
+}
+
+.report-user-handle {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: 1px;
+}
+
+.report-chat-context {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.report-reasons-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.report-reason-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.report-reason-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.report-reason-item.selected {
+  background: rgba(0, 230, 118, 0.12);
+  border-color: #00e676 !important;
+  box-shadow: 0 0 16px rgba(0, 230, 118, 0.45);
+}
+
+.report-reason-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.report-reason-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.report-reason-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--text-main);
+}
+
+.report-reason-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.report-reason-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: 12px;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+
+.report-reason-item.selected .report-reason-check {
+  background: #00e676;
+  border-color: #00e676;
+  color: #000000;
+  font-weight: 900;
+  box-shadow: 0 0 10px #00e676;
+}
+
+.btn-report {
+  color: var(--danger) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.btn-report:hover {
+  background: rgba(239, 68, 68, 0.2) !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5) !important;
+}
+
+/* ----------------------------------------------------
    SINGLE-ROW COMPACT GROUP INVITE LINK BOX
 ---------------------------------------------------- */
 .invite-link-box {

@@ -339,6 +339,25 @@
           </div>
 
           <div class="admin-section">
+            <h4><i class="fa-solid fa-triangle-exclamation text-danger"></i> Жалобы пользователей и инциденты (<span id="adminReportsCount">0</span>)</h4>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">Нарушитель</th>
+                    <th style="width: 25%;">Заявитель</th>
+                    <th style="width: 32%;">Причины и комментарий</th>
+                    <th style="width: 18%;">Действия</th>
+                  </tr>
+                </thead>
+                <tbody id="adminReportsTable">
+                  <tr><td colspan="4" class="text-center text-muted">Активных жалоб нет</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-section">
             <h4><i class="fa-solid fa-users text-primary"></i> Все пользователи системы (Компактный вид в 2 строчки)</h4>
             <div class="table-responsive">
               <table class="admin-table">
@@ -707,6 +726,88 @@
           </div>
           <button class="btn btn-primary btn-block mt-3" id="submitForwardBtn" onclick="submitForwardMessage()" disabled>
             <i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: REPORT / COMPLAINT (Пожаловаться на пользователя) -->
+    <div class="modal-overlay hidden" id="reportModal">
+      <div class="modal-box modal-md">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> Пожаловаться на пользователя</h3>
+          <button class="icon-btn" onclick="closeModal('reportModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="reportTargetUserId">
+          <input type="hidden" id="reportChatId">
+          
+          <div class="report-user-card" id="reportUserCardPreview">
+            <div class="avatar avatar-md" id="reportUserAvatar">??</div>
+            <div class="report-user-info">
+              <div class="report-user-name" id="reportUserName">Имя Пользователя</div>
+              <div class="report-user-handle" id="reportUserHandle">@username</div>
+              <div class="report-chat-context" id="reportChatContext"><i class="fa-solid fa-users"></i> Контекст: Группа / Диалог</div>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label style="font-weight: 700; margin-bottom: 8px; display: block;"><i class="fa-solid fa-list-check text-primary"></i> Выберите причины жалобы (можно несколько):</label>
+            <div class="report-reasons-grid" id="reportReasonsGrid">
+              <div class="report-reason-item" onclick="toggleReportReason(this, 'Чужой человек / Неизвестный аккаунт')">
+                <div class="report-reason-icon">🚫</div>
+                <div class="report-reason-text">
+                  <div class="report-reason-title">Чужой человек / Неизвестный аккаунт</div>
+                  <div class="report-reason-desc">Посторонний человек, не из нашей компании или семьи</div>
+                </div>
+                <div class="report-reason-check"><i class="fa-solid fa-check"></i></div>
+              </div>
+
+              <div class="report-reason-item" onclick="toggleReportReason(this, 'Плохое поведение / Оскорбления')">
+                <div class="report-reason-icon">😡</div>
+                <div class="report-reason-text">
+                  <div class="report-reason-title">Плохое поведение / Оскорбления</div>
+                  <div class="report-reason-desc">Грубость, нецензурная лексика, токсичность, агрессия</div>
+                </div>
+                <div class="report-reason-check"><i class="fa-solid fa-check"></i></div>
+              </div>
+
+              <div class="report-reason-item" onclick="toggleReportReason(this, 'Спам / Реклама / Навязчивость')">
+                <div class="report-reason-icon">📢</div>
+                <div class="report-reason-text">
+                  <div class="report-reason-title">Спам / Реклама / Навязчивость</div>
+                  <div class="report-reason-desc">Нежелательные ссылки, рекламные рассылки, флуд</div>
+                </div>
+                <div class="report-reason-check"><i class="fa-solid fa-check"></i></div>
+              </div>
+
+              <div class="report-reason-item" onclick="toggleReportReason(this, 'Подозрительный профиль / Фейк')">
+                <div class="report-reason-icon">🎭</div>
+                <div class="report-reason-text">
+                  <div class="report-reason-title">Подозрительный профиль / Фейк</div>
+                  <div class="report-reason-desc">Попытка выдать себя за другого человека, фишинг</div>
+                </div>
+                <div class="report-reason-check"><i class="fa-solid fa-check"></i></div>
+              </div>
+
+              <div class="report-reason-item" onclick="toggleReportReason(this, 'Нарушение правил сообщества')">
+                <div class="report-reason-icon">⚠️</div>
+                <div class="report-reason-text">
+                  <div class="report-reason-title">Нарушение правил / Деструктив</div>
+                  <div class="report-reason-desc">Любые другие неправомерные или подозрительные действия</div>
+                </div>
+                <div class="report-reason-check"><i class="fa-solid fa-check"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group mt-3">
+            <label>Дополнительный комментарий (необязательно):</label>
+            <textarea id="reportCommentInput" rows="2" placeholder="Опишите подробности, если необходимо..."></textarea>
+          </div>
+
+          <button class="btn btn-danger btn-block mt-3" id="submitReportBtn" onclick="submitUserReport()" disabled>
+            <i class="fa-solid fa-paper-plane"></i> Отправить жалобу администраторам (<span id="reportSelectedCount">0</span>)
           </button>
         </div>
       </div>

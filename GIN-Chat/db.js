@@ -125,9 +125,22 @@ db.exec(`
     UNIQUE(message_id, user_id, emoji)
   );
 
+  CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reporter_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    reported_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    chat_id INTEGER REFERENCES chats(id) ON DELETE SET NULL,
+    reasons TEXT NOT NULL,
+    comment TEXT,
+    status TEXT DEFAULT 'pending', -- 'pending', 'resolved', 'dismissed'
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
   CREATE INDEX IF NOT EXISTS idx_chat_members_user ON chat_members(user_id);
   CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+  CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 `);
 
 // Migrations for existing databases
