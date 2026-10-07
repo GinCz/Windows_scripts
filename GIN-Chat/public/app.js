@@ -23,7 +23,17 @@ const emojis = {
   objects: ['🔥','🎉','🎊','💡','⚡','💥','🚀','🛡️','🎯','👑','🏆','🎁','🎈','🔔','📱','💻','⌨️','📷','🎥','🎧','🎵','🔑','🔒','⚙️','💎']
 };
 
+// Initialize Theme immediately
+try {
+  const savedTheme = localStorage.getItem('gin_chat_theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    document.body.classList.remove('dark-theme');
+  }
+} catch(e) {}
+
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   if (token) {
     fetchMe();
   } else {
@@ -2740,10 +2750,38 @@ function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
 }
 
+function initTheme() {
+  const savedTheme = localStorage.getItem('gin_chat_theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+    document.body.classList.remove('dark-theme');
+    const icon = document.getElementById('themeIcon');
+    if (icon) icon.className = 'fa-solid fa-sun';
+  } else {
+    document.body.classList.remove('light-theme');
+    document.body.classList.add('dark-theme');
+    const icon = document.getElementById('themeIcon');
+    if (icon) icon.className = 'fa-solid fa-moon';
+  }
+}
+
 function toggleTheme() {
   document.body.classList.toggle('light-theme');
   const isLight = document.body.classList.contains('light-theme');
-  document.getElementById('themeIcon').className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  if (isLight) {
+    document.body.classList.remove('dark-theme');
+    localStorage.setItem('gin_chat_theme', 'light');
+  } else {
+    document.body.classList.add('dark-theme');
+    localStorage.setItem('gin_chat_theme', 'dark');
+  }
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+function openAboutModal() {
+  closeMainMenu();
+  openModal('aboutAppModal');
 }
 
 function openLightbox(url) {

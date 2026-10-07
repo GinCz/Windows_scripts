@@ -1,4 +1,4 @@
-const CACHE_NAME = "gin-chat-v017";
+const CACHE_NAME = "gin-chat-v018";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",

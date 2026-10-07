@@ -94,7 +94,7 @@
           <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="btn-github-docs">
             <i class="fa-brands fa-github"></i> Подробное описание всех функций ↗
           </a>
-          <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v017</div>
+          <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v018</div>
         </div>
       </div>
     </div>
@@ -129,9 +129,8 @@
           <button class="menu-item" id="adminPanelMenuBtn" onclick="openAdminModal()"><i class="fa-solid fa-shield-halved text-warning"></i> Панель администратора <span class="badge badge-warning hidden" id="pendingUsersBadge">0</span></button>
           <button class="menu-item" onclick="openProfileModal()"><i class="fa-solid fa-gear"></i> Настройки профиля</button>
           <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
-                    <button id="pwaAuthInstallBtn" class="btn-pwa-install" style="display:none;" onclick="installPWA()">
-            <i class="fa-solid fa-download"></i> Установить GIN-Chat на устройство
-          </button>
+          <button class="menu-item" id="pwaMenuInstallBtn" style="display:none;" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v018)</button>
           <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -159,7 +158,7 @@
                 <button id="pwaInstallBtn" class="btn-sidebar-pwa" style="display:none;" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v017</div>
+        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v018</div>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -865,6 +864,43 @@
       <div class="reaction-grid-25" id="reactionGrid25"></div>
     </div>
 
+    <!-- MODAL: ABOUT GIN-CHAT (v018) -->
+    <div class="modal-overlay hidden" id="aboutAppModal">
+      <div class="modal-box modal-about-app">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-circle-info text-primary"></i> О приложении GIN-Chat</h3>
+          <button class="icon-btn" onclick="closeModal('aboutAppModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body text-center" style="padding: 24px 20px;">
+          <div class="about-logo-wrap mb-3">
+            <img src="/favicon.svg" alt="Ninja Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.5));">
+          </div>
+          <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v018 (0.1.8)</div>
+          <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
+            Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong> и поддержкой PWA.
+          </p>
+          <div class="about-info-table" style="text-align: left; background: rgba(0,0,0,0.15); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <span style="color: var(--text-muted);">Разработчик:</span>
+              <strong>Владимир Буланцев (GinCz)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+              <span style="color: var(--text-muted);">Сборка:</span>
+              <span>Release v018 • PWA Standalone</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+              <span style="color: var(--text-muted);">Шифрование:</span>
+              <span class="text-success" style="font-weight: 600;"><i class="fa-solid fa-lock"></i> AES-256-GCM (Active)</span>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" onclick="closeModal('aboutAppModal')">
+            <i class="fa-solid fa-check"></i> Понятно
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- TOAST NOTIFICATION -->
     <div id="toastNotification" class="toast-notification hidden"></div>
   </div>
@@ -889,6 +925,8 @@
       if (pwaBtn) pwaBtn.style.display = 'flex';
       const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
       if (pwaAuthBtn) pwaAuthBtn.style.display = 'inline-flex';
+      const pwaMenuBtn = document.getElementById('pwaMenuInstallBtn');
+      if (pwaMenuBtn) pwaMenuBtn.style.display = 'flex';
     });
 
     function installPWA() {
@@ -903,6 +941,8 @@
           if (pwaBtn) pwaBtn.style.display = 'none';
           const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
           if (pwaAuthBtn) pwaAuthBtn.style.display = 'none';
+          const pwaMenuBtn = document.getElementById('pwaMenuInstallBtn');
+          if (pwaMenuBtn) pwaMenuBtn.style.display = 'none';
         });
       }
     }
@@ -913,6 +953,8 @@
       if (pwaBtn) pwaBtn.style.display = 'none';
       const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
       if (pwaAuthBtn) pwaAuthBtn.style.display = 'none';
+      const pwaMenuBtn = document.getElementById('pwaMenuInstallBtn');
+      if (pwaMenuBtn) pwaMenuBtn.style.display = 'none';
     });
   </script>
 </body>
