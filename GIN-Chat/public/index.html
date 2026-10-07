@@ -191,6 +191,8 @@
               </div>
             </div>
             <div class="chat-header-actions">
+              <button class="icon-btn" id="headerAudioCallBtn" onclick="startDirectCall('audio')" title="Голосовой звонок (P2P)"><i class="fa-solid fa-phone"></i></button>
+              <button class="icon-btn" id="headerVideoCallBtn" onclick="startDirectCall('video')" title="Видеозвонок (P2P)"><i class="fa-solid fa-video"></i></button>
               <button class="icon-btn" onclick="openWallpaperModal()" title="Фон чата (Обои)"><i class="fa-solid fa-image"></i></button>
               <button class="btn btn-sm btn-bronze-invite hidden" id="chatHeaderGroupInviteBtn" onclick="copyCurrentChatLink()" title="Скопировать ссылку-приглашение в группу"><i class="fa-solid fa-user-plus"></i> Ссылка в группу</button>
               <button class="icon-btn" onclick="copyCurrentChatLink()" title="Скопировать ссылку на чат"><i class="fa-solid fa-link"></i></button>
@@ -973,6 +975,37 @@
         <div class="modal-body">
           <p class="modal-hint">Выберите фоновый градиент для диалогов, как в Telegram:</p>
           <div class="wallpaper-grid" id="wallpaperGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: WEBRTC P2P 1-ON-1 CALL -->
+    <div class="modal-overlay hidden" id="callModal">
+      <div class="modal-box modal-call-box">
+        <!-- User Info Header -->
+        <div class="call-user-card" id="callUserCard">
+          <div class="avatar avatar-xl call-avatar" id="callAvatar">ВБ</div>
+          <h3 class="call-user-name" id="callUserName">Собеседник</h3>
+          <p class="call-status-text" id="callStatusText">Инициализация вызова...</p>
+          <div class="call-timer hidden" id="callTimer">00:00</div>
+        </div>
+
+        <!-- Video Display Areas -->
+        <div class="call-video-container hidden" id="callVideoContainer">
+          <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+          <video id="localVideo" class="local-video" autoplay playsinline muted></video>
+        </div>
+
+        <!-- Audio element for remote stream -->
+        <audio id="remoteAudio" autoplay playsinline></audio>
+
+        <!-- Call Controls Toolbar -->
+        <div class="call-controls-bar">
+          <button type="button" class="call-ctrl-btn" id="callMuteMicBtn" onclick="toggleCallMic()" title="Микрофон"><i class="fa-solid fa-microphone"></i></button>
+          <button type="button" class="call-ctrl-btn" id="callToggleCamBtn" onclick="toggleCallCam()" title="Камера"><i class="fa-solid fa-video"></i></button>
+          <button type="button" class="call-ctrl-btn" id="callSwitchCamBtn" onclick="switchCallCamera()" title="Сменить камеру"><i class="fa-solid fa-camera-rotate"></i></button>
+          <button type="button" class="call-ctrl-btn call-btn-accept hidden" id="callAcceptBtn" onclick="acceptIncomingCall()" title="Ответить"><i class="fa-solid fa-phone"></i></button>
+          <button type="button" class="call-ctrl-btn call-btn-end" id="callEndBtn" onclick="endCall()" title="Завершить"><i class="fa-solid fa-phone-slash"></i></button>
         </div>
       </div>
     </div>

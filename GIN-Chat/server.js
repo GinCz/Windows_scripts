@@ -1784,6 +1784,57 @@ io.on('connection', (socket) => {
     io.to('chat_' + chatId).emit('reaction_updated', { messageId, reactions: map });
   });
 
+  // ----------------------------------------------------
+  // WEBRTC P2P 1-ON-1 VOICE & VIDEO CALL SIGNALING
+  // ----------------------------------------------------
+  socket.on('call_start', ({ toUserId, type, offer, chatId }) => {
+    const targetUserId = Number(toUserId);
+    if (!onlineUsers.has(targetUserId) || onlineUsers.get(targetUserId).size === 0) {
+      return socket.emit('call_failed', { reason: 'offline', message: 'Пользователь сейчас не в сети' });
+    }
+
+    io.to('user_' + targetUserId).emit('incoming_call', {
+      fromUserId: userId,
+      callerName: user.name,
+      callerUsername: user.username,
+      callerAvatar: user.avatar,
+      type: type || 'audio',
+      offer,
+      chatId
+    });
+  });
+
+  socket.on('call_accept', ({ toUserId, answer }) => {
+    const targetUserId = Number(toUserId);
+    io.to('user_' + targetUserId).emit('call_accepted', {
+      fromUserId: userId,
+      answer
+    });
+  });
+
+  socket.on('call_reject', ({ toUserId, reason }) => {
+    const targetUserId = Number(toUserId);
+    io.to('user_' + targetUserId).emit('call_rejected', {
+      fromUserId: userId,
+      reason: reason || 'declined'
+    });
+  });
+
+  socket.on('call_end', ({ toUserId }) => {
+    const targetUserId = Number(toUserId);
+    io.to('user_' + targetUserId).emit('call_ended', {
+      fromUserId: userId
+    });
+  });
+
+  socket.on('call_ice_candidate', ({ toUserId, candidate }) => {
+    const targetUserId = Number(toUserId);
+    io.to('user_' + targetUserId).emit('call_ice_candidate', {
+      fromUserId: userId,
+      candidate
+    });
+  });
+
   socket.on('disconnect', () => {
     if (onlineUsers.has(userId)) {
       onlineUsers.get(userId).delete(socket.id);
