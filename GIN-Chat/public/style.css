@@ -482,6 +482,7 @@ body {
 
 /* BRAND SIGNATURE */
 .brand-signature {
+  display: block;
   font-size: 11px;
   color: var(--text-muted);
   text-align: center;
@@ -489,6 +490,16 @@ body {
   letter-spacing: 1px;
   font-weight: 700;
   opacity: 0.75;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.brand-signature:hover {
+  opacity: 1;
+  color: var(--accent-color);
+  text-shadow: 0 0 10px var(--accent-glow, rgba(82, 136, 193, 0.4));
+  transform: translateY(-1px);
 }
 
 /* MAIN LAYOUT */
@@ -2769,7 +2780,12 @@ body.light-theme .form-group select {
 }
 
 body.light-theme .brand-signature {
-  color: #94a3b8 !important;
+  color: #64748b !important;
+}
+
+body.light-theme .brand-signature:hover {
+  color: #2563eb !important;
+  text-shadow: 0 0 10px rgba(37, 99, 235, 0.3) !important;
 }
 
 body.light-theme .btn-sidebar-pwa {
