@@ -576,6 +576,99 @@ app.delete('/api/admin/users/:id', authMiddleware, requireAdmin, (req, res) => {
   res.json({ success: true, message: 'Пользователь удален' });
 });
 
+// Admin Merge Two Users into One Account (Владимир)
+app.post('/api/admin/users/merge', authMiddleware, requireAdmin, (req, res) => {
+  const { sourceUserId, targetUserId } = req.body;
+  const sId = Number(sourceUserId);
+  const tId = Number(targetUserId);
+
+  if (!sId || !tId) {
+    return res.status(400).json({ error: 'Необходимо указать оба аккаунта для объединения' });
+  }
+  if (sId === tId) {
+    return res.status(400).json({ error: 'Нельзя объединить аккаунт сам с собой' });
+  }
+
+  const sourceUser = db.prepare('SELECT * FROM users WHERE id = ?').get(sId);
+  const targetUser = db.prepare('SELECT * FROM users WHERE id = ?').get(tId);
+
+  if (!sourceUser || !targetUser) {
+    return res.status(404).json({ error: 'Один из пользователей не найден в базе данных' });
+  }
+
+  try {
+    const mergeTx = db.transaction(() => {
+      // 1. Transfer messages sent by sourceUser to targetUser
+      db.prepare('UPDATE messages SET sender_id = ? WHERE sender_id = ?').run(tId, sId);
+
+      // 2. Transfer chats created by sourceUser to targetUser
+      db.prepare('UPDATE chats SET created_by = ? WHERE created_by = ?').run(tId, sId);
+
+      // 3. Handle chat memberships
+      const sourceMemberships = db.prepare('SELECT * FROM chat_members WHERE user_id = ?').all(sId);
+      for (const sm of sourceMemberships) {
+        const targetMember = db.prepare('SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?').get(sm.chat_id, tId);
+        if (targetMember) {
+          // Target is already member of this chat, delete source membership
+          db.prepare('DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?').run(sm.chat_id, sId);
+        } else {
+          // Transfer membership to target
+          db.prepare('UPDATE chat_members SET user_id = ? WHERE chat_id = ? AND user_id = ?').run(tId, sm.chat_id, sId);
+        }
+      }
+
+      // 4. Handle message reads
+      const sourceReads = db.prepare('SELECT * FROM message_reads WHERE user_id = ?').all(sId);
+      for (const sr of sourceReads) {
+        const targetRead = db.prepare('SELECT * FROM message_reads WHERE message_id = ? AND user_id = ?').get(sr.message_id, tId);
+        if (targetRead) {
+          db.prepare('DELETE FROM message_reads WHERE message_id = ? AND user_id = ?').run(sr.message_id, sId);
+        } else {
+          db.prepare('UPDATE message_reads SET user_id = ? WHERE message_id = ? AND user_id = ?').run(tId, sr.message_id, sId);
+        }
+      }
+
+      // 5. Handle reactions
+      const sourceReactions = db.prepare('SELECT * FROM reactions WHERE user_id = ?').all(sId);
+      for (const rc of sourceReactions) {
+        const targetReaction = db.prepare('SELECT * FROM reactions WHERE message_id = ? AND user_id = ? AND emoji = ?').get(rc.message_id, tId, rc.emoji);
+        if (targetReaction) {
+          db.prepare('DELETE FROM reactions WHERE id = ?').run(rc.id);
+        } else {
+          db.prepare('UPDATE reactions SET user_id = ? WHERE id = ?').run(tId, rc.id);
+        }
+      }
+
+      // 6. Handle reports
+      db.prepare('UPDATE reports SET reporter_id = ? WHERE reporter_id = ?').run(tId, sId);
+      db.prepare('UPDATE reports SET reported_user_id = ? WHERE reported_user_id = ?').run(tId, sId);
+
+      // 7. Delete sourceUser (all foreign key references moved)
+      db.prepare('DELETE FROM users WHERE id = ?').run(sId);
+    });
+
+    mergeTx();
+
+    // Sockets notifications
+    io.to('user_' + sId).emit('force_logout', { 
+      reason: `Ваша учетная запись была объединена с основным аккаунтом "${targetUser.name}" (@${targetUser.username}). Пожалуйста, авторизуйтесь под основным логином.` 
+    });
+    io.emit('user_deleted', { userId: sId });
+    io.to('user_' + tId).emit('chats_updated');
+    io.emit('user_merged', { sourceUserId: sId, targetUserId: tId });
+
+    sendTelegramNotification(`🔗 <b>Объединение аккаунтов выполнено!</b>\n\n<b>Дубликат:</b> ${escapeTgHtml(sourceUser.name)} (@${escapeTgHtml(sourceUser.username)}, ID: ${sId})\n<b>Перенесен в:</b> ${escapeTgHtml(targetUser.name)} (@${escapeTgHtml(targetUser.username)}, ID: ${tId})\n\nВсе сообщения, группы и диалоги успешно перенесены в основной аккаунт.`);
+
+    res.json({ 
+      success: true, 
+      message: `Аккаунт "${sourceUser.name}" (@${sourceUser.username}) успешно объединен с "${targetUser.name}" (@${targetUser.username})` 
+    });
+  } catch (err) {
+    console.error('Merge users error:', err);
+    res.status(500).json({ error: 'Ошибка объединения: ' + err.message });
+  }
+});
+
 // Admin Stats
 app.get('/api/admin/stats', authMiddleware, requireAdmin, (req, res) => {
   const totalUsers = db.prepare("SELECT COUNT(*) as c FROM users").get().c;
@@ -1710,6 +1803,6 @@ app.get('*', (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 GIN-Chat running on http://0.0.0.0:${PORT}`);
-  sendTelegramNotification('🚀 <b>GIN-Chat сервер v019 запущен:</b>\nhttps://4at.gincz.com');
+  sendTelegramNotification('🚀 <b>GIN-Chat сервер v020 запущен:</b>\nhttps://4at.gincz.com');
   pollTelegramUpdates();
 });

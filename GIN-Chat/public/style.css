@@ -673,7 +673,11 @@ body {
   padding: 10px 14px;
   cursor: pointer;
   transition: all 0.15s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22) !important;
+}
+
+.chat-item:last-child {
+  border-bottom: none !important;
 }
 
 .chat-item:hover {
@@ -2556,8 +2560,29 @@ body.light-theme .chat-tab:hover {
 }
 
 body.light-theme .chat-item {
-  border-bottom: 1px solid #f1f5f9 !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.22) !important;
   color: #0f172a !important;
+}
+
+body.light-theme .chat-item:last-child {
+  border-bottom: none !important;
+}
+
+body.light-theme .user-select-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.20) !important;
+}
+
+body.light-theme .member-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.20) !important;
+}
+
+body.light-theme .user-contact-card {
+  border: 1px solid rgba(0, 0, 0, 0.22) !important;
+  background: #ffffff !important;
+}
+
+body.light-theme .admin-table tbody tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.18) !important;
 }
 
 body.light-theme .chat-item:hover {
@@ -2588,20 +2613,11 @@ body.light-theme .chat-view {
 
 body.light-theme .active-chat-container,
 body.light-theme .chat-messages {
-  background: linear-gradient(45deg, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fae8ff 100%) !important;
+  background: var(--chat-wallpaper-bg, linear-gradient(45deg, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fae8ff 100%));
 }
 
-body.light-theme .active-chat-container.chat-theme-0 { background: linear-gradient(45deg, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fae8ff 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-1 { background: linear-gradient(45deg, #ccfbf1 0%, #dbeafe 40%, #e0e7ff 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-2 { background: linear-gradient(45deg, #dcfce7 0%, #ccfbf1 40%, #e0e7ff 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-3 { background: linear-gradient(45deg, #ffedd5 0%, #fed7aa 40%, #fae8ff 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-4 { background: linear-gradient(45deg, #fce7f3 0%, #fbcfe8 40%, #fae8ff 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-5 { background: linear-gradient(45deg, #cffafe 0%, #bae6fd 40%, #ede9fe 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-6 { background: linear-gradient(45deg, #ede9fe 0%, #f3e8ff 40%, #fae8ff 100%) !important; }
-body.light-theme .active-chat-container.chat-theme-7 { background: linear-gradient(45deg, #f0fdf4 0%, #dcfce7 40%, #f3e8ff 100%) !important; }
-
 body.light-theme .empty-chat-state {
-  background: linear-gradient(45deg, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fae8ff 100%) !important;
+  background: var(--chat-wallpaper-bg, linear-gradient(45deg, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fae8ff 100%));
   color: #64748b !important;
 }
 

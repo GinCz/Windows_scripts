@@ -131,7 +131,7 @@
           <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
           <button class="menu-item" onclick="openWallpaperModal()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
           <button class="menu-item" id="pwaMenuInstallBtn" style="display:none;" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
-          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v019)</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v020)</button>
           <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -159,7 +159,7 @@
                 <button id="pwaInstallBtn" class="btn-sidebar-pwa" style="display:none;" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v019</div>
+        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v020</div>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -194,6 +194,7 @@
               </div>
             </div>
             <div class="chat-header-actions">
+              <button class="icon-btn" onclick="openWallpaperModal()" title="Фон чата (Обои)"><i class="fa-solid fa-image"></i></button>
               <button class="btn btn-sm btn-bronze-invite hidden" id="chatHeaderGroupInviteBtn" onclick="copyCurrentChatLink()" title="Скопировать ссылку-приглашение в группу"><i class="fa-solid fa-user-plus"></i> Ссылка в группу</button>
               <button class="icon-btn" onclick="copyCurrentChatLink()" title="Скопировать ссылку на чат"><i class="fa-solid fa-link"></i></button>
               <button class="icon-btn" onclick="openChatDetailsModal()" title="Информация о группе / собеседнике"><i class="fa-solid fa-circle-info"></i></button>
@@ -403,22 +404,79 @@
             </div>
           </div>
 
+          <div class="admin-section" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 12px; padding: 14px 18px; margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h4 style="margin: 0 0 4px 0;"><i class="fa-solid fa-code-merge text-primary"></i> Объединение двух учетных записей (Merge Users)</h4>
+                <p style="margin: 0; font-size: 12.5px; color: var(--text-muted);">
+                  Слияние аккаунтов с разных устройств (ПК / телефон): перенос всех сообщений, чатов и групп в один основной логин.
+                </p>
+              </div>
+              <button class="btn btn-sm btn-primary" onclick="openAdminMergeModal()"><i class="fa-solid fa-code-merge"></i> Объединить аккаунты</button>
+            </div>
+          </div>
+
           <div class="admin-section">
             <h4><i class="fa-solid fa-users text-primary"></i> Все пользователи системы (Компактный вид в 2 строчки)</h4>
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
-                    <th style="width: 28%;">Пользователь</th>
-                    <th style="width: 28%;">Email / Телефон</th>
+                    <th style="width: 26%;">Пользователь</th>
+                    <th style="width: 26%;">Email / Телефон</th>
                     <th style="width: 14%;">Роль / Статус</th>
-                    <th style="width: 30%;">Управление</th>
+                    <th style="width: 34%;">Управление</th>
                   </tr>
                 </thead>
                 <tbody id="adminAllUsersTable"></tbody>
               </table>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADMIN MERGE TWO USERS (Владимир) -->
+    <div class="modal-overlay hidden" id="adminMergeModal">
+      <div class="modal-box modal-lg">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-code-merge text-primary"></i> Объединение учетных записей (Merge Users)</h3>
+          <button class="icon-btn" onclick="closeModal('adminMergeModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert-box show" style="background: rgba(168, 85, 247, 0.12); border-color: rgba(168, 85, 247, 0.3); color: var(--text-color); margin-bottom: 20px; font-size: 13px; line-height: 1.5;">
+            <i class="fa-solid fa-circle-info text-primary"></i> <strong>Как работает объединение:</strong><br>
+            • Все сообщения, диалоги, участие в группах и реакции <strong>Объединяемого аккаунта (Дубликата)</strong> будут бесшовно перенесены в <strong>Основной аккаунт</strong>.<br>
+            • Объединяемый дубликат будет закрыт, а на его устройстве потребуется вход под основным логином.
+          </div>
+
+          <form onsubmit="handleAdminMergeUsers(event)">
+            <div class="form-group mb-3">
+              <label><i class="fa-solid fa-crown text-warning"></i> <strong>1. Основной аккаунт (Target User)</strong> — куда переносим всё:</label>
+              <select id="mergeTargetUserSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text-color); border: 1px solid var(--border-color); font-size: 14px;">
+                <option value="">-- Выберите основной аккаунт --</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-4">
+              <label><i class="fa-solid fa-mobile-screen text-primary"></i> <strong>2. Объединяемый аккаунт-дубликат (Source User)</strong> — который поглощается:</label>
+              <select id="mergeSourceUserSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text-color); border: 1px solid var(--border-color); font-size: 14px;">
+                <option value="">-- Выберите дубликат для слияния --</option>
+              </select>
+            </div>
+
+            <div class="form-group mb-4" style="background: rgba(0,0,0,0.15); padding: 12px; border-radius: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                <input type="checkbox" id="mergeConfirmCheckbox" required style="width: 18px; height: 18px;">
+                <span>Я подтверждаю объединение и перенос всех данных в выбранный основной аккаунт</span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-warning btn-block" id="mergeSubmitBtn" style="font-weight: 700; padding: 12px;">
+              <i class="fa-solid fa-code-merge"></i> Объединить аккаунты
+            </button>
+            <div id="mergeAlert" class="alert-box"></div>
+          </form>
         </div>
       </div>
     </div>
@@ -690,6 +748,12 @@
               <input type="tel" id="profilePhone" placeholder="+7 999 123-45-67">
             </div>
             <hr class="form-divider">
+            <h5>Оформление и фоны диалогов</h5>
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+              <button type="button" class="btn btn-outline" style="flex: 1;" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Сменить тему</button>
+              <button type="button" class="btn btn-outline" style="flex: 1;" onclick="openWallpaperModalFromProfile()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
+            </div>
+            <hr class="form-divider">
             <h5>Смена своего пароля (необязательно)</h5>
             <div class="form-group">
               <label>Текущий пароль</label>
@@ -877,7 +941,7 @@
             <img src="/favicon.svg" alt="Ninja Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.5));">
           </div>
           <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
-          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v019 (0.1.9)</div>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v020 (0.2.0)</div>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
             Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong> и поддержкой PWA.
           </p>
@@ -888,7 +952,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <span style="color: var(--text-muted);">Сборка:</span>
-              <span>Release v019 • PWA Standalone</span>
+              <span>Release v020 • PWA Standalone</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0;">
               <span style="color: var(--text-muted);">Шифрование:</span>

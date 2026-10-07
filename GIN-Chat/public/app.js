@@ -500,6 +500,7 @@ async function selectChat(chatId) {
     activeChatEl.className = activeChatEl.className.replace(/chat-theme-\d/g, '').trim();
     const themeIdx = Math.abs(Number(chatId) || 0) % 8;
     activeChatEl.classList.add(`chat-theme-${themeIdx}`);
+    applyWallpaper();
 
     document.body.classList.add('mobile-chat-open');
 
@@ -1601,8 +1602,9 @@ async function loadAdminData() {
 
     const usersRes = await fetch('/api/admin/users', { headers: { Authorization: `Bearer ${token}` } });
     const { users } = await usersRes.json();
+    adminAllUsersCache = users || [];
 
-    const pending = users.filter(u => u.status === 'pending');
+    const pending = (users || []).filter(u => u.status === 'pending');
     const pendingTable = document.getElementById('adminPendingUsersTable');
 
     if (pending.length === 0) {
@@ -1638,7 +1640,7 @@ async function loadAdminData() {
     }
 
     const allTable = document.getElementById('adminAllUsersTable');
-    allTable.innerHTML = users.map(u => `
+    allTable.innerHTML = (users || []).map(u => `
       <tr>
         <td>
           <div style="display: flex; align-items: center; gap: 10px;">
@@ -1664,10 +1666,12 @@ async function loadAdminData() {
             ${u.id !== currentUser.id ? `
               <button class="btn btn-xs btn-primary" onclick="startDirectWithUser(${u.id})" title="Написать"><i class="fa-solid fa-paper-plane"></i> Написать</button>
               <button class="btn btn-xs btn-warning" onclick="openAdminPassModal(${u.id}, '${escapeHtml(u.name)}', '${escapeHtml(u.username)}')" title="Сменить пароль"><i class="fa-solid fa-key"></i> Пароль</button>
+              <button class="btn btn-xs btn-outline" onclick="openAdminMergeModal(${u.id})" title="Объединить этот аккаунт с другим"><i class="fa-solid fa-code-merge"></i> Слить</button>
               <button class="btn btn-xs btn-outline" onclick="openAdminEditUserModalById(${u.id})" title="Изм"><i class="fa-solid fa-user-pen"></i></button>
               <button class="btn btn-xs btn-danger" onclick="adminDeleteUser(${u.id})" title="Удалить"><i class="fa-solid fa-trash"></i></button>
             ` : `
               <button class="btn btn-xs btn-outline" onclick="openAdminEditUserModalById(${u.id})" title="Редактировать"><i class="fa-solid fa-user-pen"></i> Изм</button>
+              <button class="btn btn-xs btn-outline" onclick="openAdminMergeModal()" title="Объединить два любых аккаунта"><i class="fa-solid fa-code-merge"></i> Слияние</button>
               <span class="text-muted" style="font-size: 11px; align-self: center;">(Вы)</span>
             `}
           </div>
@@ -2743,11 +2747,113 @@ function toggleMainMenu() {
 }
 
 function closeMainMenu() {
-  document.getElementById('mainMenu').classList.add('hidden');
+  const m = document.getElementById('mainMenu');
+  if (m) m.classList.add('hidden');
+}
+
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.add('hidden');
+  const el = document.getElementById(id);
+  if (el) el.classList.add('hidden');
+}
+
+// ----------------------------------------------------
+// ADMIN MERGE USERS (Владимир)
+// ----------------------------------------------------
+
+function openAdminMergeModal(sourceUserId = null) {
+  const modal = document.getElementById('adminMergeModal');
+  const targetSelect = document.getElementById('mergeTargetUserSelect');
+  const sourceSelect = document.getElementById('mergeSourceUserSelect');
+  const alertBox = document.getElementById('mergeAlert');
+  const confirmBox = document.getElementById('mergeConfirmCheckbox');
+  
+  if (alertBox) alertBox.className = 'alert-box';
+  if (confirmBox) confirmBox.checked = false;
+
+  const usersList = adminAllUsersCache && adminAllUsersCache.length > 0 ? adminAllUsersCache : [];
+  const optionsHtml = usersList.map(u => 
+    `<option value="${u.id}">${escapeHtml(u.name)} (@${escapeHtml(u.username)}) [ID: ${u.id}, ${u.role}]</option>`
+  ).join('');
+
+  if (targetSelect) {
+    targetSelect.innerHTML = '<option value="">-- Выберите основной аккаунт (куда переносим) --</option>' + optionsHtml;
+  }
+  if (sourceSelect) {
+    sourceSelect.innerHTML = '<option value="">-- Выберите дубликат для слияния (который удалится) --</option>' + optionsHtml;
+    if (sourceUserId) {
+      sourceSelect.value = sourceUserId;
+    }
+  }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+async function handleAdminMergeUsers(e) {
+  e.preventDefault();
+  const alertBox = document.getElementById('mergeAlert');
+  const submitBtn = document.getElementById('mergeSubmitBtn');
+  const targetUserId = document.getElementById('mergeTargetUserSelect').value;
+  const sourceUserId = document.getElementById('mergeSourceUserSelect').value;
+
+  if (!targetUserId || !sourceUserId) {
+    alertBox.className = 'alert-box error show';
+    alertBox.innerText = 'Пожалуйста, выберите оба аккаунта для слияния.';
+    return;
+  }
+
+  if (targetUserId === sourceUserId) {
+    alertBox.className = 'alert-box error show';
+    alertBox.innerText = 'Нельзя объединить аккаунт сам с собой.';
+    return;
+  }
+
+  const targetUser = adminAllUsersCache.find(u => u.id == targetUserId);
+  const sourceUser = adminAllUsersCache.find(u => u.id == sourceUserId);
+
+  const confirmText = `Вы действительно хотите объединить дубликат "${sourceUser ? sourceUser.name : ('ID ' + sourceUserId)}" в основной аккаунт "${targetUser ? targetUser.name : ('ID ' + targetUserId)}"?\n\nВсе сообщения, чаты и группы будут перенесены. Аккаунт-дубликат будет закрыт. Это действие необратимо!`;
+  if (!confirm(confirmText)) {
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Объединение аккаунтов...';
+
+  try {
+    const res = await fetch('/api/admin/users/merge', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ sourceUserId, targetUserId })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alertBox.className = 'alert-box success show';
+      alertBox.innerText = data.message || 'Аккаунты успешно объединены!';
+      showToast('🔗 Аккаунты успешно объединены!');
+      setTimeout(() => {
+        closeModal('adminMergeModal');
+        loadAdminData();
+        loadChats();
+      }, 1500);
+    } else {
+      alertBox.className = 'alert-box error show';
+      alertBox.innerText = data.error || 'Ошибка объединения аккаунтов';
+    }
+  } catch (err) {
+    alertBox.className = 'alert-box error show';
+    alertBox.innerText = 'Сетевая ошибка при объединении';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fa-solid fa-code-merge"></i> Объединить аккаунты';
+  }
 }
 
 // ----------------------------------------------------
@@ -2759,20 +2865,34 @@ const wallpapers = [
   { id: 'ocean', name: 'Морской Бриз', light: 'linear-gradient(45deg, #ccfbf1 0%, #bae6fd 50%, #e0f2fe 100%)', dark: 'linear-gradient(135deg, #042f2e 0%, #0c4a6e 50%, #02131d 100%)' },
   { id: 'mint', name: 'Изумрудный Сад', light: 'linear-gradient(45deg, #dcfce7 0%, #d1fae5 50%, #f0fdf4 100%)', dark: 'linear-gradient(135deg, #052e16 0%, #064e3b 50%, #02160d 100%)' },
   { id: 'sunset', name: 'Закат & Персик', light: 'linear-gradient(45deg, #ffedd5 0%, #fed7aa 50%, #ffe4e6 100%)', dark: 'linear-gradient(135deg, #431407 0%, #701a75 50%, #1c0a1a 100%)' },
-  { id: 'stealth', name: 'Скрытный Ниндзя', light: 'linear-gradient(45deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%)', dark: 'linear-gradient(135deg, #111215 0%, #1e1b2e 50%, #090a0d 100%)' },
+  { id: 'stealth', name: 'Скрытный Графит', light: 'linear-gradient(45deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%)', dark: 'linear-gradient(135deg, #111215 0%, #1e1b2e 50%, #090a0d 100%)' },
   { id: 'sakura', name: 'Сакура Bloom', light: 'linear-gradient(45deg, #fce7f3 0%, #fbcfe8 50%, #f5d0fe 100%)', dark: 'linear-gradient(135deg, #500724 0%, #701a75 50%, #1f0410 100%)' },
-  { id: 'mocha', name: 'Уютный Мокко', light: 'linear-gradient(45deg, #fef3c7 0%, #fed7aa 50%, #fae8ff 100%)', dark: 'linear-gradient(135deg, #271a0c 0%, #3e1f2f 50%, #120b08 100%)' }
+  { id: 'mocha', name: 'Уютный Мокко', light: 'linear-gradient(45deg, #fef3c7 0%, #fed7aa 50%, #fae8ff 100%)', dark: 'linear-gradient(135deg, #271a0c 0%, #3e1f2f 50%, #120b08 100%)' },
+  { id: 'lavender', name: 'Лаванда & Сумерки', light: 'linear-gradient(45deg, #ede9fe 0%, #ddd6fe 50%, #f5f3ff 100%)', dark: 'linear-gradient(135deg, #2e1065 0%, #1e1b4b 50%, #090614 100%)' },
+  { id: 'cyberpunk', name: 'Киберпанк 2077', light: 'linear-gradient(45deg, #fef08a 0%, #fed7aa 50%, #fbcfe8 100%)', dark: 'linear-gradient(135deg, #450a0a 0%, #581c87 50%, #020617 100%)' },
+  { id: 'deepspace', name: 'Глубокий Космос', light: 'linear-gradient(45deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)', dark: 'linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%)' },
+  { id: 'solid_classic', name: 'Классический Монохром', light: '#f8fafc', dark: '#0e1621' }
 ];
 
 function applyWallpaper(wpId) {
-  const wp = wallpapers.find(w => w.id === wpId) || wallpapers[0];
+  const currentWpId = wpId || localStorage.getItem('gin_chat_wallpaper') || 'aurora';
+  const wp = wallpapers.find(w => w.id === currentWpId) || wallpapers[0];
   const isLight = document.body.classList.contains('light-theme');
   const bg = isLight ? wp.light : wp.dark;
   
+  // Set CSS variable on root and body
+  document.documentElement.style.setProperty('--chat-wallpaper-bg', bg);
+  document.body.style.setProperty('--chat-wallpaper-bg', bg);
+  
   const activeChatEl = document.getElementById('activeChatContainer');
-  const chatMessagesEl = document.getElementById('chatMessages');
-  if (activeChatEl) activeChatEl.style.background = bg;
-  if (chatMessagesEl) chatMessagesEl.style.background = bg;
+  const messagesContainerEl = document.getElementById('messagesContainer');
+  const emptyStateEl = document.getElementById('emptyChatState');
+  const chatViewEl = document.getElementById('chatView');
+
+  if (activeChatEl) activeChatEl.style.setProperty('background', bg, 'important');
+  if (messagesContainerEl) messagesContainerEl.style.setProperty('background', bg, 'important');
+  if (emptyStateEl) emptyStateEl.style.setProperty('background', bg, 'important');
+  if (chatViewEl) chatViewEl.style.setProperty('background', bg, 'important');
   
   localStorage.setItem('gin_chat_wallpaper', wp.id);
 }
@@ -2804,8 +2924,19 @@ function selectWallpaper(wpId) {
 
 function openWallpaperModal() {
   closeMainMenu();
-  renderWallpaperGrid();
-  openModal('wallpaperModal');
+  const modal = document.getElementById('wallpaperModal');
+  if (modal) {
+    renderWallpaperGrid();
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+}
+
+function openWallpaperModalFromProfile() {
+  closeModal('profileModal');
+  setTimeout(() => {
+    openWallpaperModal();
+  }, 50);
 }
 
 function initTheme() {
