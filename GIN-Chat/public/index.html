@@ -3,13 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GIN-Chat | Защищенный приватный мессенджер</title>
+  <title>GIN-Chat</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="/css/style.css">
-  <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#180a2b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GIN-Chat">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
 </head>
 <body class="dark-theme">
   <div id="app">
@@ -21,7 +28,6 @@
             <img src="/favicon.svg" alt="Ninja" class="ninja-auth-logo">
           </div>
           <h2>GIN-Chat</h2>
-          <p class="auth-subtitle">Приватный защищенный мессенджер Владимира Буланцева</p>
         </div>
 
         <!-- AUTH TABS -->
@@ -82,10 +88,13 @@
 
         <!-- GITHUB DOCS BUTTON & SIGNATURE -->
         <div class="auth-footer-docs">
+                    <button id="pwaAuthInstallBtn" class="btn-pwa-install" style="display:none;" onclick="installPWA()">
+            <i class="fa-solid fa-download"></i> Установить GIN-Chat на устройство
+          </button>
           <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="btn-github-docs">
             <i class="fa-brands fa-github"></i> Подробное описание всех функций ↗
           </a>
-          <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v015</div>
+          <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v017</div>
         </div>
       </div>
     </div>
@@ -120,6 +129,9 @@
           <button class="menu-item" id="adminPanelMenuBtn" onclick="openAdminModal()"><i class="fa-solid fa-shield-halved text-warning"></i> Панель администратора <span class="badge badge-warning hidden" id="pendingUsersBadge">0</span></button>
           <button class="menu-item" onclick="openProfileModal()"><i class="fa-solid fa-gear"></i> Настройки профиля</button>
           <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
+                    <button id="pwaAuthInstallBtn" class="btn-pwa-install" style="display:none;" onclick="installPWA()">
+            <i class="fa-solid fa-download"></i> Установить GIN-Chat на устройство
+          </button>
           <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -144,7 +156,10 @@
         </div>
 
         <!-- Sidebar Footer Signature -->
-        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v015</div>
+                <button id="pwaInstallBtn" class="btn-sidebar-pwa" style="display:none;" onclick="installPWA()">
+          <i class="fa-solid fa-download"></i> Установить приложение
+        </button>
+        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v017</div>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -856,5 +871,49 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
   <script src="/js/app.js"></script>
+  <!-- PWA Service Worker & Install Handler -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((reg) => console.log('GIN-Chat SW registered:', reg.scope))
+          .catch((err) => console.error('GIN-Chat SW failed:', err));
+      });
+    }
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const pwaBtn = document.getElementById('pwaInstallBtn');
+      if (pwaBtn) pwaBtn.style.display = 'flex';
+      const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
+      if (pwaAuthBtn) pwaAuthBtn.style.display = 'inline-flex';
+    });
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('PWA accepted');
+          }
+          deferredPrompt = null;
+          const pwaBtn = document.getElementById('pwaInstallBtn');
+          if (pwaBtn) pwaBtn.style.display = 'none';
+          const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
+          if (pwaAuthBtn) pwaAuthBtn.style.display = 'none';
+        });
+      }
+    }
+
+    window.addEventListener('appinstalled', () => {
+      console.log('GIN-Chat installed!');
+      const pwaBtn = document.getElementById('pwaInstallBtn');
+      if (pwaBtn) pwaBtn.style.display = 'none';
+      const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
+      if (pwaAuthBtn) pwaAuthBtn.style.display = 'none';
+    });
+  </script>
 </body>
 </html>

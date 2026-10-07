@@ -1,15 +1,39 @@
 {
   "name": "GIN-Chat",
   "short_name": "GIN-Chat",
+  "description": "GIN-Chat - Modern AI Chat Application by Vladimir Bulantsev (GinCz)",
   "start_url": "/",
+  "id": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#17212b",
-  "theme_color": "#242f3d",
+  "orientation": "any",
+  "background_color": "#180a2b",
+  "theme_color": "#180a2b",
+  "categories": ["productivity", "utilities", "social"],
   "icons": [
     {
-      "src": "/icon.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

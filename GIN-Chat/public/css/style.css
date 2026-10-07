@@ -2429,3 +2429,48 @@ body {
   .mobile-chat-open .chat-view { display: flex; width: 100%; }
   .mobile-back-btn { display: flex; }
 }
+
+/* PWA INSTALL BUTTONS */
+.btn-pwa-install {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #7928ca 0%, #a855f7 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(121, 40, 202, 0.35);
+}
+.btn-pwa-install:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(121, 40, 202, 0.5);
+}
+.btn-sidebar-pwa {
+  margin: 10px 16px;
+  padding: 8px 12px;
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.btn-sidebar-pwa:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #fff;
+}
