@@ -129,8 +129,9 @@
           <button class="menu-item" id="adminPanelMenuBtn" onclick="openAdminModal()"><i class="fa-solid fa-shield-halved text-warning"></i> Панель администратора <span class="badge badge-warning hidden" id="pendingUsersBadge">0</span></button>
           <button class="menu-item" onclick="openProfileModal()"><i class="fa-solid fa-gear"></i> Настройки профиля</button>
           <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
+          <button class="menu-item" onclick="openWallpaperModal()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
           <button class="menu-item" id="pwaMenuInstallBtn" style="display:none;" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
-          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v018)</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v019)</button>
           <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -158,7 +159,7 @@
                 <button id="pwaInstallBtn" class="btn-sidebar-pwa" style="display:none;" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v018</div>
+        <div class="brand-signature">VladiMIR+AI &nbsp;|||&nbsp; v019</div>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -876,7 +877,7 @@
             <img src="/favicon.svg" alt="Ninja Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.5));">
           </div>
           <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
-          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v018 (0.1.8)</div>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v019 (0.1.9)</div>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
             Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong> и поддержкой PWA.
           </p>
@@ -887,7 +888,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <span style="color: var(--text-muted);">Сборка:</span>
-              <span>Release v018 • PWA Standalone</span>
+              <span>Release v019 • PWA Standalone</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0;">
               <span style="color: var(--text-muted);">Шифрование:</span>
@@ -897,6 +898,20 @@
           <button class="btn btn-primary btn-block" onclick="closeModal('aboutAppModal')">
             <i class="fa-solid fa-check"></i> Понятно
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: CHAT WALLPAPER SELECTOR -->
+    <div class="modal-overlay hidden" id="wallpaperModal">
+      <div class="modal-box modal-wallpaper-box">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-image text-primary"></i> Фон чатов (Обои)</h3>
+          <button class="icon-btn" onclick="closeModal('wallpaperModal')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-hint">Выберите фоновый градиент для диалогов, как в Telegram:</p>
+          <div class="wallpaper-grid" id="wallpaperGrid"></div>
         </div>
       </div>
     </div>

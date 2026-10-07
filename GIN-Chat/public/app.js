@@ -2750,6 +2750,64 @@ function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
 }
 
+// ----------------------------------------------------
+// WALLPAPER & BACKGROUND SWITCHER (Telegram-style)
+// ----------------------------------------------------
+const wallpapers = [
+  { id: 'aurora', name: 'Нежная Аврора', light: 'linear-gradient(45deg, #dbeafe 0%, #e0e7ff 35%, #f3e8ff 70%, #fae8ff 100%)', dark: 'linear-gradient(135deg, #180a2b 0%, #1e113a 40%, #0e1420 100%)' },
+  { id: 'neon', name: 'Космос & Неон', light: 'linear-gradient(45deg, #e0f2fe 0%, #e879f9 50%, #c084fc 100%)', dark: 'linear-gradient(135deg, #0b0f19 0%, #2e1065 50%, #030712 100%)' },
+  { id: 'ocean', name: 'Морской Бриз', light: 'linear-gradient(45deg, #ccfbf1 0%, #bae6fd 50%, #e0f2fe 100%)', dark: 'linear-gradient(135deg, #042f2e 0%, #0c4a6e 50%, #02131d 100%)' },
+  { id: 'mint', name: 'Изумрудный Сад', light: 'linear-gradient(45deg, #dcfce7 0%, #d1fae5 50%, #f0fdf4 100%)', dark: 'linear-gradient(135deg, #052e16 0%, #064e3b 50%, #02160d 100%)' },
+  { id: 'sunset', name: 'Закат & Персик', light: 'linear-gradient(45deg, #ffedd5 0%, #fed7aa 50%, #ffe4e6 100%)', dark: 'linear-gradient(135deg, #431407 0%, #701a75 50%, #1c0a1a 100%)' },
+  { id: 'stealth', name: 'Скрытный Ниндзя', light: 'linear-gradient(45deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%)', dark: 'linear-gradient(135deg, #111215 0%, #1e1b2e 50%, #090a0d 100%)' },
+  { id: 'sakura', name: 'Сакура Bloom', light: 'linear-gradient(45deg, #fce7f3 0%, #fbcfe8 50%, #f5d0fe 100%)', dark: 'linear-gradient(135deg, #500724 0%, #701a75 50%, #1f0410 100%)' },
+  { id: 'mocha', name: 'Уютный Мокко', light: 'linear-gradient(45deg, #fef3c7 0%, #fed7aa 50%, #fae8ff 100%)', dark: 'linear-gradient(135deg, #271a0c 0%, #3e1f2f 50%, #120b08 100%)' }
+];
+
+function applyWallpaper(wpId) {
+  const wp = wallpapers.find(w => w.id === wpId) || wallpapers[0];
+  const isLight = document.body.classList.contains('light-theme');
+  const bg = isLight ? wp.light : wp.dark;
+  
+  const activeChatEl = document.getElementById('activeChatContainer');
+  const chatMessagesEl = document.getElementById('chatMessages');
+  if (activeChatEl) activeChatEl.style.background = bg;
+  if (chatMessagesEl) chatMessagesEl.style.background = bg;
+  
+  localStorage.setItem('gin_chat_wallpaper', wp.id);
+}
+
+function renderWallpaperGrid() {
+  const currentWp = localStorage.getItem('gin_chat_wallpaper') || 'aurora';
+  const isLight = document.body.classList.contains('light-theme');
+  const grid = document.getElementById('wallpaperGrid');
+  if (!grid) return;
+  
+  grid.innerHTML = wallpapers.map(wp => `
+    <div class="wallpaper-card ${wp.id === currentWp ? 'active' : ''}" onclick="selectWallpaper('${wp.id}')" style="background: ${isLight ? wp.light : wp.dark};">
+      <div class="wallpaper-card-inner">
+        <div class="wallpaper-mock-msg out">Привет! 👋</div>
+        <div class="wallpaper-mock-msg in">Отличный фон! ✨</div>
+      </div>
+      <div class="wallpaper-card-name">${wp.name}</div>
+      ${wp.id === currentWp ? '<div class="wallpaper-check"><i class="fa-solid fa-check"></i></div>' : ''}
+    </div>
+  `).join('');
+}
+
+function selectWallpaper(wpId) {
+  applyWallpaper(wpId);
+  renderWallpaperGrid();
+  showToast('Фон чатов успешно установлен!');
+  closeModal('wallpaperModal');
+}
+
+function openWallpaperModal() {
+  closeMainMenu();
+  renderWallpaperGrid();
+  openModal('wallpaperModal');
+}
+
 function initTheme() {
   const savedTheme = localStorage.getItem('gin_chat_theme') || 'dark';
   if (savedTheme === 'light') {
@@ -2763,6 +2821,7 @@ function initTheme() {
     const icon = document.getElementById('themeIcon');
     if (icon) icon.className = 'fa-solid fa-moon';
   }
+  applyWallpaper(localStorage.getItem('gin_chat_wallpaper') || 'aurora');
 }
 
 function toggleTheme() {
@@ -2777,6 +2836,7 @@ function toggleTheme() {
   }
   const icon = document.getElementById('themeIcon');
   if (icon) icon.className = isLight ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  applyWallpaper(localStorage.getItem('gin_chat_wallpaper') || 'aurora');
 }
 
 function openAboutModal() {

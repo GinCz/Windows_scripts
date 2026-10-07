@@ -1710,6 +1710,6 @@ app.get('*', (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 GIN-Chat running on http://0.0.0.0:${PORT}`);
-  sendTelegramNotification('🚀 <b>GIN-Chat сервер v018 запущен:</b>\nhttps://4at.gincz.com');
+  sendTelegramNotification('🚀 <b>GIN-Chat сервер v019 запущен:</b>\nhttps://4at.gincz.com');
   pollTelegramUpdates();
 });
