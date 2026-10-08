@@ -25,7 +25,6 @@ setlocal enabledelayedexpansion
 ::
 ::   Drives:
 ::     A: — AWS_12        18.195.117.12
-::     E: — IONOS_38      82.223.116.38
 ::     I: — ILYA_221      89.110.69.221
 ::     N: — PILIK_33      195.63.138.33
 ::     Q: — SO_38         144.124.233.38
@@ -59,7 +58,6 @@ echo.
 
 echo %YELLOW%[ STATUS ]%RESET% Saving credentials to the system...
 cmdkey /add:18.195.117.12     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:82.223.116.38     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:89.110.69.221     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:195.63.138.33     /user:%USER% /pass:%PASS% >nul 2>&1
 cmdkey /add:144.124.233.38    /user:%USER% /pass:%PASS% >nul 2>&1
@@ -77,8 +75,6 @@ echo.
 ::   5. Save result to %TMPDIR%\DRIVE.txt for the final table
 
 start /b cmd /c "net use A: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 18.195.117.12 >nul 2>&1 && (net use A: \\18.195.117.12\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\A.txt\" || echo ERROR > \"%TMPDIR%\A.txt\") || echo SKIP > \"%TMPDIR%\A.txt\""
-
-start /b cmd /c "net use E: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 82.223.116.38 >nul 2>&1 && (net use E: \\82.223.116.38\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\E.txt\" || echo ERROR > \"%TMPDIR%\E.txt\") || echo SKIP > \"%TMPDIR%\E.txt\""
 
 start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 89.110.69.221 >nul 2>&1 && (net use I: \\89.110.69.221\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\I.txt\" || echo ERROR > \"%TMPDIR%\I.txt\") || echo SKIP > \"%TMPDIR%\I.txt\""
 
@@ -102,7 +98,6 @@ echo %WHITE%  Drive  Server             IP                  Status%RESET%
 echo %WHITE%  ─────────────────────────────────────────────────────────────────%RESET%
 
 call :show_result A AWS_12      18.195.117.12
-call :show_result E IONOS_38    82.223.116.38
 call :show_result I ILYA_221    89.110.69.221
 call :show_result N PILIK_33    195.63.138.33
 call :show_result Q SO_38       144.124.233.38
