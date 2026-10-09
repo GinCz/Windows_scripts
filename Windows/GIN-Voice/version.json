@@ -1,7 +1,7 @@
 {
-  "version": "v005",
-  "version_number": 5,
-  "app_name": "GIN-Voice",
-  "release_date": "2026-10-10",
-  "github_url": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
+  "version": "v006",
+  "name": "GIN-Voice",
+  "updated_at": "2026-10-10",
+  "author": "Vladimir Bulantsev (GinCz)",
+  "changes": "Fixed Russian language dictation, white checkbox text, larger fonts, real-time HUD"
 }
