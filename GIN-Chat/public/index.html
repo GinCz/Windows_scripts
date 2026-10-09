@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>GIN-Chat</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="alternate icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=20261007_v3">
     <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#180a2b">
   <meta name="mobile-web-app-capable" content="yes">
@@ -25,9 +25,19 @@
       <div class="auth-card">
         <div class="auth-logo">
           <div class="logo-ninja-wrap">
-            <img src="/favicon.svg" alt="Ninja" class="ninja-auth-logo">
+            <img src="/favicon.svg" alt="GIN-Chat Logo" class="ninja-auth-logo">
           </div>
           <h2>GIN-Chat</h2>
+        </div>
+
+        <!-- VIEW MODE SELECTOR (MOBILE / DESKTOP) -->
+        <div class="view-mode-selector" id="viewModeSelector">
+          <button type="button" class="view-mode-btn active" id="btnModeMobile" onclick="setViewMode('mobile')">
+            <i class="fa-solid fa-mobile-screen"></i> <span>Мобильная версия</span>
+          </button>
+          <button type="button" class="view-mode-btn" id="btnModeDesktop" onclick="setViewMode('desktop')">
+            <i class="fa-solid fa-desktop"></i> <span>Компьютерная (ПК)</span>
+          </button>
         </div>
 
         <!-- AUTH TABS -->
@@ -86,12 +96,19 @@
           <div id="regAlert" class="alert-box"></div>
         </form>
 
-        <!-- GITHUB DOCS BUTTON & SIGNATURE -->
+        <!-- PWA INSTALL PROMINENT HERO BUTTON & GITHUB DOCS -->
         <div class="auth-footer-docs">
-                    <button id="pwaAuthInstallBtn" class="btn-pwa-install" style="display:none;" onclick="installPWA()">
-            <i class="fa-solid fa-download"></i> Установить GIN-Chat на устройство
+          <button id="pwaAuthInstallBtn" class="btn-pwa-install btn-pwa-install-hero" onclick="installPWA()">
+            <div class="pwa-btn-icon"><i class="fa-solid fa-circle-down"></i></div>
+            <div class="pwa-btn-text">
+              <span class="pwa-btn-title">Установить GIN-Chat на телефон</span>
+              <span class="pwa-btn-sub">PWA приложение • Android, iOS, Windows</span>
+            </div>
           </button>
-          <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v020 ↗</a>
+          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener noreferrer" class="btn-docs-github" title="Подробное описание работы GIN-Chat на GitHub ↗">
+            <i class="fa-brands fa-github"></i> Подробное описание работы чата ↗
+          </a>
+          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v028 ↗</a>
         </div>
       </div>
     </div>
@@ -126,10 +143,11 @@
           <button class="menu-item" id="adminPanelMenuBtn" onclick="openAdminModal()"><i class="fa-solid fa-shield-halved text-warning"></i> Панель администратора <span class="badge badge-warning hidden" id="pendingUsersBadge">0</span></button>
           <button class="menu-item" onclick="openProfileModal()"><i class="fa-solid fa-gear"></i> Настройки профиля</button>
           <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
+          <button class="menu-item" onclick="toggleDisplayMode()"><i class="fa-solid fa-mobile-screen text-primary"></i> <span id="menuModeText">Режим: Мобильный / ПК</span></button>
           <button class="menu-item" onclick="openWallpaperModal()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
-          <button class="menu-item" id="pwaMenuInstallBtn" style="display:none;" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
-          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v020)</button>
-          <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
+          <button class="menu-item" id="pwaMenuInstallBtn" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v028)</button>
+          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
         </div>
@@ -153,10 +171,10 @@
         </div>
 
         <!-- Sidebar Footer Signature -->
-                <button id="pwaInstallBtn" class="btn-sidebar-pwa" style="display:none;" onclick="installPWA()">
+        <button id="pwaInstallBtn" class="btn-sidebar-pwa" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <a href="https://github.com/GinCz/Windows_scripts/tree/main/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v020 ↗</a>
+        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v028 ↗</a>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -183,7 +201,7 @@
           <!-- Chat Top Header -->
           <header class="chat-header">
             <button class="icon-btn mobile-back-btn" onclick="backToChatsList()"><i class="fa-solid fa-arrow-left"></i></button>
-            <div class="chat-header-info" onclick="openChatDetailsModal()">
+            <div class="chat-header-info" onclick="openChatDetailsModal()" title="Информация о чате и собеседнике">
               <div class="avatar avatar-sm" id="chatHeaderAvatar">ГР</div>
               <div class="chat-titles">
                 <div class="chat-title-text" id="chatHeaderTitle">Название чата</div>
@@ -191,12 +209,8 @@
               </div>
             </div>
             <div class="chat-header-actions">
-              <button class="icon-btn" id="headerAudioCallBtn" onclick="startDirectCall('audio')" title="Голосовой звонок (P2P)"><i class="fa-solid fa-phone"></i></button>
-              <button class="icon-btn" id="headerVideoCallBtn" onclick="startDirectCall('video')" title="Видеозвонок (P2P)"><i class="fa-solid fa-video"></i></button>
-              <button class="icon-btn" onclick="openWallpaperModal()" title="Фон чата (Обои)"><i class="fa-solid fa-image"></i></button>
-              <button class="btn btn-sm btn-bronze-invite hidden" id="chatHeaderGroupInviteBtn" onclick="copyCurrentChatLink()" title="Скопировать ссылку-приглашение в группу"><i class="fa-solid fa-user-plus"></i> Ссылка в группу</button>
-              <button class="icon-btn" onclick="copyCurrentChatLink()" title="Скопировать ссылку на чат"><i class="fa-solid fa-link"></i></button>
-              <button class="icon-btn" onclick="openChatDetailsModal()" title="Информация о группе / собеседнике"><i class="fa-solid fa-circle-info"></i></button>
+              <button class="icon-btn" id="headerAudioCallBtn" onclick="startDirectCall('audio')" title="Голосовой звонок (P2P E2EE)"><i class="fa-solid fa-phone"></i></button>
+              <button class="icon-btn" id="headerVideoCallBtn" onclick="startDirectCall('video')" title="Видеозвонок (P2P E2EE)"><i class="fa-solid fa-video"></i></button>
             </div>
           </header>
 
@@ -631,53 +645,128 @@
       </div>
     </div>
 
-    <!-- MODAL: CHAT DETAILS & FULL GROUP MANAGEMENT -->
+    <!-- MODAL: CHAT DETAILS & PROFILE / GROUP MANAGEMENT -->
     <div class="modal-overlay hidden" id="chatDetailsModal">
       <div class="modal-box modal-lg">
         <div class="modal-header">
-          <h3 id="detailsModalTitle">Настройки и участники группы</h3>
+          <h3 id="detailsModalTitle"><i class="fa-solid fa-circle-info text-primary"></i> Информация</h3>
           <button class="icon-btn" onclick="closeModal('chatDetailsModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body">
-          <div class="group-details-header">
-            <div class="avatar-edit-wrapper">
-              <div class="avatar avatar-lg" id="detailsAvatar">ГР</div>
-              <button class="avatar-edit-btn" id="groupAvatarEditBtn" onclick="chooseAvatarFor('group')" title="Сменить аватар группы">
-                <i class="fa-solid fa-camera"></i>
-              </button>
-            </div>
-            <div class="group-details-fields" style="flex: 1; width: 100%;">
-              <div id="groupEditControls" class="group-edit-block">
-                <div class="form-group" style="margin-bottom: 8px;">
-                  <label style="font-size: 11px; color: var(--text-muted);">Название группы:</label>
-                  <input type="text" id="editGroupNameInput" placeholder="Название группы" style="font-weight: 600; font-size: 15px;">
-                </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                  <label style="font-size: 11px; color: var(--text-muted);">Описание и ссылки:</label>
-                  <textarea id="editGroupDescInput" rows="2" placeholder="Описание группы, ссылки https://..."></textarea>
-                </div>
-                <div id="groupDescView" class="group-desc-rendered" style="margin-bottom: 10px; font-size: 13px; line-height: 1.4;"></div>
-                <button class="btn btn-sm btn-primary" id="saveGroupInfoBtn" onclick="saveGroupInfo()"><i class="fa-solid fa-floppy-disk"></i> Сохранить настройки</button>
+          <!-- 1. DIRECT 1-ON-1 CHAT CONTACT PROFILE -->
+          <div id="directDetailsBlock" class="direct-details-block hidden">
+            <div class="direct-profile-hero">
+              <div class="avatar avatar-xl" id="directDetailsAvatar">ЕЛ</div>
+              <h3 class="direct-profile-name" id="directDetailsName">Собеседник</h3>
+              <div class="direct-profile-handle" id="directDetailsHandle">@username</div>
+              <div class="direct-profile-status" id="directDetailsStatus">
+                <span class="status-dot online"></span> в сети
               </div>
             </div>
-          </div>
 
-          <!-- Single-Row Compact Group Invite Link Box -->
-          <div class="invite-link-box" id="inviteLinkBox">
-            <label><i class="fa-solid fa-link"></i> Ссылка-приглашение в группу:</label>
-            <div class="invite-link-row-compact">
-              <input type="text" id="inviteLinkInput" class="invite-link-input" readonly>
-              <button class="btn btn-sm btn-primary" onclick="copyInviteLink()"><i class="fa-solid fa-copy"></i> Копировать</button>
-              <button class="btn btn-sm btn-secondary" id="regenInviteBtn" onclick="regenerateInviteLink()"><i class="fa-solid fa-arrows-rotate"></i> Сгенерировать новую</button>
+            <!-- Action Buttons Grid (Трубочка, Камера, Сменить фон, Ссылка) -->
+            <div class="direct-actions-grid">
+              <button type="button" class="direct-action-card action-call" onclick="startDirectCallFromDetails('audio')" title="Позвонить (Трубочка)">
+                <div class="action-icon"><i class="fa-solid fa-phone"></i></div>
+                <div class="action-text">
+                  <span class="action-title">Позвонить</span>
+                  <span class="action-sub">Аудиосвязь P2P</span>
+                </div>
+              </button>
+              <button type="button" class="direct-action-card action-video" onclick="startDirectCallFromDetails('video')" title="Видеозвонок (Камера)">
+                <div class="action-icon"><i class="fa-solid fa-video"></i></div>
+                <div class="action-text">
+                  <span class="action-title">Камера</span>
+                  <span class="action-sub">Видеозвонок HD</span>
+                </div>
+              </button>
+              <button type="button" class="direct-action-card action-wallpaper" onclick="openWallpaperFromDetails()" title="Сменить фон">
+                <div class="action-icon"><i class="fa-solid fa-image"></i></div>
+                <div class="action-text">
+                  <span class="action-title">Сменить фон</span>
+                  <span class="action-sub">Обои диалога</span>
+                </div>
+              </button>
+              <button type="button" class="direct-action-card action-copy" onclick="copyDirectContactLink()" title="Скопировать ссылку на диалог">
+                <div class="action-icon"><i class="fa-solid fa-link"></i></div>
+                <div class="action-text">
+                  <span class="action-title">Ссылка на чат</span>
+                  <span class="action-sub">Скопировать</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Contact Bio / Status Information -->
+            <div class="direct-profile-info-list" id="directProfileInfoList"></div>
+
+            <!-- Common Groups with this Contact -->
+            <div class="direct-common-groups-section" id="directCommonGroupsSection" style="margin-top: 14px;">
+              <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+                <span><i class="fa-solid fa-users text-primary"></i> Общие группы (<span id="directCommonGroupsCount">0</span>)</span>
+              </div>
+              <div class="direct-common-groups-list" id="directCommonGroupsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
             </div>
           </div>
 
-          <div class="members-section">
-            <div class="members-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <h4 style="margin: 0;"><i class="fa-solid fa-users"></i> Участники (<span id="membersCount">0</span>)</h4>
-              <button class="btn btn-sm btn-success" id="addGroupMembersBtn" onclick="openAddGroupMembersModal()"><i class="fa-solid fa-user-plus"></i> Добавить людей в группу</button>
+          <!-- 2. GROUP MANAGEMENT BLOCK -->
+          <div id="groupDetailsBlock" class="group-details-block hidden">
+            <div class="group-details-header">
+              <div class="avatar-edit-wrapper">
+                <div class="avatar avatar-lg" id="detailsAvatar">ГР</div>
+                <button class="avatar-edit-btn" id="groupAvatarEditBtn" onclick="chooseAvatarFor('group')" title="Сменить аватар группы">
+                  <i class="fa-solid fa-camera"></i>
+                </button>
+              </div>
+              <div class="group-details-fields" style="flex: 1; width: 100%;">
+                <div id="groupEditControls" class="group-edit-block">
+                  <div class="form-group" style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Название группы:</label>
+                    <input type="text" id="editGroupNameInput" placeholder="Название группы" style="font-weight: 600; font-size: 15px;">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 8px;">
+                    <label style="font-size: 11px; color: var(--text-muted);">Описание и ссылки:</label>
+                    <textarea id="editGroupDescInput" rows="2" placeholder="Описание группы, ссылки https://..."></textarea>
+                  </div>
+                  <div id="groupDescView" class="group-desc-rendered" style="margin-bottom: 10px; font-size: 13px; line-height: 1.4;"></div>
+                  <button class="btn btn-sm btn-primary" id="saveGroupInfoBtn" onclick="saveGroupInfo()"><i class="fa-solid fa-floppy-disk"></i> Сохранить настройки</button>
+                </div>
+              </div>
             </div>
-            <div class="members-list" id="chatMembersList"></div>
+
+            <!-- Group Quick Actions -->
+            <div class="group-quick-actions" style="display: flex; gap: 8px; margin: 14px 0 10px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-sm btn-secondary" onclick="openWallpaperFromDetails()" style="flex: 1; min-width: 120px;">
+                <i class="fa-solid fa-image"></i> Фон группы
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary" onclick="copyCurrentChatLink()" style="flex: 1; min-width: 120px;">
+                <i class="fa-solid fa-link"></i> Ссылка на группу
+              </button>
+            </div>
+
+            <!-- Single-Row Compact Group Invite Link Box -->
+            <div class="invite-link-box" id="inviteLinkBox">
+              <label><i class="fa-solid fa-link"></i> Ссылка-приглашение в группу:</label>
+              <div class="invite-link-row-compact">
+                <input type="text" id="inviteLinkInput" class="invite-link-input" readonly>
+                <button class="btn btn-sm btn-primary" onclick="copyInviteLink()"><i class="fa-solid fa-copy"></i> Копировать</button>
+                <button class="btn btn-sm btn-secondary" id="regenInviteBtn" onclick="regenerateInviteLink()"><i class="fa-solid fa-arrows-rotate"></i> Новая</button>
+              </div>
+            </div>
+
+            <div class="members-section">
+              <div class="members-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+                <h4 style="margin: 0;"><i class="fa-solid fa-users"></i> Участники (<span id="membersCount">0</span>)</h4>
+                <button class="btn btn-sm btn-success" id="addGroupMembersBtn" onclick="openAddGroupMembersModal()"><i class="fa-solid fa-user-plus"></i> Добавить людей</button>
+              </div>
+              <div class="members-list" id="chatMembersList"></div>
+            </div>
+
+            <!-- Leave Group Button -->
+            <div id="leaveGroupSection" style="margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
+              <button class="btn btn-sm btn-danger" id="leaveGroupBtn" onclick="leaveCurrentGroup()" style="width: 100%; font-weight: 600;">
+                <i class="fa-solid fa-right-from-bracket"></i> Покинуть эту группу (выйти)
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -751,6 +840,21 @@
             <div style="display: flex; gap: 10px; margin-bottom: 16px;">
               <button type="button" class="btn btn-outline" style="flex: 1;" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Сменить тему</button>
               <button type="button" class="btn btn-outline" style="flex: 1;" onclick="openWallpaperModalFromProfile()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
+            </div>
+            <hr class="form-divider">
+            <h5><i class="fa-solid fa-bell text-warning"></i> Системные Push-оповещения</h5>
+            <div class="push-status-card" style="background: rgba(255,255,255,0.04); padding: 12px 14px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-size: 13px; font-weight: 600;"><i class="fa-solid fa-mobile-screen"></i> Статус на устройстве:</span>
+                <span id="pushStatusBadge" class="badge badge-secondary" style="font-size: 11px;">Проверка...</span>
+              </div>
+              <p class="text-muted" style="font-size: 11.5px; margin: 0 0 10px 0; line-height: 1.4;">
+                Мгновенная доставка сообщений и вызовов на iPhone (Safari PWA), Android и ПК, даже при закрытом окне или спящем режиме.
+              </p>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" id="pushEnableBtn" class="btn btn-primary btn-xs" style="flex: 1;" onclick="togglePushSubscription()"><i class="fa-solid fa-bell"></i> Включить Push</button>
+                <button type="button" id="pushTestBtn" class="btn btn-outline btn-xs" onclick="sendTestPushNotification()"><i class="fa-solid fa-paper-plane"></i> Тест</button>
+              </div>
             </div>
             <hr class="form-divider">
             <h5>Смена своего пароля (необязательно)</h5>
@@ -937,12 +1041,12 @@
         </div>
         <div class="modal-body text-center" style="padding: 24px 20px;">
           <div class="about-logo-wrap mb-3">
-            <img src="/favicon.svg" alt="Ninja Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.5));">
+            <img src="/favicon.svg" alt="GIN-Chat Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5));">
           </div>
           <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
-          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v020 (0.2.0)</div>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v029 (0.2.9)</div>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
-            Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong> и поддержкой PWA.
+            Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong>, WebRTC и поддержкой Web Push.
           </p>
           <div class="about-info-table" style="text-align: left; background: rgba(0,0,0,0.15); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px;">
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
@@ -951,7 +1055,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <span style="color: var(--text-muted);">Сборка:</span>
-              <span>Release v020 • PWA Standalone</span>
+              <span>Release v029 • PWA & Web Push (iOS/Android/Desktop)</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0;">
               <span style="color: var(--text-muted);">Шифрование:</span>
@@ -961,6 +1065,46 @@
           <button class="btn btn-primary btn-block" onclick="closeModal('aboutAppModal')">
             <i class="fa-solid fa-check"></i> Понятно
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: PWA INSTALL GUIDE -->
+    <div id="pwaGuideModal" class="modal-overlay hidden" onclick="if(event.target===this) closePwaGuideModal()">
+      <div class="modal-box pwa-guide-card">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-mobile-screen-button text-primary"></i> Установка GIN-Chat</h3>
+          <button class="icon-btn" onclick="closePwaGuideModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+          <p class="pwa-intro">Установите <b>GIN-Chat</b> как отдельное быстрое приложение прямо из вашего браузера:</p>
+          
+          <div class="pwa-guide-step">
+            <div class="step-icon"><i class="fa-brands fa-android text-success"></i></div>
+            <div class="step-content">
+              <strong>На Android (Chrome / Яндекс / Samsung):</strong>
+              <p>Нажмите значок меню <b>⋮</b> (три точки вверху справа) и выберите <b>«Установить приложение»</b> или <b>«Добавить на гл. экран»</b>.</p>
+            </div>
+          </div>
+
+          <div class="pwa-guide-step">
+            <div class="step-icon"><i class="fa-brands fa-apple text-primary"></i></div>
+            <div class="step-content">
+              <strong>На iPhone / iPad (Safari):</strong>
+              <p>Нажмите кнопку <b>«Поделиться»</b> (<i class="fa-solid fa-arrow-up-from-bracket"></i>) внизу и выберите <b>«На экран «Домой»</b>.</p>
+            </div>
+          </div>
+
+          <div class="pwa-guide-step">
+            <div class="step-icon"><i class="fa-brands fa-windows text-warning"></i></div>
+            <div class="step-content">
+              <strong>На компьютере (Chrome / Edge / Yandex):</strong>
+              <p>Нажмите иконку установки <b>⊞</b> справа в строке адреса браузера.</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 14px 20px;">
+          <button class="btn btn-primary btn-block" onclick="closePwaGuideModal()">Понятно, спасибо!</button>
         </div>
       </div>
     </div>
@@ -1015,7 +1159,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="/js/app.js?v=20261007_v3"></script>
   <!-- PWA Service Worker & Install Handler -->
   <script>
     if ('serviceWorker' in navigator) {
@@ -1027,43 +1171,123 @@
     }
 
     let deferredPrompt = null;
+
+    function isPwaStandalone() {
+      return window.matchMedia('(display-mode: standalone)').matches ||
+             window.matchMedia('(display-mode: fullscreen)').matches ||
+             window.navigator.standalone === true ||
+             document.referrer.includes('android-app://');
+    }
+
+    function checkPwaInstallUI() {
+      if (isPwaStandalone()) {
+        const ids = ['pwaInstallBtn', 'pwaAuthInstallBtn', 'pwaMenuInstallBtn'];
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.setProperty('display', 'none', 'important');
+        });
+      }
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
+      if (isPwaStandalone()) {
+        e.preventDefault();
+        return;
+      }
       e.preventDefault();
       deferredPrompt = e;
       const pwaBtn = document.getElementById('pwaInstallBtn');
       if (pwaBtn) pwaBtn.style.display = 'flex';
       const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
-      if (pwaAuthBtn) pwaAuthBtn.style.display = 'inline-flex';
+      if (pwaAuthBtn) pwaAuthBtn.style.display = 'flex';
       const pwaMenuBtn = document.getElementById('pwaMenuInstallBtn');
       if (pwaMenuBtn) pwaMenuBtn.style.display = 'flex';
     });
 
     function installPWA() {
+      if (isPwaStandalone()) {
+        showToast('Приложение уже установлено на вашем устройстве');
+        return;
+      }
       if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
             console.log('PWA accepted');
+            checkPwaInstallUI();
           }
           deferredPrompt = null;
-          const pwaBtn = document.getElementById('pwaInstallBtn');
-          if (pwaBtn) pwaBtn.style.display = 'none';
-          const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
-          if (pwaAuthBtn) pwaAuthBtn.style.display = 'none';
-          const pwaMenuBtn = document.getElementById('pwaMenuInstallBtn');
-          if (pwaMenuBtn) pwaMenuBtn.style.display = 'none';
         });
+      } else {
+        openPwaGuideModal();
       }
     }
 
+    function openPwaGuideModal() {
+      const modal = document.getElementById('pwaGuideModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closePwaGuideModal() {
+      const modal = document.getElementById('pwaGuideModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setViewMode(mode, save = true) {
+      const metaViewport = document.querySelector('meta[name="viewport"]');
+      const btnMobile = document.getElementById('btnModeMobile');
+      const btnDesktop = document.getElementById('btnModeDesktop');
+      const menuModeText = document.getElementById('menuModeText');
+
+      if (mode === 'desktop') {
+        document.documentElement.classList.add('desktop-mode-forced');
+        document.documentElement.classList.remove('mobile-mode');
+        document.body.classList.add('desktop-mode-forced');
+        document.body.classList.remove('mobile-mode');
+        if (metaViewport) {
+          metaViewport.setAttribute('content', 'width=1100, initial-scale=0.35, user-scalable=yes');
+        }
+        if (btnMobile) btnMobile.classList.remove('active');
+        if (btnDesktop) btnDesktop.classList.add('active');
+        if (menuModeText) menuModeText.textContent = 'Режим: ПК версия (Активен)';
+        if (save) localStorage.setItem('gin_view_mode', 'desktop');
+      } else {
+        document.documentElement.classList.add('mobile-mode');
+        document.documentElement.classList.remove('desktop-mode-forced');
+        document.body.classList.add('mobile-mode');
+        document.body.classList.remove('desktop-mode-forced');
+        if (metaViewport) {
+          metaViewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover');
+        }
+        if (btnMobile) btnMobile.classList.add('active');
+        if (btnDesktop) btnDesktop.classList.remove('active');
+        if (menuModeText) menuModeText.textContent = 'Режим: Мобильный (Активен)';
+        if (save) localStorage.setItem('gin_view_mode', 'mobile');
+      }
+    }
+
+    function toggleDisplayMode() {
+      const isCurrentlyMobile = document.body.classList.contains('mobile-mode') || !document.body.classList.contains('desktop-mode-forced');
+      setViewMode(isCurrentlyMobile ? 'desktop' : 'mobile', true);
+    }
+
+    function initViewMode() {
+      checkPwaInstallUI();
+      const isMobileDevice = window.innerWidth <= 840 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const saved = localStorage.getItem('gin_view_mode');
+      if (saved === 'desktop' && !isMobileDevice) {
+        setViewMode('desktop', false);
+      } else {
+        setViewMode('mobile', false);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', initViewMode);
+    initViewMode();
+
     window.addEventListener('appinstalled', () => {
       console.log('GIN-Chat installed!');
-      const pwaBtn = document.getElementById('pwaInstallBtn');
-      if (pwaBtn) pwaBtn.style.display = 'none';
-      const pwaAuthBtn = document.getElementById('pwaAuthInstallBtn');
-      if (pwaAuthBtn) pwaAuthBtn.style.display = 'none';
-      const pwaMenuBtn = document.getElementById('pwaMenuInstallBtn');
-      if (pwaMenuBtn) pwaMenuBtn.style.display = 'none';
+      checkPwaInstallUI();
     });
   </script>
 </body>
