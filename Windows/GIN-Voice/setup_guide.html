@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIN-Voice — Инструкция по установке и настройке</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.2);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); line-height: 1.6; padding: 40px 20px; }
+    .container { max-width: 760px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 40px; }
+    .badge { display: inline-block; background: var(--accent-glow); color: var(--accent); padding: 6px 14px; border-radius: 9999px; font-size: 13px; font-weight: 600; margin-bottom: 12px; border: 1px solid var(--accent); }
+    h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+    .subtitle { color: var(--text-muted); font-size: 16px; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .step-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .step-num { background: var(--accent); color: #000; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; }
+    .step-title { font-size: 20px; font-weight: 700; color: #fff; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; background: #0284c7; color: #fff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 14px; transition: background 0.2s; }
+    .btn:hover { background: #0369a1; }
+    .btn-large { font-size: 16px; padding: 14px 28px; }
+    .code-box { background: #0b1120; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-family: monospace; font-size: 14px; color: #38bdf8; margin: 12px 0; }
+    .hotkey-badge { background: #334155; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-family: monospace; border: 1px solid #475569; }
+    ul { padding-left: 20px; color: var(--text-muted); }
+    li { margin-bottom: 8px; }
+    li strong { color: var(--text); }
+    .footer { text-align: center; color: var(--text-muted); font-size: 13px; margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="badge">VladiMIR+AI Release</span>
+      <h1>🎙️ GIN-Voice [v001]</h1>
+      <p class="subtitle">Быстрый голосовой ввод нейросетью Whisper Large v3 для Windows 10/11</p>
+    </div>
+
+    <!-- Шаг 1 -->
+    <div class="card">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-title">Получите бесплатный ключ Groq API</div>
+      </div>
+      <p style="color: var(--text-muted);">
+        Для мгновенного распознавания речи за <strong>0.3 секунды</strong> программа использует движок Groq Whisper. Он полностью <strong>бесплатен</strong> (дает 7 000 секунд аудио в день бесплатно).
+      </p>
+      <a href="https://console.groq.com/keys" target="_blank" class="btn btn-large">
+        🌐 Открыть страницу Groq API Keys ↗
+      </a>
+      <ul style="margin-top: 16px;">
+        <li>Войдите через аккаунт Google или GitHub;</li>
+        <li>Нажмите синюю кнопку <strong>«Create API Key»</strong>;</li>
+        <li>Скопируйте ключ (он начинается на <code>gsk_...</code>).</li>
+      </ul>
+    </div>
+
+    <!-- Шаг 2 -->
+    <div class="card">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-title">Вставьте ключ в окно программы</div>
+      </div>
+      <p style="color: var(--text-muted);">
+        Вставьте скопированный ключ в появившееся окно настройки <strong>GIN-Voice</strong> и нажмите <strong>«Save & Activate»</strong>.
+      </p>
+      <p style="color: var(--text-muted); margin-top: 8px;">
+        Если окно уже закрыто: нажмите правой кнопкой мыши по значку микрофона у часов $\rightarrow$ <strong>Open Settings (config.json)</strong> и вставьте ключ в строку:
+      </p>
+      <div class="code-box">"groq_api_key": "gsk_ваш_скопированный_ключ"</div>
+    </div>
+
+    <!-- Шаг 3 -->
+    <div class="card">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-title">Как пользоваться (всего 1 клавиша)</div>
+      </div>
+      <ul>
+        <li>Поставьте курсор в любое место (браузер, блокнот, чат, Antigravity, Telegram).</li>
+        <li>Нажмите клавишу <span class="hotkey-badge">F4</span> — прозвучит короткий высокий сигнал (запись началась).</li>
+        <li>Продиктуйте нужный текст.</li>
+        <li>Нажмите <span class="hotkey-badge">F4</span> повторно — прозвучит сигнал, и текст мгновенно напечатается у курсора!</li>
+      </ul>
+    </div>
+
+    <!-- Настройки языков -->
+    <div class="card">
+      <div class="step-header">
+        <div class="step-num">★</div>
+        <div class="step-title">Языки и персональный словарь</div>
+      </div>
+      <p style="color: var(--text-muted); margin-bottom: 12px;">
+        <strong>Управление в трее у часов (правый клик по микрофону):</strong>
+      </p>
+      <ul>
+        <li><strong>Выбор языков:</strong> По умолчанию включен <strong>English</strong>. Вы можете сразу отметить <strong>Czech</strong> и <strong>Russian</strong> для одновременной смешанной речи.</li>
+        <li><strong>Проекты:</strong> Программа автоматически переводит произнесенные фразы в канонические названия: <code>GIN-TV</code>, <code>GIN-Cinema</code>, <code>GIN-NetScan</code>, <code>GIN-VPN</code>, <code>GIN-Chat</code>, <code>GIN-Voice</code>, <code>Secret_Privat</code>, <code>ORACLE_157</code>.</li>
+        <li><strong>Автозагрузка:</strong> Поставьте галочку <strong>Autostart with Windows</strong>, чтобы программа работала незаметно в фоне.</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      GIN-Voice [v001] by VladiMIR+AI &bull; <a href="https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice" style="color: var(--accent); text-decoration: none;">GitHub Репозиторий ↗</a>
+    </div>
+  </div>
+</body>
+</html>
