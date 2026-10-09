@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#151b28"/>
+      <stop offset="100%" stop-color="#080a0f"/>
+    </linearGradient>
+    <linearGradient id="blueGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="100%" stop-color="#4facfe"/>
+    </linearGradient>
+    <linearGradient id="innerPlate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Quantum Shield Body (Stealth Chat Polygon) -->
+  <polygon points="256,48 440,120 440,304 256,448 72,304 72,120" 
+           fill="url(#shieldGrad)" stroke="#FFFFFF" stroke-width="12" stroke-linejoin="round"/>
+
+  <!-- Inner Cyber Armor Plating -->
+  <polygon points="256,88 400,144 400,284 256,396 112,284 112,144" 
+           fill="url(#innerPlate)" stroke="url(#blueGlow)" stroke-width="8" stroke-linejoin="round"/>
+
+  <!-- Stealth Facet Accent Lines -->
+  <line x1="256" y1="88" x2="256" y2="190" stroke="url(#blueGlow)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="112" y1="144" x2="200" y2="210" stroke="url(#blueGlow)" stroke-width="4" stroke-linecap="round"/>
+  <line x1="400" y1="144" x2="312" y2="210" stroke="url(#blueGlow)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- Speech Bubble Dynamic Tail Accents -->
+  <path d="M190,390 L130,460 L200,436" fill="none" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <polygon points="175,395 142,442 184,428" fill="url(#blueGlow)"/>
+
+  <!-- Quantum Core Keyhole (Encryption Symbol) -->
+  <circle cx="256" cy="226" r="38" fill="#FFFFFF" filter="url(#glow)"/>
+  <circle cx="256" cy="226" r="38" fill="#FFFFFF"/>
+  <polygon points="238,236 274,236 284,310 228,310" fill="#FFFFFF" filter="url(#glow)"/>
+  <polygon points="238,236 274,236 284,310 228,310" fill="#FFFFFF"/>
+
+  <!-- Inner Core Center Cyan Dot -->
+  <circle cx="256" cy="226" r="14" fill="#00f2fe"/>
+</svg>

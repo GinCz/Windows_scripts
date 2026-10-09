@@ -8,13 +8,13 @@ const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/favicon.svg",
-  "/favicon.ico",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-maskable-192.png",
-  "/icons/icon-maskable-512.png",
-  "/icons/apple-touch-icon.png"
+  "/favicon-v30.svg",
+  "/favicon-v30.ico",
+  "/icons/icon-192-v30.png",
+  "/icons/icon-512-v30.png",
+  "/icons/icon-maskable-192-v30.png",
+  "/icons/icon-maskable-512-v30.png",
+  "/icons/apple-touch-icon-v30.png"
 ];
 
 // 1. Install & Cache
@@ -96,8 +96,8 @@ self.addEventListener("push", (event) => {
 
   const options = {
     body: data.body || "Новое сообщение в чате",
-    icon: data.icon || "/icons/icon-192.png",
-    badge: data.badge || "/icons/icon-192.png",
+    icon: data.icon || "/icons/icon-192-v30.png",
+    badge: data.badge || "/icons/icon-192-v30.png",
     tag: data.tag || (isCall ? "call_incoming" : "gin-chat-msg"),
     renotify: data.renotify !== undefined ? data.renotify : true,
     requireInteraction: isCall, // keep on screen for incoming call
