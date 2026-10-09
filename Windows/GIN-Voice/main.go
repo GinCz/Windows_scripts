@@ -1,6 +1,6 @@
 // Execution Context : Go 1.19+ (Windows AMD64)
 // Target Server     : Local Windows Desktop PC
-// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI and Win32 GUI [v003]
+// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI and Win32 GUI [v004]
 
 package main
 
@@ -26,8 +26,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v003"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v003]"
+	AppVersion    = "v004"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v004]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 
@@ -42,21 +42,13 @@ const (
 	WM_SETICON       = 0x0080
 	WM_RBUTTONUP     = 0x0205
 	WM_LBUTTONDBLCLK = 0x0203
-	WM_KEYDOWN       = 0x0100
-	WM_SYSKEYDOWN    = 0x0104
 
-	WH_KEYBOARD_LL = 13
-
-	NIM_ADD        = 0x00000000
-	NIM_MODIFY     = 0x00000001
-	NIM_DELETE     = 0x00000002
-	NIF_MESSAGE    = 0x00000001
-	NIF_ICON       = 0x00000002
-	NIF_TIP        = 0x00000004
-	NIF_INFO       = 0x00000010
-	NIIF_INFO      = 0x00000001
-	NIIF_WARNING   = 0x00000002
-	NIIF_ERROR     = 0x00000003
+	NIM_ADD     = 0x00000000
+	NIM_MODIFY  = 0x00000001
+	NIM_DELETE  = 0x00000002
+	NIF_MESSAGE = 0x00000001
+	NIF_ICON    = 0x00000002
+	NIF_TIP     = 0x00000004
 
 	MF_STRING    = 0x00000000
 	MF_SEPARATOR = 0x00000800
@@ -71,6 +63,8 @@ const (
 	VK_F9           = 0x78
 	VK_F10          = 0x79
 	VK_F12          = 0x7B
+	VK_SCROLL       = 0x91
+	VK_PAUSE        = 0x13
 	VK_CONTROL      = 0x11
 	KEYEVENTF_KEYUP = 0x0002
 
@@ -103,10 +97,11 @@ const (
 	IDM_OPEN_DICT     = 1003
 	IDM_LINK_FOLDER   = 1004
 	IDM_OPEN_CONFIG   = 1005
-	IDM_AUTOSTART     = 1006
-	IDM_OPEN_HELP     = 1007
-	IDM_UNINSTALL     = 1008
-	IDM_EXIT          = 1009
+	IDM_OPEN_DIR      = 1006
+	IDM_AUTOSTART     = 1007
+	IDM_OPEN_HELP     = 1008
+	IDM_UNINSTALL     = 1009
+	IDM_EXIT          = 1010
 
 	IDM_LANG_BASE = 2000
 
@@ -123,6 +118,8 @@ const (
 	IDC_BTN_DICT       = 3010
 	IDC_BTN_TEST       = 3011
 	IDC_BTN_UNINST     = 3012
+	IDC_BTN_COPY_KEY   = 3013
+	IDC_BTN_OPEN_DIR   = 3014
 )
 
 //go:embed app.ico
@@ -155,9 +152,6 @@ var (
 	procGetMessageW         = user32.NewProc("GetMessageW")
 	procTranslateMessage    = user32.NewProc("TranslateMessage")
 	procDispatchMessageW    = user32.NewProc("DispatchMessageW")
-	procSetWindowsHookExW   = user32.NewProc("SetWindowsHookExW")
-	procUnhookWindowsHookEx = user32.NewProc("UnhookWindowsHookEx")
-	procCallNextHookEx      = user32.NewProc("CallNextHookEx")
 	procCreatePopupMenu     = user32.NewProc("CreatePopupMenu")
 	procAppendMenuW         = user32.NewProc("AppendMenuW")
 	procTrackPopupMenu      = user32.NewProc("TrackPopupMenu")
@@ -179,6 +173,7 @@ var (
 	procGetWindowTextW      = user32.NewProc("GetWindowTextW")
 	procSetWindowTextW      = user32.NewProc("SetWindowTextW")
 	procGetSystemMetrics    = user32.NewProc("GetSystemMetrics")
+	procGetAsyncKeyState      = user32.NewProc("GetAsyncKeyState")
 
 	procShellNotifyIconW = shell32.NewProc("Shell_NotifyIconW")
 	procShellExecuteW    = shell32.NewProc("ShellExecuteW")
@@ -198,14 +193,6 @@ var (
 type POINT struct {
 	X int32
 	Y int32
-}
-
-type KBDLLHOOKSTRUCT struct {
-	VkCode      uint32
-	ScanCode    uint32
-	Flags       uint32
-	Time        uint32
-	DwExtraInfo uintptr
 }
 
 type WNDCLASSEXW struct {
@@ -231,12 +218,6 @@ type NOTIFYICONDATAW struct {
 	UCallbackMessage uint32
 	HIcon            uintptr
 	SzTip            [128]uint16
-	DwState          uint32
-	DwStateMask      uint32
-	SzInfo           [256]uint16
-	UTimeoutOrVersion uint32
-	SzInfoTitle      [64]uint16
-	DwInfoFlags      uint32
 }
 
 type MSG struct {
@@ -272,6 +253,7 @@ type Config struct {
 var (
 	appDir          string
 	configFile      string
+	keyFile         string
 	dictFile        string
 	helpFile        string
 	logFile         string
@@ -290,7 +272,6 @@ var (
 	isRecording     bool
 	recordMutex     sync.Mutex
 	trayCreated     bool
-	hKeyboardHook   uintptr
 	hIconNormal     uintptr
 	hIconRec        uintptr
 )
@@ -391,29 +372,6 @@ func updateTrayState(recording bool, tipText string) {
 	procShellNotifyIconW.Call(NIM_MODIFY, uintptr(unsafe.Pointer(&nid)))
 }
 
-func showBalloonNotification(title, message string, flags uint32) {
-	if !trayCreated {
-		return
-	}
-	var sTitle [64]uint16
-	tChars := []rune(title)
-	for i := 0; i < len(tChars) && i < 63; i++ {
-		sTitle[i] = uint16(tChars[i])
-	}
-	nid.SzInfoTitle = sTitle
-
-	var sInfo [256]uint16
-	mChars := []rune(message)
-	for i := 0; i < len(mChars) && i < 255; i++ {
-		sInfo[i] = uint16(mChars[i])
-	}
-	nid.SzInfo = sInfo
-	nid.DwInfoFlags = flags
-	nid.UFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_INFO
-
-	procShellNotifyIconW.Call(NIM_MODIFY, uintptr(unsafe.Pointer(&nid)))
-}
-
 func initTrayIcon() {
 	if trayCreated {
 		return
@@ -444,8 +402,8 @@ func loadConfig() {
 	config = Config{
 		Version:   AppVersion,
 		FirstRun:  true,
-		Hotkey:    "F4",
-		HotkeyVK:  VK_F4,
+		Hotkey:    "F8",
+		HotkeyVK:  VK_F8,
 		HotkeyMod: 0,
 		ActiveLanguages: []string{"en"},
 		AllLanguages: []LanguageItem{
@@ -466,15 +424,26 @@ func loadConfig() {
 	data, err := os.ReadFile(configFile)
 	if err == nil {
 		_ = json.Unmarshal(data, &config)
-	} else {
-		saveConfig()
 	}
+
+	// Also check plain-text api_key.txt if empty
+	if config.GroqAPIKey == "" {
+		if kData, kErr := os.ReadFile(keyFile); kErr == nil {
+			config.GroqAPIKey = strings.TrimSpace(string(kData))
+		}
+	}
+
+	saveConfig()
 }
 
 func saveConfig() {
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err == nil {
 		_ = os.WriteFile(configFile, data, 0644)
+	}
+	// Also mirror plain-text key to api_key.txt for easy manual editing/recovery
+	if config.GroqAPIKey != "" {
+		_ = os.WriteFile(keyFile, []byte(config.GroqAPIKey), 0644)
 	}
 }
 
@@ -547,7 +516,6 @@ func startRecording() {
 	if err != nil {
 		writeLog("Failed to open waveaudio: " + err.Error())
 		playBeep(250, 150)
-		showBalloonNotification("GIN-Voice: Ошибка микрофона", "Не удалось открыть устройство звукозаписи Windows MCI.", NIIF_ERROR)
 		return
 	}
 
@@ -560,7 +528,6 @@ func startRecording() {
 	if err != nil {
 		writeLog("Failed to record waveaudio: " + err.Error())
 		playBeep(250, 150)
-		showBalloonNotification("GIN-Voice: Ошибка записи", "Проверьте разрешение для микрофона в параметрах Windows.", NIIF_ERROR)
 		return
 	}
 
@@ -594,7 +561,6 @@ func stopRecordingAndTranscribe() {
 		if err != nil || fi.Size() < 1000 {
 			writeLog(fmt.Sprintf("Empty audio file: err=%v, size=%d", err, fi.Size()))
 			playBeep(220, 250)
-			showBalloonNotification("GIN-Voice: Пустая запись", "Звуковой файл не содержит аудиоданных. Проверьте громкость микрофона.", NIIF_WARNING)
 			return
 		}
 
@@ -602,7 +568,12 @@ func stopRecordingAndTranscribe() {
 		if err != nil {
 			writeLog("Transcription error: " + err.Error())
 			playBeep(220, 300)
-			showBalloonNotification("GIN-Voice: Ошибка распознавания", err.Error(), NIIF_ERROR)
+			procMessageBoxW.Call(
+				0,
+				uintptr(unsafe.Pointer(strPtr("Ошибка Whisper: "+err.Error()))),
+				uintptr(unsafe.Pointer(strPtr(AppTitle+" - Ошибка"))),
+				0x00000010,
+			)
 			return
 		}
 
@@ -612,9 +583,8 @@ func stopRecordingAndTranscribe() {
 		}
 
 		text = applyDictionary(text)
-		writeLog(fmt.Sprintf("Text pasted: [%s]", text))
+		writeLog(fmt.Sprintf("Pasting text: [%s]", text))
 		pasteText(text)
-		showBalloonNotification("GIN-Voice", text, NIIF_INFO)
 	}()
 }
 
@@ -642,7 +612,7 @@ func transcribeAudio(wavPath string) (string, error) {
 
 	audioData, err := os.ReadFile(wavPath)
 	if err != nil || len(audioData) < 1000 {
-		return "", fmt.Errorf("Аудиофайл поврежден или пуст.")
+		return "", fmt.Errorf("Аудиофайл пуст или поврежден.")
 	}
 
 	var reqBody bytes.Buffer
@@ -657,7 +627,6 @@ func transcribeAudio(wavPath string) (string, error) {
 	_ = writer.WriteField("model", "whisper-large-v3")
 	_ = writer.WriteField("response_format", "text")
 
-	// Context prompt biased with project entities
 	dictMutex.RLock()
 	var terms []string
 	for _, v := range dictionary {
@@ -878,9 +847,9 @@ func runUninstall() {
 		0,
 		uintptr(unsafe.Pointer(strPtr("Вы уверены, что хотите полностью удалить GIN-Voice и все его файлы?"))),
 		uintptr(unsafe.Pointer(strPtr(AppTitle+" - Подтверждение удаления"))),
-		0x00000024, // MB_YESNO | MB_ICONQUESTION
+		0x00000024,
 	)
-	if r != 6 { // IDYES
+	if r != 6 {
 		return
 	}
 
@@ -939,6 +908,7 @@ func showContextMenu() {
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DICT, uintptr(unsafe.Pointer(strPtr("📖 Open Dictionary (Notepad)"))))
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_LINK_FOLDER, uintptr(unsafe.Pointer(strPtr("📂 Link AI Knowledge Folder..."))))
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_CONFIG, uintptr(unsafe.Pointer(strPtr("⚙️ Open Settings (GUI)"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DIR, uintptr(unsafe.Pointer(strPtr("📁 Open App Data Folder (api_key.txt)"))))
 
 	autostartFlags := uintptr(MF_STRING)
 	if config.Autostart {
@@ -967,8 +937,8 @@ func showSettingsDialog() {
 
 	screenWidth, _, _ := procGetSystemMetrics.Call(0)
 	screenHeight, _, _ := procGetSystemMetrics.Call(1)
-	dlgWidth := int32(560)
-	dlgHeight := int32(460)
+	dlgWidth := int32(580)
+	dlgHeight := int32(490)
 	dlgX := (int32(screenWidth) - dlgWidth) / 2
 	dlgY := (int32(screenHeight) - dlgHeight) / 2
 
@@ -978,7 +948,7 @@ func showSettingsDialog() {
 	hwndSetup, _, _ = procCreateWindowExW.Call(
 		0,
 		uintptr(unsafe.Pointer(className)),
-		uintptr(unsafe.Pointer(strPtr("⚙️ GIN-Voice [v003] — Settings & Personalization"))),
+		uintptr(unsafe.Pointer(strPtr("⚙️ GIN-Voice [v004] — Settings & Personalization"))),
 		WS_OVERLAPPEDWINDOW&^0x00040000 | WS_VISIBLE,
 		uintptr(dlgX), uintptr(dlgY), uintptr(dlgWidth), uintptr(dlgHeight),
 		0, 0, hInstance, 0,
@@ -992,9 +962,9 @@ func showSettingsDialog() {
 	// Section 1: Groq API Key
 	lbl1, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("1. Groq API Key (Free, 0.3s transcription): Name key 'gin-voice':"))),
+		uintptr(unsafe.Pointer(strPtr("1. Groq API Key (saved in api_key.txt & config.json):"))),
 		WS_CHILD|WS_VISIBLE,
-		20, 15, 500, 20, hwndSetup, 0, hInstance, 0,
+		20, 15, 520, 20, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(lbl1, WM_SETFONT, hFont, 1)
 
@@ -1006,15 +976,23 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(currKey))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		20, 38, 280, 26, hwndSetup, uintptr(IDC_EDIT_KEY), hInstance, 0,
+		20, 38, 240, 26, hwndSetup, uintptr(IDC_EDIT_KEY), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditKey, WM_SETFONT, hFont, 1)
 
+	btnCopy, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr("📋 Copy"))),
+		WS_CHILD|WS_VISIBLE,
+		268, 37, 75, 28, hwndSetup, uintptr(IDC_BTN_COPY_KEY), hInstance, 0,
+	)
+	procSendMessageW.Call(btnCopy, WM_SETFONT, hFont, 1)
+
 	btnTest, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🧪 Test Key"))),
+		uintptr(unsafe.Pointer(strPtr("🧪 Test"))),
 		WS_CHILD|WS_VISIBLE,
-		308, 37, 105, 28, hwndSetup, uintptr(IDC_BTN_TEST), hInstance, 0,
+		350, 37, 80, 28, hwndSetup, uintptr(IDC_BTN_TEST), hInstance, 0,
 	)
 	procSendMessageW.Call(btnTest, WM_SETFONT, hFont, 1)
 
@@ -1022,16 +1000,16 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr("🌐 Get Key ↗"))),
 		WS_CHILD|WS_VISIBLE,
-		420, 37, 105, 28, hwndSetup, uintptr(IDC_BTN_GROQ), hInstance, 0,
+		436, 37, 105, 28, hwndSetup, uintptr(IDC_BTN_GROQ), hInstance, 0,
 	)
 	procSendMessageW.Call(btnGroq, WM_SETFONT, hFont, 1)
 
 	// Section 2: Hotkey
 	lbl2, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("2. Hotkey for Voice Typing (F4, F8, F9, F10, F12):"))),
+		uintptr(unsafe.Pointer(strPtr("2. Hotkey for Voice Typing (F8 default; or F4, F9, F10, F12):"))),
 		WS_CHILD|WS_VISIBLE,
-		20, 80, 500, 20, hwndSetup, 0, hInstance, 0,
+		20, 80, 520, 20, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(lbl2, WM_SETFONT, hFont, 1)
 
@@ -1048,7 +1026,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr("3. Common AI Knowledge Folder (D:\\AI, Secret_Privat, etc.):"))),
 		WS_CHILD|WS_VISIBLE,
-		20, 145, 500, 20, hwndSetup, 0, hInstance, 0,
+		20, 145, 520, 20, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(lbl3, WM_SETFONT, hFont, 1)
 
@@ -1056,7 +1034,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(config.LinkedKnowledgeFolder))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		20, 168, 360, 26, hwndSetup, uintptr(IDC_EDIT_FOLDER), hInstance, 0,
+		20, 168, 380, 26, hwndSetup, uintptr(IDC_EDIT_FOLDER), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditFolder, WM_SETFONT, hFont, 1)
 
@@ -1064,7 +1042,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr("📁 Browse..."))),
 		WS_CHILD|WS_VISIBLE,
-		390, 167, 135, 28, hwndSetup, uintptr(IDC_BTN_BROWSE), hInstance, 0,
+		410, 167, 130, 28, hwndSetup, uintptr(IDC_BTN_BROWSE), hInstance, 0,
 	)
 	procSendMessageW.Call(btnBrowse, WM_SETFONT, hFont, 1)
 
@@ -1073,7 +1051,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr("4. Active Languages (Code-Switching Support):"))),
 		WS_CHILD|WS_VISIBLE,
-		20, 212, 500, 20, hwndSetup, 0, hInstance, 0,
+		20, 212, 520, 20, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(lbl4, WM_SETFONT, hFont, 1)
 
@@ -1119,7 +1097,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr("💾 Save & Apply"))),
 		WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON,
-		20, 290, 160, 38, hwndSetup, uintptr(IDC_BTN_SAVE), hInstance, 0,
+		20, 285, 160, 38, hwndSetup, uintptr(IDC_BTN_SAVE), hInstance, 0,
 	)
 	procSendMessageW.Call(btnSave, WM_SETFONT, hFont, 1)
 
@@ -1127,23 +1105,31 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr("📖 Edit Dictionary"))),
 		WS_CHILD|WS_VISIBLE,
-		190, 290, 160, 38, hwndSetup, uintptr(IDC_BTN_DICT), hInstance, 0,
+		190, 285, 160, 38, hwndSetup, uintptr(IDC_BTN_DICT), hInstance, 0,
 	)
 	procSendMessageW.Call(btnDict, WM_SETFONT, hFont, 1)
 
+	btnOpenDir, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr("📁 Open Folder"))),
+		WS_CHILD|WS_VISIBLE,
+		360, 285, 160, 38, hwndSetup, uintptr(IDC_BTN_OPEN_DIR), hInstance, 0,
+	)
+	procSendMessageW.Call(btnOpenDir, WM_SETFONT, hFont, 1)
+
 	btnUninst, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🗑️ Uninstall App"))),
+		uintptr(unsafe.Pointer(strPtr("🗑️ Uninstall GIN-Voice"))),
 		WS_CHILD|WS_VISIBLE,
-		360, 290, 165, 38, hwndSetup, uintptr(IDC_BTN_UNINST), hInstance, 0,
+		20, 335, 200, 34, hwndSetup, uintptr(IDC_BTN_UNINST), hInstance, 0,
 	)
 	procSendMessageW.Call(btnUninst, WM_SETFONT, hFont, 1)
 
 	lblTip, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("Status: Option #17 Brand Icon active. Press F4 to test dictation anywhere."))),
+		uintptr(unsafe.Pointer(strPtr("Hotkey listener: Instant hardware capture on [F8]. No balloon popups."))),
 		WS_CHILD|WS_VISIBLE,
-		20, 345, 500, 30, hwndSetup, 0, hInstance, 0,
+		20, 385, 520, 30, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(lblTip, WM_SETFONT, hFont, 1)
 
@@ -1172,8 +1158,12 @@ func parseVK(keyStr string) uint32 {
 		return VK_F10
 	case "F12":
 		return VK_F12
+	case "SCROLL":
+		return VK_SCROLL
+	case "PAUSE":
+		return VK_PAUSE
 	default:
-		return VK_F4
+		return VK_F8
 	}
 }
 
@@ -1207,6 +1197,8 @@ func handleMenuCommand(cmdID uintptr) {
 		}
 	case cmdID == IDM_OPEN_DICT:
 		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("notepad.exe"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
+	case cmdID == IDM_OPEN_DIR:
+		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("explorer.exe"))), uintptr(unsafe.Pointer(strPtr(appDir))), 0, SW_SHOWNORMAL)
 	case cmdID == IDM_LINK_FOLDER:
 		go func() {
 			folder := pickFolderDialog()
@@ -1230,9 +1222,6 @@ func handleMenuCommand(cmdID uintptr) {
 	case cmdID == IDM_UNINSTALL:
 		runUninstall()
 	case cmdID == IDM_EXIT:
-		if hKeyboardHook != 0 {
-			procUnhookWindowsHookEx.Call(hKeyboardHook)
-		}
 		procShellNotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 		procPostQuitMessage.Call(0)
 	}
@@ -1254,9 +1243,6 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		handleMenuCommand(wParam)
 		return 0
 	case WM_DESTROY:
-		if hKeyboardHook != 0 {
-			procUnhookWindowsHookEx.Call(hKeyboardHook)
-		}
 		procShellNotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 		procPostQuitMessage.Call(0)
 		return 0
@@ -1310,10 +1296,25 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 			procMessageBoxW.Call(
 				0,
-				uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("GIN-Voice настройки успешно сохранены!\nГорячая клавиша: [%s]\nЯзыки: %s", config.Hotkey, strings.Join(config.ActiveLanguages, ", "))))),
+				uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("GIN-Voice настройки успешно сохранены!\nКлюч сохранен в api_key.txt\nГорячая клавиша: [%s]\nЯзыки: %s", config.Hotkey, strings.Join(config.ActiveLanguages, ", "))))),
 				uintptr(unsafe.Pointer(strPtr(AppTitle+" - Готово"))),
 				0x00000040,
 			)
+			return 0
+		} else if cmdID == IDC_BTN_COPY_KEY {
+			var bufKey [512]uint16
+			procGetWindowTextW.Call(hwndEditKey, uintptr(unsafe.Pointer(&bufKey[0])), 512)
+			k := strings.TrimSpace(syscall.UTF16ToString(bufKey[:]))
+			if k != "" {
+				setClipboardText(k)
+				playBeep(880, 80)
+				procMessageBoxW.Call(
+					hwndSetup,
+					uintptr(unsafe.Pointer(strPtr("Ключ скопирован в буфер обмена!"))),
+					uintptr(unsafe.Pointer(strPtr(AppTitle))),
+					0x00000040,
+				)
+			}
 			return 0
 		} else if cmdID == IDC_BTN_TEST {
 			var bufKey [512]uint16
@@ -1347,6 +1348,9 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		} else if cmdID == IDC_BTN_DICT {
 			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("notepad.exe"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
 			return 0
+		} else if cmdID == IDC_BTN_OPEN_DIR {
+			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("explorer.exe"))), uintptr(unsafe.Pointer(strPtr(appDir))), 0, SW_SHOWNORMAL)
+			return 0
 		} else if cmdID == IDC_BTN_UNINST {
 			runUninstall()
 			return 0
@@ -1360,16 +1364,28 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	return r
 }
 
-func keyboardHookCallback(nCode int32, wParam uintptr, lParam uintptr) uintptr {
-	if nCode >= 0 && (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
-		kbd := (*KBDLLHOOKSTRUCT)(unsafe.Pointer(lParam))
-		if kbd.VkCode == config.HotkeyVK {
-			go toggleRecording()
-			return 1
+func startHotkeyListener() {
+	go func() {
+		var wasPressed bool
+		for {
+			time.Sleep(20 * time.Millisecond)
+			vk := config.HotkeyVK
+			if vk == 0 {
+				vk = VK_F8
+			}
+
+			state, _, _ := procGetAsyncKeyState.Call(uintptr(vk))
+			isDown := (state & 0x8000) != 0
+
+			if isDown && !wasPressed {
+				wasPressed = true
+				writeLog(fmt.Sprintf("Hardware hotkey press detected: [%s] (VK %d)", config.Hotkey, vk))
+				toggleRecording()
+			} else if !isDown && wasPressed {
+				wasPressed = false
+			}
 		}
-	}
-	r, _, _ := procCallNextHookEx.Call(hKeyboardHook, uintptr(nCode), wParam, lParam)
-	return r
+	}()
 }
 
 func copyFile(src, dst string) error {
@@ -1442,9 +1458,8 @@ func checkAndSelfInstall() {
 	_ = os.MkdirAll(targetDir, 0755)
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v003.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v004.exe"))
 
-	// Deploy Option #17 app.ico and app_rec.ico
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
 		_ = os.WriteFile(dstIco, defaultAppIco, 0644)
@@ -1497,11 +1512,12 @@ func main() {
 	exePath, _ := os.Executable()
 	appDir = filepath.Dir(exePath)
 	configFile = filepath.Join(appDir, "config.json")
+	keyFile = filepath.Join(appDir, "api_key.txt")
 	dictFile = filepath.Join(appDir, "dictionary.json")
 	helpFile = filepath.Join(appDir, "setup_guide.html")
 	logFile = filepath.Join(appDir, "gin_voice.log")
 
-	writeLog("=== GIN-Voice [v003] Starting ===")
+	writeLog("=== GIN-Voice [v004] Starting ===")
 
 	loadConfig()
 	loadDictionary()
@@ -1534,15 +1550,8 @@ func main() {
 		0, 0, hInstance, 0,
 	)
 
-	hookProc := syscall.NewCallback(keyboardHookCallback)
-	r, _, _ := procSetWindowsHookExW.Call(
-		WH_KEYBOARD_LL,
-		hookProc,
-		hInstance,
-		0,
-	)
-	hKeyboardHook = r
-	writeLog(fmt.Sprintf("Installed WH_KEYBOARD_LL hook for [%s] (VK %d)", config.Hotkey, config.HotkeyVK))
+	// Start ultra-reliable hardware hotkey listener (immune to UIPI/focus/other apps)
+	startHotkeyListener()
 
 	apiKey := config.GroqAPIKey
 	if apiKey == "" {
@@ -1565,9 +1574,5 @@ func main() {
 		}
 		procTranslateMessage.Call(uintptr(unsafe.Pointer(&msg)))
 		procDispatchMessageW.Call(uintptr(unsafe.Pointer(&msg)))
-	}
-
-	if hKeyboardHook != 0 {
-		procUnhookWindowsHookEx.Call(hKeyboardHook)
 	}
 }
