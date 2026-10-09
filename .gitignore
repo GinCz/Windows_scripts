@@ -1,2 +1,6 @@
 
 *.log
+
+Windows/GIN-Voice/api_key.txt
+Windows/GIN-Voice/*.log
+api_key.txt
