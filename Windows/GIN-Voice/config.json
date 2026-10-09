@@ -1,0 +1,46 @@
+{
+  "version": "v001",
+  "first_run": true,
+  "hotkey": "F4",
+  "hotkey_vk": 115,
+  "hotkey_mod": 0,
+  "active_languages": [
+    "en"
+  ],
+  "all_languages": [
+    {
+      "code": "en",
+      "name": "English"
+    },
+    {
+      "code": "cs",
+      "name": "Czech"
+    },
+    {
+      "code": "ru",
+      "name": "Russian"
+    },
+    {
+      "code": "de",
+      "name": "German"
+    },
+    {
+      "code": "fr",
+      "name": "French"
+    },
+    {
+      "code": "es",
+      "name": "Spanish"
+    },
+    {
+      "code": "uk",
+      "name": "Ukrainian"
+    }
+  ],
+  "groq_api_key": "",
+  "sound_feedback": true,
+  "auto_paste": true,
+  "restore_clipboard": true,
+  "autostart": false,
+  "linked_knowledge_folder": ""
+}
