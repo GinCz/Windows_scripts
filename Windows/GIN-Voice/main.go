@@ -30,8 +30,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v016"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v016]"
+	AppVersion    = "v017"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v017]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -135,6 +135,7 @@ const (
 	IDC_EDIT_HOTKEY = 3006
 	IDC_BTN_DICT    = 3007
 	IDC_BTN_TEST    = 3008
+	IDC_EDIT_FONT   = 3009
 
 	IDC_LANG_CHK_BASE = 4000
 )
@@ -201,6 +202,7 @@ var (
 	procGetSystemMetrics     = user32.NewProc("GetSystemMetrics")
 	procGetAsyncKeyState       = user32.NewProc("GetAsyncKeyState")
 	procInvalidateRect       = user32.NewProc("InvalidateRect")
+	procFindWindowW          = user32.NewProc("FindWindowW")
 
 	procShellNotifyIconW     = shell32.NewProc("Shell_NotifyIconW")
 	procShellExecuteW        = shell32.NewProc("ShellExecuteW")
@@ -221,6 +223,8 @@ var (
 	procResetEvent          = kernel32.NewProc("ResetEvent")
 	procWaitForSingleObject = kernel32.NewProc("WaitForSingleObject")
 	procCloseHandle         = kernel32.NewProc("CloseHandle")
+	procCreateMutexW        = kernel32.NewProc("CreateMutexW")
+	procGetLastError        = kernel32.NewProc("GetLastError")
 
 	procCreateSolidBrush = gdi32.NewProc("CreateSolidBrush")
 	procCreateFontW      = gdi32.NewProc("CreateFontW")
@@ -334,11 +338,15 @@ type UIStringBundle struct {
 	SettingsTestBtn     string
 	SettingsHotkey      string
 	SettingsHotkeyTip   string
+	SettingsFont        string
+	SettingsFontTip     string
 	SettingsFolder      string
 	SettingsBrowse      string
 	SettingsLangs       string
 	SettingsSave        string
 	SettingsDict        string
+	SettingsSavedTitle  string
+	SettingsSavedMsg    string
 	HudRecording        string
 	HudTranscribing     string
 	HudPasted           string
@@ -362,6 +370,7 @@ type Config struct {
 	Hotkey                string         `json:"hotkey"`
 	HotkeyVK              uint32         `json:"hotkey_vk"`
 	HotkeyMod             uint32         `json:"hotkey_mod"`
+	HUDFont               string         `json:"hud_font"`
 	ActiveLanguages       []string       `json:"active_languages"`
 	AllLanguages          []LanguageItem `json:"all_languages"`
 	GroqAPIKey            string         `json:"groq_api_key"`
@@ -389,11 +398,13 @@ var (
 	hwndLblKey      uintptr
 	hwndLblHot      uintptr
 	hwndLblHotTip   uintptr
+	hwndLblFont     uintptr
 	hwndLblFolder   uintptr
 	hwndLblLangs    uintptr
 	hwndEditKey     uintptr
 	hwndEditFolder  uintptr
 	hwndEditHotkey  uintptr
+	hwndEditFont    uintptr
 	langCheckHWnd   = make(map[string]uintptr)
 	nid             NOTIFYICONDATAW
 	isRecording     bool
@@ -472,13 +483,17 @@ var (
 			SettingsKeyLabel:    "🔑 Groq Whisper API Key:",
 			SettingsGetGroq:     "🌐 Get Free Key at Groq.com",
 			SettingsTestBtn:     "🧪 Test Key",
-			SettingsHotkey:      "⚡ Dictation Hotkey:",
-			SettingsHotkeyTip:   "(Available: F8, F4, F9, F10, F12 — Toggle Start/Stop)",
+			SettingsHotkey:      "⚡ Hotkey:",
+			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsFont:        "🎨 HUD Font:",
+			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift, Consolas)",
 			SettingsFolder:      "📁 Linked Knowledge / Project Folder (Auto-Dictionary):",
 			SettingsBrowse:      "📂 Browse...",
 			SettingsLangs:       "🌐 Active Recognition Languages (Whisper AI):",
 			SettingsSave:        "💾 Save & Apply",
 			SettingsDict:        "📖 Edit Dictionary",
+			SettingsSavedTitle:  "GIN-Voice - Ready",
+			SettingsSavedMsg:    "✅ Settings saved successfully!\n\n• GIN-Voice is active in the System Tray (near clock).\n• Hotkey: [%s] (Press anytime to start/stop speaking).\n• HUD Font: %s",
 			HudRecording:        "🔴 RECORDING... Speak now [%s to Finish]",
 			HudTranscribing:     "⚡ Transcribing with Whisper AI...",
 			HudPasted:           "✅ Pasted: %s",
@@ -512,13 +527,17 @@ var (
 			SettingsKeyLabel:    "🔑 Groq Whisper API Key:",
 			SettingsGetGroq:     "🌐 Получить бесплатный ключ на Groq.com",
 			SettingsTestBtn:     "🧪 Проверить",
-			SettingsHotkey:      "⚡ Горячая клавиша диктовки:",
-			SettingsHotkeyTip:   "(Доступны: F8, F4, F9, F10, F12 — переключение Старт/Стоп)",
+			SettingsHotkey:      "⚡ Горячая клавиша:",
+			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsFont:        "🎨 Шрифт HUD:",
+			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift, Consolas)",
 			SettingsFolder:      "📁 Общая папка с базами знаний / проектами (Автословарь):",
 			SettingsBrowse:      "📂 Обзор...",
 			SettingsLangs:       "🌐 Активные языки распознавания (Whisper AI):",
 			SettingsSave:        "💾 Сохранить и Применить",
 			SettingsDict:        "📖 Редактировать словарь",
+			SettingsSavedTitle:  "GIN-Voice - Готов к работе",
+			SettingsSavedMsg:    "✅ Настройки успешно сохранены!\n\n• GIN-Voice активен и работает в системном трее (возле часов).\n• Горячая клавиша: [%s] (Нажмите в любом месте для диктовки).\n• Шрифт HUD: %s",
 			HudRecording:        "🔴 ИДЁТ ЗАПИСЬ... Говорите [%s для Завершения]",
 			HudTranscribing:     "⚡ Распознавание речи через Whisper AI...",
 			HudPasted:           "✅ Вставлено: %s",
@@ -552,13 +571,17 @@ var (
 			SettingsKeyLabel:    "🔑 Groq Whisper API Klíč:",
 			SettingsGetGroq:     "🌐 Získat klíč zdarma na Groq.com",
 			SettingsTestBtn:     "🧪 Otestovat",
-			SettingsHotkey:      "⚡ Klávesová zkratka diktování:",
-			SettingsHotkeyTip:   "(Dostupné: F8, F4, F9, F10, F12 — Přepínač Start/Stop)",
+			SettingsHotkey:      "⚡ Klávesová zkratka:",
+			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsFont:        "🎨 Písmo HUD:",
+			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Propojená složka projektů (Automatický slovník):",
 			SettingsBrowse:      "📂 Procházet...",
 			SettingsLangs:       "🌐 Aktivní jazyky rozpoznávání (Whisper AI):",
 			SettingsSave:        "💾 Uložit a Použít",
 			SettingsDict:        "📖 Upravit slovník",
+			SettingsSavedTitle:  "GIN-Voice - Připraven",
+			SettingsSavedMsg:    "✅ Nastavení bylo úspěšně uloženo!\n\n• GIN-Voice je aktivní v systémové liště.\n• Klávesová zkratka: [%s]\n• Písmo HUD: %s",
 			HudRecording:        "🔴 NAHRÁVÁNÍ... Mluvte [%s pro Dokončení]",
 			HudTranscribing:     "⚡ Přepisuji řeč pomocí Whisper AI...",
 			HudPasted:           "✅ Vloženo: %s",
@@ -592,13 +615,17 @@ var (
 			SettingsKeyLabel:    "🔑 Chiave Groq Whisper API:",
 			SettingsGetGroq:     "🌐 Ottieni chiave gratuita su Groq.com",
 			SettingsTestBtn:     "🧪 Verifica",
-			SettingsHotkey:      "⚡ Tasto rapido di dettatura:",
-			SettingsHotkeyTip:   "(Disponibili: F8, F4, F9, F10, F12 — Avvia/Ferma)",
+			SettingsHotkey:      "⚡ Tasto rapido:",
+			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsFont:        "🎨 Font HUD:",
+			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Cartella progetti collegata (Dizionario automatico):",
 			SettingsBrowse:      "📂 Sfoglia...",
 			SettingsLangs:       "🌐 Lingue di riconoscimento attive (Whisper AI):",
 			SettingsSave:        "💾 Salva e applica",
 			SettingsDict:        "📖 Modifica dizionario",
+			SettingsSavedTitle:  "GIN-Voice - Pronto",
+			SettingsSavedMsg:    "✅ Impostazioni salvate!\n\n• GIN-Voice è attivo nella barra delle applicazioni.\n• Tasto rapido: [%s]\n• Font HUD: %s",
 			HudRecording:        "🔴 REGISTRAZIONE... Parla [%s per Terminare]",
 			HudTranscribing:     "⚡ Trascrizione vocale con Whisper AI...",
 			HudPasted:           "✅ Incollato: %s",
@@ -632,13 +659,17 @@ var (
 			SettingsKeyLabel:    "🔑 Clave Groq Whisper API:",
 			SettingsGetGroq:     "🌐 Obtener clave gratis en Groq.com",
 			SettingsTestBtn:     "🧪 Probar clave",
-			SettingsHotkey:      "⚡ Tecla de acceso rápido:",
-			SettingsHotkeyTip:   "(Disponibles: F8, F4, F9, F10, F12 — Iniciar/Detener)",
+			SettingsHotkey:      "⚡ Tecla rápida:",
+			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsFont:        "🎨 Fuente HUD:",
+			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Carpeta vinculada de proyectos (Diccionario automático):",
 			SettingsBrowse:      "📂 Examinar...",
 			SettingsLangs:       "🌐 Idiomas de reconocimiento activos (Whisper AI):",
 			SettingsSave:        "💾 Guardar y aplicar",
 			SettingsDict:        "📖 Editar diccionario",
+			SettingsSavedTitle:  "GIN-Voice - Listo",
+			SettingsSavedMsg:    "✅ ¡Configuración guardada!\n\n• GIN-Voice está activo en la bandeja del sistema.\n• Tecla rápida: [%s]\n• Fuente HUD: %s",
 			HudRecording:        "🔴 GRABANDO... Hable [%s para Terminar]",
 			HudTranscribing:     "⚡ Transcribiendo voz con Whisper AI...",
 			HudPasted:           "✅ Pegado: %s",
@@ -672,13 +703,17 @@ var (
 			SettingsKeyLabel:    "🔑 Clé Groq Whisper API :",
 			SettingsGetGroq:     "🌐 Obtenir une clé gratuite sur Groq.com",
 			SettingsTestBtn:     "🧪 Tester",
-			SettingsHotkey:      "⚡ Raccourci de dictée :",
-			SettingsHotkeyTip:   "(Disponibles : F8, F4, F9, F10, F12 — Démarrer/Arrêter)",
+			SettingsHotkey:      "⚡ Raccourci :",
+			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsFont:        "🎨 Police HUD :",
+			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Dossier de projets lié (Dictionnaire automatique) :",
 			SettingsBrowse:      "📂 Parcourir...",
 			SettingsLangs:       "🌐 Langues de reconnaissance actives (Whisper AI) :",
 			SettingsSave:        "💾 Enregistrer et appliquer",
 			SettingsDict:        "📖 Modifier le dictionnaire",
+			SettingsSavedTitle:  "GIN-Voice - Prêt",
+			SettingsSavedMsg:    "✅ Paramètres enregistrés !\n\n• GIN-Voice est actif dans la barre des tâches.\n• Raccourci : [%s]\n• Police HUD : %s",
 			HudRecording:        "🔴 ENREGISTREMENT... Parlez [%s pour Terminer]",
 			HudTranscribing:     "⚡ Transcription vocale avec Whisper AI...",
 			HudPasted:           "✅ Collé : %s",
@@ -829,7 +864,7 @@ func playGentleSound(soundType string) {
 			procPlaySoundW.Call(
 				uintptr(unsafe.Pointer(&data[0])),
 				0,
-				0x0001|0x0004|0x0002, // SND_ASYNC | SND_MEMORY | SND_NODEFAULT
+				0x0000|0x0004|0x0002, // SND_SYNC | SND_MEMORY | SND_NODEFAULT on dedicated thread
 			)
 		}(soundData)
 	}
@@ -895,6 +930,7 @@ func loadConfig() {
 		Hotkey:                "F4",
 		HotkeyVK:              VK_F4,
 		HotkeyMod:             0,
+		HUDFont:               "Comfortaa",
 		ActiveLanguages:       []string{"EN"}, // Only English selected by default upon initial installation
 		AllLanguages:          MasterLanguages,
 		GroqAPIKey:            "", // Strictly empty by default - no hardcoded keys, no env fallback
@@ -917,6 +953,10 @@ func loadConfig() {
 	if config.Hotkey == "" {
 		config.Hotkey = "F4"
 		config.HotkeyVK = VK_F4
+	}
+
+	if config.HUDFont == "" {
+		config.HUDFont = "Comfortaa"
 	}
 
 	if config.LinkedKnowledgeFolder == "" {
@@ -1998,12 +2038,12 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(btnTest, WM_SETFONT, hFontBold, 1)
 
-	// 2. Hotkey Config Row
+	// 2. Hotkey Config & HUD Font Row
 	hwndLblHot, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkey))),
 		WS_CHILD|WS_VISIBLE,
-		24, 146, 260, 26, hwndSetup, 0, hInstance, 0,
+		24, 146, 170, 26, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndLblHot, WM_SETFONT, hFontBold, 1)
 
@@ -2011,15 +2051,31 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(config.Hotkey))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		290, 142, 120, 32, hwndSetup, uintptr(IDC_EDIT_HOTKEY), hInstance, 0,
+		198, 142, 80, 32, hwndSetup, uintptr(IDC_EDIT_HOTKEY), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditHotkey, WM_SETFONT, hFontBold, 1)
 
+	hwndLblFont, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsFont))),
+		WS_CHILD|WS_VISIBLE,
+		296, 146, 140, 26, hwndSetup, 0, hInstance, 0,
+	)
+	procSendMessageW.Call(hwndLblFont, WM_SETFONT, hFontBold, 1)
+
+	hwndEditFont, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
+		uintptr(unsafe.Pointer(strPtr(config.HUDFont))),
+		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
+		440, 142, 160, 32, hwndSetup, uintptr(IDC_EDIT_FONT), hInstance, 0,
+	)
+	procSendMessageW.Call(hwndEditFont, WM_SETFONT, hFontNormal, 1)
+
 	hwndLblHotTip, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkeyTip))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))),
 		WS_CHILD|WS_VISIBLE,
-		424, 146, 380, 26, hwndSetup, 0, hInstance, 0,
+		610, 146, 200, 26, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndLblHotTip, WM_SETFONT, hFontNormal, 1)
 
@@ -2224,7 +2280,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		ctrlHwnd := lParam
 		if ctrlHwnd == hwndHeader {
 			procSetTextColor.Call(hdc, 0x00FFE500) // Vibrant Cyan #00E5FF for Main Header Banner
-		} else if ctrlHwnd == hwndLblKey || ctrlHwnd == hwndLblHot || ctrlHwnd == hwndLblFolder || ctrlHwnd == hwndLblLangs {
+		} else if ctrlHwnd == hwndLblKey || ctrlHwnd == hwndLblHot || ctrlHwnd == hwndLblFont || ctrlHwnd == hwndLblFolder || ctrlHwnd == hwndLblLangs {
 			procSetTextColor.Call(hdc, 0x005EC522) // Emerald Green #22C55E for Section Titles
 		} else if ctrlHwnd == hwndLblHotTip {
 			procSetTextColor.Call(hdc, 0x00FCD37D) // Sky Blue #7DD3FC for Helper Tips
@@ -2235,7 +2291,11 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		return hBrushDarkBg
 	case WM_CTLCOLOREDIT:
 		hdc := wParam
+		ctrlHwnd := lParam
 		procSetTextColor.Call(hdc, 0x00FCFAF8) // Crisp White Text
+		if ctrlHwnd == hwndEditFont {
+			procSetTextColor.Call(hdc, 0x00FFE500) // Cyan text for HUD Font preview
+		}
 		procSetBkColor.Call(hdc, 0x0028211C) // Deep Slate #1C2128
 		return hBrushEditBg
 	case WM_CTLCOLORBTN:
@@ -2258,6 +2318,16 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				config.HotkeyVK = parseVK(newHotkey)
 			}
 
+			var bufFont [128]uint16
+			procGetWindowTextW.Call(hwndEditFont, uintptr(unsafe.Pointer(&bufFont[0])), 128)
+			newFont := strings.TrimSpace(syscall.UTF16ToString(bufFont[:]))
+			if newFont != "" {
+				config.HUDFont = newFont
+			} else {
+				config.HUDFont = "Comfortaa"
+			}
+			updateHUDFont()
+
 			var bufFolder [1024]uint16
 			procGetWindowTextW.Call(hwndEditFolder, uintptr(unsafe.Pointer(&bufFolder[0])), 1024)
 			config.LinkedKnowledgeFolder = strings.TrimSpace(syscall.UTF16ToString(bufFolder[:]))
@@ -2278,10 +2348,27 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 			saveConfig()
 			playGentleSound("save")
-			procShowWindow.Call(hwnd, SW_HIDE)
 			initTrayIcon()
 			ui := getUI()
 			updateTrayState(false, fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey))
+
+			// Show visual HUD notification
+			updateHUD(true, fmt.Sprintf("✅ %s | [%s]", ui.Ready, config.Hotkey))
+			go func() {
+				time.Sleep(2500 * time.Millisecond)
+				updateHUD(false, "")
+			}()
+
+			// Show confirmation message box to user
+			msgText := fmt.Sprintf(ui.SettingsSavedMsg, config.Hotkey, config.HUDFont)
+			procMessageBoxW.Call(
+				hwndSetup,
+				uintptr(unsafe.Pointer(strPtr(msgText))),
+				uintptr(unsafe.Pointer(strPtr(ui.SettingsSavedTitle))),
+				0x00000040, // MB_ICONINFORMATION
+			)
+
+			procShowWindow.Call(hwnd, SW_HIDE)
 			return 0
 		} else if cmdID == IDC_BTN_TEST {
 			var bufKey [512]uint16
@@ -2311,7 +2398,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			}
 			return 0
 		} else if cmdID == IDC_BTN_DICT {
-			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("notepad.exe"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
+			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
 			return 0
 		}
 	case WM_CLOSE:
@@ -2333,6 +2420,26 @@ func hudWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	default:
 		r, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
 		return r
+	}
+}
+
+func createHUDFont(fontName string) uintptr {
+	fontName = strings.TrimSpace(fontName)
+	if fontName == "" {
+		fontName = "Comfortaa"
+	}
+	hFont, _, _ := procCreateFontW.Call(
+		20, 0, 0, 0, 400, 0, 0, 0, // 400: non-bold, aesthetic, clean
+		0, 0, 0, 0, 0,
+		uintptr(unsafe.Pointer(strPtr(fontName))),
+	)
+	return hFont
+}
+
+func updateHUDFont() {
+	hFontHUD = createHUDFont(config.HUDFont)
+	if hwndHUDText != 0 {
+		procSendMessageW.Call(hwndHUDText, WM_SETFONT, hFontHUD, 1)
 	}
 }
 
@@ -2478,6 +2585,10 @@ func checkAndSelfInstall() {
 		return
 	}
 
+	// Terminate any currently running GIN-Voice instances before copying
+	_ = exec.Command("taskkill", "/F", "/IM", "GIN-Voice.exe").Run()
+	time.Sleep(400 * time.Millisecond)
+
 	_ = os.MkdirAll(targetDir, 0755)
 
 	// Clean up all old version binaries and installers in targetDir
@@ -2555,6 +2666,28 @@ func checkAndSelfInstall() {
 func main() {
 	checkAndSelfInstall()
 
+	// Single Instance Mutex
+	hMutex, _, _ := procCreateMutexW.Call(0, 1, uintptr(unsafe.Pointer(strPtr("Global\\GIN_VOICE_RUNNING_MUTEX"))))
+	lastErr, _, _ := procGetLastError.Call()
+	if lastErr == 183 && hMutex != 0 { // ERROR_ALREADY_EXISTS
+		hwndExisting, _, _ := procFindWindowW.Call(
+			uintptr(unsafe.Pointer(strPtr("GIN_VOICE_CYBER_SETTINGS"))),
+			0,
+		)
+		if hwndExisting != 0 {
+			procShowWindow.Call(hwndExisting, SW_SHOWNORMAL)
+			procSetForegroundWindow.Call(hwndExisting)
+		} else {
+			procMessageBoxW.Call(
+				0,
+				uintptr(unsafe.Pointer(strPtr("GIN-Voice is already active and running in the System Tray (near the clock).\n\n• Press [F4] (or your hotkey) to dictate.\n• Right-click the microphone icon in tray to open settings."))),
+				uintptr(unsafe.Pointer(strPtr("GIN-Voice - Already Running"))),
+				0x00000040,
+			)
+		}
+		os.Exit(0)
+	}
+
 	exePath, _ := os.Executable()
 	appDir = filepath.Dir(exePath)
 	configFile = filepath.Join(appDir, "config.json")
@@ -2605,11 +2738,7 @@ func main() {
 		0, 0, 0, 0, 0,
 		uintptr(unsafe.Pointer(strPtr("Segoe UI"))),
 	)
-	hFontHUD, _, _ = procCreateFontW.Call(
-		21, 0, 0, 0, 700, 0, 0, 0,
-		0, 0, 0, 0, 0,
-		uintptr(unsafe.Pointer(strPtr("Segoe UI"))),
-	)
+	hFontHUD = createHUDFont(config.HUDFont)
 
 	hInstance, _, _ := procGetModuleHandleW.Call(0)
 
