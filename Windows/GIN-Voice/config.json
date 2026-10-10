@@ -1,14 +1,15 @@
 {
-  "version": "v010",
+  "version": "v011",
   "ui_language": "EN",
   "first_run": false,
-  "hotkey": "F8",
-  "hotkey_vk": 119,
+  "hotkey": "F4",
+  "hotkey_vk": 115,
   "hotkey_mod": 0,
   "active_languages": [
     "EN",
     "CS",
-    "RU"
+    "RU",
+    "DE"
   ],
   "all_languages": [
     {
@@ -56,8 +57,8 @@
       "name": "日本語 (Japanese)"
     },
     {
-      "code": "TR",
-      "name": "Türkçe (Turkish)"
+      "code": "KO",
+      "name": "한국어 (Korean)"
     },
     {
       "code": "AR",
@@ -66,6 +67,22 @@
     {
       "code": "HE",
       "name": "עברית (Hebrew)"
+    },
+    {
+      "code": "TR",
+      "name": "Türkçe (Turkish)"
+    },
+    {
+      "code": "PT",
+      "name": "Português (Portuguese)"
+    },
+    {
+      "code": "NL",
+      "name": "Nederlands (Dutch)"
+    },
+    {
+      "code": "SV",
+      "name": "Svenska (Swedish)"
     }
   ],
   "groq_api_key": "",
@@ -73,5 +90,5 @@
   "auto_paste": true,
   "restore_clipboard": true,
   "autostart": false,
-  "linked_knowledge_folder": ""
+  "linked_knowledge_folder": "D:\\AI\\BASE"
 }

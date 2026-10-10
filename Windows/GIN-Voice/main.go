@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -27,8 +28,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v010"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v010]"
+	AppVersion    = "v011"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v011]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -224,6 +225,7 @@ var (
 	procWaveInStop            = winmm.NewProc("waveInStop")
 	procWaveInReset           = winmm.NewProc("waveInReset")
 	procWaveInClose           = winmm.NewProc("waveInClose")
+	procPlaySoundW            = winmm.NewProc("PlaySoundW")
 )
 
 type POINT struct {
@@ -399,7 +401,7 @@ var (
 		{"FR", "Français"},
 	}
 
-	// Recognition languages: EN first (checked by default), CS second, RU third, followed by others
+	// Recognition languages: 18 items (6 rows x 3 columns) perfectly balanced
 	MasterLanguages = []LanguageItem{
 		{"EN", "English (Английский)"},
 		{"CS", "Čeština (Czech)"},
@@ -412,9 +414,13 @@ var (
 		{"PL", "Polski (Polish)"},
 		{"ZH", "中文 (Chinese)"},
 		{"JA", "日本語 (Japanese)"},
-		{"TR", "Türkçe (Turkish)"},
+		{"KO", "한국어 (Korean)"},
 		{"AR", "العربية (Arabic)"},
 		{"HE", "עברית (Hebrew)"},
+		{"TR", "Türkçe (Turkish)"},
+		{"PT", "Português (Portuguese)"},
+		{"NL", "Nederlands (Dutch)"},
+		{"SV", "Svenska (Swedish)"},
 	}
 
 	UIStrings = map[string]UIStringBundle{
@@ -661,11 +667,88 @@ func loadIcons() {
 	hIconRec = loadIconFromFile("app_rec.ico", defaultAppRecIco)
 }
 
-func playBeep(freq, duration uint32) {
-	if config.SoundFeedback {
-		go func() {
-			procBeep.Call(uintptr(freq), uintptr(duration))
-		}()
+func createGentleTone(freq float64, durationMs int, volume float64) []byte {
+	sampleRate := 44100
+	numSamples := sampleRate * durationMs / 1000
+	pcm := make([]byte, numSamples*2)
+
+	for i := 0; i < numSamples; i++ {
+		t := float64(i) / float64(sampleRate)
+		envelope := math.Sin(math.Pi * float64(i) / float64(numSamples))
+		sample := int16(math.Sin(2*math.Pi*freq*t) * envelope * volume * 32767.0)
+
+		pcm[i*2] = byte(sample)
+		pcm[i*2+1] = byte(sample >> 8)
+	}
+
+	dataLen := len(pcm)
+	totalLen := 36 + dataLen
+	byteRate := sampleRate * 1 * 2
+	blockAlign := 2
+
+	buf := make([]byte, 44+dataLen)
+	copy(buf[0:], []byte("RIFF"))
+	buf[4] = byte(totalLen)
+	buf[5] = byte(totalLen >> 8)
+	buf[6] = byte(totalLen >> 16)
+	buf[7] = byte(totalLen >> 24)
+	copy(buf[8:], []byte("WAVE"))
+	copy(buf[12:], []byte("fmt "))
+	buf[16] = 16
+	buf[20] = 1 // PCM
+	buf[22] = 1 // mono
+	buf[24] = byte(sampleRate)
+	buf[25] = byte(sampleRate >> 8)
+	buf[26] = byte(sampleRate >> 16)
+	buf[27] = byte(sampleRate >> 24)
+	buf[28] = byte(byteRate)
+	buf[29] = byte(byteRate >> 8)
+	buf[30] = byte(byteRate >> 16)
+	buf[31] = byte(byteRate >> 24)
+	buf[32] = byte(blockAlign)
+	buf[33] = byte(blockAlign >> 8)
+	buf[34] = 16 // 16 bits
+	buf[35] = 0
+	copy(buf[36:], []byte("data"))
+	buf[40] = byte(dataLen)
+	buf[41] = byte(dataLen >> 8)
+	buf[42] = byte(dataLen >> 16)
+	buf[43] = byte(dataLen >> 24)
+	copy(buf[44:], pcm)
+	return buf
+}
+
+var (
+	soundStartRecord = createGentleTone(580.0, 85, 0.16) // Gentle high soft chime
+	soundStopRecord  = createGentleTone(440.0, 85, 0.14) // Gentle low soft chime
+	soundSave        = createGentleTone(620.0, 90, 0.15) // Gentle save confirmation
+	soundNotice      = createGentleTone(350.0, 110, 0.14) // Subtle soft blip
+)
+
+func playGentleSound(soundType string) {
+	if !config.SoundFeedback {
+		return
+	}
+	var soundData []byte
+	switch soundType {
+	case "start":
+		soundData = soundStartRecord
+	case "stop":
+		soundData = soundStopRecord
+	case "save":
+		soundData = soundSave
+	default:
+		soundData = soundNotice
+	}
+
+	if len(soundData) > 0 {
+		go func(data []byte) {
+			procPlaySoundW.Call(
+				uintptr(unsafe.Pointer(&data[0])),
+				0,
+				0x0001|0x0004|0x0002, // SND_ASYNC | SND_MEMORY | SND_NODEFAULT
+			)
+		}(soundData)
 	}
 }
 
@@ -723,19 +806,20 @@ func initTrayIcon() {
 
 func loadConfig() {
 	config = Config{
-		Version:          AppVersion,
-		UILanguage:       "EN", // English by default
-		FirstRun:         false,
-		Hotkey:           "F8",
-		HotkeyVK:         VK_F8,
-		HotkeyMod:        0,
-		ActiveLanguages:  []string{"EN", "CS", "RU"}, // English, Czech and Russian enabled by default for multi-lingual dictation
-		AllLanguages:     MasterLanguages,
-		GroqAPIKey:       "", // Strictly empty by default - no hardcoded keys, no env fallback
-		SoundFeedback:    true,
-		AutoPaste:        true,
-		RestoreClipboard: true,
-		Autostart:        false,
+		Version:               AppVersion,
+		UILanguage:            "EN", // English by default
+		FirstRun:              false,
+		Hotkey:                "F4",
+		HotkeyVK:              VK_F4,
+		HotkeyMod:             0,
+		ActiveLanguages:       []string{"EN", "CS", "RU", "DE"}, // EN, CS, RU, DE enabled by default
+		AllLanguages:          MasterLanguages,
+		GroqAPIKey:            "", // Strictly empty by default - no hardcoded keys, no env fallback
+		SoundFeedback:         true,
+		AutoPaste:             true,
+		RestoreClipboard:      true,
+		Autostart:             false,
+		LinkedKnowledgeFolder: `D:\AI\BASE`,
 	}
 
 	data, err := os.ReadFile(configFile)
@@ -747,8 +831,17 @@ func loadConfig() {
 		config.UILanguage = "EN"
 	}
 
+	if config.Hotkey == "" {
+		config.Hotkey = "F4"
+		config.HotkeyVK = VK_F4
+	}
+
+	if config.LinkedKnowledgeFolder == "" {
+		config.LinkedKnowledgeFolder = `D:\AI\BASE`
+	}
+
 	if len(config.ActiveLanguages) == 0 {
-		config.ActiveLanguages = []string{"EN", "CS", "RU"}
+		config.ActiveLanguages = []string{"EN", "CS", "RU", "DE"}
 	}
 
 	config.AllLanguages = MasterLanguages
@@ -996,7 +1089,7 @@ func startRecording() {
 
 	cleanKey := strings.TrimSpace(config.GroqAPIKey)
 	if cleanKey == "" {
-		playBeep(250, 200)
+		playGentleSound("notice")
 		showSettingsDialog()
 		return
 	}
@@ -1004,12 +1097,12 @@ func startRecording() {
 	err := startRecordingWaveIn()
 	if err != nil {
 		writeLog("WaveIn start error: " + err.Error())
-		playBeep(250, 150)
+		playGentleSound("notice")
 		return
 	}
 
 	isRecording = true
-	playBeep(880, 100)
+	playGentleSound("start")
 	ui := getUI()
 	updateTrayState(true, fmt.Sprintf("%s | %s", AppTitle, fmt.Sprintf(ui.HudRecording, config.Hotkey)))
 	updateHUD(true, fmt.Sprintf(ui.HudRecording, config.Hotkey))
@@ -1026,7 +1119,7 @@ func stopRecordingAndTranscribe() {
 	recordMutex.Unlock()
 
 	ui := getUI()
-	playBeep(440, 100)
+	playGentleSound("stop")
 	updateTrayState(false, AppTitle+" | "+ui.HudTranscribing)
 	updateHUD(true, ui.HudTranscribing)
 
@@ -1041,7 +1134,7 @@ func stopRecordingAndTranscribe() {
 
 		if len(wavBytes) < 2000 {
 			writeLog(fmt.Sprintf("Audio recording too short: %d bytes", len(wavBytes)))
-			playBeep(220, 200)
+			playGentleSound("notice")
 			updateHUD(true, ui.HudEmpty)
 			return
 		}
@@ -1049,7 +1142,7 @@ func stopRecordingAndTranscribe() {
 		text, err := transcribeAudioBytes(wavBytes)
 		if err != nil {
 			writeLog("Transcription error: " + err.Error())
-			playBeep(220, 300)
+			playGentleSound("notice")
 			updateHUD(true, fmt.Sprintf(ui.HudError, err.Error()))
 			return
 		}
@@ -1455,7 +1548,7 @@ func showSettingsDialog() {
 	screenHeight, _, _ := procGetSystemMetrics.Call(1)
 
 	winW := int32(840)
-	winH := int32(590)
+	winH := int32(640)
 	posX := (int32(screenWidth) - winW) / 2
 	posY := (int32(screenHeight) - winH) / 2
 
@@ -1560,7 +1653,7 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(btnBrowse, WM_SETFONT, hFontBold, 1)
 
-	// 4. Recognition Language Checklist
+	// 4. Recognition Language Checklist (18 languages: 6 rows x 3 columns)
 	lblLangs, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsLangs))),
@@ -1572,7 +1665,7 @@ func showSettingsDialog() {
 	startX := int32(24)
 	startY := int32(296)
 	colW := int32(260)
-	rowH := int32(32)
+	rowH := int32(28)
 
 	for i, lang := range MasterLanguages {
 		col := int32(i % 3)
@@ -1778,7 +1871,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			config.ActiveLanguages = langs
 
 			saveConfig()
-			playBeep(880, 150)
+			playGentleSound("save")
 			procShowWindow.Call(hwnd, SW_HIDE)
 			initTrayIcon()
 			ui := getUI()
@@ -1946,7 +2039,7 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
-    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v010.exe' -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v011.exe' -Force -ErrorAction SilentlyContinue
 }
 `, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath)
 
@@ -1983,7 +2076,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v010.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v011.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
