@@ -1,4 +1,4 @@
-# 🎙️ GIN-Voice [v015] — User Guide & Personalization Help
+# 🎙️ GIN-Voice [v016] — User Guide & Personalization Help
 
 > **Product:** GIN-Voice by VladiMIR+AI  
 > **Target OS:** Windows 10 / 11 (64-bit)  

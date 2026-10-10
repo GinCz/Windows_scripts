@@ -30,8 +30,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v015"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v015]"
+	AppVersion    = "v016"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v016]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -121,6 +121,7 @@ const (
 	IDM_OPEN_HELP     = 1007
 	IDM_EXIT          = 1008
 	IDM_UPDATE_APP    = 1009
+	IDM_CHECK_UPDATE  = 1010
 
 	IDM_UI_LANG_BASE = 1500
 	IDM_LANG_BASE    = 2000
@@ -314,28 +315,29 @@ type LanguageItem struct {
 }
 
 type UIStringBundle struct {
-	MenuStartDictation string
-	MenuStopDictation  string
-	MenuSpeechLang     string
-	MenuInterfaceLang  string
-	MenuKeyConfigured  string
-	MenuKeyNotSet      string
-	MenuOpenDict       string
-	MenuLinkFolder     string
-	MenuAutostart      string
-	MenuHelp           string
-	MenuExit           string
-	SettingsTitle      string
-	SettingsHeader     string
-	SettingsKeyLabel   string
-	SettingsGetGroq    string
-	SettingsTestBtn    string
-	SettingsHotkey     string
-	SettingsHotkeyTip  string
-	SettingsFolder     string
-	SettingsBrowse     string
-	SettingsLangs      string
-	SettingsSave       string
+	MenuStartDictation  string
+	MenuStopDictation   string
+	MenuSpeechLang      string
+	MenuInterfaceLang   string
+	MenuKeyConfigured   string
+	MenuKeyNotSet       string
+	MenuOpenDict        string
+	MenuLinkFolder      string
+	MenuAutostart       string
+	MenuHelp            string
+	MenuExit            string
+	MenuCheckUpdates    string
+	SettingsTitle       string
+	SettingsHeader      string
+	SettingsKeyLabel    string
+	SettingsGetGroq     string
+	SettingsTestBtn     string
+	SettingsHotkey      string
+	SettingsHotkeyTip   string
+	SettingsFolder      string
+	SettingsBrowse      string
+	SettingsLangs       string
+	SettingsSave        string
 	SettingsDict        string
 	HudRecording        string
 	HudTranscribing     string
@@ -346,6 +348,9 @@ type UIStringBundle struct {
 	HudUpdateDone       string
 	HudUpdateError      string
 	HudUpdateNotice     string
+	HudCheckingUpdate   string
+	HudUpToDate         string
+	HudCheckFailed      string
 	MenuUpdateAvailable string
 	Ready               string
 }
@@ -460,6 +465,7 @@ var (
 			MenuLinkFolder:      "📁 Link Knowledge Folder...",
 			MenuAutostart:       "⚡ Autostart on Windows Boot",
 			MenuHelp:            "❓ Setup Guide & Help",
+			MenuCheckUpdates:    "🔄 Check for Updates...",
 			MenuExit:            "❌ Exit GIN-Voice",
 			SettingsTitle:       "GIN-Voice - Settings & Control Center",
 			SettingsHeader:      "🎙️ GIN-Voice by VladiMIR+AI — Instant Voice Typing",
@@ -482,6 +488,9 @@ var (
 			HudUpdateDone:       "✅ Update downloaded! Restarting...",
 			HudUpdateError:      "❌ Update failed: %s",
 			HudUpdateNotice:     "✨ GIN-Voice %s update is available!",
+			HudCheckingUpdate:   "🔍 Checking for updates...",
+			HudUpToDate:         "✅ GIN-Voice is up to date (%s)",
+			HudCheckFailed:      "⚠️ Update check failed: %s",
 			Ready:               "Ready",
 		},
 		"RU": {
@@ -496,6 +505,7 @@ var (
 			MenuLinkFolder:      "📁 Привязать общую папку с базами знаний...",
 			MenuAutostart:       "⚡ Автозапуск при старте Windows",
 			MenuHelp:            "❓ Инструкция и справка",
+			MenuCheckUpdates:    "🔄 Проверить обновления...",
 			MenuExit:            "❌ Выход из GIN-Voice",
 			SettingsTitle:       "GIN-Voice - Центр Управления",
 			SettingsHeader:      "🎙️ GIN-Voice by VladiMIR+AI — Мгновенный Голосовой Ввод",
@@ -518,6 +528,9 @@ var (
 			HudUpdateDone:       "✅ Обновление загружено! Перезапуск...",
 			HudUpdateError:      "❌ Ошибка обновления: %s",
 			HudUpdateNotice:     "✨ Доступна новая версия GIN-Voice %s!",
+			HudCheckingUpdate:   "🔍 Проверка обновлений...",
+			HudUpToDate:         "✅ У вас последняя версия GIN-Voice (%s)",
+			HudCheckFailed:      "⚠️ Ошибка проверки обновлений: %s",
 			Ready:               "Готов к работе",
 		},
 		"CS": {
@@ -532,6 +545,7 @@ var (
 			MenuLinkFolder:      "📁 Propojit složku znalostí...",
 			MenuAutostart:       "⚡ Automatické spuštění při startu Windows",
 			MenuHelp:            "❓ Nápověda a průvodce",
+			MenuCheckUpdates:    "🔄 Zkontrolovat aktualizace...",
 			MenuExit:            "❌ Ukončit GIN-Voice",
 			SettingsTitle:       "GIN-Voice - Nastavení a Ovládací Centrum",
 			SettingsHeader:      "🎙️ GIN-Voice od VladiMIR+AI — Okamžité Hlasové Psaní",
@@ -554,6 +568,9 @@ var (
 			HudUpdateDone:       "✅ Aktualizace stažena! Restartuji...",
 			HudUpdateError:      "❌ Chyba aktualizace: %s",
 			HudUpdateNotice:     "✨ Je k dispozici nová verze GIN-Voice %s!",
+			HudCheckingUpdate:   "🔍 Kontrola aktualizací...",
+			HudUpToDate:         "✅ Používáte nejnovější verzi GIN-Voice (%s)",
+			HudCheckFailed:      "⚠️ Kontrola aktualizací selhala: %s",
 			Ready:               "Připraven",
 		},
 		"IT": {
@@ -568,6 +585,7 @@ var (
 			MenuLinkFolder:      "📁 Collega cartella progetti...",
 			MenuAutostart:       "⚡ Avvio automatico con Windows",
 			MenuHelp:            "❓ Guida e supporto",
+			MenuCheckUpdates:    "🔄 Controlla aggiornamenti...",
 			MenuExit:            "❌ Esci da GIN-Voice",
 			SettingsTitle:       "GIN-Voice - Centro di controllo",
 			SettingsHeader:      "🎙️ GIN-Voice by VladiMIR+AI — Digitazione vocale istantanea",
@@ -590,6 +608,9 @@ var (
 			HudUpdateDone:       "✅ Aggiornamento pronto! Riavvio...",
 			HudUpdateError:      "❌ Errore aggiornamento: %s",
 			HudUpdateNotice:     "✨ È disponibile una nuova versione di GIN-Voice %s!",
+			HudCheckingUpdate:   "🔍 Controllo aggiornamenti...",
+			HudUpToDate:         "✅ GIN-Voice è aggiornato (%s)",
+			HudCheckFailed:      "⚠️ Controllo aggiornamenti fallito: %s",
 			Ready:               "Pronto",
 		},
 		"ES": {
@@ -604,6 +625,7 @@ var (
 			MenuLinkFolder:      "📁 Vincular carpeta de conocimientos...",
 			MenuAutostart:       "⚡ Inicio automático con Windows",
 			MenuHelp:            "❓ Guía y ayuda",
+			MenuCheckUpdates:    "🔄 Buscar actualizaciones...",
 			MenuExit:            "❌ Salir de GIN-Voice",
 			SettingsTitle:       "GIN-Voice - Centro de control",
 			SettingsHeader:      "🎙️ GIN-Voice por VladiMIR+AI — Dictado por voz instantáneo",
@@ -626,6 +648,9 @@ var (
 			HudUpdateDone:       "✅ Actualización lista! Reiniciando...",
 			HudUpdateError:      "❌ Error al actualizar: %s",
 			HudUpdateNotice:     "✨ ¡Nueva versión de GIN-Voice %s disponible!",
+			HudCheckingUpdate:   "🔍 Buscando actualizaciones...",
+			HudUpToDate:         "✅ GIN-Voice está actualizado (%s)",
+			HudCheckFailed:      "⚠️ Error al buscar actualizaciones: %s",
 			Ready:               "Listo",
 		},
 		"FR": {
@@ -640,6 +665,7 @@ var (
 			MenuLinkFolder:      "📁 Lier le dossier de connaissances...",
 			MenuAutostart:       "⚡ Démarrage automatique avec Windows",
 			MenuHelp:            "❓ Guide d'installation et aide",
+			MenuCheckUpdates:    "🔄 Vérifier les mises à jour...",
 			MenuExit:            "❌ Quitter GIN-Voice",
 			SettingsTitle:       "GIN-Voice - Centre de configuration",
 			SettingsHeader:      "🎙️ GIN-Voice par VladiMIR+AI — Saisie vocale instantanée",
@@ -662,6 +688,9 @@ var (
 			HudUpdateDone:       "✅ Mise à jour prête ! Redémarrage...",
 			HudUpdateError:      "❌ Échec de la mise à jour : %s",
 			HudUpdateNotice:     "✨ Une nouvelle version de GIN-Voice %s est disponible !",
+			HudCheckingUpdate:   "🔍 Vérification des mises à jour...",
+			HudUpToDate:         "✅ GIN-Voice est à jour (%s)",
+			HudCheckFailed:      "⚠️ Échec de la vérification : %s",
 			Ready:               "Prêt",
 		},
 	}
@@ -1488,32 +1517,65 @@ func isNewerVersion(remote, local string) bool {
 	return remote != "" && remote != local
 }
 
-func checkForUpdates() {
-	client := &http.Client{Timeout: 6 * time.Second}
-	url := "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/version.json"
-	resp, err := client.Get(url)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return
+func triggerCheckForUpdates(manual bool) {
+	ui := getUI()
+	if manual {
+		updateHUD(true, ui.HudCheckingUpdate)
+		playGentleSound("notice")
 	}
 
-	var info RemoteVersionInfo
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return
-	}
+	go func() {
+		client := &http.Client{Timeout: 8 * time.Second}
+		url := "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/version.json"
+		resp, err := client.Get(url)
+		if err != nil {
+			if manual {
+				writeLog("Manual update check failed: " + err.Error())
+				updateHUD(true, fmt.Sprintf(ui.HudCheckFailed, "Connection error"))
+				time.Sleep(3 * time.Second)
+				updateHUD(false, "")
+			}
+			return
+		}
+		defer resp.Body.Close()
 
-	remoteVer := strings.TrimSpace(info.Version)
-	if remoteVer != "" && isNewerVersion(remoteVer, AppVersion) {
-		updateMutex.Lock()
-		updateAvailable = remoteVer
-		updateMutex.Unlock()
+		if resp.StatusCode != http.StatusOK {
+			if manual {
+				writeLog(fmt.Sprintf("Manual update HTTP error: %d", resp.StatusCode))
+				updateHUD(true, fmt.Sprintf(ui.HudCheckFailed, fmt.Sprintf("HTTP %d", resp.StatusCode)))
+				time.Sleep(3 * time.Second)
+				updateHUD(false, "")
+			}
+			return
+		}
 
-		writeLog(fmt.Sprintf("Update detected: %s (Current: %s)", remoteVer, AppVersion))
-	}
+		var info RemoteVersionInfo
+		if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+			if manual {
+				updateHUD(true, fmt.Sprintf(ui.HudCheckFailed, "Invalid response"))
+				time.Sleep(3 * time.Second)
+				updateHUD(false, "")
+			}
+			return
+		}
+
+		remoteVer := strings.TrimSpace(info.Version)
+		if remoteVer != "" && isNewerVersion(remoteVer, AppVersion) {
+			updateMutex.Lock()
+			updateAvailable = remoteVer
+			updateMutex.Unlock()
+
+			writeLog(fmt.Sprintf("Update detected: %s (Current: %s)", remoteVer, AppVersion))
+			performSelfUpdate(remoteVer)
+		} else {
+			if manual {
+				updateHUD(true, fmt.Sprintf(ui.HudUpToDate, AppVersion))
+				playGentleSound("save")
+				time.Sleep(3 * time.Second)
+				updateHUD(false, "")
+			}
+		}
+	}()
 }
 
 func performSelfUpdate(latestVer string) {
@@ -1589,10 +1651,8 @@ func performSelfUpdate(latestVer string) {
 		time.Sleep(900 * time.Millisecond)
 
 		pid := os.Getpid()
-		targetDir := filepath.Dir(currExe)
-		versionExe := filepath.Join(targetDir, fmt.Sprintf("GIN-Voice_%s.exe", latestVer))
 
-		// PowerShell script gracefully stops current process, replaces GIN-Voice.exe and GIN-Voice_<ver>.exe in target folder, preserves config.json and dictionary.json 100%, and relaunches GIN-Voice.exe
+		// PowerShell script gracefully stops current process, replaces GIN-Voice.exe, preserves config.json and dictionary.json 100%, and relaunches GIN-Voice.exe
 		psScript := fmt.Sprintf(`
 Start-Sleep -Milliseconds 400
 Stop-Process -Id %d -Force -ErrorAction SilentlyContinue
@@ -1601,7 +1661,6 @@ $tries = 0
 while ($tries -lt 25) {
     try {
         Copy-Item -Path '%s' -Destination '%s' -Force
-        Copy-Item -Path '%s' -Destination '%s' -Force -ErrorAction SilentlyContinue
         break
     } catch {
         Start-Sleep -Milliseconds 300
@@ -1610,7 +1669,7 @@ while ($tries -lt 25) {
 }
 Remove-Item -Path '%s' -Force -ErrorAction SilentlyContinue
 Start-Process -FilePath '%s'
-`, pid, tempExe, currExe, tempExe, versionExe, tempExe, currExe)
+`, pid, tempExe, currExe, tempExe, currExe)
 
 		cmd := exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psScript)
 		_ = cmd.Start()
@@ -1859,12 +1918,16 @@ func showContextMenu() {
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_HELP, uintptr(unsafe.Pointer(strPtr(ui.MenuHelp))))
 
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_CHECK_UPDATE, uintptr(unsafe.Pointer(strPtr(ui.MenuCheckUpdates))))
+
+	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr(ui.MenuExit))))
 
 	var pt POINT
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
 	procSetForegroundWindow.Call(hwndMain)
 	procTrackPopupMenu.Call(hMenu, TPM_RIGHTBUTTON, uintptr(pt.X), uintptr(pt.Y), 0, hwndMain, 0)
+	procPostMessageW.Call(hwndMain, 0, 0, 0)
 }
 
 func showSettingsDialog() {
@@ -2072,23 +2135,8 @@ func handleMenuCommand(cmdID uintptr) {
 	switch {
 	case cmdID == IDM_TOGGLE_RECORD:
 		go toggleRecording()
-	case cmdID == IDM_UPDATE_APP:
-		updateMutex.Lock()
-		latest := updateAvailable
-		updateMutex.Unlock()
-		if latest != "" {
-			go performSelfUpdate(latest)
-		} else {
-			go func() {
-				checkForUpdates()
-				updateMutex.Lock()
-				latest := updateAvailable
-				updateMutex.Unlock()
-				if latest != "" {
-					performSelfUpdate(latest)
-				}
-			}()
-		}
+	case cmdID == IDM_CHECK_UPDATE || cmdID == IDM_UPDATE_APP:
+		triggerCheckForUpdates(true)
 	case cmdID == IDM_SETUP_KEY || cmdID == IDM_OPEN_CONFIG:
 		showSettingsDialog()
 	case cmdID >= IDM_UI_LANG_BASE && cmdID < IDM_UI_LANG_BASE+uintptr(len(UILanguages)):
@@ -2436,7 +2484,7 @@ func checkAndSelfInstall() {
 	if entries, err := os.ReadDir(targetDir); err == nil {
 		for _, entry := range entries {
 			name := entry.Name()
-			if strings.HasPrefix(name, "GIN-Voice_v") || strings.HasPrefix(name, "GIN-Voice_Setup_v") {
+			if strings.HasPrefix(name, "GIN-Voice_v") || strings.HasPrefix(name, "GIN-Voice_Setup") {
 				_ = os.Remove(filepath.Join(targetDir, name))
 			}
 		}
@@ -2519,6 +2567,18 @@ func main() {
 		_ = os.WriteFile(helpFile, defaultSetupGuideHTML, 0644)
 	}
 
+	// Clean up any installer or legacy version binaries from app directory
+	if entries, err := os.ReadDir(appDir); err == nil {
+		for _, entry := range entries {
+			name := entry.Name()
+			if !entry.IsDir() {
+				if strings.HasPrefix(name, "GIN-Voice_Setup") || (strings.HasPrefix(name, "GIN-Voice_v") && !strings.EqualFold(name, filepath.Base(exePath))) {
+					_ = os.Remove(filepath.Join(appDir, name))
+				}
+			}
+		}
+	}
+
 	writeLog("=== GIN-Voice [" + AppVersion + "] Starting ===")
 
 	loadConfig()
@@ -2578,15 +2638,16 @@ func main() {
 		0, 0, hInstance, 0,
 	)
 
+	initTrayIcon()
 	initHUD()
 	startHotkeyListener()
 
 	go func() {
-		time.Sleep(2 * time.Second)
-		checkForUpdates()
+		time.Sleep(3 * time.Second)
+		triggerCheckForUpdates(false)
 		ticker := time.NewTicker(2 * time.Hour)
 		for range ticker.C {
-			checkForUpdates()
+			triggerCheckForUpdates(false)
 		}
 	}()
 
@@ -2595,13 +2656,8 @@ func main() {
 		if config.FirstRun {
 			config.FirstRun = false
 			saveConfig()
-			if _, err := os.Stat(helpFile); err == nil {
-				procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(helpFile))), 0, 0, SW_SHOWNORMAL)
-			}
 		}
 		showSettingsDialog()
-	} else {
-		initTrayIcon()
 	}
 
 	var msg MSG
