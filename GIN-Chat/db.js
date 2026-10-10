@@ -137,10 +137,21 @@ db.exec(`
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    user_agent TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
   CREATE INDEX IF NOT EXISTS idx_chat_members_user ON chat_members(user_id);
   CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
   CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+  CREATE INDEX IF NOT EXISTS idx_push_subs_user ON push_subscriptions(user_id);
 `);
 
 // Migrations for existing databases

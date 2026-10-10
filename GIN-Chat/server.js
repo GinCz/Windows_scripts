@@ -19,6 +19,13 @@ const io = new Server(server, {
   maxHttpBufferSize: 50 * 1024 * 1024 // 50MB file support
 });
 
+// Real-time online users tracking Map (userId -> Set of socket.ids)
+const onlineUsers = new Map();
+function isUserOnline(userId) {
+  const uid = Number(userId);
+  return onlineUsers.has(uid) && onlineUsers.get(uid).size > 0;
+}
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'gin_super_jwt_secret_chat_2026';
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -563,16 +570,20 @@ app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
 // Send Test Push Notification
 app.post('/api/push/test', authMiddleware, async (req, res) => {
   try {
+    const subs = db.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?').all(req.user.id);
+    if (!subs || subs.length === 0) {
+      return res.status(400).json({ error: 'Нет активных Push-подписок на сервере. Пожалуйста, сначала включите Push на этом устройстве.' });
+    }
     await sendPushToUser(req.user.id, {
       title: '🔔 Тестовое оповещение GIN-Chat',
       body: 'Поздравляем! Web Push успешно работает на вашем устройстве.',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: '/icons/icon-192-v30.png',
+      badge: '/icons/badge-monochrome.png',
       tag: 'test_push',
       renotify: true,
       data: { url: '/' }
     });
-    res.json({ success: true, message: 'Тестовый пуш отправлен!' });
+    res.json({ success: true, message: `Тестовый пуш отправлен на ${subs.length} устр.!` });
   } catch (err) {
     console.error('Push test error:', err);
     res.status(500).json({ error: 'Ошибка отправки тестового пуша' });
@@ -590,7 +601,11 @@ app.get('/api/admin/users', authMiddleware, requireAdmin, (req, res) => {
     FROM users
     ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, id DESC
   `).all();
-  res.json({ users });
+  const enrichedUsers = users.map(u => ({
+    ...u,
+    is_online: isUserOnline(u.id)
+  }));
+  res.json({ users: enrichedUsers });
 });
 
 // Get single user details by ID
@@ -891,12 +906,18 @@ app.get('/api/chats', authMiddleware, (req, res) => {
       `).get(chat.id, userId);
 
       if (otherMember) {
-        partner = otherMember;
+        partner = {
+          ...otherMember,
+          is_online: isUserOnline(otherMember.id)
+        };
         chatName = otherMember.name;
         chatAvatar = otherMember.avatar;
       } else {
         const selfMember = db.prepare(`SELECT id, name, username, avatar, last_seen FROM users WHERE id = ?`).get(userId);
-        partner = selfMember;
+        partner = {
+          ...selfMember,
+          is_online: isUserOnline(userId)
+        };
         chatName = 'Избранное (Заметки)';
       }
     }
@@ -1068,7 +1089,10 @@ app.get('/api/chats/:id', authMiddleware, (req, res) => {
     if (otherMember) {
       enrichedChat.name = otherMember.name;
       enrichedChat.avatar = otherMember.avatar;
-      enrichedChat.partner = otherMember;
+      enrichedChat.partner = {
+        ...otherMember,
+        is_online: isUserOnline(otherMember.id)
+      };
 
       commonGroups = db.prepare(`
         SELECT c.id, c.name, c.avatar,
@@ -1084,13 +1108,18 @@ app.get('/api/chats/:id', authMiddleware, (req, res) => {
     }
   }
 
-  const members = db.prepare(`
+  const rawMembers = db.prepare(`
     SELECT u.id, u.name, u.username, u.avatar, u.last_seen, cm.role, cm.joined_at
     FROM chat_members cm
     JOIN users u ON cm.user_id = u.id
     WHERE cm.chat_id = ?
     ORDER BY CASE cm.role WHEN 'owner' THEN 1 WHEN 'admin' THEN 2 ELSE 3 END, u.name ASC
   `).all(chatId);
+
+  const members = rawMembers.map(m => ({
+    ...m,
+    is_online: isUserOnline(m.id)
+  }));
 
   let pinnedMessage = null;
   if (chat.pinned_message_id) {
@@ -1656,7 +1685,12 @@ app.get('/api/users/search', authMiddleware, (req, res) => {
     `).all(myId);
   }
 
-  res.json({ users });
+  const enrichedUsers = users.map(u => ({
+    ...u,
+    is_online: isUserOnline(u.id)
+  }));
+
+  res.json({ users: enrichedUsers });
 });
 
 // ----------------------------------------------------
@@ -1726,8 +1760,6 @@ setInterval(() => {
 // ----------------------------------------------------
 // SOCKET.IO REAL-TIME LOGIC
 // ----------------------------------------------------
-
-const onlineUsers = new Map();
 
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
@@ -1844,7 +1876,7 @@ io.on('connection', (socket) => {
                 title: isGroup ? `${chatTitle} (${sender.name})` : sender.name,
                 body: bodyPreview,
                 icon: sender.avatar || '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
+                badge: '/icons/badge-monochrome.png',
                 tag: `chat_${chatId}`,
                 renotify: true,
                 data: {
@@ -1933,7 +1965,7 @@ io.on('connection', (socket) => {
                 title: isGroup ? `${chatTitle} • ${sender.name}` : sender.name,
                 body: `↪️ Переслано: ${origMsg.type === 'text' ? (textDecrypted || '') : origMsg.type}`,
                 icon: sender.avatar || '/icons/icon-192.png',
-                badge: '/icons/icon-192.png',
+                badge: '/icons/badge-monochrome.png',
                 tag: `chat_${targetChatId}`,
                 renotify: true,
                 data: {
@@ -1953,6 +1985,74 @@ io.on('connection', (socket) => {
     } catch (err) {
       console.error('Socket forward_message error:', err);
       if (callback) callback({ error: 'Ошибка пересылки сообщения' });
+    }
+  });
+
+  socket.on('forward_messages', async ({ messageIds, targetChatIds }, callback) => {
+    try {
+      if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+        if (callback) callback({ error: 'Не выбраны сообщения' });
+        return;
+      }
+      if (!targetChatIds || !Array.isArray(targetChatIds) || targetChatIds.length === 0) {
+        if (callback) callback({ error: 'Не выбраны получатели' });
+        return;
+      }
+
+      const placeholders = messageIds.map(() => '?').join(',');
+      const origMessages = db.prepare(`SELECT * FROM messages WHERE id IN (${placeholders}) ORDER BY id ASC`).all(...messageIds);
+      if (!origMessages || origMessages.length === 0) {
+        if (callback) callback({ error: 'Сообщения не найдены' });
+        return;
+      }
+
+      const sender = db.prepare('SELECT id, name, username, avatar FROM users WHERE id = ?').get(userId);
+      let totalForwarded = 0;
+
+      for (const origMsg of origMessages) {
+        const origSender = db.prepare('SELECT name, username FROM users WHERE id = ?').get(origMsg.sender_id);
+        const origSenderName = origSender ? origSender.name : 'Пользователь';
+        const textDecrypted = origMsg.type === 'text' && origMsg.text_encrypted ? decryptText(origMsg.text_encrypted) : '';
+        const forwardText = origMsg.type === 'text' ? `↪️ Переслано от ${origSenderName}:\n${textDecrypted}` : (origMsg.text_encrypted ? decryptText(origMsg.text_encrypted) : null);
+        const encryptedForwardText = forwardText ? encryptText(forwardText) : null;
+
+        for (const targetChatId of targetChatIds) {
+          const member = db.prepare('SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?').get(targetChatId, userId);
+          if (!member && user.role !== 'superadmin') continue;
+
+          const info = db.prepare(`
+            INSERT INTO messages (chat_id, sender_id, text_encrypted, reply_to_id, type, file_url, file_name, file_size, file_duration)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `).run(targetChatId, userId, encryptedForwardText, null, origMsg.type, origMsg.file_url, origMsg.file_name, origMsg.file_size, origMsg.file_duration);
+
+          db.prepare('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(targetChatId);
+
+          const messagePayload = {
+            id: info.lastInsertRowid,
+            chat_id: targetChatId,
+            sender_id: userId,
+            sender,
+            text: forwardText || '',
+            type: origMsg.type,
+            file_url: origMsg.file_url,
+            file_name: origMsg.file_name,
+            file_size: origMsg.file_size,
+            file_duration: origMsg.file_duration,
+            reply_to: null,
+            reactions: {},
+            is_edited: false,
+            created_at: new Date().toISOString()
+          };
+
+          io.to('chat_' + targetChatId).emit('new_message', messagePayload);
+          totalForwarded++;
+        }
+      }
+
+      if (callback) callback({ success: true, count: totalForwarded });
+    } catch (err) {
+      console.error('Socket forward_messages error:', err);
+      if (callback) callback({ error: 'Ошибка пакетной пересылки' });
     }
   });
 
@@ -1997,6 +2097,37 @@ io.on('connection', (socket) => {
       if (callback) callback({ success: true });
     } catch (err) {
       if (callback) callback({ error: 'Ошибка удаления' });
+    }
+  });
+
+  socket.on('delete_messages', ({ messageIds, chatId }, callback) => {
+    try {
+      if (!Array.isArray(messageIds) || messageIds.length === 0) {
+        return callback && callback({ error: 'Не выбраны сообщения для удаления' });
+      }
+
+      const isPrivileged = (user.role === 'superadmin' || user.role === 'admin');
+      const deletedIds = [];
+
+      for (const mid of messageIds) {
+        const msg = db.prepare('SELECT * FROM messages WHERE id = ? AND chat_id = ?').get(mid, chatId);
+        if (msg && (msg.sender_id === userId || isPrivileged)) {
+          db.prepare('DELETE FROM messages WHERE id = ?').run(mid);
+          deletedIds.push(Number(mid));
+        }
+      }
+
+      if (deletedIds.length > 0) {
+        io.to('chat_' + chatId).emit('messages_deleted', {
+          chatId: Number(chatId),
+          messageIds: deletedIds
+        });
+      }
+
+      if (callback) callback({ success: true, count: deletedIds.length });
+    } catch (err) {
+      console.error('delete_messages error:', err);
+      if (callback) callback({ error: 'Ошибка пакетного удаления' });
     }
   });
 
@@ -2054,7 +2185,7 @@ io.on('connection', (socket) => {
       title: `📞 Входящий ${type === 'video' ? 'видеозвонок' : 'аудиозвонок'}`,
       body: `${user.name} (@${user.username}) вызывает вас в GIN-Chat`,
       icon: user.avatar || '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      badge: '/icons/badge-monochrome.png',
       tag: `call_${userId}`,
       urgency: 'high',
       ttl: 45,

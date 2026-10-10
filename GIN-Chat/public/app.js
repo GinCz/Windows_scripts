@@ -8,6 +8,10 @@ let replyMessage = null;
 let editingMessage = null;
 let currentUploadXhr = null;
 
+// Multi-message selection state
+let isSelectionMode = false;
+let selectedMessageIds = new Set();
+
 // Voice recording state
 let mediaRecorder = null;
 let audioChunks = [];
@@ -98,10 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const msgInput = document.getElementById('messageInput');
   msgInput?.addEventListener('input', () => {
     msgInput.style.height = 'auto';
-    msgInput.style.height = Math.min(msgInput.scrollHeight, 120) + 'px';
+    msgInput.style.height = Math.min(msgInput.scrollHeight, 150) + 'px';
     const hasText = msgInput.value.trim().length > 0;
     document.getElementById('sendBtn').classList.toggle('hidden', !hasText);
     document.getElementById('voiceBtn').classList.toggle('hidden', hasText);
+    if (activeChat) scrollToBottom();
   });
 });
 
@@ -292,6 +297,8 @@ function initApp() {
   loadChats().then(() => {
     handleUrlRouting();
   });
+  checkPushStatus();
+  autoSyncPushSubscription();
 }
 
 // ----------------------------------------------------
@@ -309,7 +316,8 @@ function connectSocket() {
   });
 
   socket.on('new_message', (msg) => {
-    if (activeChat && Number(activeChat.id) === Number(msg.chat_id)) {
+    const isCurrentActiveChat = activeChat && Number(activeChat.id) === Number(msg.chat_id);
+    if (isCurrentActiveChat) {
       if (!document.getElementById(`msg-${msg.id}`)) {
         appendMessageToView(msg);
         scrollToBottom();
@@ -318,6 +326,11 @@ function connectSocket() {
     }
     playMessageSound();
     loadChats();
+
+    // Show system notification if window/tab is not active or chat is not active
+    if (document.hidden || !document.hasFocus() || !isCurrentActiveChat) {
+      showLocalSystemNotification(msg);
+    }
   });
 
   socket.on('message_edited', ({ chatId, messageId, text }) => {
@@ -351,6 +364,26 @@ function connectSocket() {
         msgRow.style.transform = 'scale(0.8)';
         setTimeout(() => msgRow.remove(), 250);
       }
+      if (selectedMessageIds.has(messageId)) {
+        selectedMessageIds.delete(messageId);
+        updateSelectionUI();
+      }
+    }
+    loadChats();
+  });
+
+  socket.on('messages_deleted', ({ chatId, messageIds }) => {
+    if (activeChat && activeChat.id === chatId && Array.isArray(messageIds)) {
+      messageIds.forEach(id => {
+        const msgRow = document.getElementById(`msg-${id}`);
+        if (msgRow) {
+          msgRow.style.opacity = '0';
+          msgRow.style.transform = 'scale(0.8)';
+          setTimeout(() => msgRow.remove(), 250);
+        }
+        selectedMessageIds.delete(id);
+      });
+      updateSelectionUI();
     }
     loadChats();
   });
@@ -442,10 +475,36 @@ function connectSocket() {
     }
   });
 
-  socket.on('user_status', ({ userId, status }) => {
-    if (activeChat && activeChat.partner && activeChat.partner.id === userId) {
-      activeChat.partner.is_online = status === 'online';
+  socket.on('user_status', ({ userId, status, last_seen }) => {
+    const isOnline = status === 'online';
+
+    // Update activeChat partner
+    if (activeChat && activeChat.partner && activeChat.partner.id === Number(userId)) {
+      activeChat.partner.is_online = isOnline;
+      if (last_seen) activeChat.partner.last_seen = last_seen;
       updateChatHeaderSubtitle();
+
+      // If contact profile modal is currently open, live update its status
+      const detailsModal = document.getElementById('chatDetailsModal');
+      if (detailsModal && !detailsModal.classList.contains('hidden')) {
+        const statusEl = document.getElementById('directDetailsStatus');
+        if (statusEl) {
+          statusEl.innerHTML = formatUserStatus(isOnline, activeChat.partner.last_seen);
+        }
+      }
+    }
+
+    // Update allChats partner state
+    let chatUpdated = false;
+    allChats.forEach(c => {
+      if (c.type === 'direct' && c.partner && c.partner.id === Number(userId)) {
+        c.partner.is_online = isOnline;
+        if (last_seen) c.partner.last_seen = last_seen;
+        chatUpdated = true;
+      }
+    });
+    if (chatUpdated) {
+      renderChatsList();
     }
   });
 
@@ -458,21 +517,96 @@ function connectSocket() {
   socket.on('call_ice_candidate', handleCallIceCandidate);
 }
 
+let globalAudioCtx = null;
+function getSharedAudioContext() {
+  if (!globalAudioCtx) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) globalAudioCtx = new AudioCtx();
+  }
+  if (globalAudioCtx && globalAudioCtx.state === 'suspended') {
+    globalAudioCtx.resume().catch(() => {});
+  }
+  return globalAudioCtx;
+}
+
+if (typeof window !== 'undefined') {
+  ['click', 'touchstart', 'touchend', 'keydown'].forEach((eventName) => {
+    window.addEventListener(eventName, () => {
+      getSharedAudioContext();
+    }, { passive: true });
+  });
+}
+
 function playMessageSound() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.2);
-  } catch (e) {}
+    // 1. Mobile Vibration (Android / Chrome PWA)
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate([200, 100, 200]);
+      } catch (ve) {}
+    }
+
+    // 2. Audible tone via HTML5 Audio file
+    try {
+      const msgAudio = new Audio('/sounds/message.wav');
+      msgAudio.volume = 0.85;
+      msgAudio.play().catch(() => {});
+    } catch (ae) {}
+
+    // 3. Web Audio API synthesized backup
+    const ctx = getSharedAudioContext();
+    if (ctx) {
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime);
+      osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    }
+  } catch (e) {
+    console.warn('playMessageSound error:', e);
+  }
+}
+
+function showLocalSystemNotification(msg) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  try {
+    const senderName = msg.sender_name || (msg.user ? msg.user.name : 'GIN-Chat');
+    let body = msg.text || '';
+    if (msg.type === 'voice') body = '🎤 Голосовое сообщение';
+    else if (msg.type === 'image') body = '📷 Фотография';
+    else if (msg.type === 'file') body = `📎 Файл: ${msg.file_name || 'документ'}`;
+
+    const options = {
+      body: body || 'Новое входящее сообщение',
+      icon: '/icons/icon-192-v30.png',
+      badge: '/icons/badge-monochrome.png',
+      tag: 'chat_' + (msg.chat_id || 'direct'),
+      renotify: true,
+      vibrate: [300, 100, 300],
+      data: { url: '/?chat=' + (msg.chat_id || ''), chatId: msg.chat_id }
+    };
+
+    getSwRegistration().then((reg) => {
+      if (reg && reg.showNotification) {
+        reg.showNotification(senderName, options);
+      } else {
+        new Notification(senderName, options);
+      }
+    }).catch(() => {
+      try { new Notification(senderName, options); } catch (e) {}
+    });
+  } catch (err) {
+    console.warn('showLocalSystemNotification non-fatal:', err);
+  }
 }
 
 // ----------------------------------------------------
@@ -553,6 +687,7 @@ function renderChatsList() {
 
 async function selectChat(chatId) {
   try {
+    exitSelectionMode();
     const res = await fetch(`/api/chats/${chatId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -609,16 +744,12 @@ async function selectChat(chatId) {
       document.getElementById('pinnedBar').classList.add('hidden');
     }
 
-    if (activeChat.type === 'group') {
-      const slug = encodeURIComponent((activeChat.name || 'group').trim().replace(/[\s\/]+/g, '_'));
-      const code = activeChat.invite_code || activeChat.id;
-      if (window.location.hash !== `#/group/${code}/${slug}`) {
-        history.replaceState({ chatId }, '', `#/group/${code}/${slug}`);
-      }
-    } else {
-      if (window.location.hash !== '#/c/' + chatId) {
-        history.replaceState({ chatId }, '', '#/c/' + chatId);
-      }
+    const targetHash = activeChat.type === 'group'
+      ? `#/group/${activeChat.invite_code || activeChat.id}/${encodeURIComponent((activeChat.name || 'group').trim().replace(/[\s\/]+/g, '_'))}`
+      : `#/c/${chatId}`;
+
+    if (window.location.hash !== targetHash) {
+      history.pushState({ view: 'chat', chatId }, '', targetHash);
     }
 
     renderChatsList();
@@ -630,14 +761,19 @@ async function selectChat(chatId) {
 
 function updateChatHeaderSubtitle() {
   const sub = document.getElementById('chatHeaderSubtitle');
-  if (!activeChat) return;
+  if (!sub || !activeChat) return;
   if (activeChat.type === 'group') {
     sub.innerText = `${activeChat.members ? activeChat.members.length : 0} участников`;
   } else {
-    if (activeChat.partner && activeChat.partner.username) {
-      sub.innerText = `@${activeChat.partner.username} • в сети`;
+    const partner = activeChat.partner || {};
+    const isOnline = partner.is_online === true;
+    const lastSeen = partner.last_seen;
+    const handle = partner.username ? `@${partner.username} • ` : '';
+
+    if (isOnline) {
+      sub.innerHTML = `${handle}<span class="status-dot online"></span> <span class="text-success" style="font-weight:600;">в сети</span>`;
     } else {
-      sub.innerText = 'в сети';
+      sub.innerHTML = `${handle}${formatUserStatus(false, lastSeen)}`;
     }
   }
 }
@@ -683,6 +819,7 @@ function appendMessageToView(msg) {
       <button class="msg-act-btn msg-act-emoji" onclick="toggleReaction(${msg.id}, '🔥')" title="Огонь 🔥">🔥</button>
       <button class="msg-act-btn msg-act-emoji" onclick="toggleReaction(${msg.id}, '😂')" title="Смех 😂">😂</button>
       <button class="msg-act-btn reaction-more" onclick="openReactionPicker(event, ${msg.id})" title="Все 25 реакций"><i class="fa-regular fa-face-smile"></i></button>
+      <button class="msg-act-btn" onclick="toggleSelectMessage(${msg.id}, event)" title="Выбрать"><i class="fa-regular fa-square-check"></i></button>
       <button class="msg-act-btn forward" onclick="openForwardModal(${msg.id})" title="Переслать"><i class="fa-solid fa-share"></i></button>
       <button class="msg-act-btn" onclick="setReplyMessageById(${msg.id})" title="Ответить"><i class="fa-solid fa-reply"></i></button>
       ${(canModify && msg.type === 'text') ? `<button class="msg-act-btn" onclick="startEditMessage(${msg.id}, '${escapeForJs(msg.text)}')" title="Редактировать"><i class="fa-solid fa-pencil"></i></button>` : ''}
@@ -798,15 +935,41 @@ function appendMessageToView(msg) {
   bubble.className = 'msg-bubble';
   bubble.innerHTML = contentHtml;
 
+  // Selection Checkmark Element
+  const checkEl = document.createElement('div');
+  checkEl.className = 'msg-select-check';
+  checkEl.innerHTML = '<i class="fa-solid fa-check"></i>';
+  checkEl.title = 'Выбрать';
+  checkEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSelectMessage(msg.id, e);
+  });
+
   bubble.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     setReplyMessage(msg);
   });
-  bubble.addEventListener('dblclick', () => {
+  bubble.addEventListener('dblclick', (e) => {
+    if (isSelectionMode) return;
     toggleReaction(msg.id, '👍');
   });
+  bubble.addEventListener('click', (e) => {
+    if (isSelectionMode) {
+      // If clicking interactive controls inside bubble, ignore
+      if (e.target.closest('button, a, input, audio, video, .msg-action-bar, .audio-seek-track')) return;
+      e.preventDefault();
+      toggleSelectMessage(msg.id, e);
+    }
+  });
 
+  row.appendChild(checkEl);
   row.appendChild(bubble);
+
+  // Restore selection state if message was already selected
+  if (selectedMessageIds.has(msg.id)) {
+    row.classList.add('selected');
+  }
+
   container.appendChild(row);
 
   renderReactions(msg.id, msg.reactions);
@@ -880,13 +1043,58 @@ function formatTime(iso) {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatUserStatus(isOnline, lastSeenIso) {
+  if (isOnline) {
+    return '<span class="status-dot online"></span> <span class="text-success" style="font-weight:600;">в сети</span>';
+  }
+  if (!lastSeenIso) {
+    return '<span class="status-dot offline"></span> <span class="text-muted">не в сети</span>';
+  }
+  try {
+    const d = new Date(lastSeenIso);
+    const now = new Date();
+    const diffMs = now - d;
+    const diffMins = Math.floor(diffMs / 60000);
+    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (diffMins < 1) {
+      return '<span class="status-dot offline"></span> <span class="text-muted">был(а) только что</span>';
+    }
+    if (diffMins < 60) {
+      return `<span class="status-dot offline"></span> <span class="text-muted">был(а) ${diffMins} мин. назад</span>`;
+    }
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+      return `<span class="status-dot offline"></span> <span class="text-muted">был(а) сегодня в ${timeStr}</span>`;
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return `<span class="status-dot offline"></span> <span class="text-muted">был(а) вчера в ${timeStr}</span>`;
+    }
+    return `<span class="status-dot offline"></span> <span class="text-muted">был(а) ${d.toLocaleDateString([], { day: 'numeric', month: 'short' })} в ${timeStr}</span>`;
+  } catch (e) {
+    return '<span class="status-dot offline"></span> <span class="text-muted">не в сети</span>';
+  }
+}
+
 function scrollToBottom() {
   const el = document.getElementById('messagesContainer');
   el.scrollTop = el.scrollHeight;
 }
 
-function backToChatsList() {
+function backToChatsList(triggerHistory = true) {
   document.body.classList.remove('mobile-chat-open');
+  activeChat = null;
+  const activeChatEl = document.getElementById('activeChatContainer');
+  if (activeChatEl) activeChatEl.classList.add('hidden');
+  const emptyChatEl = document.getElementById('emptyChatState');
+  if (emptyChatEl) emptyChatEl.classList.remove('hidden');
+  
+  if (triggerHistory && window.location.hash && window.location.hash !== '#/' && window.location.hash !== '') {
+    history.pushState({ view: 'list' }, '', '#/');
+  }
+  renderChatsList();
 }
 
 // ----------------------------------------------------
@@ -1529,20 +1737,184 @@ document.addEventListener('click', (e) => {
 });
 
 // ----------------------------------------------------
+// MULTI-MESSAGE SELECTION SYSTEM
+// ----------------------------------------------------
+function toggleSelectionMode(forceState) {
+  if (typeof forceState === 'boolean') {
+    isSelectionMode = forceState;
+  } else {
+    isSelectionMode = !isSelectionMode;
+  }
+
+  const bar = document.getElementById('selectionBar');
+  const container = document.getElementById('messagesContainer');
+  const headerBtn = document.getElementById('headerSelectMessagesBtn');
+
+  if (isSelectionMode) {
+    if (bar) bar.classList.remove('hidden');
+    if (container) container.classList.add('selection-mode');
+    if (headerBtn) headerBtn.classList.add('active');
+  } else {
+    if (bar) bar.classList.add('hidden');
+    if (container) container.classList.remove('selection-mode');
+    if (headerBtn) headerBtn.classList.remove('active');
+    selectedMessageIds.clear();
+    document.querySelectorAll('.msg-row.selected').forEach(r => r.classList.remove('selected'));
+  }
+
+  updateSelectionUI();
+}
+
+function exitSelectionMode() {
+  toggleSelectionMode(false);
+}
+
+function toggleSelectMessage(msgId, event) {
+  if (event) {
+    event.stopPropagation();
+  }
+
+  // If selection mode wasn't active, activate it immediately
+  if (!isSelectionMode) {
+    toggleSelectionMode(true);
+  }
+
+  const id = Number(msgId);
+  const row = document.getElementById(`msg-${id}`);
+
+  if (selectedMessageIds.has(id)) {
+    selectedMessageIds.delete(id);
+    if (row) row.classList.remove('selected');
+  } else {
+    selectedMessageIds.add(id);
+    if (row) row.classList.add('selected');
+  }
+
+  updateSelectionUI();
+}
+
+function toggleSelectAllMessages() {
+  if (!activeChat) return;
+  if (!isSelectionMode) {
+    toggleSelectionMode(true);
+  }
+
+  const allRows = Array.from(document.querySelectorAll('#messagesScroll .msg-row'));
+  const allIds = allRows.map(r => Number(r.id.replace('msg-', ''))).filter(n => !isNaN(n));
+
+  const allSelected = allIds.length > 0 && allIds.every(id => selectedMessageIds.has(id));
+
+  if (allSelected) {
+    // Unselect all
+    selectedMessageIds.clear();
+    allRows.forEach(r => r.classList.remove('selected'));
+  } else {
+    // Select all
+    allIds.forEach(id => selectedMessageIds.add(id));
+    allRows.forEach(r => r.classList.add('selected'));
+  }
+
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const count = selectedMessageIds.size;
+  const countText = document.getElementById('selectionCountText');
+  const forwardCountBadge = document.getElementById('forwardSelectedCountBadge');
+  const deleteCountBadge = document.getElementById('deleteSelectedCountBadge');
+  const forwardBtn = document.getElementById('deleteSelectedBtn') ? document.getElementById('forwardSelectedBtn') : null;
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  const selectAllBtn = document.getElementById('selectAllBtn');
+
+  if (countText) countText.innerText = `Выбрано: ${count}`;
+  if (forwardCountBadge) forwardCountBadge.innerText = count;
+  if (deleteCountBadge) deleteCountBadge.innerText = count;
+
+  if (forwardBtn) forwardBtn.disabled = count === 0;
+  if (deleteBtn) deleteBtn.disabled = count === 0;
+
+  const allRows = document.querySelectorAll('#messagesScroll .msg-row');
+  const totalCount = allRows.length;
+
+  if (selectAllBtn) {
+    if (totalCount > 0 && count === totalCount) {
+      selectAllBtn.innerHTML = '<i class="fa-solid fa-xmark"></i> Снять выбор';
+    } else {
+      selectAllBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Выбрать все';
+    }
+  }
+}
+
+function forwardSelectedMessages() {
+  if (selectedMessageIds.size === 0) return;
+  const idsArray = Array.from(selectedMessageIds).sort((a, b) => a - b);
+  openForwardModal(idsArray);
+}
+
+function deleteSelectedMessages() {
+  if (!activeChat || !socket || selectedMessageIds.size === 0) return;
+
+  const count = selectedMessageIds.size;
+  const confirmMsg = count === 1 
+    ? 'Удалить выбранное сообщение?' 
+    : `Удалить выбранные сообщения (${count} шт.)?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  const idsArray = Array.from(selectedMessageIds);
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  if (deleteBtn) {
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Удаление...';
+  }
+
+  socket.emit('delete_messages', {
+    chatId: activeChat.id,
+    messageIds: idsArray
+  }, (res) => {
+    if (deleteBtn) {
+      deleteBtn.disabled = false;
+      deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Удалить (<span id="deleteSelectedCountBadge">0</span>)`;
+    }
+
+    if (res && res.error) {
+      alert(res.error);
+    } else {
+      showToast(`Удалено сообщений: ${res && res.count !== undefined ? res.count : idsArray.length}`);
+      exitSelectionMode();
+    }
+  });
+}
+
+// ----------------------------------------------------
 // FORWARD MESSAGE SYSTEM (Compact Vertical & Multi-Select)
 // ----------------------------------------------------
-let forwardMessageId = null;
+let forwardMessageIds = []; // Can be array of IDs or single ID in array
 let forwardSelectedRecipients = new Set();
 let forwardAvailableItems = [];
 
-async function openForwardModal(messageId) {
-  forwardMessageId = messageId;
+async function openForwardModal(targetIds) {
+  if (Array.isArray(targetIds)) {
+    forwardMessageIds = targetIds.map(Number);
+  } else if (targetIds) {
+    forwardMessageIds = [Number(targetIds)];
+  } else {
+    forwardMessageIds = [];
+  }
+
   forwardSelectedRecipients.clear();
   updateForwardSubmitButton();
 
   const modal = document.getElementById('forwardModal');
+  const modalTitle = document.getElementById('forwardModalTitle');
   const searchInput = document.getElementById('forwardSearchInput');
   const listContainer = document.getElementById('forwardRecipientsList');
+
+  if (modalTitle) {
+    const count = forwardMessageIds.length;
+    modalTitle.innerHTML = `<i class="fa-solid fa-share text-primary"></i> Переслать ${count > 1 ? `сообщения (${count})` : 'сообщение'}`;
+  }
+
   if (searchInput) searchInput.value = '';
   modal.classList.remove('hidden');
 
@@ -1654,7 +2026,7 @@ function updateForwardSubmitButton() {
 }
 
 async function submitForwardMessage() {
-  if (!forwardMessageId || forwardSelectedRecipients.size === 0) return;
+  if (!forwardMessageIds || forwardMessageIds.length === 0 || forwardSelectedRecipients.size === 0) return;
 
   const btn = document.getElementById('submitForwardBtn');
   btn.disabled = true;
@@ -1687,20 +2059,41 @@ async function submitForwardMessage() {
       return;
     }
 
-    socket.emit('forward_message', {
-      messageId: forwardMessageId,
-      targetChatIds
-    }, (resp) => {
-      btn.disabled = false;
-      btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)`;
-      if (resp && resp.error) {
-        alert(resp.error);
-      } else {
-        closeModal('forwardModal');
-        showToast(`Сообщение успешно переслано (${targetChatIds.length})!`);
-        loadChats();
-      }
-    });
+    if (forwardMessageIds.length === 1) {
+      // Single message forward
+      socket.emit('forward_message', {
+        messageId: forwardMessageIds[0],
+        targetChatIds
+      }, (resp) => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)`;
+        if (resp && resp.error) {
+          alert(resp.error);
+        } else {
+          closeModal('forwardModal');
+          showToast(`Сообщение успешно переслано (${targetChatIds.length})!`);
+          exitSelectionMode();
+          loadChats();
+        }
+      });
+    } else {
+      // Multi-message batch forward
+      socket.emit('forward_messages', {
+        messageIds: forwardMessageIds,
+        targetChatIds
+      }, (resp) => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Переслать (<span id="forwardSelectedCount">0</span>)`;
+        if (resp && resp.error) {
+          alert(resp.error);
+        } else {
+          closeModal('forwardModal');
+          showToast(`Сообщения успешно пересланы (${forwardMessageIds.length} шт.)!`);
+          exitSelectionMode();
+          loadChats();
+        }
+      });
+    }
   } catch (err) {
     alert('Ошибка пересылки сообщения');
     btn.disabled = false;
@@ -2453,7 +2846,7 @@ function openChatDetailsModal() {
     renderChatMembersList();
   } else {
     // DIRECT 1-ON-1 CHAT PROFILE
-    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-id-badge text-primary"></i> Профиль собеседника';
+    if (titleEl) titleEl.innerHTML = '';
     if (groupBlock) groupBlock.classList.add('hidden');
     if (directBlock) directBlock.classList.remove('hidden');
 
@@ -2464,26 +2857,24 @@ function openChatDetailsModal() {
     const partnerRole = partner.role || 'user';
     const isPartnerOnline = partner.is_online || false;
 
-    updateAvatarElement('directDetailsAvatar', partnerAvatar, partnerName, 'avatar-xl');
+    updateAvatarElement('directDetailsAvatar', partnerAvatar, partnerName, 'avatar-lg');
 
     const nameEl = document.getElementById('directDetailsName');
-    if (nameEl) {
-      let roleBadge = '';
-      if (partnerRole === 'superadmin') roleBadge = '<span class="badge badge-danger">👑 Создатель</span>';
-      else if (partnerRole === 'admin') roleBadge = '<span class="badge badge-warning">🛡️ Администратор</span>';
-      else roleBadge = '<span class="badge badge-primary">Пользователь</span>';
-
-      nameEl.innerHTML = `${escapeHtml(partnerName)} ${roleBadge}`;
-    }
+    if (nameEl) nameEl.innerText = partnerName;
 
     const handleEl = document.getElementById('directDetailsHandle');
     if (handleEl) handleEl.innerText = partnerUsername ? `@${partnerUsername}` : '';
 
+    const roleEl = document.getElementById('directDetailsRole');
+    if (roleEl) {
+      if (partnerRole === 'superadmin') roleEl.innerHTML = '<span class="badge badge-danger">👑 Создатель</span>';
+      else if (partnerRole === 'admin') roleEl.innerHTML = '<span class="badge badge-warning">🛡️ Администратор</span>';
+      else roleEl.innerHTML = '<span class="badge badge-primary">Пользователь</span>';
+    }
+
     const statusEl = document.getElementById('directDetailsStatus');
     if (statusEl) {
-      statusEl.innerHTML = isPartnerOnline
-        ? '<span class="status-dot online"></span> <span class="text-success" style="font-weight:600;">в сети</span>'
-        : '<span class="status-dot offline"></span> <span class="text-muted">не в сети</span>';
+      statusEl.innerHTML = formatUserStatus(isPartnerOnline, partner.last_seen);
     }
 
     const infoList = document.getElementById('directProfileInfoList');
@@ -3126,7 +3517,13 @@ function closeAvatarCropper() {
 // ----------------------------------------------------
 
 function toggleMainMenu() {
-  document.getElementById('mainMenu').classList.toggle('hidden');
+  const m = document.getElementById('mainMenu');
+  if (m) {
+    m.classList.toggle('hidden');
+    if (!m.classList.contains('hidden')) {
+      checkPushStatus();
+    }
+  }
 }
 
 function closeMainMenu() {
@@ -3507,6 +3904,48 @@ async function handleUrlRouting() {
 
 window.addEventListener('hashchange', () => {
   handleUrlRouting();
+});
+
+// Android & Mobile Back Button Navigation Handler (popstate)
+window.addEventListener('popstate', (event) => {
+  // 1. If any modal dialog is currently open, close it first
+  const openModals = document.querySelectorAll('.modal-overlay:not(.hidden)');
+  if (openModals.length > 0) {
+    openModals.forEach(m => {
+      if (m.id) closeModal(m.id);
+    });
+    return;
+  }
+
+  // 2. If fullscreen media lightbox is open, close lightbox
+  const lightbox = document.getElementById('lightboxOverlay');
+  if (lightbox && !lightbox.classList.contains('hidden')) {
+    closeLightbox();
+    return;
+  }
+
+  // 3. If emoji picker or GIF picker is open, close it
+  const emojiPicker = document.getElementById('emojiPicker');
+  if (emojiPicker && !emojiPicker.classList.contains('hidden')) {
+    emojiPicker.classList.add('hidden');
+    return;
+  }
+  const gifPicker = document.getElementById('gifPicker');
+  if (gifPicker && !gifPicker.classList.contains('hidden')) {
+    closeGifPicker();
+    return;
+  }
+
+  // 4. If mobile chat view is open, return back to the contacts / chats list
+  if (document.body.classList.contains('mobile-chat-open')) {
+    backToChatsList(false);
+    return;
+  }
+
+  // 5. If state contains specific navigation or hash changed
+  if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '') {
+    handleUrlRouting();
+  }
 });
 
 // ----------------------------------------------------
@@ -4458,30 +4897,68 @@ function urlBase64ToUint8Array(base64String) {
 async function getSwRegistration() {
   if (!('serviceWorker' in navigator)) return null;
   try {
-    return await navigator.serviceWorker.ready;
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg) return reg;
+    return await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((resolve) => setTimeout(() => resolve(null), 2500))
+    ]);
   } catch (e) {
     return null;
   }
 }
 
-async function checkPushStatus() {
+function updatePushStatusUI(status) {
   const badge = document.getElementById('pushStatusBadge');
   const btn = document.getElementById('pushEnableBtn');
-  if (!badge || !btn) return;
+  const menuBadge = document.getElementById('mainMenuPushBadge');
+  const menuIcon = document.getElementById('mainMenuPushIcon');
+  const menuText = document.getElementById('mainMenuPushText');
 
+  if (status === 'unsupported') {
+    if (badge) { badge.className = 'badge badge-secondary'; badge.innerText = 'Не поддерживается'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-ban"></i> Не поддерживается'; }
+    if (menuBadge) { menuBadge.className = 'badge badge-secondary'; menuBadge.innerText = 'Н/Д'; }
+    if (menuIcon) { menuIcon.className = 'fa-solid fa-ban text-secondary'; }
+    if (menuText) { menuText.innerText = 'Push: Не поддерживается'; }
+  } else if (status === 'denied') {
+    if (badge) { badge.className = 'badge badge-danger'; badge.innerText = 'Заблокировано'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-lock"></i> Разрешите в браузере'; }
+    if (menuBadge) { menuBadge.className = 'badge badge-danger'; menuBadge.innerText = 'Блок'; }
+    if (menuIcon) { menuIcon.className = 'fa-solid fa-lock text-danger'; }
+    if (menuText) { menuText.innerText = 'Push: Разрешите в браузере'; }
+  } else if (status === 'granted') {
+    if (badge) { badge.className = 'badge badge-success'; badge.innerText = 'Включено (Активно)'; }
+    if (btn) {
+      btn.className = 'btn btn-outline btn-xs';
+      btn.innerHTML = '<i class="fa-solid fa-bell-slash"></i> Отключить Push';
+      btn.disabled = false;
+    }
+    if (menuBadge) { menuBadge.className = 'badge badge-success'; menuBadge.innerText = 'Вкл'; }
+    if (menuIcon) { menuIcon.className = 'fa-solid fa-bell text-success'; }
+    if (menuText) { menuText.innerText = 'Уведомления (Вкл)'; }
+  } else {
+    // off
+    if (badge) { badge.className = 'badge badge-warning'; badge.innerText = 'Выключено'; }
+    if (btn) {
+      btn.className = 'btn btn-primary btn-xs';
+      btn.innerHTML = '<i class="fa-solid fa-bell"></i> Включить Push';
+      btn.disabled = false;
+    }
+    if (menuBadge) { menuBadge.className = 'badge badge-warning'; menuBadge.innerText = 'Выкл'; }
+    if (menuIcon) { menuIcon.className = 'fa-solid fa-bell-slash text-warning'; }
+    if (menuText) { menuText.innerText = 'Уведомления (Выкл)'; }
+  }
+}
+
+async function checkPushStatus() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    badge.className = 'badge badge-secondary';
-    badge.innerText = 'Не поддерживается';
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-ban"></i> Не поддерживается';
+    updatePushStatusUI('unsupported');
     return;
   }
 
   if (Notification.permission === 'denied') {
-    badge.className = 'badge badge-danger';
-    badge.innerText = 'Заблокировано';
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-lock"></i> Разрешите в браузере';
+    updatePushStatusUI('denied');
     return;
   }
 
@@ -4490,20 +4967,53 @@ async function checkPushStatus() {
     if (!reg) return;
     const sub = await reg.pushManager.getSubscription();
     if (sub && Notification.permission === 'granted') {
-      badge.className = 'badge badge-success';
-      badge.innerText = 'Включено (Активно)';
-      btn.className = 'btn btn-outline btn-xs';
-      btn.innerHTML = '<i class="fa-solid fa-bell-slash"></i> Отключить Push';
-      btn.disabled = false;
+      updatePushStatusUI('granted');
     } else {
-      badge.className = 'badge badge-warning';
-      badge.innerText = 'Выключено';
-      btn.className = 'btn btn-primary btn-xs';
-      btn.innerHTML = '<i class="fa-solid fa-bell"></i> Включить Push';
-      btn.disabled = false;
+      updatePushStatusUI('off');
     }
   } catch (e) {
     console.error('checkPushStatus error:', e);
+  }
+}
+
+async function autoSyncPushSubscription() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!token || Notification.permission !== 'granted') return;
+
+  try {
+    const reg = await getSwRegistration();
+    if (!reg) return;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      // User has notifications enabled in Android/Browser settings, auto-subscribe!
+      const keyRes = await fetch('/api/push/vapid-public-key');
+      const keyData = await keyRes.json();
+      if (!keyData.publicKey) return;
+      const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
+      try {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey
+        });
+      } catch (subErr) {
+        console.warn('autoSync push subscribe error:', subErr);
+      }
+    }
+
+    if (sub) {
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          subscription: sub.toJSON(),
+          userAgent: navigator.userAgent
+        })
+      });
+      await checkPushStatus();
+    }
+  } catch (err) {
+    console.warn('autoSyncPushSubscription non-fatal:', err);
   }
 }
 
@@ -4513,22 +5023,29 @@ async function togglePushSubscription() {
     return;
   }
 
-  const reg = await getSwRegistration();
+  let reg = await getSwRegistration();
   if (!reg) {
-    alert('Служба Service Worker еще инициализируется. Пожалуйста, подождите или перезагрузите страницу.');
-    return;
+    try {
+      reg = await navigator.serviceWorker.register('/sw.js');
+      await navigator.serviceWorker.ready;
+    } catch (e) {
+      alert('Служба Service Worker еще инициализируется. Пожалуйста, подождите или перезагрузите страницу.');
+      return;
+    }
   }
 
   try {
     const existingSub = await reg.pushManager.getSubscription();
     if (existingSub) {
-      // Unsubscribe
+      // Toggle to unsubscribe
       await existingSub.unsubscribe();
-      await fetch('/api/push/unsubscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ endpoint: existingSub.endpoint })
-      });
+      try {
+        await fetch('/api/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ endpoint: existingSub.endpoint })
+        });
+      } catch (netErr) {}
       showToast('🔕 Push-оповещения отключены');
       await checkPushStatus();
       return;
@@ -4550,10 +5067,22 @@ async function togglePushSubscription() {
     }
 
     const applicationServerKey = urlBase64ToUint8Array(keyData.publicKey);
-    const newSub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey
-    });
+    let newSub;
+    try {
+      newSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey
+      });
+    } catch (subErr) {
+      console.warn('Initial pushManager.subscribe failed, trying clean attempt:', subErr);
+      // If previous subscription orphaned or key changed, clear and retry
+      const staleSub = await reg.pushManager.getSubscription();
+      if (staleSub) await staleSub.unsubscribe();
+      newSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey
+      });
+    }
 
     const subJson = newSub.toJSON();
     const saveRes = await fetch('/api/push/subscribe', {
@@ -4565,15 +5094,18 @@ async function togglePushSubscription() {
       })
     });
 
+    const saveJson = await saveRes.json().catch(() => ({}));
     if (saveRes.ok) {
       showToast('🔔 Push-оповещения успешно включены!');
       await checkPushStatus();
     } else {
-      alert('Не удалось зарегистрировать Push-подписку на сервере');
+      alert('Не удалось зарегистрировать Push на сервере: ' + (saveJson.error || 'Ошибка сервера'));
+      await checkPushStatus();
     }
   } catch (err) {
     console.error('togglePushSubscription error:', err);
-    alert('Ошибка при настройке Push-оповещений: ' + err.message);
+    alert('Ошибка при настройке Push-оповещений: ' + (err.message || err.name || 'неизвестная ошибка'));
+    await checkPushStatus();
   }
 }
 

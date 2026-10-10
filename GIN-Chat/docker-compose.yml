@@ -11,6 +11,9 @@ services:
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
+      - ./public:/app/public
+      - ./server.js:/app/server.js
+      - ./db.js:/app/db.js
     environment:
       - PORT=3000
       - NODE_ENV=production

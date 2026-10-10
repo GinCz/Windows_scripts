@@ -9,8 +9,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon-v30.svg">
   <link rel="alternate icon" type="image/svg+xml" href="/favicon-v30.svg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/style.css?v=20261010_v030">
-    <link rel="manifest" href="/manifest.json?v=20261010_v030">
+  <link rel="stylesheet" href="/css/style.css?v=20261010_v034">
+    <link rel="manifest" href="/manifest.json?v=20261010_v034">
   <meta name="theme-color" content="#180a2b">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -110,7 +110,7 @@
           <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener noreferrer" class="btn-docs-github" title="Подробное описание работы GIN-Chat на GitHub ↗">
             <i class="fa-brands fa-github"></i> Подробное описание работы чата ↗
           </a>
-          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v030 ↗</a>
+          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v034 ↗</a>
         </div>
       </div>
     </div>
@@ -144,11 +144,12 @@
           <button class="menu-item" onclick="openNewGroupModal()"><i class="fa-solid fa-users text-primary"></i> Создать группу</button>
           <button class="menu-item" id="adminPanelMenuBtn" onclick="openAdminModal()"><i class="fa-solid fa-shield-halved text-warning"></i> Панель администратора <span class="badge badge-warning hidden" id="pendingUsersBadge">0</span></button>
           <button class="menu-item" onclick="openProfileModal()"><i class="fa-solid fa-gear"></i> Настройки профиля</button>
+          <button class="menu-item" id="mainMenuPushBtn" onclick="togglePushSubscription()"><i class="fa-solid fa-bell text-warning" id="mainMenuPushIcon"></i> <span id="mainMenuPushText">Уведомления (Push)</span> <span class="badge badge-warning" id="mainMenuPushBadge" style="margin-left: auto;">Выкл</span></button>
           <button class="menu-item" onclick="toggleTheme()"><i class="fa-solid fa-moon" id="themeIcon"></i> Сменить тему</button>
           <button class="menu-item" onclick="toggleDisplayMode()"><i class="fa-solid fa-mobile-screen text-primary"></i> <span id="menuModeText">Режим: Мобильный / ПК</span></button>
           <button class="menu-item" onclick="openWallpaperModal()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
           <button class="menu-item" id="pwaMenuInstallBtn" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
-          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v030)</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v034)</button>
           <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -176,7 +177,7 @@
         <button id="pwaInstallBtn" class="btn-sidebar-pwa" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v030 ↗</a>
+        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v034 ↗</a>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -213,8 +214,28 @@
             <div class="chat-header-actions">
               <button class="icon-btn" id="headerAudioCallBtn" onclick="startDirectCall('audio')" title="Голосовой звонок (P2P E2EE)"><i class="fa-solid fa-phone"></i></button>
               <button class="icon-btn" id="headerVideoCallBtn" onclick="startDirectCall('video')" title="Видеозвонок (P2P E2EE)"><i class="fa-solid fa-video"></i></button>
+              <button class="icon-btn" id="headerSelectMessagesBtn" onclick="toggleSelectionMode()" title="Выбрать сообщения (несколько / все)"><i class="fa-solid fa-list-check"></i></button>
             </div>
           </header>
+
+          <!-- Multiple Messages Selection Bar -->
+          <div class="selection-bar hidden" id="selectionBar">
+            <div class="selection-info">
+              <span id="selectionCountText">Выбрано: 0</span>
+              <button type="button" class="btn btn-outline btn-xs" id="selectAllBtn" onclick="toggleSelectAllMessages()"><i class="fa-solid fa-check-double"></i> Выбрать все</button>
+            </div>
+            <div class="selection-actions">
+              <button type="button" class="btn btn-primary btn-xs" id="forwardSelectedBtn" onclick="forwardSelectedMessages()" disabled title="Переслать выбранные">
+                <i class="fa-solid fa-share"></i> Переслать (<span id="forwardSelectedCountBadge">0</span>)
+              </button>
+              <button type="button" class="btn btn-danger btn-xs" id="deleteSelectedBtn" onclick="deleteSelectedMessages()" disabled title="Удалить выбранные">
+                <i class="fa-solid fa-trash"></i> Удалить (<span id="deleteSelectedCountBadge">0</span>)
+              </button>
+              <button type="button" class="icon-btn selection-close-btn" onclick="exitSelectionMode()" title="Отменить выбор">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
 
           <!-- Pinned Message Bar -->
           <div class="pinned-bar hidden" id="pinnedBar">
@@ -251,7 +272,7 @@
           </div>
 
           <!-- Chat Input Area -->
-          <footer class="chat-input-area">
+          <footer class="chat-input-area" id="chatInputArea">
             <!-- Attachment Menu -->
             <div class="attachment-menu hidden" id="attachmentMenu">
               <button class="attach-item" onclick="triggerFileInput('image/*')"><i class="fa-solid fa-image"></i> Фото или Картинка</button>
@@ -259,17 +280,6 @@
             </div>
 
             <input type="file" id="hiddenFileInput" class="hidden" onchange="handleFileSelected(event)">
-
-            <button class="icon-btn" id="attachBtn" onclick="toggleAttachmentMenu()" title="Прикрепить файл"><i class="fa-solid fa-paperclip"></i></button>
-
-            <!-- Emoji Picker Trigger -->
-            <button class="icon-btn" id="emojiBtn" onclick="toggleEmojiPicker()" title="Смайлики"><i class="fa-regular fa-face-smile"></i></button>
-
-            <!-- GIF & Animated Stickers Trigger (/gif) -->
-            <button class="icon-btn gif-btn" id="gifBtn" onclick="toggleGifPicker()" title="GIF-анимации и стикеры (/gif)">GIF</button>
-
-            <!-- Schedule Message Trigger -->
-            <button class="icon-btn schedule-btn" id="scheduleBtn" onclick="openScheduleModal()" title="Отправить позже (по времени)"><i class="fa-regular fa-clock"></i></button>
 
             <!-- Emoji Picker Popup -->
             <div class="emoji-picker-popup hidden" id="emojiPicker">
@@ -309,9 +319,27 @@
               <div class="gif-grid" id="gifGrid"></div>
             </div>
 
-            <!-- Message Input Box -->
-            <div class="input-wrapper">
-              <textarea id="messageInput" rows="1" placeholder="Напишите сообщение..." onkeydown="handleInputKeydown(event)" oninput="handleTypingEvent()"></textarea>
+            <!-- Action buttons toolbar row (😊, GIF, 📎, ⏰ on left ... 🎤 / ✈️ on right) -->
+            <div class="chat-input-tools-row" id="chatInputToolsRow">
+              <div class="tools-left-group">
+                <button class="icon-btn tool-btn" id="emojiBtn" onclick="toggleEmojiPicker()" title="Смайлики"><i class="fa-regular fa-face-smile"></i></button>
+                <button class="icon-btn tool-btn gif-btn" id="gifBtn" onclick="toggleGifPicker()" title="GIF-анимации и стикеры (/gif)">GIF</button>
+                <button class="icon-btn tool-btn" id="attachBtn" onclick="toggleAttachmentMenu()" title="Прикрепить файл"><i class="fa-solid fa-paperclip"></i></button>
+                <button class="icon-btn tool-btn schedule-btn" id="scheduleBtn" onclick="openScheduleModal()" title="Отправить позже (по времени)"><i class="fa-regular fa-clock"></i></button>
+              </div>
+
+              <!-- Right aligned Voice / Send button in the same top row -->
+              <div class="tools-right-group">
+                <button class="icon-btn tool-btn voice-tool-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="Голосовое сообщение"><i class="fa-solid fa-microphone"></i></button>
+                <button class="icon-btn tool-btn send-tool-btn hidden" id="sendBtn" onclick="sendMessage()" title="Отправить"><i class="fa-solid fa-paper-plane"></i></button>
+              </div>
+            </div>
+
+            <!-- Main text input row (100% full width) -->
+            <div class="chat-input-main-row" id="chatInputMainRow">
+              <div class="input-wrapper input-wrapper-full">
+                <textarea id="messageInput" rows="1" placeholder="Напишите сообщение..." onkeydown="handleInputKeydown(event)" oninput="handleTypingEvent()"></textarea>
+              </div>
             </div>
 
             <!-- Voice Recording UI -->
@@ -320,10 +348,6 @@
               <button class="btn btn-sm btn-danger" onclick="cancelVoiceRecording()"><i class="fa-solid fa-trash"></i> Отмена</button>
               <button class="btn btn-sm btn-success" onclick="stopAndSendVoice()"><i class="fa-solid fa-paper-plane"></i> Отправить</button>
             </div>
-
-            <!-- Record Voice / Send Buttons -->
-            <button class="icon-btn send-btn" id="voiceBtn" onclick="toggleVoiceRecording()" title="Голосовое сообщение"><i class="fa-solid fa-microphone"></i></button>
-            <button class="icon-btn send-btn hidden" id="sendBtn" onclick="sendMessage()" title="Отправить"><i class="fa-solid fa-paper-plane"></i></button>
           </footer>
         </div>
       </main>
@@ -468,14 +492,14 @@
           <form onsubmit="handleAdminMergeUsers(event)">
             <div class="form-group mb-3">
               <label><i class="fa-solid fa-crown text-warning"></i> <strong>1. Основной аккаунт (Target User)</strong> — куда переносим всё:</label>
-              <select id="mergeTargetUserSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text-color); border: 1px solid var(--border-color); font-size: 14px;">
+              <select id="mergeTargetUserSelect" class="form-select" required>
                 <option value="">-- Выберите основной аккаунт --</option>
               </select>
             </div>
 
             <div class="form-group mb-4">
               <label><i class="fa-solid fa-mobile-screen text-primary"></i> <strong>2. Объединяемый аккаунт-дубликат (Source User)</strong> — который поглощается:</label>
-              <select id="mergeSourceUserSelect" class="form-control" required style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-card); color: var(--text-color); border: 1px solid var(--border-color); font-size: 14px;">
+              <select id="mergeSourceUserSelect" class="form-select" required>
                 <option value="">-- Выберите дубликат для слияния --</option>
               </select>
             </div>
@@ -649,37 +673,33 @@
 
     <!-- MODAL: CHAT DETAILS & PROFILE / GROUP MANAGEMENT -->
     <div class="modal-overlay hidden" id="chatDetailsModal">
-      <div class="modal-box modal-lg">
-        <div class="modal-header">
-          <h3 id="detailsModalTitle"><i class="fa-solid fa-circle-info text-primary"></i> Информация</h3>
-          <button class="icon-btn" onclick="closeModal('chatDetailsModal')"><i class="fa-solid fa-xmark"></i></button>
+      <div class="modal-box modal-lg compact-details-modal">
+        <div class="modal-header compact-modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px 4px; border-bottom: none;">
+          <h3 id="detailsModalTitle" style="font-size: 15px; margin: 0; color: var(--text-muted);"><i class="fa-solid fa-circle-info text-primary"></i> Информация</h3>
+          <button class="icon-btn modal-close-red-btn" onclick="closeModal('chatDetailsModal')" title="Закрыть"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="padding: 0 16px 16px;">
           <!-- 1. DIRECT 1-ON-1 CHAT CONTACT PROFILE -->
           <div id="directDetailsBlock" class="direct-details-block hidden">
-            <div class="direct-profile-hero">
-              <div class="avatar avatar-xl" id="directDetailsAvatar">ЕЛ</div>
-              <h3 class="direct-profile-name" id="directDetailsName">Собеседник</h3>
-              <div class="direct-profile-handle" id="directDetailsHandle">@username</div>
-              <div class="direct-profile-status" id="directDetailsStatus">
-                <span class="status-dot online"></span> в сети
+            <div class="direct-profile-hero compact-hero">
+              <div class="avatar avatar-lg" id="directDetailsAvatar">ЕЛ</div>
+              <div class="direct-hero-info">
+                <h3 class="direct-profile-name" id="directDetailsName">Собеседник</h3>
+                <div class="direct-profile-handle" id="directDetailsHandle">@username</div>
+                <div class="direct-profile-role" id="directDetailsRole"><span class="badge badge-primary">Пользователь</span></div>
+                <div class="direct-profile-status" id="directDetailsStatus">
+                  <span class="status-dot online"></span> в сети
+                </div>
               </div>
             </div>
 
-            <!-- Action Buttons Grid (Трубочка, Камера, Сменить фон, Ссылка) -->
-            <div class="direct-actions-grid">
-              <button type="button" class="direct-action-card action-call" onclick="startDirectCallFromDetails('audio')" title="Позвонить (Трубочка)">
+            <!-- Action Buttons Grid: 2 Columns (Left: Call & Video | Right: Wallpaper & Link) -->
+            <div class="direct-actions-grid compact-grid">
+              <button type="button" class="direct-action-card action-call" onclick="startDirectCallFromDetails('audio')" title="Позвонить">
                 <div class="action-icon"><i class="fa-solid fa-phone"></i></div>
                 <div class="action-text">
                   <span class="action-title">Позвонить</span>
                   <span class="action-sub">Аудиосвязь P2P</span>
-                </div>
-              </button>
-              <button type="button" class="direct-action-card action-video" onclick="startDirectCallFromDetails('video')" title="Видеозвонок (Камера)">
-                <div class="action-icon"><i class="fa-solid fa-video"></i></div>
-                <div class="action-text">
-                  <span class="action-title">Камера</span>
-                  <span class="action-sub">Видеозвонок HD</span>
                 </div>
               </button>
               <button type="button" class="direct-action-card action-wallpaper" onclick="openWallpaperFromDetails()" title="Сменить фон">
@@ -687,6 +707,13 @@
                 <div class="action-text">
                   <span class="action-title">Сменить фон</span>
                   <span class="action-sub">Обои диалога</span>
+                </div>
+              </button>
+              <button type="button" class="direct-action-card action-video" onclick="startDirectCallFromDetails('video')" title="Видеозвонок">
+                <div class="action-icon"><i class="fa-solid fa-video"></i></div>
+                <div class="action-text">
+                  <span class="action-title">Камера</span>
+                  <span class="action-sub">Видео HD</span>
                 </div>
               </button>
               <button type="button" class="direct-action-card action-copy" onclick="copyDirectContactLink()" title="Скопировать ссылку на диалог">
@@ -702,11 +729,11 @@
             <div class="direct-profile-info-list" id="directProfileInfoList"></div>
 
             <!-- Common Groups with this Contact -->
-            <div class="direct-common-groups-section" id="directCommonGroupsSection" style="margin-top: 14px;">
-              <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">
+            <div class="direct-common-groups-section" id="directCommonGroupsSection" style="margin-top: 10px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
                 <span><i class="fa-solid fa-users text-primary"></i> Общие группы (<span id="directCommonGroupsCount">0</span>)</span>
               </div>
-              <div class="direct-common-groups-list" id="directCommonGroupsList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+              <div class="direct-common-groups-list" id="directCommonGroupsList" style="display: flex; flex-direction: column; gap: 4px;"></div>
             </div>
           </div>
 
@@ -929,7 +956,7 @@
     <div class="modal-overlay hidden" id="forwardModal">
       <div class="modal-box modal-md">
         <div class="modal-header">
-          <h3><i class="fa-solid fa-share text-primary"></i> Переслать сообщение</h3>
+          <h3 id="forwardModalTitle"><i class="fa-solid fa-share text-primary"></i> Переслать сообщение</h3>
           <button class="icon-btn" onclick="closeModal('forwardModal')"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="modal-body">
@@ -1046,7 +1073,7 @@
             <img src="/favicon-v30.svg" alt="GIN-Chat Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5));">
           </div>
           <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
-          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v030 (0.3.0)</div>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v034 (0.3.4)</div>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
             Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong>, WebRTC и поддержкой Web Push.
           </p>
@@ -1057,7 +1084,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <span style="color: var(--text-muted);">Сборка:</span>
-              <span>Release v030 • PWA & Web Push (iOS/Android/Desktop)</span>
+              <span>Release v034 • Dark / Light Select & Merge Fix (v0.3.4)</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0;">
               <span style="color: var(--text-muted);">Шифрование:</span>
@@ -1161,14 +1188,28 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
-  <script src="/js/app.js?v=20261009_v030"></script>
+  <script src="/js/app.js?v=20261010_v034"></script>
   <!-- PWA Service Worker & Install Handler -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then((reg) => console.log('GIN-Chat SW registered:', reg.scope))
+          .then((reg) => {
+            console.log('GIN-Chat SW registered:', reg.scope);
+            reg.update();
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') reg.update();
+            });
+          })
           .catch((err) => console.error('GIN-Chat SW failed:', err));
+      });
+
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     }
 

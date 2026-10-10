@@ -1,10 +1,11 @@
 {
   "name": "GIN-Chat",
   "short_name": "GIN-Chat",
-  "version": "0.3.0",
+  "version": "0.3.4",
+  "gcm_sender_id": "103953800507",
   "description": "GIN-Chat - Modern AI Chat Application by Vladimir Bulantsev (GinCz)",
-  "start_url": "/?v=030",
-  "id": "/?v=030",
+  "start_url": "/?v=034",
+  "id": "/?v=034",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
@@ -35,6 +36,12 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/icons/badge-monochrome.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "monochrome"
     }
   ]
 }
