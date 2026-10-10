@@ -1,7 +1,7 @@
 // =============================================================================
 // Execution Context : Go 1.22+ (Windows AMD64)
 // Target Server     : Local Windows Desktop PC
-// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI, WaveIn Event Engine, Cyber Dark GUI, On-Screen HUD [v007]
+// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI, WaveIn Event Engine, Multi-Language UI, Cyber Dark GUI, On-Screen HUD [v008]
 // =============================================================================
 
 package main
@@ -10,7 +10,6 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -28,21 +27,10 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v007"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v007]"
+	AppVersion    = "v008"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v008]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
-)
-
-var (
-	// Default Groq key obfuscated to bypass GitHub Push Protection scanner
-	DefaultGroqKey = string([]byte{
-		0x67, 0x73, 0x6b, 0x5f, 0x78, 0x37, 0x50, 0x75, 0x6c, 0x4f, 0x39, 0x62,
-		0x32, 0x5a, 0x77, 0x62, 0x73, 0x5a, 0x63, 0x47, 0x30, 0x55, 0x54, 0x57,
-		0x57, 0x47, 0x64, 0x79, 0x62, 0x33, 0x46, 0x59, 0x45, 0x79, 0x31, 0x79,
-		0x65, 0x70, 0x30, 0x6f, 0x64, 0x5a, 0x73, 0x4e, 0x65, 0x6d, 0x74, 0x4c,
-		0x49, 0x56, 0x76, 0x52, 0x75, 0x46, 0x74, 0x6c,
-	})
 )
 
 const (
@@ -126,25 +114,22 @@ const (
 	IDM_OPEN_DICT     = 1003
 	IDM_LINK_FOLDER   = 1004
 	IDM_OPEN_CONFIG   = 1005
-	IDM_OPEN_DIR      = 1006
-	IDM_AUTOSTART     = 1007
-	IDM_OPEN_HELP     = 1008
-	IDM_UNINSTALL     = 1009
-	IDM_EXIT          = 1010
+	IDM_AUTOSTART     = 1006
+	IDM_OPEN_HELP     = 1007
+	IDM_EXIT          = 1008
 
-	IDM_LANG_BASE = 2000
+	IDM_UI_LANG_BASE = 1500
+	IDM_LANG_BASE    = 2000
 
 	// Settings Dialog IDs
-	IDC_BTN_SAVE     = 3001
-	IDC_BTN_GROQ     = 3002
-	IDC_EDIT_KEY     = 3003
-	IDC_EDIT_FOLDER  = 3004
-	IDC_BTN_BROWSE   = 3005
-	IDC_EDIT_HOTKEY  = 3006
-	IDC_BTN_DICT     = 3007
-	IDC_BTN_TEST     = 3008
-	IDC_BTN_UNINST   = 3009
-	IDC_BTN_OPEN_DIR = 3011
+	IDC_BTN_SAVE    = 3001
+	IDC_BTN_GROQ    = 3002
+	IDC_EDIT_KEY    = 3003
+	IDC_EDIT_FOLDER = 3004
+	IDC_BTN_BROWSE  = 3005
+	IDC_EDIT_HOTKEY = 3006
+	IDC_BTN_DICT    = 3007
+	IDC_BTN_TEST    = 3008
 
 	IDC_LANG_CHK_BASE = 4000
 )
@@ -317,8 +302,41 @@ type LanguageItem struct {
 	Name string `json:"name"`
 }
 
+type UIStringBundle struct {
+	MenuStartDictation string
+	MenuStopDictation  string
+	MenuSpeechLang     string
+	MenuInterfaceLang  string
+	MenuKeyConfigured  string
+	MenuKeyNotSet      string
+	MenuOpenDict       string
+	MenuLinkFolder     string
+	MenuAutostart      string
+	MenuHelp           string
+	MenuExit           string
+	SettingsTitle      string
+	SettingsHeader     string
+	SettingsKeyLabel   string
+	SettingsGetGroq    string
+	SettingsTestBtn    string
+	SettingsHotkey     string
+	SettingsHotkeyTip  string
+	SettingsFolder     string
+	SettingsBrowse     string
+	SettingsLangs      string
+	SettingsSave       string
+	SettingsDict       string
+	HudRecording       string
+	HudTranscribing    string
+	HudPasted          string
+	HudEmpty           string
+	HudError           string
+	Ready              string
+}
+
 type Config struct {
 	Version               string         `json:"version"`
+	UILanguage            string         `json:"ui_language"` // EN, RU, CS, IT, ES, FR
 	FirstRun              bool           `json:"first_run"`
 	Hotkey                string         `json:"hotkey"`
 	HotkeyVK              uint32         `json:"hotkey_vk"`
@@ -334,35 +352,35 @@ type Config struct {
 }
 
 var (
-	appDir          string
-	configFile      string
-	keyFile         string
-	dictFile        string
-	helpFile        string
-	logFile         string
-	config          Config
-	dictionary      map[string]string
-	dictMutex       sync.RWMutex
-	hwndMain        uintptr
-	hwndSetup       uintptr
-	hwndHUD         uintptr
-	hwndHUDText     uintptr
-	hwndEditKey     uintptr
-	hwndEditFolder  uintptr
-	hwndEditHotkey  uintptr
-	langCheckHWnd   = make(map[string]uintptr)
-	nid             NOTIFYICONDATAW
-	isRecording     bool
-	recordMutex     sync.Mutex
-	trayCreated     bool
-	hIconNormal     uintptr
-	hIconRec        uintptr
-	hBrushDarkBg    uintptr
-	hBrushEditBg    uintptr
-	hFontNormal     uintptr
-	hFontBold       uintptr
-	hFontHeader     uintptr
-	hFontHUD        uintptr
+	appDir         string
+	configFile     string
+	keyFile        string
+	dictFile       string
+	helpFile       string
+	logFile        string
+	config         Config
+	dictionary     map[string]string
+	dictMutex      sync.RWMutex
+	hwndMain       uintptr
+	hwndSetup      uintptr
+	hwndHUD        uintptr
+	hwndHUDText    uintptr
+	hwndEditKey    uintptr
+	hwndEditFolder uintptr
+	hwndEditHotkey uintptr
+	langCheckHWnd  = make(map[string]uintptr)
+	nid            NOTIFYICONDATAW
+	isRecording    bool
+	recordMutex    sync.Mutex
+	trayCreated    bool
+	hIconNormal    uintptr
+	hIconRec       uintptr
+	hBrushDarkBg   uintptr
+	hBrushEditBg   uintptr
+	hFontNormal    uintptr
+	hFontBold      uintptr
+	hFontHeader    uintptr
+	hFontHUD       uintptr
 
 	// WaveIn Event Audio Engine
 	hWaveIn       uintptr
@@ -372,10 +390,21 @@ var (
 	capturedAudio []byte
 	audioMutex    sync.Mutex
 
+	// UI Languages supported
+	UILanguages = []LanguageItem{
+		{"EN", "English"},
+		{"RU", "Русский"},
+		{"CS", "Čeština"},
+		{"IT", "Italiano"},
+		{"ES", "Español"},
+		{"FR", "Français"},
+	}
+
+	// Recognition languages ordered by user preference: EN first, CS second, RU third, followed by others
 	MasterLanguages = []LanguageItem{
-		{"RU", "Русский (Russian)"},
 		{"EN", "English (Английский)"},
 		{"CS", "Čeština (Czech)"},
+		{"RU", "Русский (Russian)"},
 		{"DE", "Deutsch (German)"},
 		{"UK", "Українська (Ukrainian)"},
 		{"ES", "Español (Spanish)"},
@@ -388,7 +417,204 @@ var (
 		{"AR", "العربية (Arabic)"},
 		{"HE", "עברית (Hebrew)"},
 	}
+
+	UIStrings = map[string]UIStringBundle{
+		"EN": {
+			MenuStartDictation: "🔴 Start Dictation [%s]",
+			MenuStopDictation:  "⏹️ Stop Dictation [%s]",
+			MenuSpeechLang:     "🌐 Speech Recognition (Whisper AI)",
+			MenuInterfaceLang:  "🖥️ Interface Language",
+			MenuKeyConfigured:  "🔑 Groq API Key: Configured",
+			MenuKeyNotSet:      "⚠️ Groq API Key: NOT configured (Click to set)",
+			MenuOpenDict:       "📖 Open Dictionary (dictionary.json)",
+			MenuLinkFolder:     "📁 Link Knowledge Folder...",
+			MenuAutostart:      "⚡ Autostart on Windows Boot",
+			MenuHelp:           "❓ Setup Guide & Help",
+			MenuExit:           "❌ Exit GIN-Voice",
+			SettingsTitle:      "GIN-Voice - Settings & Control Center",
+			SettingsHeader:     "🎙️ GIN-Voice by VladiMIR+AI — Instant Voice Typing",
+			SettingsKeyLabel:   "🔑 Groq Whisper API Key:",
+			SettingsGetGroq:    "🌐 Get Free Key at Groq.com",
+			SettingsTestBtn:    "🧪 Test Key",
+			SettingsHotkey:     "⚡ Dictation Hotkey:",
+			SettingsHotkeyTip:  "(Available: F8, F4, F9, F10, F12 — Toggle Start/Stop)",
+			SettingsFolder:     "📁 Linked Knowledge / Project Folder (Auto-Dictionary):",
+			SettingsBrowse:     "📂 Browse...",
+			SettingsLangs:      "🌐 Active Recognition Languages (Whisper AI):",
+			SettingsSave:       "💾 Save & Apply",
+			SettingsDict:       "📖 Edit Dictionary",
+			HudRecording:       "🔴 RECORDING... Speak now [%s to Finish]",
+			HudTranscribing:    "⚡ Transcribing with Whisper AI...",
+			HudPasted:          "✅ Pasted: %s",
+			HudEmpty:           "⚠️ Audio recording was empty.",
+			HudError:           "❌ Error: %s",
+			Ready:              "Ready",
+		},
+		"RU": {
+			MenuStartDictation: "🔴 Начать диктовку [%s]",
+			MenuStopDictation:  "⏹️ Остановить диктовку [%s]",
+			MenuSpeechLang:     "🌐 Языки распознавания (Whisper AI)",
+			MenuInterfaceLang:  "🖥️ Язык интерфейса",
+			MenuKeyConfigured:  "🔑 Groq API Ключ: Настроен",
+			MenuKeyNotSet:      "⚠️ Groq API Ключ: НЕ задан (Нажмите для ввода)",
+			MenuOpenDict:       "📖 Открыть словарь автозамен (dictionary.json)",
+			MenuLinkFolder:     "📁 Привязать общую папку с базами знаний...",
+			MenuAutostart:      "⚡ Автозапуск при старте Windows",
+			MenuHelp:           "❓ Инструкция и справка",
+			MenuExit:           "❌ Выход из GIN-Voice",
+			SettingsTitle:      "GIN-Voice - Центр Управления",
+			SettingsHeader:     "🎙️ GIN-Voice by VladiMIR+AI — Мгновенный Голосовой Ввод",
+			SettingsKeyLabel:   "🔑 Groq Whisper API Key:",
+			SettingsGetGroq:    "🌐 Получить бесплатный ключ на Groq.com",
+			SettingsTestBtn:    "🧪 Проверить",
+			SettingsHotkey:     "⚡ Горячая клавиша диктовки:",
+			SettingsHotkeyTip:  "(Доступны: F8, F4, F9, F10, F12 — переключение Старт/Стоп)",
+			SettingsFolder:     "📁 Общая папка с базами знаний / проектами (Автословарь):",
+			SettingsBrowse:     "📂 Обзор...",
+			SettingsLangs:      "🌐 Активные языки распознавания (Whisper AI):",
+			SettingsSave:       "💾 Сохранить и Применить",
+			SettingsDict:       "📖 Редактировать словарь",
+			HudRecording:       "🔴 ИДЁТ ЗАПИСЬ... Говорите [%s для Завершения]",
+			HudTranscribing:    "⚡ Распознавание речи через Whisper AI...",
+			HudPasted:          "✅ Вставлено: %s",
+			HudEmpty:           "⚠️ Запись звука оказалась пустой.",
+			HudError:           "❌ Ошибка: %s",
+			Ready:              "Готов к работе",
+		},
+		"CS": {
+			MenuStartDictation: "🔴 Spustit diktování [%s]",
+			MenuStopDictation:  "⏹️ Zastavit diktování [%s]",
+			MenuSpeechLang:     "🌐 Jazyky rozpoznávání (Whisper AI)",
+			MenuInterfaceLang:  "🖥️ Jazyk rozhraní",
+			MenuKeyConfigured:  "🔑 Groq API Klíč: Nastaven",
+			MenuKeyNotSet:      "⚠️ Groq API Klíč: NENÍ nastaven (Klikněte pro zadání)",
+			MenuOpenDict:       "📖 Otevřít slovník (dictionary.json)",
+			MenuLinkFolder:     "📁 Propojit složku znalostí...",
+			MenuAutostart:      "⚡ Automatické spuštění při startu Windows",
+			MenuHelp:           "❓ Nápověda a průvodce",
+			MenuExit:           "❌ Ukončit GIN-Voice",
+			SettingsTitle:      "GIN-Voice - Nastavení a Ovládací Centrum",
+			SettingsHeader:     "🎙️ GIN-Voice od VladiMIR+AI — Okamžité Hlasové Psaní",
+			SettingsKeyLabel:   "🔑 Groq Whisper API Klíč:",
+			SettingsGetGroq:    "🌐 Získat klíč zdarma na Groq.com",
+			SettingsTestBtn:    "🧪 Otestovat",
+			SettingsHotkey:     "⚡ Klávesová zkratka diktování:",
+			SettingsHotkeyTip:  "(Dostupné: F8, F4, F9, F10, F12 — Přepínač Start/Stop)",
+			SettingsFolder:     "📁 Propojená složka projektů (Automatický slovník):",
+			SettingsBrowse:     "📂 Procházet...",
+			SettingsLangs:      "🌐 Aktivní jazyky rozpoznávání (Whisper AI):",
+			SettingsSave:       "💾 Uložit a Použít",
+			SettingsDict:       "📖 Upravit slovník",
+			HudRecording:       "🔴 NAHRÁVÁNÍ... Mluvte [%s pro Dokončení]",
+			HudTranscribing:    "⚡ Přepisuji řeč pomocí Whisper AI...",
+			HudPasted:          "✅ Vloženo: %s",
+			HudEmpty:           "⚠️ Záznam byl prázdný.",
+			HudError:           "❌ Chyba: %s",
+			Ready:              "Připraven",
+		},
+		"IT": {
+			MenuStartDictation: "🔴 Avvia dettatura [%s]",
+			MenuStopDictation:  "⏹️ Ferma dettatura [%s]",
+			MenuSpeechLang:     "🌐 Lingue di riconoscimento (Whisper AI)",
+			MenuInterfaceLang:  "🖥️ Lingua dell'interfaccia",
+			MenuKeyConfigured:  "🔑 Chiave Groq API: Configurato",
+			MenuKeyNotSet:      "⚠️ Chiave Groq API: NON impostata (Clicca per inserire)",
+			MenuOpenDict:       "📖 Apri dizionario (dictionary.json)",
+			MenuLinkFolder:     "📁 Collega cartella progetti...",
+			MenuAutostart:      "⚡ Avvio automatico con Windows",
+			MenuHelp:           "❓ Guida e supporto",
+			MenuExit:           "❌ Esci da GIN-Voice",
+			SettingsTitle:      "GIN-Voice - Centro di controllo",
+			SettingsHeader:     "🎙️ GIN-Voice by VladiMIR+AI — Digitazione vocale istantanea",
+			SettingsKeyLabel:   "🔑 Chiave Groq Whisper API:",
+			SettingsGetGroq:    "🌐 Ottieni chiave gratuita su Groq.com",
+			SettingsTestBtn:    "🧪 Verifica",
+			SettingsHotkey:     "⚡ Tasto rapido di dettatura:",
+			SettingsHotkeyTip:  "(Disponibili: F8, F4, F9, F10, F12 — Avvia/Ferma)",
+			SettingsFolder:     "📁 Cartella progetti collegata (Dizionario automatico):",
+			SettingsBrowse:     "📂 Sfoglia...",
+			SettingsLangs:      "🌐 Lingue di riconoscimento attive (Whisper AI):",
+			SettingsSave:       "💾 Salva e applica",
+			SettingsDict:       "📖 Modifica dizionario",
+			HudRecording:       "🔴 REGISTRAZIONE... Parla [%s per Terminare]",
+			HudTranscribing:    "⚡ Trascrizione vocale con Whisper AI...",
+			HudPasted:          "✅ Incollato: %s",
+			HudEmpty:           "⚠️ La registrazione audio era vuota.",
+			HudError:           "❌ Errore: %s",
+			Ready:              "Pronto",
+		},
+		"ES": {
+			MenuStartDictation: "🔴 Iniciar dictado [%s]",
+			MenuStopDictation:  "⏹️ Detener dictado [%s]",
+			MenuSpeechLang:     "🌐 Idiomas de reconocimiento (Whisper AI)",
+			MenuInterfaceLang:  "🖥️ Idioma de la interfaz",
+			MenuKeyConfigured:  "🔑 Clave Groq API: Configurada",
+			MenuKeyNotSet:      "⚠️ Clave Groq API: NO configurada (Haga clic para ingresar)",
+			MenuOpenDict:       "📖 Abrir diccionario (dictionary.json)",
+			MenuLinkFolder:     "📁 Vincular carpeta de conocimientos...",
+			MenuAutostart:      "⚡ Inicio automático con Windows",
+			MenuHelp:           "❓ Guía y ayuda",
+			MenuExit:           "❌ Salir de GIN-Voice",
+			SettingsTitle:      "GIN-Voice - Centro de control",
+			SettingsHeader:     "🎙️ GIN-Voice por VladiMIR+AI — Dictado por voz instantáneo",
+			SettingsKeyLabel:   "🔑 Clave Groq Whisper API:",
+			SettingsGetGroq:    "🌐 Obtener clave gratis en Groq.com",
+			SettingsTestBtn:    "🧪 Probar clave",
+			SettingsHotkey:     "⚡ Tecla de acceso rápido:",
+			SettingsHotkeyTip:  "(Disponibles: F8, F4, F9, F10, F12 — Iniciar/Detener)",
+			SettingsFolder:     "📁 Carpeta vinculada de proyectos (Diccionario automático):",
+			SettingsBrowse:     "📂 Examinar...",
+			SettingsLangs:      "🌐 Idiomas de reconocimiento activos (Whisper AI):",
+			SettingsSave:       "💾 Guardar y aplicar",
+			SettingsDict:       "📖 Editar diccionario",
+			HudRecording:       "🔴 GRABANDO... Hable [%s para Terminar]",
+			HudTranscribing:    "⚡ Transcribiendo voz con Whisper AI...",
+			HudPasted:          "✅ Pegado: %s",
+			HudEmpty:           "⚠️ La grabación de audio estaba vacía.",
+			HudError:           "❌ Error: %s",
+			Ready:              "Listo",
+		},
+		"FR": {
+			MenuStartDictation: "🔴 Démarrer la dictée [%s]",
+			MenuStopDictation:  "⏹️ Arrêter la dictée [%s]",
+			MenuSpeechLang:     "🌐 Langues de reconnaissance (Whisper AI)",
+			MenuInterfaceLang:  "🖥️ Langue de l'interface",
+			MenuKeyConfigured:  "🔑 Clé Groq API : Configurée",
+			MenuKeyNotSet:      "⚠️ Clé Groq API : NON configurée (Cliquez pour définir)",
+			MenuOpenDict:       "📖 Ouvrir le dictionnaire (dictionary.json)",
+			MenuLinkFolder:     "📁 Lier le dossier de connaissances...",
+			MenuAutostart:      "⚡ Démarrage automatique avec Windows",
+			MenuHelp:           "❓ Guide d'installation et aide",
+			MenuExit:           "❌ Quitter GIN-Voice",
+			SettingsTitle:      "GIN-Voice - Centre de configuration",
+			SettingsHeader:     "🎙️ GIN-Voice par VladiMIR+AI — Saisie vocale instantanée",
+			SettingsKeyLabel:   "🔑 Clé Groq Whisper API :",
+			SettingsGetGroq:    "🌐 Obtenir une clé gratuite sur Groq.com",
+			SettingsTestBtn:    "🧪 Tester",
+			SettingsHotkey:     "⚡ Raccourci de dictée :",
+			SettingsHotkeyTip:  "(Disponibles : F8, F4, F9, F10, F12 — Démarrer/Arrêter)",
+			SettingsFolder:     "📁 Dossier de projets lié (Dictionnaire automatique) :",
+			SettingsBrowse:     "📂 Parcourir...",
+			SettingsLangs:      "🌐 Langues de reconnaissance actives (Whisper AI) :",
+			SettingsSave:       "💾 Enregistrer et appliquer",
+			SettingsDict:       "📖 Modifier le dictionnaire",
+			HudRecording:       "🔴 ENREGISTREMENT... Parlez [%s pour Terminer]",
+			HudTranscribing:    "⚡ Transcription vocale avec Whisper AI...",
+			HudPasted:          "✅ Collé : %s",
+			HudEmpty:           "⚠️ L'enregistrement audio était vide.",
+			HudError:           "❌ Erreur : %s",
+			Ready:              "Prêt",
+		},
+	}
 )
+
+func getUI() UIStringBundle {
+	code := strings.ToUpper(config.UILanguage)
+	if b, exists := UIStrings[code]; exists {
+		return b
+	}
+	return UIStrings["EN"]
+}
 
 func writeLog(msg string) {
 	if logFile == "" {
@@ -487,7 +713,8 @@ func initTrayIcon() {
 	nid.UCallbackMessage = WM_TRAYICON
 	nid.HIcon = hIconNormal
 
-	tip := AppTitle + " | Ready (" + config.Hotkey + ")"
+	ui := getUI()
+	tip := fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey)
 	uTip, _ := syscall.UTF16FromString(tip)
 	copy(nid.SzTip[:], uTip)
 
@@ -498,13 +725,14 @@ func initTrayIcon() {
 func loadConfig() {
 	config = Config{
 		Version:          AppVersion,
+		UILanguage:       "EN", // English by default
 		FirstRun:         false,
 		Hotkey:           "F8",
 		HotkeyVK:         VK_F8,
 		HotkeyMod:        0,
-		ActiveLanguages:  []string{"RU", "EN"},
+		ActiveLanguages:  []string{"EN"}, // English checked by default
 		AllLanguages:     MasterLanguages,
-		GroqAPIKey:       DefaultGroqKey,
+		GroqAPIKey:       "", // Empty by default
 		SoundFeedback:    true,
 		AutoPaste:        true,
 		RestoreClipboard: true,
@@ -519,13 +747,15 @@ func loadConfig() {
 	if config.GroqAPIKey == "" {
 		if kData, kErr := os.ReadFile(keyFile); kErr == nil {
 			config.GroqAPIKey = strings.TrimSpace(string(kData))
-		} else {
-			config.GroqAPIKey = DefaultGroqKey
 		}
 	}
 
+	if config.UILanguage == "" {
+		config.UILanguage = "EN"
+	}
+
 	if len(config.ActiveLanguages) == 0 {
-		config.ActiveLanguages = []string{"RU", "EN"}
+		config.ActiveLanguages = []string{"EN"}
 	}
 
 	config.AllLanguages = MasterLanguages
@@ -700,7 +930,7 @@ func startRecordingWaveIn() error {
 	go func(targetWaveIn, targetEvent uintptr) {
 		for {
 			r, _, _ := procWaitForSingleObject.Call(targetEvent, 60)
-			if r != 0 && r != 258 { // WAIT_OBJECT_0=0, WAIT_TIMEOUT=258
+			if r != 0 && r != 258 {
 				break
 			}
 
@@ -774,6 +1004,12 @@ func startRecording() {
 		return
 	}
 
+	if config.GroqAPIKey == "" && os.Getenv("GROQ_API_KEY") == "" {
+		playBeep(250, 200)
+		showSettingsDialog()
+		return
+	}
+
 	err := startRecordingWaveIn()
 	if err != nil {
 		writeLog("WaveIn start error: " + err.Error())
@@ -783,8 +1019,9 @@ func startRecording() {
 
 	isRecording = true
 	playBeep(880, 100)
-	updateTrayState(true, AppTitle+" | 🔴 RECORDING... ("+config.Hotkey+" to Stop)")
-	updateHUD(true, "🔴 RECORDING... Speak now ["+config.Hotkey+" to Finish]")
+	ui := getUI()
+	updateTrayState(true, fmt.Sprintf("%s | %s", AppTitle, fmt.Sprintf(ui.HudRecording, config.Hotkey)))
+	updateHUD(true, fmt.Sprintf(ui.HudRecording, config.Hotkey))
 	writeLog("Direct WaveIn Event recording active.")
 }
 
@@ -797,14 +1034,15 @@ func stopRecordingAndTranscribe() {
 	isRecording = false
 	recordMutex.Unlock()
 
+	ui := getUI()
 	playBeep(440, 100)
-	updateTrayState(false, AppTitle+" | ⚡ Transcribing with Whisper...")
-	updateHUD(true, "⚡ Transcribing Speech with Whisper AI...")
+	updateTrayState(false, AppTitle+" | "+ui.HudTranscribing)
+	updateHUD(true, ui.HudTranscribing)
 
 	wavBytes := stopRecordingWaveIn()
 
 	go func() {
-		defer updateTrayState(false, AppTitle+" | Ready ("+config.Hotkey+")")
+		defer updateTrayState(false, fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey))
 		defer func() {
 			time.Sleep(1400 * time.Millisecond)
 			updateHUD(false, "")
@@ -813,7 +1051,7 @@ func stopRecordingAndTranscribe() {
 		if len(wavBytes) < 2000 {
 			writeLog(fmt.Sprintf("Audio recording too short: %d bytes", len(wavBytes)))
 			playBeep(220, 200)
-			updateHUD(true, "⚠️ Audio recording was empty.")
+			updateHUD(true, ui.HudEmpty)
 			return
 		}
 
@@ -821,7 +1059,7 @@ func stopRecordingAndTranscribe() {
 		if err != nil {
 			writeLog("Transcription error: " + err.Error())
 			playBeep(220, 300)
-			updateHUD(true, "❌ Error: "+err.Error())
+			updateHUD(true, fmt.Sprintf(ui.HudError, err.Error()))
 			return
 		}
 
@@ -832,7 +1070,7 @@ func stopRecordingAndTranscribe() {
 
 		text = applyDictionary(text)
 		writeLog(fmt.Sprintf("Pasted text: [%s]", text))
-		updateHUD(true, "✅ Pasted: "+text)
+		updateHUD(true, fmt.Sprintf(ui.HudPasted, text))
 		pasteText(text)
 	}()
 }
@@ -850,23 +1088,23 @@ func toggleRecording() {
 }
 
 func getTranscriptionLanguage() string {
-	hasRU := hasLang("RU")
-	hasCS := hasLang("CS")
 	hasEN := hasLang("EN")
+	hasCS := hasLang("CS")
+	hasRU := hasLang("RU")
 
-	if hasRU {
-		return "ru"
+	if hasEN && !hasCS && !hasRU {
+		return "en"
 	}
-	if hasCS && !hasEN {
+	if hasCS && !hasRU {
 		return "cs"
 	}
-	if hasEN && !hasCS {
-		return "en"
+	if hasRU {
+		return "ru"
 	}
 	if len(config.ActiveLanguages) == 1 {
 		return strings.ToLower(config.ActiveLanguages[0])
 	}
-	return "ru"
+	return "en"
 }
 
 func transcribeAudioBytes(wavBytes []byte) (string, error) {
@@ -875,7 +1113,7 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 		apiKey = os.Getenv("GROQ_API_KEY")
 	}
 	if apiKey == "" {
-		apiKey = DefaultGroqKey
+		return "", fmt.Errorf("Groq API Key is not configured. Please open settings and enter your key.")
 	}
 
 	body := &bytes.Buffer{}
@@ -952,7 +1190,7 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 func testGroqAPIKey(key string) (bool, string) {
 	key = strings.TrimSpace(key)
 	if key == "" {
-		return false, "API ключ не может быть пустым."
+		return false, "API Key cannot be empty."
 	}
 
 	dummyWAV := createWAV(make([]byte, 16000), 16000, 1, 16)
@@ -967,7 +1205,7 @@ func testGroqAPIKey(key string) (bool, string) {
 
 	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/audio/transcriptions", body)
 	if err != nil {
-		return false, "Ошибка создания запроса: " + err.Error()
+		return false, "Error creating request: " + err.Error()
 	}
 
 	req.Header.Set("Authorization", "Bearer "+key)
@@ -976,15 +1214,15 @@ func testGroqAPIKey(key string) (bool, string) {
 	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, "Ошибка соединения с сервером Groq: " + err.Error()
+		return false, "Connection error with Groq: " + err.Error()
 	}
 	defer resp.Body.Close()
 
 	respBytes, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode == http.StatusOK {
-		return true, "✅ Успех! Groq Whisper AI API ключ действителен и полностью готов к работе."
+		return true, "✅ Success! Groq Whisper AI API key is valid and fully operational."
 	}
-	return false, fmt.Sprintf("❌ Ошибка ключа (%d): %s", resp.StatusCode, string(respBytes))
+	return false, fmt.Sprintf("❌ API Key Error (%d): %s", resp.StatusCode, string(respBytes))
 }
 
 func getClipboardText() string {
@@ -1072,7 +1310,7 @@ func pasteText(text string) {
 
 func pickFolderNative(owner uintptr) string {
 	var bi BROWSEINFOW
-	title := "Выберите общую папку с базами знаний для GIN-Voice:"
+	title := "Select knowledge base / project folder for GIN-Voice:"
 	bi.HwndOwner = owner
 	bi.LpszTitle = strPtr(title)
 	bi.UlFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE
@@ -1155,43 +1393,6 @@ func toggleAutostart() {
 	saveConfig()
 }
 
-func runUninstall() {
-	r, _, _ := procMessageBoxW.Call(
-		0,
-		uintptr(unsafe.Pointer(strPtr("Вы действительно хотите полностью удалить GIN-Voice со всеми файлами и ярлыками?"))),
-		uintptr(unsafe.Pointer(strPtr(AppTitle+" - Удаление программы"))),
-		0x00000004|0x00000030, // MB_YESNO | MB_ICONWARNING
-	)
-	if r != 6 { // IDYES
-		return
-	}
-
-	procShellNotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
-	_ = setAutostart(false)
-
-	uninstBAT := filepath.Join(appDir, "uninstall.bat")
-	if len(defaultUninstallBAT) > 0 {
-		_ = os.WriteFile(uninstBAT, defaultUninstallBAT, 0644)
-	}
-
-	psScript := fmt.Sprintf(`
-Start-Sleep -Seconds 1
-$desktop = [Environment]::GetFolderPath('Desktop')
-$startMenu = [Environment]::GetFolderPath('Programs')
-Remove-Item -Path "$desktop\GIN-Voice.lnk" -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "$startMenu\GIN-Voice.lnk" -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "D:\MEGA\DOCS\desktop\GIN-Voice.lnk" -Force -ErrorAction SilentlyContinue
-reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "GIN-Voice" /f 2>$null
-Remove-Item -Path "%s" -Recurse -Force -ErrorAction SilentlyContinue
-`, appDir)
-
-	psFile := filepath.Join(os.TempDir(), "gin_voice_uninst.ps1")
-	_ = os.WriteFile(psFile, []byte(psScript), 0644)
-
-	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", psFile).Start()
-	os.Exit(0)
-}
-
 func showContextMenu() {
 	hMenu, _, _ := procCreatePopupMenu.Call()
 	if hMenu == 0 {
@@ -1199,20 +1400,22 @@ func showContextMenu() {
 	}
 	defer procDestroyMenu.Call(hMenu)
 
+	ui := getUI()
 	var titleText string
 	recordMutex.Lock()
 	rec := isRecording
 	recordMutex.Unlock()
 
 	if rec {
-		titleText = "⏹️ Остановить запись [" + config.Hotkey + "]"
+		titleText = fmt.Sprintf(ui.MenuStopDictation, config.Hotkey)
 	} else {
-		titleText = "🔴 Начать диктовку [" + config.Hotkey + "]"
+		titleText = fmt.Sprintf(ui.MenuStartDictation, config.Hotkey)
 	}
 
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_TOGGLE_RECORD, uintptr(unsafe.Pointer(strPtr(titleText))))
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 
+	// Speech Recognition Languages Submenu
 	hLangSubMenu, _, _ := procCreatePopupMenu.Call()
 	for i, lang := range config.AllLanguages {
 		flags := uintptr(MF_STRING)
@@ -1222,27 +1425,36 @@ func showContextMenu() {
 		itemText := fmt.Sprintf("[%s] %s", lang.Code, lang.Name)
 		procAppendMenuW.Call(hLangSubMenu, flags, IDM_LANG_BASE+uintptr(i), uintptr(unsafe.Pointer(strPtr(itemText))))
 	}
-	procAppendMenuW.Call(hMenu, MF_POPUP, hLangSubMenu, uintptr(unsafe.Pointer(strPtr("🌐 Языки распознавания (Whisper AI)"))))
+	procAppendMenuW.Call(hMenu, MF_POPUP, hLangSubMenu, uintptr(unsafe.Pointer(strPtr(ui.MenuSpeechLang))))
 
-	statusKey := "🔑 Groq API Ключ: Настроен (Whisper-Large-v3)"
+	// Interface Language Submenu (EN, RU, CS, IT, ES, FR)
+	hUILangSubMenu, _, _ := procCreatePopupMenu.Call()
+	for i, uiItem := range UILanguages {
+		flags := uintptr(MF_STRING)
+		if strings.EqualFold(config.UILanguage, uiItem.Code) {
+			flags |= MF_CHECKED
+		}
+		procAppendMenuW.Call(hUILangSubMenu, flags, IDM_UI_LANG_BASE+uintptr(i), uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("[%s] %s", uiItem.Code, uiItem.Name)))))
+	}
+	procAppendMenuW.Call(hMenu, MF_POPUP, hUILangSubMenu, uintptr(unsafe.Pointer(strPtr(ui.MenuInterfaceLang))))
+
+	statusKey := ui.MenuKeyConfigured
 	if config.GroqAPIKey == "" {
-		statusKey = "⚠️ Groq API Ключ: НЕ задан (Нажмите для ввода)"
+		statusKey = ui.MenuKeyNotSet
 	}
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_SETUP_KEY, uintptr(unsafe.Pointer(strPtr(statusKey))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DICT, uintptr(unsafe.Pointer(strPtr("📖 Открыть словарь автозамен (dictionary.json)"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_LINK_FOLDER, uintptr(unsafe.Pointer(strPtr("📁 Привязать общую папку с базами знаний..."))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DICT, uintptr(unsafe.Pointer(strPtr(ui.MenuOpenDict))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_LINK_FOLDER, uintptr(unsafe.Pointer(strPtr(ui.MenuLinkFolder))))
 
 	autoFlags := uintptr(MF_STRING)
 	if config.Autostart {
 		autoFlags |= MF_CHECKED
 	}
-	procAppendMenuW.Call(hMenu, autoFlags, IDM_AUTOSTART, uintptr(unsafe.Pointer(strPtr("⚡ Автозапуск при старте Windows"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DIR, uintptr(unsafe.Pointer(strPtr("📂 Открыть папку программы GIN-Voice"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_HELP, uintptr(unsafe.Pointer(strPtr("❓ Инструкция и справка (setup_guide.html)"))))
+	procAppendMenuW.Call(hMenu, autoFlags, IDM_AUTOSTART, uintptr(unsafe.Pointer(strPtr(ui.MenuAutostart))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_HELP, uintptr(unsafe.Pointer(strPtr(ui.MenuHelp))))
 
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_UNINSTALL, uintptr(unsafe.Pointer(strPtr("🗑️ Полное удаление GIN-Voice"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr("❌ Выход из GIN-Voice"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr(ui.MenuExit))))
 
 	var pt POINT
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
@@ -1257,20 +1469,21 @@ func showSettingsDialog() {
 		return
 	}
 
+	ui := getUI()
 	hInstance, _, _ := procGetModuleHandleW.Call(0)
 	screenWidth, _, _ := procGetSystemMetrics.Call(0)
 	screenHeight, _, _ := procGetSystemMetrics.Call(1)
 
 	winW := int32(840)
-	winH := int32(630)
+	winH := int32(590)
 	posX := (int32(screenWidth) - winW) / 2
 	posY := (int32(screenHeight) - winH) / 2
 
 	hwndSetup, _, _ = procCreateWindowExW.Call(
 		WS_EX_TOPMOST,
 		uintptr(unsafe.Pointer(strPtr("GIN_VOICE_CYBER_SETTINGS"))),
-		uintptr(unsafe.Pointer(strPtr(AppTitle+" - Центр Управления"))),
-		WS_OVERLAPPEDWINDOW&^0x00050000|WS_VISIBLE, // No resize / maximize
+		uintptr(unsafe.Pointer(strPtr(AppTitle+" - "+ui.SettingsTitle))),
+		WS_OVERLAPPEDWINDOW&^0x00050000|WS_VISIBLE,
 		uintptr(posX), uintptr(posY), uintptr(winW), uintptr(winH),
 		0, 0, hInstance, 0,
 	)
@@ -1278,7 +1491,7 @@ func showSettingsDialog() {
 	// Header Banner
 	lblHdr, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("🎙️ GIN-Voice by VladiMIR+AI — Мгновенный Голосовой Ввод"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsHeader))),
 		WS_CHILD|WS_VISIBLE,
 		24, 20, 780, 32, hwndSetup, 0, hInstance, 0,
 	)
@@ -1287,7 +1500,7 @@ func showSettingsDialog() {
 	// 1. Groq API Key Row
 	lblKey, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("🔑 Groq Whisper API Key:"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsKeyLabel))),
 		WS_CHILD|WS_VISIBLE,
 		24, 68, 260, 26, hwndSetup, 0, hInstance, 0,
 	)
@@ -1295,7 +1508,7 @@ func showSettingsDialog() {
 
 	btnGroq, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🌐 Получить бесплатный ключ на Groq.com"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsGetGroq))),
 		WS_CHILD|WS_VISIBLE,
 		470, 62, 334, 30, hwndSetup, uintptr(IDC_BTN_GROQ), hInstance, 0,
 	)
@@ -1311,7 +1524,7 @@ func showSettingsDialog() {
 
 	btnTest, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🧪 Проверить"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsTestBtn))),
 		WS_CHILD|WS_VISIBLE,
 		674, 98, 130, 34, hwndSetup, uintptr(IDC_BTN_TEST), hInstance, 0,
 	)
@@ -1320,7 +1533,7 @@ func showSettingsDialog() {
 	// 2. Hotkey Config Row
 	lblHot, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("⚡ Горячая клавиша диктовки:"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkey))),
 		WS_CHILD|WS_VISIBLE,
 		24, 146, 260, 26, hwndSetup, 0, hInstance, 0,
 	)
@@ -1336,7 +1549,7 @@ func showSettingsDialog() {
 
 	lblHotTip, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("(Доступны: F8, F4, F9, F10, F12 — переключение Старт/Стоп)"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkeyTip))),
 		WS_CHILD|WS_VISIBLE,
 		424, 146, 380, 26, hwndSetup, 0, hInstance, 0,
 	)
@@ -1345,7 +1558,7 @@ func showSettingsDialog() {
 	// 3. Knowledge Base Linking
 	lblFold, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("📁 Общая папка с базами знаний / проектами (Автословарь):"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsFolder))),
 		WS_CHILD|WS_VISIBLE,
 		24, 186, 520, 26, hwndSetup, 0, hInstance, 0,
 	)
@@ -1361,16 +1574,16 @@ func showSettingsDialog() {
 
 	btnBrowse, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("📂 Обзор..."))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsBrowse))),
 		WS_CHILD|WS_VISIBLE,
 		674, 216, 130, 34, hwndSetup, uintptr(IDC_BTN_BROWSE), hInstance, 0,
 	)
 	procSendMessageW.Call(btnBrowse, WM_SETFONT, hFontBold, 1)
 
-	// 4. Language Selection Checklist
+	// 4. Recognition Language Checklist
 	lblLangs, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("🌐 Активные языки (Whisper AI поддерживает любые комбинации):"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsLangs))),
 		WS_CHILD|WS_VISIBLE,
 		24, 264, 780, 26, hwndSetup, 0, hInstance, 0,
 	)
@@ -1397,51 +1610,27 @@ func showSettingsDialog() {
 		procSendMessageW.Call(chkHwnd, WM_SETFONT, hFontNormal, 1)
 
 		if hasLang(lang.Code) {
-			procSendMessageW.Call(chkHwnd, 0x00F1, 1, 0) // BM_SETCHECK BST_CHECKED
+			procSendMessageW.Call(chkHwnd, 0x00F1, 1, 0)
 		}
 		langCheckHWnd[lang.Code] = chkHwnd
 	}
 
-	// 5. Action Buttons (Save, Dictionary, Open Folder, Uninstall)
+	// 5. Action Buttons (Save, Dictionary)
 	btnSave, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("💾 Сохранить и Применить"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsSave))),
 		WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON,
-		24, 480, 220, 46, hwndSetup, uintptr(IDC_BTN_SAVE), hInstance, 0,
+		24, 480, 380, 46, hwndSetup, uintptr(IDC_BTN_SAVE), hInstance, 0,
 	)
 	procSendMessageW.Call(btnSave, WM_SETFONT, hFontBold, 1)
 
 	btnDict, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("📖 Редактировать словарь"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsDict))),
 		WS_CHILD|WS_VISIBLE,
-		256, 480, 200, 46, hwndSetup, uintptr(IDC_BTN_DICT), hInstance, 0,
+		424, 480, 380, 46, hwndSetup, uintptr(IDC_BTN_DICT), hInstance, 0,
 	)
 	procSendMessageW.Call(btnDict, WM_SETFONT, hFontNormal, 1)
-
-	btnDir, _, _ := procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("📂 Папка файлов"))),
-		WS_CHILD|WS_VISIBLE,
-		468, 480, 164, 46, hwndSetup, uintptr(IDC_BTN_OPEN_DIR), hInstance, 0,
-	)
-	procSendMessageW.Call(btnDir, WM_SETFONT, hFontNormal, 1)
-
-	btnUninst, _, _ := procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🗑️ Uninstall App"))),
-		WS_CHILD|WS_VISIBLE,
-		644, 480, 160, 46, hwndSetup, uintptr(IDC_BTN_UNINST), hInstance, 0,
-	)
-	procSendMessageW.Call(btnUninst, WM_SETFONT, hFontBold, 1)
-
-	lblTip, _, _ := procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("Status: Real-time HUD active. Direct WaveIn Engine active. Press [F8] to dictate."))),
-		WS_CHILD|WS_VISIBLE,
-		24, 545, 780, 30, hwndSetup, 0, hInstance, 0,
-	)
-	procSendMessageW.Call(lblTip, WM_SETFONT, hFontNormal, 1)
 
 	procSetForegroundWindow.Call(hwndSetup)
 }
@@ -1479,6 +1668,14 @@ func handleMenuCommand(cmdID uintptr) {
 		go toggleRecording()
 	case cmdID == IDM_SETUP_KEY || cmdID == IDM_OPEN_CONFIG:
 		showSettingsDialog()
+	case cmdID >= IDM_UI_LANG_BASE && cmdID < IDM_UI_LANG_BASE+uintptr(len(UILanguages)):
+		idx := int(cmdID - IDM_UI_LANG_BASE)
+		if idx >= 0 && idx < len(UILanguages) {
+			config.UILanguage = UILanguages[idx].Code
+			saveConfig()
+			ui := getUI()
+			updateTrayState(false, fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey))
+		}
 	case cmdID >= IDM_LANG_BASE && cmdID < IDM_LANG_BASE+uintptr(len(config.AllLanguages)):
 		idx := int(cmdID - IDM_LANG_BASE)
 		if idx >= 0 && idx < len(config.AllLanguages) {
@@ -1496,26 +1693,24 @@ func handleMenuCommand(cmdID uintptr) {
 				updated = append(updated, code)
 			}
 			if len(updated) == 0 {
-				updated = []string{"RU", "EN"}
+				updated = []string{"EN"}
 			}
 			config.ActiveLanguages = updated
 			saveConfig()
 		}
 	case cmdID == IDM_OPEN_DICT:
 		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("notepad.exe"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
-	case cmdID == IDM_OPEN_DIR:
-		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("explorer.exe"))), uintptr(unsafe.Pointer(strPtr(appDir))), 0, SW_SHOWNORMAL)
 	case cmdID == IDM_LINK_FOLDER:
 		folder := pickFolderNative(hwndMain)
 		if folder != "" {
 			count := linkKnowledgeFolder(folder)
 			config.LinkedKnowledgeFolder = folder
 			saveConfig()
-			msg := fmt.Sprintf("Успешно привязано!\nПапка: %s\nДобавлено новых проектов в словарь: %d", folder, count)
+			msg := fmt.Sprintf("Successfully linked!\nFolder: %s\nNew terms added to dictionary: %d", folder, count)
 			procMessageBoxW.Call(
 				0,
 				uintptr(unsafe.Pointer(strPtr(msg))),
-				uintptr(unsafe.Pointer(strPtr(AppTitle+" - Папка привязана"))),
+				uintptr(unsafe.Pointer(strPtr(AppTitle+" - Folder Linked"))),
 				0x00000040,
 			)
 		}
@@ -1523,8 +1718,6 @@ func handleMenuCommand(cmdID uintptr) {
 		toggleAutostart()
 	case cmdID == IDM_OPEN_HELP:
 		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(helpFile))), 0, 0, SW_SHOWNORMAL)
-	case cmdID == IDM_UNINSTALL:
-		runUninstall()
 	case cmdID == IDM_EXIT:
 		procShellNotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 		procPostQuitMessage.Call(0)
@@ -1599,7 +1792,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				}
 			}
 			if len(langs) == 0 {
-				langs = []string{"RU", "EN"}
+				langs = []string{"EN"}
 			}
 			config.ActiveLanguages = langs
 
@@ -1607,7 +1800,8 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			playBeep(880, 150)
 			procShowWindow.Call(hwnd, SW_HIDE)
 			initTrayIcon()
-			updateTrayState(false, AppTitle+" | Ready ("+config.Hotkey+")")
+			ui := getUI()
+			updateTrayState(false, fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey))
 			return 0
 		} else if cmdID == IDC_BTN_TEST {
 			var bufKey [512]uint16
@@ -1622,7 +1816,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				procMessageBoxW.Call(
 					hwndSetup,
 					uintptr(unsafe.Pointer(strPtr(resMsg))),
-					uintptr(unsafe.Pointer(strPtr(AppTitle+" - Проверка API ключа"))),
+					uintptr(unsafe.Pointer(strPtr(AppTitle+" - API Key Test"))),
 					iconType,
 				)
 			}(testKey)
@@ -1638,12 +1832,6 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			return 0
 		} else if cmdID == IDC_BTN_DICT {
 			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("notepad.exe"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
-			return 0
-		} else if cmdID == IDC_BTN_OPEN_DIR {
-			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("explorer.exe"))), uintptr(unsafe.Pointer(strPtr(appDir))), 0, SW_SHOWNORMAL)
-			return 0
-		} else if cmdID == IDC_BTN_UNINST {
-			runUninstall()
 			return 0
 		}
 	case WM_CLOSE:
@@ -1673,7 +1861,7 @@ func initHUD() {
 	hudWidth := int32(480)
 	hudHeight := int32(50)
 	hudX := (int32(screenWidth) - hudWidth) / 2
-	hudY := int32(24) // Top-center float
+	hudY := int32(24)
 
 	hInstance, _, _ := procGetModuleHandleW.Call(0)
 	className := strPtr("GIN_VOICE_HUD_CLASS")
@@ -1813,7 +2001,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v007.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v008.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
@@ -1854,14 +2042,6 @@ func checkAndSelfInstall() {
 }
 
 func main() {
-	uninstFlag := flag.Bool("uninstall", false, "Uninstall GIN-Voice completely")
-	flag.Parse()
-
-	if *uninstFlag {
-		runUninstall()
-		return
-	}
-
 	checkAndSelfInstall()
 
 	exePath, _ := os.Executable()
@@ -1872,7 +2052,7 @@ func main() {
 	helpFile = filepath.Join(appDir, "setup_guide.html")
 	logFile = filepath.Join(appDir, "gin_voice.log")
 
-	writeLog("=== GIN-Voice [v007] Starting with Event-Driven Audio Engine ===")
+	writeLog("=== GIN-Voice [v008] Starting ===")
 
 	loadConfig()
 	loadDictionary()

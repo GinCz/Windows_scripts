@@ -1,40 +1,69 @@
 {
-  "version": "v001",
-  "first_run": true,
-  "hotkey": "F4",
-  "hotkey_vk": 115,
+  "version": "v008",
+  "ui_language": "EN",
+  "first_run": false,
+  "hotkey": "F8",
+  "hotkey_vk": 119,
   "hotkey_mod": 0,
   "active_languages": [
-    "en"
+    "EN"
   ],
   "all_languages": [
     {
-      "code": "en",
-      "name": "English"
+      "code": "EN",
+      "name": "English (Английский)"
     },
     {
-      "code": "cs",
-      "name": "Czech"
+      "code": "CS",
+      "name": "Čeština (Czech)"
     },
     {
-      "code": "ru",
-      "name": "Russian"
+      "code": "RU",
+      "name": "Русский (Russian)"
     },
     {
-      "code": "de",
-      "name": "German"
+      "code": "DE",
+      "name": "Deutsch (German)"
     },
     {
-      "code": "fr",
-      "name": "French"
+      "code": "UK",
+      "name": "Українська (Ukrainian)"
     },
     {
-      "code": "es",
-      "name": "Spanish"
+      "code": "ES",
+      "name": "Español (Spanish)"
     },
     {
-      "code": "uk",
-      "name": "Ukrainian"
+      "code": "FR",
+      "name": "Français (French)"
+    },
+    {
+      "code": "IT",
+      "name": "Italiano (Italian)"
+    },
+    {
+      "code": "PL",
+      "name": "Polski (Polish)"
+    },
+    {
+      "code": "ZH",
+      "name": "中文 (Chinese)"
+    },
+    {
+      "code": "JA",
+      "name": "日本語 (Japanese)"
+    },
+    {
+      "code": "TR",
+      "name": "Türkçe (Turkish)"
+    },
+    {
+      "code": "AR",
+      "name": "العربية (Arabic)"
+    },
+    {
+      "code": "HE",
+      "name": "עברית (Hebrew)"
     }
   ],
   "groq_api_key": "",

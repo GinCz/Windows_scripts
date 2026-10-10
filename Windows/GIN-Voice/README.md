@@ -1,24 +1,25 @@
-# 🎙️ GIN-Voice [v007]
+# 🎙️ GIN-Voice [v008]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v007`  
+> *Version:* `v008`  
 
 ---
 
-## 🎯 What's New in v007
-* **Event-Driven Audio Engine (`CALLBACK_EVENT`):** WinMM audio recording is now 100% decoupled from the Windows GUI message loop using kernel events. Completely eliminates recording hangs and lockups regardless of recording duration.
-* **Non-Blocking Asynchronous Hotkey Listener:** Hardware `[F8]` listener runs in a decoupled worker with debouncing, preventing keyboard hook freezes.
-* **True 32bpp BMP DIB Icon Suite:** Full multi-resolution icon embedding (16x16, 20x20, 24x24, 32x32, 40x40, 48x48, 64x64, 128x128, 256x256) ensuring Windows Explorer and Desktop render the crisp GIN-Voice icon instead of a blank white square.
-* **Real-time Cyber Floating HUD:** Top-center status indicator showing recording state, Whisper AI transcription, and auto-pasted results.
-* **Out-of-the-Box Operation:** Pre-configured with built-in Groq Whisper AI key so it works instantly on launch, with the ability to set a custom key anytime via Tray Menu.
-* **Extended Brand Dictionary:** Automatic capitalization and syntax correction for `GIN-Cinema`, `GIN-TV`, `GIN-NetScan`, `GIN-Voice`, `GIN-VPN`, `GIN-Chat`, `Secret_Privat`, `ORACLE_157`, `Server_222`, `Antigravity`, and `Gemini`.
+## 🎯 What's New in v008
+* **Multi-Language UI (Menu & Interface):** Default interface language is now English (`EN`), with instant switching to `RU` (Русский), `CS` (Čeština), `IT` (Italiano), `ES` (Español), or `FR` (Français) via Tray Menu.
+* **Recognition Languages Priority:** English (`EN`) is set as first and checked by default, followed by Czech (`CS`) and Russian (`RU`).
+* **Zero Pre-Filled Keys (Clean Security):** No default API key is pre-filled. Fresh installs start cleanly with an empty API key field, prompting the configuration wizard.
+* **Streamlined Tray Menu:** Removed redundant "Uninstall" and "Open Folder" menu items for a cleaner, focused experience.
+* **Guaranteed Windows PE Resource Icon:** Native compilation embeds 32bpp DIB multi-resolution icons (16x16 to 256x256) directly into the executable `.rsrc` table so Windows Explorer and Desktop render the neon microphone icon.
+* **Event-Driven Audio Engine (`CALLBACK_EVENT`):** Complete isolation of WinMM audio driver from window messages for 100% deadlock-free continuous dictation.
+* **Shortcuts & Mega Desktop Support:** Automatically installs shortcuts to Desktop, Start Menu, and `D:\MEGA\DOCS\desktop\`.
 
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v007.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v007.exe` — Portable executable
+* `GIN-Voice_Setup_v008.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v008.exe` — Portable executable
 * `setup_guide.html` — Visual HTML guide with step-by-step setup
 * `dictionary.json` — Custom vocabulary replacements
 * `version.json` — Release metadata
