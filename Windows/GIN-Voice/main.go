@@ -135,6 +135,8 @@ const (
 	IDC_BTN_DICT    = 3007
 	IDC_BTN_TEST    = 3008
 	IDC_EDIT_FONT   = 3009
+	IDC_BTN_LANG_EN = 3010
+	IDC_BTN_LANG_RU = 3011
 
 	IDC_LANG_CHK_BASE = 4000
 )
@@ -404,6 +406,13 @@ var (
 	hwndEditFolder  uintptr
 	hwndEditHotkey  uintptr
 	hwndEditFont    uintptr
+	btnLangEN       uintptr
+	btnLangRU       uintptr
+	btnGroq         uintptr
+	btnTest         uintptr
+	btnBrowse       uintptr
+	btnSave         uintptr
+	btnDict         uintptr
 	langCheckHWnd   = make(map[string]uintptr)
 	nid             NOTIFYICONDATAW
 	isRecording     bool
@@ -1951,9 +1960,26 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHeader))),
 		WS_CHILD|WS_VISIBLE,
-		24, 20, 780, 32, hwndSetup, 0, hInstance, 0,
+		24, 20, 510, 32, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndHeader, WM_SETFONT, hFontHeader, 1)
+
+	// Top Language Switcher in Settings Window
+	btnLangEN, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr("🇬🇧 English"))),
+		WS_CHILD|WS_VISIBLE,
+		550, 16, 114, 34, hwndSetup, uintptr(IDC_BTN_LANG_EN), hInstance, 0,
+	)
+	procSendMessageW.Call(btnLangEN, WM_SETFONT, hFontBold, 1)
+
+	btnLangRU, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr("🇷🇺 Русский"))),
+		WS_CHILD|WS_VISIBLE,
+		674, 16, 130, 34, hwndSetup, uintptr(IDC_BTN_LANG_RU), hInstance, 0,
+	)
+	procSendMessageW.Call(btnLangRU, WM_SETFONT, hFontBold, 1)
 
 	// 1. Groq API Key Row
 	hwndLblKey, _, _ = procCreateWindowExW.Call(
@@ -1964,7 +1990,7 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(hwndLblKey, WM_SETFONT, hFontBold, 1)
 
-	btnGroq, _, _ := procCreateWindowExW.Call(
+	btnGroq, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsGetGroq))),
 		WS_CHILD|WS_VISIBLE,
@@ -1980,7 +2006,7 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(hwndEditKey, WM_SETFONT, hFontNormal, 1)
 
-	btnTest, _, _ := procCreateWindowExW.Call(
+	btnTest, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsTestBtn))),
 		WS_CHILD|WS_VISIBLE,
@@ -2046,7 +2072,7 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(hwndEditFolder, WM_SETFONT, hFontNormal, 1)
 
-	btnBrowse, _, _ := procCreateWindowExW.Call(
+	btnBrowse, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsBrowse))),
 		WS_CHILD|WS_VISIBLE,
@@ -2091,7 +2117,7 @@ func showSettingsDialog() {
 	}
 
 	// 5. Action Buttons (Save, Dictionary)
-	btnSave, _, _ := procCreateWindowExW.Call(
+	btnSave, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsSave))),
 		WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON,
@@ -2099,7 +2125,7 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(btnSave, WM_SETFONT, hFontBold, 1)
 
-	btnDict, _, _ := procCreateWindowExW.Call(
+	btnDict, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsDict))),
 		WS_CHILD|WS_VISIBLE,
@@ -2108,6 +2134,27 @@ func showSettingsDialog() {
 	procSendMessageW.Call(btnDict, WM_SETFONT, hFontNormal, 1)
 
 	procSetForegroundWindow.Call(hwndSetup)
+}
+
+func refreshSettingsDialogUI() {
+	if hwndSetup == 0 {
+		return
+	}
+	ui := getUI()
+	procSetWindowTextW.Call(hwndSetup, uintptr(unsafe.Pointer(strPtr(AppTitle+" - "+ui.SettingsTitle))))
+	procSetWindowTextW.Call(hwndHeader, uintptr(unsafe.Pointer(strPtr(ui.SettingsHeader))))
+	procSetWindowTextW.Call(hwndLblKey, uintptr(unsafe.Pointer(strPtr(ui.SettingsKeyLabel))))
+	procSetWindowTextW.Call(btnGroq, uintptr(unsafe.Pointer(strPtr(ui.SettingsGetGroq))))
+	procSetWindowTextW.Call(btnTest, uintptr(unsafe.Pointer(strPtr(ui.SettingsTestBtn))))
+	procSetWindowTextW.Call(hwndLblHot, uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkey))))
+	procSetWindowTextW.Call(hwndLblFont, uintptr(unsafe.Pointer(strPtr(ui.SettingsFont))))
+	procSetWindowTextW.Call(hwndLblHotTip, uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))))
+	procSetWindowTextW.Call(hwndLblFolder, uintptr(unsafe.Pointer(strPtr(ui.SettingsFolder))))
+	procSetWindowTextW.Call(btnBrowse, uintptr(unsafe.Pointer(strPtr(ui.SettingsBrowse))))
+	procSetWindowTextW.Call(hwndLblLangs, uintptr(unsafe.Pointer(strPtr(ui.SettingsLangs))))
+	procSetWindowTextW.Call(btnSave, uintptr(unsafe.Pointer(strPtr(ui.SettingsSave))))
+	procSetWindowTextW.Call(btnDict, uintptr(unsafe.Pointer(strPtr(ui.SettingsDict))))
+	updateTrayState(false, fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey))
 }
 
 func hasLang(code string) bool {
@@ -2150,8 +2197,7 @@ func handleMenuCommand(cmdID uintptr) {
 		if idx >= 0 && idx < len(UILanguages) {
 			config.UILanguage = UILanguages[idx].Code
 			saveConfig()
-			ui := getUI()
-			updateTrayState(false, fmt.Sprintf("%s | %s (%s)", AppTitle, ui.Ready, config.Hotkey))
+			refreshSettingsDialogUI()
 		}
 	case cmdID >= IDM_LANG_BASE && cmdID < IDM_LANG_BASE+uintptr(len(config.AllLanguages)):
 		idx := int(cmdID - IDM_LANG_BASE)
@@ -2255,7 +2301,17 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		return hBrushDarkBg
 	case WM_COMMAND:
 		cmdID := wParam & 0xFFFF
-		if cmdID == IDC_BTN_SAVE {
+		if cmdID == IDC_BTN_LANG_EN {
+			config.UILanguage = "EN"
+			saveConfig()
+			refreshSettingsDialogUI()
+			return 0
+		} else if cmdID == IDC_BTN_LANG_RU {
+			config.UILanguage = "RU"
+			saveConfig()
+			refreshSettingsDialogUI()
+			return 0
+		} else if cmdID == IDC_BTN_SAVE {
 			var bufKey [512]uint16
 			procGetWindowTextW.Call(hwndEditKey, uintptr(unsafe.Pointer(&bufKey[0])), 512)
 			config.GroqAPIKey = strings.TrimSpace(syscall.UTF16ToString(bufKey[:]))
