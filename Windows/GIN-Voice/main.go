@@ -30,8 +30,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v013"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v013]"
+	AppVersion    = "v014"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v014]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -152,6 +152,9 @@ var defaultSetupGuideHTML []byte
 
 //go:embed uninstall.bat
 var defaultUninstallBAT []byte
+
+//go:embed uninstall.ps1
+var defaultUninstallPS1 []byte
 
 var (
 	user32   = syscall.NewLazyDLL("user32.dll")
@@ -374,6 +377,12 @@ var (
 	hwndSetup       uintptr
 	hwndHUD         uintptr
 	hwndHUDText     uintptr
+	hwndHeader      uintptr
+	hwndLblKey      uintptr
+	hwndLblHot      uintptr
+	hwndLblHotTip   uintptr
+	hwndLblFolder   uintptr
+	hwndLblLangs    uintptr
 	hwndEditKey     uintptr
 	hwndEditFolder  uintptr
 	hwndEditHotkey  uintptr
@@ -1882,22 +1891,22 @@ func showSettingsDialog() {
 	)
 
 	// Header Banner
-	lblHdr, _, _ := procCreateWindowExW.Call(
+	hwndHeader, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHeader))),
 		WS_CHILD|WS_VISIBLE,
 		24, 20, 780, 32, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lblHdr, WM_SETFONT, hFontHeader, 1)
+	procSendMessageW.Call(hwndHeader, WM_SETFONT, hFontHeader, 1)
 
 	// 1. Groq API Key Row
-	lblKey, _, _ := procCreateWindowExW.Call(
+	hwndLblKey, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsKeyLabel))),
 		WS_CHILD|WS_VISIBLE,
 		24, 68, 260, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lblKey, WM_SETFONT, hFontBold, 1)
+	procSendMessageW.Call(hwndLblKey, WM_SETFONT, hFontBold, 1)
 
 	btnGroq, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
@@ -1924,13 +1933,13 @@ func showSettingsDialog() {
 	procSendMessageW.Call(btnTest, WM_SETFONT, hFontBold, 1)
 
 	// 2. Hotkey Config Row
-	lblHot, _, _ := procCreateWindowExW.Call(
+	hwndLblHot, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkey))),
 		WS_CHILD|WS_VISIBLE,
 		24, 146, 260, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lblHot, WM_SETFONT, hFontBold, 1)
+	procSendMessageW.Call(hwndLblHot, WM_SETFONT, hFontBold, 1)
 
 	hwndEditHotkey, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
@@ -1940,22 +1949,22 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(hwndEditHotkey, WM_SETFONT, hFontBold, 1)
 
-	lblHotTip, _, _ := procCreateWindowExW.Call(
+	hwndLblHotTip, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkeyTip))),
 		WS_CHILD|WS_VISIBLE,
 		424, 146, 380, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lblHotTip, WM_SETFONT, hFontNormal, 1)
+	procSendMessageW.Call(hwndLblHotTip, WM_SETFONT, hFontNormal, 1)
 
 	// 3. Knowledge Base Linking
-	lblFold, _, _ := procCreateWindowExW.Call(
+	hwndLblFolder, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsFolder))),
 		WS_CHILD|WS_VISIBLE,
 		24, 186, 520, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lblFold, WM_SETFONT, hFontBold, 1)
+	procSendMessageW.Call(hwndLblFolder, WM_SETFONT, hFontBold, 1)
 
 	hwndEditFolder, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
@@ -1974,13 +1983,13 @@ func showSettingsDialog() {
 	procSendMessageW.Call(btnBrowse, WM_SETFONT, hFontBold, 1)
 
 	// 4. Recognition Language Checklist (18 languages: 6 rows x 3 columns)
-	lblLangs, _, _ := procCreateWindowExW.Call(
+	hwndLblLangs, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsLangs))),
 		WS_CHILD|WS_VISIBLE,
 		24, 264, 780, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lblLangs, WM_SETFONT, hFontBold, 1)
+	procSendMessageW.Call(hwndLblLangs, WM_SETFONT, hFontBold, 1)
 
 	startX := int32(24)
 	startY := int32(296)
@@ -2161,18 +2170,27 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case WM_CTLCOLORSTATIC:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x00F8FAFC)
-		procSetBkColor.Call(hdc, 0x0018110D)
+		ctrlHwnd := lParam
+		if ctrlHwnd == hwndHeader {
+			procSetTextColor.Call(hdc, 0x00FFE500) // Vibrant Cyan #00E5FF for Main Header Banner
+		} else if ctrlHwnd == hwndLblKey || ctrlHwnd == hwndLblHot || ctrlHwnd == hwndLblFolder || ctrlHwnd == hwndLblLangs {
+			procSetTextColor.Call(hdc, 0x005EC522) // Emerald Green #22C55E for Section Titles
+		} else if ctrlHwnd == hwndLblHotTip {
+			procSetTextColor.Call(hdc, 0x00FCD37D) // Sky Blue #7DD3FC for Helper Tips
+		} else {
+			procSetTextColor.Call(hdc, 0x00FCFAF8) // Bright Crisp White #F8FAFC for Checkbox Labels
+		}
+		procSetBkColor.Call(hdc, 0x002E2722) // Cool Slate Gray #22272E
 		return hBrushDarkBg
 	case WM_CTLCOLOREDIT:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x00F8E500)
-		procSetBkColor.Call(hdc, 0x00261D12)
+		procSetTextColor.Call(hdc, 0x00FCFAF8) // Crisp White Text
+		procSetBkColor.Call(hdc, 0x0028211C) // Deep Slate #1C2128
 		return hBrushEditBg
 	case WM_CTLCOLORBTN:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x00F8FAFC)
-		procSetBkColor.Call(hdc, 0x0018110D)
+		procSetTextColor.Call(hdc, 0x00FCFAF8)
+		procSetBkColor.Call(hdc, 0x002E2722)
 		return hBrushDarkBg
 	case WM_COMMAND:
 		cmdID := wParam & 0xFFFF
@@ -2258,8 +2276,8 @@ func hudWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case WM_CTLCOLORSTATIC:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x0000E5FF) // Vibrant Cyan #00E5FF
-		procSetBkColor.Call(hdc, 0x00111827)
+		procSetTextColor.Call(hdc, 0x00FFE500) // Vibrant Cyan #00E5FF
+		procSetBkColor.Call(hdc, 0x002E2722)  // Cool Slate Gray #22272E
 		return hBrushDarkBg
 	default:
 		r, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
@@ -2351,6 +2369,9 @@ func copyFile(src, dst string) error {
 
 func createShortcuts(exePath, targetDir string) {
 	icoPath := filepath.Join(targetDir, "app.ico")
+	recIcoPath := filepath.Join(targetDir, "app_rec.ico")
+	uninstBat := filepath.Join(targetDir, "uninstall.bat")
+
 	psCmd := fmt.Sprintf(`
 $w = New-Object -ComObject WScript.Shell
 $desktop = [Environment]::GetFolderPath('Desktop')
@@ -2369,6 +2390,13 @@ $s2.IconLocation = '%s'
 $s2.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
 $s2.Save()
 
+$sUn = $w.CreateShortcut("$startMenu\Uninstall GIN-Voice.lnk")
+$sUn.TargetPath = '%s'
+$sUn.WorkingDirectory = '%s'
+$sUn.IconLocation = '%s'
+$sUn.Description = 'Uninstall GIN-Voice'
+$sUn.Save()
+
 if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3 = $w.CreateShortcut("D:\MEGA\DOCS\desktop\GIN-Voice.lnk")
     $s3.TargetPath = '%s'
@@ -2376,9 +2404,9 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
-    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v013.exe' -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v014.exe' -Force -ErrorAction SilentlyContinue
 }
-`, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath)
+`, exePath, targetDir, icoPath, exePath, targetDir, icoPath, uninstBat, targetDir, recIcoPath, exePath, targetDir, icoPath, exePath)
 
 	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psCmd).Run()
 }
@@ -2413,7 +2441,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v013.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v014.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
@@ -2428,6 +2456,11 @@ func checkAndSelfInstall() {
 	dstUninst := filepath.Join(targetDir, "uninstall.bat")
 	if len(defaultUninstallBAT) > 0 {
 		_ = os.WriteFile(dstUninst, defaultUninstallBAT, 0644)
+	}
+
+	dstUninstPS1 := filepath.Join(targetDir, "uninstall.ps1")
+	if len(defaultUninstallPS1) > 0 {
+		_ = os.WriteFile(dstUninstPS1, defaultUninstallPS1, 0644)
 	}
 
 	dictDest := filepath.Join(targetDir, "dictionary.json")
@@ -2469,9 +2502,9 @@ func main() {
 	loadDictionary()
 	loadIcons()
 
-	bDark, _, _ := procCreateSolidBrush.Call(0x0018110D)
+	bDark, _, _ := procCreateSolidBrush.Call(0x002E2722) // Cool Slate Gray #22272E
 	hBrushDarkBg = bDark
-	bEdit, _, _ := procCreateSolidBrush.Call(0x00261D12)
+	bEdit, _, _ := procCreateSolidBrush.Call(0x0028211C) // Deep Slate #1C2128
 	hBrushEditBg = bEdit
 
 	hFontNormal, _, _ = procCreateFontW.Call(
