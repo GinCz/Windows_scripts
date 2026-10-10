@@ -9,6 +9,7 @@ package main
 import (
 	"bytes"
 	_ "embed"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,6 +19,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -28,8 +30,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v011"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v011]"
+	AppVersion    = "v012"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v012]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -904,6 +906,112 @@ func applyDictionary(input string) string {
 	return result
 }
 
+var hallucinationRegexes = []*regexp.Regexp{
+	// Subtitles / Credits / Translators (Whisper training artifacts)
+	regexp.MustCompile(`(?i)(субтитры\s+(создавал[аи]?|делал[аи]?|переводил[аи]?|добавил[аи]?|подготовил[аи]?|оформил[аи]?|редактировал[аи]?).*)`),
+	regexp.MustCompile(`(?i)((редактор|автор|перевод|синхронизация)\s+субтитров.*)`),
+	regexp.MustCompile(`(?i)(субтитры\s*:\s*.*)`),
+	regexp.MustCompile(`(?i)(dimatorzok.*)`),
+	regexp.MustCompile(`(?i)(dima\s*torzok.*)`),
+	regexp.MustCompile(`(?i)(amara\.org.*)`),
+	regexp.MustCompile(`(?i)(opensubtitles(\.org)?.*)`),
+	regexp.MustCompile(`(?i)(titulky\s+(vytvořil|připravil|přeložil).*)`),
+	regexp.MustCompile(`(?i)(překlad\s+titulků.*)`),
+	regexp.MustCompile(`(?i)(untertitel\s+(von|erstellt).*)`),
+	regexp.MustCompile(`(?i)(subtitles\s+by.*)`),
+	regexp.MustCompile(`(?i)(translated\s+by.*)`),
+	regexp.MustCompile(`(?i)(sous-titres\s+par.*)`),
+	regexp.MustCompile(`(?i)(sottotitoli\s+a\s+cura\s+di.*)`),
+	regexp.MustCompile(`(?i)(subtítulos\s+por.*)`),
+
+	// YouTube / Social media outros
+	regexp.MustCompile(`(?i)((подписывайтесь|подпишитесь)\s+на\s+канал.*)`),
+	regexp.MustCompile(`(?i)(ставьте\s+лайки.*)`),
+	regexp.MustCompile(`(?i)(спасибо\s+за\s+(просмотр|внимание).*)`),
+	regexp.MustCompile(`(?i)(не\s+забудьте\s+подписаться.*)`),
+	regexp.MustCompile(`(?i)(до\s+новых\s+встреч.*)`),
+	regexp.MustCompile(`(?i)(продолжение\s+следует.*)`),
+	regexp.MustCompile(`(?i)(thank\s+you\s+for\s+watching.*)`),
+	regexp.MustCompile(`(?i)(thanks\s+for\s+watching.*)`),
+	regexp.MustCompile(`(?i)(please\s+subscribe.*)`),
+	regexp.MustCompile(`(?i)(like\s+and\s+subscribe.*)`),
+	regexp.MustCompile(`(?i)(danke\s+fürs\s+zuschauen.*)`),
+	regexp.MustCompile(`(?i)(merci\s+d'avoir\s+regardé.*)`),
+	regexp.MustCompile(`(?i)(grazie\s+per\s+la\s+visione.*)`),
+	regexp.MustCompile(`(?i)(gracias\s+por\s+ver.*)`),
+
+	// Acoustic markers in brackets
+	regexp.MustCompile(`(?i)\[(музыка|аплодисменты|смех|вздох|тишина|шум|звонок|music|applause|laughter|silence|noise|bell|cough)\]`),
+	regexp.MustCompile(`(?i)\((музыка|аплодисменты|смех|вздох|тишина|шум|звонок|music|applause|laughter|silence|noise|bell|cough)\)`),
+}
+
+func cleanHallucinations(text string) string {
+	res := text
+	for _, re := range hallucinationRegexes {
+		res = re.ReplaceAllString(res, "")
+	}
+	res = strings.TrimSpace(res)
+	res = strings.TrimRight(res, " ,;:-–—")
+	return res
+}
+
+func trimAudioSilence(pcm []byte) []byte {
+	numSamples := len(pcm) / 2
+	if numSamples < 3200 { // less than 200ms
+		return pcm
+	}
+
+	samples := make([]int16, numSamples)
+	for i := 0; i < numSamples; i++ {
+		samples[i] = int16(binary.LittleEndian.Uint16(pcm[i*2 : i*2+2]))
+	}
+
+	windowSize := 800 // 50ms at 16000Hz
+	threshold := int64(250) // silence energy threshold
+
+	startWindow := -1
+	endWindow := -1
+
+	numWindows := numSamples / windowSize
+	for w := 0; w < numWindows; w++ {
+		var sum int64
+		for i := 0; i < windowSize; i++ {
+			val := int64(samples[w*windowSize+i])
+			if val < 0 {
+				val = -val
+			}
+			sum += val
+		}
+		avg := sum / int64(windowSize)
+		if avg > threshold {
+			if startWindow == -1 {
+				startWindow = w
+			}
+			endWindow = w
+		}
+	}
+
+	if startWindow == -1 {
+		return pcm
+	}
+
+	// 150ms padding before and 200ms after
+	startSample := (startWindow - 3) * windowSize
+	if startSample < 0 {
+		startSample = 0
+	}
+	endSample := (endWindow + 4) * windowSize
+	if endSample > numSamples {
+		endSample = numSamples
+	}
+
+	if endSample <= startSample {
+		return pcm
+	}
+
+	return pcm[startSample*2 : endSample*2]
+}
+
 func createWAV(pcm []byte, sampleRate int, channels int, bits int) []byte {
 	dataLen := len(pcm)
 	totalLen := 36 + dataLen
@@ -1076,7 +1184,8 @@ func stopRecordingWaveIn() []byte {
 		procCloseHandle.Call(curEvent)
 	}
 
-	return createWAV(pcm, 16000, 1, 16)
+	trimmedPCM := trimAudioSilence(pcm)
+	return createWAV(trimmedPCM, 16000, 1, 16)
 }
 
 func startRecording() {
@@ -1147,12 +1256,19 @@ func stopRecordingAndTranscribe() {
 			return
 		}
 
+		text = cleanHallucinations(text)
 		text = strings.TrimSpace(text)
 		if text == "" {
 			return
 		}
 
 		text = applyDictionary(text)
+		text = cleanHallucinations(text)
+		text = strings.TrimSpace(text)
+		if text == "" {
+			return
+		}
+
 		writeLog(fmt.Sprintf("Pasted text: [%s]", text))
 		updateHUD(true, fmt.Sprintf(ui.HudPasted, text))
 		pasteText(text)
@@ -2039,7 +2155,7 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
-    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v011.exe' -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v012.exe' -Force -ErrorAction SilentlyContinue
 }
 `, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath)
 
@@ -2076,7 +2192,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v011.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v012.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {

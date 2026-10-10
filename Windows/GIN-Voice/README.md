@@ -1,24 +1,24 @@
-# 🎙️ GIN-Voice [v011]
+# 🎙️ GIN-Voice [v012]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v011`  
+> *Version:* `v012`  
 
 ---
 
-## 🎯 What's New in v011
-* **Soft & Gentle Audio Chimes:** Replaced loud motherboard beeps with synthesized PCM harmonic tones (smooth Hann envelope, subtle volume) via `winmm.dll`.
-* **F4 Default Hotkey:** Streamlined single-key activation with default hotkey set to `F4`.
-* **Default Knowledge Base Folder:** Preconfigured to `D:\AI\BASE` for instant integration.
-* **Balanced 18-Language Matrix (6×3 Grid):** Default selection of 4 languages (`EN`, `CS`, `RU`, `DE`) with a symmetrical 18-language checkbox grid (English, Czech, Russian, German, Ukrainian, Spanish, French, Italian, Polish, Chinese, Japanese, Korean, Arabic, Hebrew, Turkish, Portuguese, Dutch, Swedish).
-* **Direct MEGA Cloud Synchronisation:** `GIN-Voice_Setup_v011.exe` is uploaded directly to `D:\MEGA\DOCS\desktop\` via MEGA cloud CLI.
-* **Multi-Language UI:** Instant switching between `EN`, `RU`, `CS`, `IT`, `ES`, `FR`.
+## 🎯 What's New in v012
+* **Anti-Hallucination Filter (Zero Subtitle Artifacts):** Comprehensive multi-language filter eliminating Whisper subtitle hallucinations (e.g., *"Субтитры создавал DimaTorzok"*, *"Редактор субтитров"*, *"Amara.org"*, *"Thank you for watching"*, etc.).
+* **Smart Audio Silence Trimming (RMS Energy Detection):** Trailing and leading silence/background noise is automatically detected and trimmed from PCM audio buffers prior to transcription, stopping Whisper from predicting phantom subtitle credits on silence.
+* **Soft & Gentle Audio Chimes:** Synthesized harmonic PCM WAV tones with Hann amplitude envelope at comfortable low volume.
+* **F4 Default Hotkey & D:\AI\BASE Default Path:** Rapid single-key workflow with default base folder.
+* **Balanced 18-Language Recognition Grid:** 6 rows × 3 columns with default active languages `EN`, `CS`, `RU`, `DE`.
+* **Direct MEGA Cloud Synchronisation:** `GIN-Voice_Setup_v012.exe` delivered directly to `/MEGA/DOCS/desktop/`.
 
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v011.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v011.exe` — Portable executable
+* `GIN-Voice_Setup_v012.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v012.exe` — Portable executable
 * `setup_guide.html` — Visual HTML guide with step-by-step setup
 * `dictionary.json` — Custom vocabulary replacements
 * `version.json` — Release metadata
