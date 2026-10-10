@@ -1,6 +1,8 @@
-// Execution Context : Go 1.19+ (Windows AMD64)
+// =============================================================================
+// Execution Context : Go 1.22+ (Windows AMD64)
 // Target Server     : Local Windows Desktop PC
-// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI, WaveIn Engine, Cyber Dark GUI, On-Screen HUD [v006]
+// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI, WaveIn Event Engine, Cyber Dark GUI, On-Screen HUD [v007]
+// =============================================================================
 
 package main
 
@@ -26,8 +28,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v006"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v006]"
+	AppVersion    = "v007"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v007]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -46,6 +48,7 @@ var (
 const (
 	WM_USER           = 0x0400
 	WM_TRAYICON       = WM_USER + 1
+	WM_UPDATE_HUD     = WM_USER + 2
 	WM_COMMAND        = 0x0111
 	WM_DESTROY        = 0x0002
 	WM_CLOSE          = 0x0010
@@ -58,14 +61,13 @@ const (
 	WM_CTLCOLORBTN    = 0x0135
 	WM_PAINT          = 0x000F
 
-	// WaveIn Messages
-	MM_WIM_OPEN  = 0x03BE
-	MM_WIM_CLOSE = 0x03BF
-	MM_WIM_DATA  = 0x03C0
-
-	CALLBACK_WINDOW = 0x00010000
+	CALLBACK_EVENT  = 0x00050000
 	WAVE_MAPPER     = 0xFFFFFFFF
 	WAVE_FORMAT_PCM = 1
+
+	WHDR_DONE     = 0x00000001
+	WHDR_PREPARED = 0x00000002
+	WHDR_INQUEUE  = 0x00000010
 
 	NIM_ADD     = 0x00000000
 	NIM_MODIFY  = 0x00000001
@@ -133,16 +135,16 @@ const (
 	IDM_LANG_BASE = 2000
 
 	// Settings Dialog IDs
-	IDC_BTN_SAVE      = 3001
-	IDC_BTN_GROQ      = 3002
-	IDC_EDIT_KEY      = 3003
-	IDC_EDIT_FOLDER   = 3004
-	IDC_BTN_BROWSE    = 3005
-	IDC_EDIT_HOTKEY   = 3006
-	IDC_BTN_DICT      = 3007
-	IDC_BTN_TEST      = 3008
-	IDC_BTN_UNINST    = 3009
-	IDC_BTN_OPEN_DIR  = 3011
+	IDC_BTN_SAVE     = 3001
+	IDC_BTN_GROQ     = 3002
+	IDC_EDIT_KEY     = 3003
+	IDC_EDIT_FOLDER  = 3004
+	IDC_BTN_BROWSE   = 3005
+	IDC_EDIT_HOTKEY  = 3006
+	IDC_BTN_DICT     = 3007
+	IDC_BTN_TEST     = 3008
+	IDC_BTN_UNINST   = 3009
+	IDC_BTN_OPEN_DIR = 3011
 
 	IDC_LANG_CHK_BASE = 4000
 )
@@ -171,37 +173,38 @@ var (
 	uxtheme  = syscall.NewLazyDLL("uxtheme.dll")
 	winmm    = syscall.NewLazyDLL("winmm.dll")
 
-	procRegisterClassExW    = user32.NewProc("RegisterClassExW")
-	procCreateWindowExW     = user32.NewProc("CreateWindowExW")
-	procDefWindowProcW      = user32.NewProc("DefWindowProcW")
-	procDestroyWindow       = user32.NewProc("DestroyWindow")
-	procPostQuitMessage     = user32.NewProc("PostQuitMessage")
-	procGetMessageW         = user32.NewProc("GetMessageW")
-	procTranslateMessage    = user32.NewProc("TranslateMessage")
-	procDispatchMessageW    = user32.NewProc("DispatchMessageW")
-	procCreatePopupMenu     = user32.NewProc("CreatePopupMenu")
-	procAppendMenuW         = user32.NewProc("AppendMenuW")
-	procTrackPopupMenu      = user32.NewProc("TrackPopupMenu")
-	procDestroyMenu         = user32.NewProc("DestroyMenu")
-	procSetForegroundWindow = user32.NewProc("SetForegroundWindow")
-	procGetCursorPos        = user32.NewProc("GetCursorPos")
-	procOpenClipboard       = user32.NewProc("OpenClipboard")
-	procCloseClipboard      = user32.NewProc("CloseClipboard")
-	procEmptyClipboard      = user32.NewProc("EmptyClipboard")
-	procSetClipboardData    = user32.NewProc("SetClipboardData")
-	procGetClipboardData    = user32.NewProc("GetClipboardData")
+	procRegisterClassExW     = user32.NewProc("RegisterClassExW")
+	procCreateWindowExW      = user32.NewProc("CreateWindowExW")
+	procDefWindowProcW       = user32.NewProc("DefWindowProcW")
+	procDestroyWindow        = user32.NewProc("DestroyWindow")
+	procPostQuitMessage      = user32.NewProc("PostQuitMessage")
+	procGetMessageW          = user32.NewProc("GetMessageW")
+	procTranslateMessage     = user32.NewProc("TranslateMessage")
+	procDispatchMessageW     = user32.NewProc("DispatchMessageW")
+	procCreatePopupMenu      = user32.NewProc("CreatePopupMenu")
+	procAppendMenuW          = user32.NewProc("AppendMenuW")
+	procTrackPopupMenu       = user32.NewProc("TrackPopupMenu")
+	procDestroyMenu          = user32.NewProc("DestroyMenu")
+	procSetForegroundWindow  = user32.NewProc("SetForegroundWindow")
+	procGetCursorPos         = user32.NewProc("GetCursorPos")
+	procOpenClipboard        = user32.NewProc("OpenClipboard")
+	procCloseClipboard       = user32.NewProc("CloseClipboard")
+	procEmptyClipboard       = user32.NewProc("EmptyClipboard")
+	procSetClipboardData     = user32.NewProc("SetClipboardData")
+	procGetClipboardData     = user32.NewProc("GetClipboardData")
 	procIsClipboardAvailable = user32.NewProc("IsClipboardFormatAvailable")
-	procKeybdEvent          = user32.NewProc("keybd_event")
-	procMessageBoxW         = user32.NewProc("MessageBoxW")
-	procLoadIconW           = user32.NewProc("LoadIconW")
-	procLoadImageW          = user32.NewProc("LoadImageW")
-	procShowWindow          = user32.NewProc("ShowWindow")
-	procSendMessageW        = user32.NewProc("SendMessageW")
-	procGetWindowTextW      = user32.NewProc("GetWindowTextW")
-	procSetWindowTextW      = user32.NewProc("SetWindowTextW")
-	procGetSystemMetrics    = user32.NewProc("GetSystemMetrics")
-	procGetAsyncKeyState      = user32.NewProc("GetAsyncKeyState")
-	procInvalidateRect      = user32.NewProc("InvalidateRect")
+	procKeybdEvent           = user32.NewProc("keybd_event")
+	procMessageBoxW          = user32.NewProc("MessageBoxW")
+	procLoadIconW            = user32.NewProc("LoadIconW")
+	procLoadImageW           = user32.NewProc("LoadImageW")
+	procShowWindow           = user32.NewProc("ShowWindow")
+	procSendMessageW         = user32.NewProc("SendMessageW")
+	procPostMessageW         = user32.NewProc("PostMessageW")
+	procGetWindowTextW       = user32.NewProc("GetWindowTextW")
+	procSetWindowTextW       = user32.NewProc("SetWindowTextW")
+	procGetSystemMetrics     = user32.NewProc("GetSystemMetrics")
+	procGetAsyncKeyState       = user32.NewProc("GetAsyncKeyState")
+	procInvalidateRect       = user32.NewProc("InvalidateRect")
 
 	procShellNotifyIconW     = shell32.NewProc("Shell_NotifyIconW")
 	procShellExecuteW        = shell32.NewProc("ShellExecuteW")
@@ -211,12 +214,17 @@ var (
 
 	procSetWindowTheme = uxtheme.NewProc("SetWindowTheme")
 
-	procBeep             = kernel32.NewProc("Beep")
-	procGlobalAlloc      = kernel32.NewProc("GlobalAlloc")
-	procGlobalLock       = kernel32.NewProc("GlobalLock")
-	procGlobalUnlock     = kernel32.NewProc("GlobalUnlock")
-	procGlobalFree       = kernel32.NewProc("GlobalFree")
-	procGetModuleHandleW = kernel32.NewProc("GetModuleHandleW")
+	procBeep                = kernel32.NewProc("Beep")
+	procGlobalAlloc         = kernel32.NewProc("GlobalAlloc")
+	procGlobalLock          = kernel32.NewProc("GlobalLock")
+	procGlobalUnlock        = kernel32.NewProc("GlobalUnlock")
+	procGlobalFree          = kernel32.NewProc("GlobalFree")
+	procGetModuleHandleW    = kernel32.NewProc("GetModuleHandleW")
+	procCreateEventW        = kernel32.NewProc("CreateEventW")
+	procSetEvent            = kernel32.NewProc("SetEvent")
+	procResetEvent          = kernel32.NewProc("ResetEvent")
+	procWaitForSingleObject = kernel32.NewProc("WaitForSingleObject")
+	procCloseHandle         = kernel32.NewProc("CloseHandle")
 
 	procCreateSolidBrush = gdi32.NewProc("CreateSolidBrush")
 	procCreateFontW      = gdi32.NewProc("CreateFontW")
@@ -349,70 +357,38 @@ var (
 	trayCreated     bool
 	hIconNormal     uintptr
 	hIconRec        uintptr
+	hBrushDarkBg    uintptr
+	hBrushEditBg    uintptr
+	hFontNormal     uintptr
+	hFontBold       uintptr
+	hFontHeader     uintptr
+	hFontHUD        uintptr
 
-	// Dark Theme Brushes & Fonts
-	hBrushDarkBg uintptr
-	hBrushEditBg uintptr
-	hFontNormal  uintptr
-	hFontBold    uintptr
-	hFontHeader  uintptr
-	hFontHUD     uintptr
-
-	// Direct WaveIn Audio Engine
+	// WaveIn Event Audio Engine
 	hWaveIn       uintptr
-	waveBuffers   [4][]byte
-	waveHeaders   [4]WAVEHDR
+	hWaveEvent    uintptr
+	waveBuffers   [8][]byte
+	waveHeaders   [8]WAVEHDR
 	capturedAudio []byte
 	audioMutex    sync.Mutex
-)
 
-// 40 languages in 4 columns
-var MasterLanguages = []LanguageItem{
-	// Column 1
-	{Code: "RU", Name: "Russian"},
-	{Code: "EN", Name: "English"},
-	{Code: "CS", Name: "Czech"},
-	{Code: "DE", Name: "German"},
-	{Code: "FR", Name: "French"},
-	{Code: "ES", Name: "Spanish"},
-	{Code: "IT", Name: "Italian"},
-	{Code: "PT", Name: "Portuguese"},
-	{Code: "NL", Name: "Dutch"},
-	{Code: "PL", Name: "Polish"},
-	// Column 2
-	{Code: "UK", Name: "Ukrainian"},
-	{Code: "SV", Name: "Swedish"},
-	{Code: "DA", Name: "Danish"},
-	{Code: "FI", Name: "Finnish"},
-	{Code: "NO", Name: "Norwegian"},
-	{Code: "TR", Name: "Turkish"},
-	{Code: "EL", Name: "Greek"},
-	{Code: "RO", Name: "Romanian"},
-	{Code: "HU", Name: "Hungarian"},
-	{Code: "SK", Name: "Slovak"},
-	// Column 3
-	{Code: "BG", Name: "Bulgarian"},
-	{Code: "HR", Name: "Croatian"},
-	{Code: "SR", Name: "Serbian"},
-	{Code: "SL", Name: "Slovenian"},
-	{Code: "ET", Name: "Estonian"},
-	{Code: "LV", Name: "Latvian"},
-	{Code: "LT", Name: "Lithuanian"},
-	{Code: "JA", Name: "Japanese"},
-	{Code: "ZH", Name: "Chinese"},
-	{Code: "KO", Name: "Korean"},
-	// Column 4
-	{Code: "AR", Name: "Arabic"},
-	{Code: "HE", Name: "Hebrew"},
-	{Code: "HI", Name: "Hindi"},
-	{Code: "VI", Name: "Vietnamese"},
-	{Code: "TH", Name: "Thai"},
-	{Code: "ID", Name: "Indonesian"},
-	{Code: "MS", Name: "Malay"},
-	{Code: "CA", Name: "Catalan"},
-	{Code: "KA", Name: "Georgian"},
-	{Code: "HY", Name: "Armenian"},
-}
+	MasterLanguages = []LanguageItem{
+		{"RU", "Русский (Russian)"},
+		{"EN", "English (Английский)"},
+		{"CS", "Čeština (Czech)"},
+		{"DE", "Deutsch (German)"},
+		{"UK", "Українська (Ukrainian)"},
+		{"ES", "Español (Spanish)"},
+		{"FR", "Français (French)"},
+		{"IT", "Italiano (Italian)"},
+		{"PL", "Polski (Polish)"},
+		{"ZH", "中文 (Chinese)"},
+		{"JA", "日本語 (Japanese)"},
+		{"TR", "Türkçe (Turkish)"},
+		{"AR", "العربية (Arabic)"},
+		{"HE", "עברית (Hebrew)"},
+	}
+)
 
 func writeLog(msg string) {
 	if logFile == "" {
@@ -435,30 +411,24 @@ func strPtr(s string) *uint16 {
 }
 
 func loadIconFromFile(fileName string, defaultBytes []byte) uintptr {
-	targetPath := filepath.Join(appDir, fileName)
-	if _, err := os.Stat(targetPath); os.IsNotExist(err) && len(defaultBytes) > 0 {
-		_ = os.WriteFile(targetPath, defaultBytes, 0644)
+	iconPath := filepath.Join(appDir, fileName)
+	if _, err := os.Stat(iconPath); os.IsNotExist(err) && len(defaultBytes) > 0 {
+		_ = os.WriteFile(iconPath, defaultBytes, 0644)
 	}
 
-	if _, err := os.Stat(targetPath); err == nil {
-		h, _, _ := procLoadImageW.Call(
-			0,
-			uintptr(unsafe.Pointer(strPtr(targetPath))),
-			IMAGE_ICON,
-			0, 0,
-			LR_LOADFROMFILE|LR_DEFAULTSIZE,
-		)
-		if h != 0 {
-			return h
-		}
-	}
-	hInstance, _, _ := procGetModuleHandleW.Call(0)
-	h, _, _ := procLoadIconW.Call(hInstance, uintptr(1))
+	h, _, _ := procLoadImageW.Call(
+		0,
+		uintptr(unsafe.Pointer(strPtr(iconPath))),
+		IMAGE_ICON,
+		0, 0,
+		LR_LOADFROMFILE|LR_DEFAULTSIZE,
+	)
 	if h != 0 {
 		return h
 	}
-	h, _, _ = procLoadIconW.Call(0, uintptr(32512))
-	return h
+
+	hSys, _, _ := procLoadIconW.Call(0, 32512) // IDI_APPLICATION
+	return hSys
 }
 
 func loadIcons() {
@@ -496,13 +466,13 @@ func updateTrayState(recording bool, tipText string) {
 		nid.HIcon = hIconNormal
 	}
 
-	var tip [128]uint16
-	chars := []rune(tipText)
-	for i := 0; i < len(chars) && i < 127; i++ {
-		tip[i] = uint16(chars[i])
+	for i := range nid.SzTip {
+		nid.SzTip[i] = 0
 	}
-	nid.SzTip = tip
-	nid.UFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP
+	uTip, _ := syscall.UTF16FromString(tipText)
+	copy(nid.SzTip[:], uTip)
+
+	nid.UFlags = NIF_ICON | NIF_TIP | NIF_MESSAGE
 	procShellNotifyIconW.Call(NIM_MODIFY, uintptr(unsafe.Pointer(&nid)))
 }
 
@@ -510,10 +480,6 @@ func initTrayIcon() {
 	if trayCreated {
 		return
 	}
-	if hIconNormal == 0 {
-		loadIcons()
-	}
-
 	nid.CbSize = uint32(unsafe.Sizeof(nid))
 	nid.HWnd = hwndMain
 	nid.UID = 1
@@ -521,12 +487,9 @@ func initTrayIcon() {
 	nid.UCallbackMessage = WM_TRAYICON
 	nid.HIcon = hIconNormal
 
-	var tip [128]uint16
-	initTip := []rune(AppTitle + " | Ready (" + config.Hotkey + ")")
-	for i := 0; i < len(initTip) && i < 127; i++ {
-		tip[i] = uint16(initTip[i])
-	}
-	nid.SzTip = tip
+	tip := AppTitle + " | Ready (" + config.Hotkey + ")"
+	uTip, _ := syscall.UTF16FromString(tip)
+	copy(nid.SzTip[:], uTip)
 
 	procShellNotifyIconW.Call(NIM_ADD, uintptr(unsafe.Pointer(&nid)))
 	trayCreated = true
@@ -539,7 +502,7 @@ func loadConfig() {
 		Hotkey:           "F8",
 		HotkeyVK:         VK_F8,
 		HotkeyMod:        0,
-		ActiveLanguages:  []string{"RU", "EN"}, // Both RU and EN active by default
+		ActiveLanguages:  []string{"RU", "EN"},
 		AllLanguages:     MasterLanguages,
 		GroqAPIKey:       DefaultGroqKey,
 		SoundFeedback:    true,
@@ -561,7 +524,6 @@ func loadConfig() {
 		}
 	}
 
-	// Always ensure RU is included if not set
 	if len(config.ActiveLanguages) == 0 {
 		config.ActiveLanguages = []string{"RU", "EN"}
 	}
@@ -670,6 +632,7 @@ func createWAV(pcm []byte, sampleRate int, channels int, bits int) []byte {
 	return buf
 }
 
+// WaveIn Event-Driven Engine: Direct low-latency asynchronous audio recording
 func startRecordingWaveIn() error {
 	audioMutex.Lock()
 	capturedAudio = nil
@@ -684,20 +647,32 @@ func startRecordingWaveIn() error {
 	wfx.NAvgBytesPerSec = 32000
 	wfx.CbSize = 0
 
+	hEv, _, _ := procCreateEventW.Call(0, 0, 0, 0)
+	if hEv == 0 {
+		return fmt.Errorf("failed to create audio sync event")
+	}
+
+	var newWaveIn uintptr
 	ret, _, _ := procWaveInOpen.Call(
-		uintptr(unsafe.Pointer(&hWaveIn)),
+		uintptr(unsafe.Pointer(&newWaveIn)),
 		WAVE_MAPPER,
 		uintptr(unsafe.Pointer(&wfx)),
-		hwndMain,
+		hEv,
 		0,
-		CALLBACK_WINDOW,
+		CALLBACK_EVENT,
 	)
 	if ret != 0 {
+		procCloseHandle.Call(hEv)
 		return fmt.Errorf("waveInOpen error: %d", ret)
 	}
 
-	bufSize := 8000
-	for i := 0; i < 4; i++ {
+	audioMutex.Lock()
+	hWaveIn = newWaveIn
+	hWaveEvent = hEv
+	audioMutex.Unlock()
+
+	bufSize := 8000 // 250ms chunks
+	for i := 0; i < 8; i++ {
 		waveBuffers[i] = make([]byte, bufSize)
 		waveHeaders[i] = WAVEHDR{
 			LpData:         uintptr(unsafe.Pointer(&waveBuffers[i][0])),
@@ -709,32 +684,84 @@ func startRecordingWaveIn() error {
 
 	ret, _, _ = procWaveInStart.Call(hWaveIn)
 	if ret != 0 {
-		procWaveInClose.Call(hWaveIn)
+		audioMutex.Lock()
+		curWaveIn := hWaveIn
+		curEvent := hWaveEvent
 		hWaveIn = 0
+		hWaveEvent = 0
+		audioMutex.Unlock()
+
+		procWaveInClose.Call(curWaveIn)
+		procCloseHandle.Call(curEvent)
 		return fmt.Errorf("waveInStart error: %d", ret)
 	}
+
+	// Dedicated background event capture goroutine (100% decoupled from Windows GUI message loop)
+	go func(targetWaveIn, targetEvent uintptr) {
+		for {
+			r, _, _ := procWaitForSingleObject.Call(targetEvent, 60)
+			if r != 0 && r != 258 { // WAIT_OBJECT_0=0, WAIT_TIMEOUT=258
+				break
+			}
+
+			audioMutex.Lock()
+			active := isRecording && hWaveIn == targetWaveIn
+			if !active {
+				audioMutex.Unlock()
+				break
+			}
+
+			for i := 0; i < 8; i++ {
+				if (waveHeaders[i].DwFlags & WHDR_DONE) != 0 {
+					if waveHeaders[i].DwBytesRecorded > 0 {
+						chunk := (*[1 << 20]byte)(unsafe.Pointer(waveHeaders[i].LpData))[:waveHeaders[i].DwBytesRecorded]
+						capturedAudio = append(capturedAudio, chunk...)
+					}
+					waveHeaders[i].DwFlags &^= WHDR_DONE
+					if isRecording && hWaveIn == targetWaveIn {
+						procWaveInAddBuffer.Call(targetWaveIn, uintptr(unsafe.Pointer(&waveHeaders[i])), uintptr(unsafe.Sizeof(waveHeaders[i])))
+					}
+				}
+			}
+			audioMutex.Unlock()
+		}
+	}(hWaveIn, hWaveEvent)
 
 	return nil
 }
 
 func stopRecordingWaveIn() []byte {
-	if hWaveIn == 0 {
+	audioMutex.Lock()
+	curWaveIn := hWaveIn
+	curEvent := hWaveEvent
+	hWaveIn = 0
+	hWaveEvent = 0
+	audioMutex.Unlock()
+
+	if curWaveIn == 0 {
 		return nil
 	}
 
-	procWaveInStop.Call(hWaveIn)
-	procWaveInReset.Call(hWaveIn)
-
-	for i := 0; i < 4; i++ {
-		procWaveInUnprepareHeader.Call(hWaveIn, uintptr(unsafe.Pointer(&waveHeaders[i])), uintptr(unsafe.Sizeof(waveHeaders[i])))
-	}
-	procWaveInClose.Call(hWaveIn)
-	hWaveIn = 0
+	procWaveInStop.Call(curWaveIn)
+	procWaveInReset.Call(curWaveIn)
 
 	audioMutex.Lock()
+	for i := 0; i < 8; i++ {
+		if waveHeaders[i].DwBytesRecorded > 0 && (waveHeaders[i].DwFlags&WHDR_DONE) != 0 {
+			chunk := (*[1 << 20]byte)(unsafe.Pointer(waveHeaders[i].LpData))[:waveHeaders[i].DwBytesRecorded]
+			capturedAudio = append(capturedAudio, chunk...)
+		}
+		procWaveInUnprepareHeader.Call(curWaveIn, uintptr(unsafe.Pointer(&waveHeaders[i])), uintptr(unsafe.Sizeof(waveHeaders[i])))
+	}
+
 	pcm := make([]byte, len(capturedAudio))
 	copy(pcm, capturedAudio)
 	audioMutex.Unlock()
+
+	procWaveInClose.Call(curWaveIn)
+	if curEvent != 0 {
+		procCloseHandle.Call(curEvent)
+	}
 
 	return createWAV(pcm, 16000, 1, 16)
 }
@@ -758,7 +785,7 @@ func startRecording() {
 	playBeep(880, 100)
 	updateTrayState(true, AppTitle+" | 🔴 RECORDING... ("+config.Hotkey+" to Stop)")
 	updateHUD(true, "🔴 RECORDING... Speak now ["+config.Hotkey+" to Finish]")
-	writeLog("Direct WaveIn recording active.")
+	writeLog("Direct WaveIn Event recording active.")
 }
 
 func stopRecordingAndTranscribe() {
@@ -779,7 +806,7 @@ func stopRecordingAndTranscribe() {
 	go func() {
 		defer updateTrayState(false, AppTitle+" | Ready ("+config.Hotkey+")")
 		defer func() {
-			time.Sleep(1200 * time.Millisecond)
+			time.Sleep(1400 * time.Millisecond)
 			updateHUD(false, "")
 		}()
 
@@ -822,14 +849,11 @@ func toggleRecording() {
 	}
 }
 
-// Determines the correct spoken language code to avoid unwanted translation to English
 func getTranscriptionLanguage() string {
 	hasRU := hasLang("RU")
 	hasCS := hasLang("CS")
 	hasEN := hasLang("EN")
 
-	// If Russian is active, ALWAYS set language to 'ru'!
-	// In Russian mode, Whisper outputs Russian Cyrillic and keeps English/Czech terms in original Latin!
 	if hasRU {
 		return "ru"
 	}
@@ -851,94 +875,116 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 		apiKey = os.Getenv("GROQ_API_KEY")
 	}
 	if apiKey == "" {
-		return "", fmt.Errorf("missing Groq API key")
+		apiKey = DefaultGroqKey
 	}
 
-	var reqBody bytes.Buffer
-	writer := multipart.NewWriter(&reqBody)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
 
-	part, err := writer.CreateFormFile("file", "audio.wav")
+	part, err := writer.CreateFormFile("file", "speech.wav")
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create form file: %w", err)
 	}
-	_, _ = part.Write(wavBytes)
+	_, err = part.Write(wavBytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to write wav bytes: %w", err)
+	}
 
 	_ = writer.WriteField("model", "whisper-large-v3")
-	_ = writer.WriteField("response_format", "text")
+	_ = writer.WriteField("response_format", "json")
+	_ = writer.WriteField("temperature", "0.0")
 
-	// Context prompt biased with project entities
+	langCode := getTranscriptionLanguage()
+	_ = writer.WriteField("language", langCode)
+
 	dictMutex.RLock()
-	var terms []string
+	var dictTerms []string
 	for _, v := range dictionary {
-		terms = append(terms, v)
+		dictTerms = append(dictTerms, v)
 	}
 	dictMutex.RUnlock()
-	if len(terms) > 30 {
-		terms = terms[:30]
-	}
-	prompt := strings.Join(terms, ", ")
-	if prompt != "" {
-		_ = writer.WriteField("prompt", prompt)
-	}
 
-	// Correct language setting: Prevents translating Russian speech to English!
-	lang := getTranscriptionLanguage()
-	if lang != "" {
-		_ = writer.WriteField("language", lang)
+	promptContext := "GIN-Voice, GIN-Cinema, GIN-TV, GIN-NetScan, GIN-Chat, GIN-VPN, Secret_Privat, ORACLE_157, Server_222, Antigravity, Gemini, Python, Windows 11"
+	if len(dictTerms) > 0 {
+		promptContext = strings.Join(dictTerms, ", ")
 	}
+	_ = writer.WriteField("prompt", promptContext)
 
 	err = writer.Close()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to close multipart writer: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/audio/transcriptions", &reqBody)
+	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/audio/transcriptions", body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to build HTTP request: %w", err)
 	}
+
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Groq API request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to read response: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Groq error (%d): %s", resp.StatusCode, string(respBytes))
+		return "", fmt.Errorf("Groq API error (%d): %s", resp.StatusCode, string(respBytes))
 	}
 
-	return string(respBytes), nil
+	var parsed struct {
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(respBytes, &parsed); err != nil {
+		return "", fmt.Errorf("failed to parse json response: %w", err)
+	}
+
+	return parsed.Text, nil
 }
 
 func testGroqAPIKey(key string) (bool, string) {
+	key = strings.TrimSpace(key)
 	if key == "" {
-		return false, "Ключ пуст."
+		return false, "API ключ не может быть пустым."
 	}
-	req, err := http.NewRequest("GET", "https://api.groq.com/openai/v1/models", nil)
-	if err != nil {
-		return false, err.Error()
-	}
-	req.Header.Set("Authorization", "Bearer "+key)
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	dummyWAV := createWAV(make([]byte, 16000), 16000, 1, 16)
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	part, _ := writer.CreateFormFile("file", "test.wav")
+	_, _ = part.Write(dummyWAV)
+	_ = writer.WriteField("model", "whisper-large-v3")
+	_ = writer.WriteField("response_format", "json")
+	_ = writer.Close()
+
+	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/audio/transcriptions", body)
+	if err != nil {
+		return false, "Ошибка создания запроса: " + err.Error()
+	}
+
+	req.Header.Set("Authorization", "Bearer "+key)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return false, "Сетевая ошибка: " + err.Error()
+		return false, "Ошибка соединения с сервером Groq: " + err.Error()
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 200 {
-		return true, "✅ Ключ Groq валиден и активен! Доступно 7000с/день."
+	respBytes, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode == http.StatusOK {
+		return true, "✅ Успех! Groq Whisper AI API ключ действителен и полностью готов к работе."
 	}
-	return false, fmt.Sprintf("❌ Ошибка авторизации (HTTP %d). Проверьте ключ.", resp.StatusCode)
+	return false, fmt.Sprintf("❌ Ошибка ключа (%d): %s", resp.StatusCode, string(respBytes))
 }
 
 func getClipboardText() string {
@@ -946,6 +992,7 @@ func getClipboardText() string {
 	if r == 0 {
 		return ""
 	}
+
 	r, _, _ = procOpenClipboard.Call(0)
 	if r == 0 {
 		return ""
@@ -1059,13 +1106,21 @@ func linkKnowledgeFolder(folderPath string) int {
 		if strings.HasPrefix(name, ".") {
 			continue
 		}
-		cleanName := strings.TrimSuffix(name, filepath.Ext(name))
-		cleanName = strings.ReplaceAll(cleanName, "_", " ")
-		cleanName = strings.ReplaceAll(cleanName, "-", " ")
-		key := strings.ToLower(cleanName)
 
-		if _, exists := dictionary[key]; !exists {
-			dictionary[key] = entry.Name()
+		baseName := name
+		if !entry.IsDir() {
+			baseName = strings.TrimSuffix(name, filepath.Ext(name))
+		}
+
+		if len(baseName) < 2 {
+			continue
+		}
+
+		cleanKey := strings.ToLower(strings.ReplaceAll(baseName, "_", " "))
+		cleanKey = strings.ReplaceAll(cleanKey, "-", " ")
+
+		if _, exists := dictionary[cleanKey]; !exists {
+			dictionary[cleanKey] = baseName
 			addedCount++
 		}
 	}
@@ -1074,103 +1129,123 @@ func linkKnowledgeFolder(folderPath string) int {
 		data, _ := json.MarshalIndent(dictionary, "", "  ")
 		_ = os.WriteFile(dictFile, data, 0644)
 	}
+
 	return addedCount
+}
+
+func setAutostart(enabled bool) error {
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	keyCmd := `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
+	if enabled {
+		cmd := exec.Command("reg", "add", keyCmd, "/v", "GIN-Voice", "/t", "REG_SZ", "/d", fmt.Sprintf("\"%s\"", exePath), "/f")
+		return cmd.Run()
+	} else {
+		cmd := exec.Command("reg", "delete", keyCmd, "/v", "GIN-Voice", "/f")
+		return cmd.Run()
+	}
 }
 
 func toggleAutostart() {
 	config.Autostart = !config.Autostart
+	_ = setAutostart(config.Autostart)
 	saveConfig()
-
-	startupDir := filepath.Join(os.Getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
-	shortcutPath := filepath.Join(startupDir, "GIN-Voice.bat")
-
-	if config.Autostart {
-		exePath, _ := os.Executable()
-		batchContent := fmt.Sprintf("@echo off\r\nstart \"\" \"%s\"\r\n", exePath)
-		_ = os.WriteFile(shortcutPath, []byte(batchContent), 0644)
-	} else {
-		_ = os.Remove(shortcutPath)
-	}
 }
 
 func runUninstall() {
 	r, _, _ := procMessageBoxW.Call(
 		0,
-		uintptr(unsafe.Pointer(strPtr("Вы уверены, что хотите полностью удалить GIN-Voice и все его файлы?"))),
-		uintptr(unsafe.Pointer(strPtr(AppTitle+" - Подтверждение удаления"))),
-		0x00000024,
+		uintptr(unsafe.Pointer(strPtr("Вы действительно хотите полностью удалить GIN-Voice со всеми файлами и ярлыками?"))),
+		uintptr(unsafe.Pointer(strPtr(AppTitle+" - Удаление программы"))),
+		0x00000004|0x00000030, // MB_YESNO | MB_ICONWARNING
 	)
-	if r != 6 {
+	if r != 6 { // IDYES
 		return
 	}
 
-	uninstPath := filepath.Join(appDir, "uninstall.bat")
-	if _, err := os.Stat(uninstPath); os.IsNotExist(err) && len(defaultUninstallBAT) > 0 {
-		_ = os.WriteFile(uninstPath, defaultUninstallBAT, 0644)
+	procShellNotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
+	_ = setAutostart(false)
+
+	uninstBAT := filepath.Join(appDir, "uninstall.bat")
+	if len(defaultUninstallBAT) > 0 {
+		_ = os.WriteFile(uninstBAT, defaultUninstallBAT, 0644)
 	}
 
-	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(uninstPath))), 0, 0, SW_SHOWNORMAL)
+	psScript := fmt.Sprintf(`
+Start-Sleep -Seconds 1
+$desktop = [Environment]::GetFolderPath('Desktop')
+$startMenu = [Environment]::GetFolderPath('Programs')
+Remove-Item -Path "$desktop\GIN-Voice.lnk" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "$startMenu\GIN-Voice.lnk" -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "D:\MEGA\DOCS\desktop\GIN-Voice.lnk" -Force -ErrorAction SilentlyContinue
+reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "GIN-Voice" /f 2>$null
+Remove-Item -Path "%s" -Recurse -Force -ErrorAction SilentlyContinue
+`, appDir)
+
+	psFile := filepath.Join(os.TempDir(), "gin_voice_uninst.ps1")
+	_ = os.WriteFile(psFile, []byte(psScript), 0644)
+
+	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-ExecutionPolicy", "Bypass", "-File", psFile).Start()
 	os.Exit(0)
 }
 
 func showContextMenu() {
-	var pt POINT
-	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
-
 	hMenu, _, _ := procCreatePopupMenu.Call()
 	if hMenu == 0 {
 		return
 	}
 	defer procDestroyMenu.Call(hMenu)
 
+	var titleText string
 	recordMutex.Lock()
 	rec := isRecording
 	recordMutex.Unlock()
 
-	statusLabel := fmt.Sprintf("🎙️ Start Dictation [%s]", config.Hotkey)
 	if rec {
-		statusLabel = fmt.Sprintf("⏹️ Stop Recording [%s]", config.Hotkey)
+		titleText = "⏹️ Остановить запись [" + config.Hotkey + "]"
+	} else {
+		titleText = "🔴 Начать диктовку [" + config.Hotkey + "]"
 	}
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_TOGGLE_RECORD, uintptr(unsafe.Pointer(strPtr(statusLabel))))
+
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_TOGGLE_RECORD, uintptr(unsafe.Pointer(strPtr(titleText))))
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 
-	// Languages Submenu
-	hLangMenu, _, _ := procCreatePopupMenu.Call()
-	for idx, lang := range config.AllLanguages {
+	hLangSubMenu, _, _ := procCreatePopupMenu.Call()
+	for i, lang := range config.AllLanguages {
 		flags := uintptr(MF_STRING)
-		for _, active := range config.ActiveLanguages {
-			if strings.EqualFold(active, lang.Code) {
-				flags |= MF_CHECKED
-				break
-			}
+		if hasLang(lang.Code) {
+			flags |= MF_CHECKED
 		}
-		menuID := uintptr(IDM_LANG_BASE + idx)
-		procAppendMenuW.Call(hLangMenu, flags, menuID, uintptr(unsafe.Pointer(strPtr(lang.Name+" ("+strings.ToUpper(lang.Code)+")"))))
+		itemText := fmt.Sprintf("[%s] %s", lang.Code, lang.Name)
+		procAppendMenuW.Call(hLangSubMenu, flags, IDM_LANG_BASE+uintptr(i), uintptr(unsafe.Pointer(strPtr(itemText))))
 	}
-	procAppendMenuW.Call(hMenu, MF_POPUP, hLangMenu, uintptr(unsafe.Pointer(strPtr("🌐 Languages (Active)"))))
-	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+	procAppendMenuW.Call(hMenu, MF_POPUP, hLangSubMenu, uintptr(unsafe.Pointer(strPtr("🌐 Языки распознавания (Whisper AI)"))))
 
-	keyLabel := "🔑 Groq API Key [✓ Configured]"
-	if config.GroqAPIKey == "" && os.Getenv("GROQ_API_KEY") == "" {
-		keyLabel = "⚠️ Groq API Key [Not Configured]"
+	statusKey := "🔑 Groq API Ключ: Настроен (Whisper-Large-v3)"
+	if config.GroqAPIKey == "" {
+		statusKey = "⚠️ Groq API Ключ: НЕ задан (Нажмите для ввода)"
 	}
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_SETUP_KEY, uintptr(unsafe.Pointer(strPtr(keyLabel))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_SETUP_KEY, uintptr(unsafe.Pointer(strPtr(statusKey))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DICT, uintptr(unsafe.Pointer(strPtr("📖 Открыть словарь автозамен (dictionary.json)"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_LINK_FOLDER, uintptr(unsafe.Pointer(strPtr("📁 Привязать общую папку с базами знаний..."))))
 
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DICT, uintptr(unsafe.Pointer(strPtr("📖 Open Dictionary (Notepad)"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_LINK_FOLDER, uintptr(unsafe.Pointer(strPtr("📂 Link AI Knowledge Folder..."))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_CONFIG, uintptr(unsafe.Pointer(strPtr("⚙️ Open Settings (GUI)"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DIR, uintptr(unsafe.Pointer(strPtr("📁 Open App Data Folder"))))
-
-	autostartFlags := uintptr(MF_STRING)
+	autoFlags := uintptr(MF_STRING)
 	if config.Autostart {
-		autostartFlags |= MF_CHECKED
+		autoFlags |= MF_CHECKED
 	}
-	procAppendMenuW.Call(hMenu, autostartFlags, IDM_AUTOSTART, uintptr(unsafe.Pointer(strPtr("🚀 Autostart with Windows"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_HELP, uintptr(unsafe.Pointer(strPtr("❓ Setup Guide & Help"))))
-	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_UNINSTALL, uintptr(unsafe.Pointer(strPtr("🗑️ Uninstall GIN-Voice..."))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr("❌ Exit GIN-Voice"))))
+	procAppendMenuW.Call(hMenu, autoFlags, IDM_AUTOSTART, uintptr(unsafe.Pointer(strPtr("⚡ Автозапуск при старте Windows"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DIR, uintptr(unsafe.Pointer(strPtr("📂 Открыть папку программы GIN-Voice"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_HELP, uintptr(unsafe.Pointer(strPtr("❓ Инструкция и справка (setup_guide.html)"))))
 
+	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_UNINSTALL, uintptr(unsafe.Pointer(strPtr("🗑️ Полное удаление GIN-Voice"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr("❌ Выход из GIN-Voice"))))
+
+	var pt POINT
+	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
 	procSetForegroundWindow.Call(hwndMain)
 	procTrackPopupMenu.Call(hMenu, TPM_RIGHTBUTTON, uintptr(pt.X), uintptr(pt.Y), 0, hwndMain, 0)
 }
@@ -1182,169 +1257,175 @@ func showSettingsDialog() {
 		return
 	}
 
-	if hIconNormal == 0 {
-		loadIcons()
-	}
-
+	hInstance, _, _ := procGetModuleHandleW.Call(0)
 	screenWidth, _, _ := procGetSystemMetrics.Call(0)
 	screenHeight, _, _ := procGetSystemMetrics.Call(1)
-	dlgWidth := int32(840)
-	dlgHeight := int32(660)
-	dlgX := (int32(screenWidth) - dlgWidth) / 2
-	dlgY := (int32(screenHeight) - dlgHeight) / 2
 
-	className := strPtr("GIN_VOICE_CYBER_SETTINGS")
-	hInstance, _, _ := procGetModuleHandleW.Call(0)
+	winW := int32(840)
+	winH := int32(630)
+	posX := (int32(screenWidth) - winW) / 2
+	posY := (int32(screenHeight) - winH) / 2
 
 	hwndSetup, _, _ = procCreateWindowExW.Call(
-		0,
-		uintptr(unsafe.Pointer(className)),
-		uintptr(unsafe.Pointer(strPtr("⚙️ GIN-Voice [v006] — Settings & Personalization"))),
-		WS_OVERLAPPEDWINDOW&^0x00040000 | WS_VISIBLE,
-		uintptr(dlgX), uintptr(dlgY), uintptr(dlgWidth), uintptr(dlgHeight),
+		WS_EX_TOPMOST,
+		uintptr(unsafe.Pointer(strPtr("GIN_VOICE_CYBER_SETTINGS"))),
+		uintptr(unsafe.Pointer(strPtr(AppTitle+" - Центр Управления"))),
+		WS_OVERLAPPEDWINDOW&^0x00050000|WS_VISIBLE, // No resize / maximize
+		uintptr(posX), uintptr(posY), uintptr(winW), uintptr(winH),
 		0, 0, hInstance, 0,
 	)
 
-	procSendMessageW.Call(hwndSetup, WM_SETICON, ICON_SMALL, hIconNormal)
-	procSendMessageW.Call(hwndSetup, WM_SETICON, ICON_BIG, hIconNormal)
-
-	// Section 1: Groq API Key
-	lbl1, _, _ := procCreateWindowExW.Call(
+	// Header Banner
+	lblHdr, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("🔑 1. Groq API Key (Free, 0.3s latency) — Automatically saved:"))),
+		uintptr(unsafe.Pointer(strPtr("🎙️ GIN-Voice by VladiMIR+AI — Мгновенный Голосовой Ввод"))),
 		WS_CHILD|WS_VISIBLE,
-		24, 16, 780, 22, hwndSetup, 0, hInstance, 0,
+		24, 20, 780, 32, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lbl1, WM_SETFONT, hFontHeader, 1)
+	procSendMessageW.Call(lblHdr, WM_SETFONT, hFontHeader, 1)
 
-	currKey := config.GroqAPIKey
+	// 1. Groq API Key Row
+	lblKey, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
+		uintptr(unsafe.Pointer(strPtr("🔑 Groq Whisper API Key:"))),
+		WS_CHILD|WS_VISIBLE,
+		24, 68, 260, 26, hwndSetup, 0, hInstance, 0,
+	)
+	procSendMessageW.Call(lblKey, WM_SETFONT, hFontBold, 1)
+
+	btnGroq, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr("🌐 Получить бесплатный ключ на Groq.com"))),
+		WS_CHILD|WS_VISIBLE,
+		470, 62, 334, 30, hwndSetup, uintptr(IDC_BTN_GROQ), hInstance, 0,
+	)
+	procSendMessageW.Call(btnGroq, WM_SETFONT, hFontNormal, 1)
+
 	hwndEditKey, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
-		uintptr(unsafe.Pointer(strPtr(currKey))),
+		uintptr(unsafe.Pointer(strPtr(config.GroqAPIKey))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		24, 42, 530, 30, hwndSetup, uintptr(IDC_EDIT_KEY), hInstance, 0,
+		24, 98, 640, 34, hwndSetup, uintptr(IDC_EDIT_KEY), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditKey, WM_SETFONT, hFontNormal, 1)
 
 	btnTest, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🧪 Test Key"))),
+		uintptr(unsafe.Pointer(strPtr("🧪 Проверить"))),
 		WS_CHILD|WS_VISIBLE,
-		566, 41, 115, 32, hwndSetup, uintptr(IDC_BTN_TEST), hInstance, 0,
+		674, 98, 130, 34, hwndSetup, uintptr(IDC_BTN_TEST), hInstance, 0,
 	)
 	procSendMessageW.Call(btnTest, WM_SETFONT, hFontBold, 1)
 
-	btnGroq, _, _ := procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🌐 Get Key ↗"))),
-		WS_CHILD|WS_VISIBLE,
-		692, 41, 115, 32, hwndSetup, uintptr(IDC_BTN_GROQ), hInstance, 0,
-	)
-	procSendMessageW.Call(btnGroq, WM_SETFONT, hFontBold, 1)
-
-	// Section 2: Hotkey & AI Knowledge Folder
-	lbl2, _, _ := procCreateWindowExW.Call(
+	// 2. Hotkey Config Row
+	lblHot, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("⌨️ 2. Hotkey:"))),
+		uintptr(unsafe.Pointer(strPtr("⚡ Горячая клавиша диктовки:"))),
 		WS_CHILD|WS_VISIBLE,
-		24, 86, 120, 22, hwndSetup, 0, hInstance, 0,
+		24, 146, 260, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lbl2, WM_SETFONT, hFontHeader, 1)
+	procSendMessageW.Call(lblHot, WM_SETFONT, hFontBold, 1)
 
 	hwndEditHotkey, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(config.Hotkey))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		24, 110, 110, 30, hwndSetup, uintptr(IDC_EDIT_HOTKEY), hInstance, 0,
+		290, 142, 120, 32, hwndSetup, uintptr(IDC_EDIT_HOTKEY), hInstance, 0,
 	)
-	procSendMessageW.Call(hwndEditHotkey, WM_SETFONT, hFontNormal, 1)
+	procSendMessageW.Call(hwndEditHotkey, WM_SETFONT, hFontBold, 1)
 
-	lbl3, _, _ := procCreateWindowExW.Call(
+	lblHotTip, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("📂 3. AI Knowledge Database Folder (e.g. D:\\AI\\Base):"))),
+		uintptr(unsafe.Pointer(strPtr("(Доступны: F8, F4, F9, F10, F12 — переключение Старт/Стоп)"))),
 		WS_CHILD|WS_VISIBLE,
-		150, 86, 650, 22, hwndSetup, 0, hInstance, 0,
+		424, 146, 380, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lbl3, WM_SETFONT, hFontHeader, 1)
+	procSendMessageW.Call(lblHotTip, WM_SETFONT, hFontNormal, 1)
+
+	// 3. Knowledge Base Linking
+	lblFold, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
+		uintptr(unsafe.Pointer(strPtr("📁 Общая папка с базами знаний / проектами (Автословарь):"))),
+		WS_CHILD|WS_VISIBLE,
+		24, 186, 520, 26, hwndSetup, 0, hInstance, 0,
+	)
+	procSendMessageW.Call(lblFold, WM_SETFONT, hFontBold, 1)
 
 	hwndEditFolder, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(config.LinkedKnowledgeFolder))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		150, 110, 520, 30, hwndSetup, uintptr(IDC_EDIT_FOLDER), hInstance, 0,
+		24, 216, 640, 34, hwndSetup, uintptr(IDC_EDIT_FOLDER), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditFolder, WM_SETFONT, hFontNormal, 1)
 
 	btnBrowse, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("📁 Browse..."))),
+		uintptr(unsafe.Pointer(strPtr("📂 Обзор..."))),
 		WS_CHILD|WS_VISIBLE,
-		682, 109, 125, 32, hwndSetup, uintptr(IDC_BTN_BROWSE), hInstance, 0,
+		674, 216, 130, 34, hwndSetup, uintptr(IDC_BTN_BROWSE), hInstance, 0,
 	)
 	procSendMessageW.Call(btnBrowse, WM_SETFONT, hFontBold, 1)
 
-	// Section 3: 40 Languages in 4 Columns
-	lbl4, _, _ := procCreateWindowExW.Call(
+	// 4. Language Selection Checklist
+	lblLangs, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("🌐 4. Active Languages (Select Russian & English or Any Others):"))),
+		uintptr(unsafe.Pointer(strPtr("🌐 Активные языки (Whisper AI поддерживает любые комбинации):"))),
 		WS_CHILD|WS_VISIBLE,
-		24, 154, 780, 22, hwndSetup, 0, hInstance, 0,
+		24, 264, 780, 26, hwndSetup, 0, hInstance, 0,
 	)
-	procSendMessageW.Call(lbl4, WM_SETFONT, hFontHeader, 1)
+	procSendMessageW.Call(lblLangs, WM_SETFONT, hFontBold, 1)
 
-	colWidth := int32(195)
-	startY := int32(182)
-	rowHeight := int32(28)
+	startX := int32(24)
+	startY := int32(296)
+	colW := int32(260)
+	rowH := int32(32)
 
-	emptyTheme := strPtr("")
-	for idx, lang := range MasterLanguages {
-		col := int32(idx / 10)
-		row := int32(idx % 10)
-		x := 24 + col*colWidth
-		y := startY + row*rowHeight
+	for i, lang := range MasterLanguages {
+		col := int32(i % 3)
+		row := int32(i / 3)
+		cX := startX + (col * colW)
+		cY := startY + (row * rowH)
 
-		label := fmt.Sprintf("[%s] %s", lang.Code, lang.Name)
-		chkHWnd, _, _ := procCreateWindowExW.Call(
+		chkHwnd, _, _ := procCreateWindowExW.Call(
 			0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-			uintptr(unsafe.Pointer(strPtr(label))),
+			uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("[%s] %s", lang.Code, lang.Name)))),
 			WS_CHILD|WS_VISIBLE|BS_AUTOCHECKBOX,
-			uintptr(x), uintptr(y), uintptr(colWidth-10), uintptr(rowHeight),
-			hwndSetup, uintptr(IDC_LANG_CHK_BASE+idx), hInstance, 0,
+			uintptr(cX), uintptr(cY), uintptr(colW-12), uintptr(rowH-4),
+			hwndSetup, uintptr(IDC_LANG_CHK_BASE+i), hInstance, 0,
 		)
-		procSendMessageW.Call(chkHWnd, WM_SETFONT, hFontNormal, 1)
-		// Disable UxTheme so that WM_CTLCOLORSTATIC applies bright white text on dark background!
-		procSetWindowTheme.Call(chkHWnd, uintptr(unsafe.Pointer(emptyTheme)), uintptr(unsafe.Pointer(emptyTheme)))
-		langCheckHWnd[lang.Code] = chkHWnd
+		procSendMessageW.Call(chkHwnd, WM_SETFONT, hFontNormal, 1)
 
 		if hasLang(lang.Code) {
-			procSendMessageW.Call(chkHWnd, 0x00F1, 1, 0)
+			procSendMessageW.Call(chkHwnd, 0x00F1, 1, 0) // BM_SETCHECK BST_CHECKED
 		}
+		langCheckHWnd[lang.Code] = chkHwnd
 	}
 
-	// Action Buttons
+	// 5. Action Buttons (Save, Dictionary, Open Folder, Uninstall)
 	btnSave, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("💾 Save, Apply & Run"))),
+		uintptr(unsafe.Pointer(strPtr("💾 Сохранить и Применить"))),
 		WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON,
-		24, 480, 230, 46, hwndSetup, uintptr(IDC_BTN_SAVE), hInstance, 0,
+		24, 480, 220, 46, hwndSetup, uintptr(IDC_BTN_SAVE), hInstance, 0,
 	)
 	procSendMessageW.Call(btnSave, WM_SETFONT, hFontBold, 1)
 
 	btnDict, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("📖 Edit Dictionary"))),
+		uintptr(unsafe.Pointer(strPtr("📖 Редактировать словарь"))),
 		WS_CHILD|WS_VISIBLE,
-		268, 480, 175, 46, hwndSetup, uintptr(IDC_BTN_DICT), hInstance, 0,
+		256, 480, 200, 46, hwndSetup, uintptr(IDC_BTN_DICT), hInstance, 0,
 	)
-	procSendMessageW.Call(btnDict, WM_SETFONT, hFontBold, 1)
+	procSendMessageW.Call(btnDict, WM_SETFONT, hFontNormal, 1)
 
-	btnOpenDir, _, _ := procCreateWindowExW.Call(
+	btnDir, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("📁 Open App Folder"))),
+		uintptr(unsafe.Pointer(strPtr("📂 Папка файлов"))),
 		WS_CHILD|WS_VISIBLE,
-		456, 480, 175, 46, hwndSetup, uintptr(IDC_BTN_OPEN_DIR), hInstance, 0,
+		468, 480, 164, 46, hwndSetup, uintptr(IDC_BTN_OPEN_DIR), hInstance, 0,
 	)
-	procSendMessageW.Call(btnOpenDir, WM_SETFONT, hFontBold, 1)
+	procSendMessageW.Call(btnDir, WM_SETFONT, hFontNormal, 1)
 
 	btnUninst, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
@@ -1356,7 +1437,7 @@ func showSettingsDialog() {
 
 	lblTip, _, _ := procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr("Status: Real-time HUD active. Direct WaveIn Audio Engine active. Press [F8] to dictate."))),
+		uintptr(unsafe.Pointer(strPtr("Status: Real-time HUD active. Direct WaveIn Engine active. Press [F8] to dictate."))),
 		WS_CHILD|WS_VISIBLE,
 		24, 545, 780, 30, hwndSetup, 0, hInstance, 0,
 	)
@@ -1395,7 +1476,7 @@ func parseVK(keyStr string) uint32 {
 func handleMenuCommand(cmdID uintptr) {
 	switch {
 	case cmdID == IDM_TOGGLE_RECORD:
-		toggleRecording()
+		go toggleRecording()
 	case cmdID == IDM_SETUP_KEY || cmdID == IDM_OPEN_CONFIG:
 		showSettingsDialog()
 	case cmdID >= IDM_LANG_BASE && cmdID < IDM_LANG_BASE+uintptr(len(config.AllLanguages)):
@@ -1452,23 +1533,11 @@ func handleMenuCommand(cmdID uintptr) {
 
 func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
-	case MM_WIM_DATA:
-		hdr := (*WAVEHDR)(unsafe.Pointer(lParam))
-		if hdr != nil && hdr.DwBytesRecorded > 0 {
-			audioMutex.Lock()
-			chunk := (*[1 << 20]byte)(unsafe.Pointer(hdr.LpData))[:hdr.DwBytesRecorded]
-			capturedAudio = append(capturedAudio, chunk...)
-			audioMutex.Unlock()
-		}
-		if isRecording && hWaveIn != 0 {
-			procWaveInAddBuffer.Call(hWaveIn, lParam, uintptr(unsafe.Sizeof(*hdr)))
-		}
-		return 0
 	case WM_TRAYICON:
 		if lParam == WM_RBUTTONUP {
 			showContextMenu()
 		} else if lParam == WM_LBUTTONDBLCLK {
-			toggleRecording()
+			go toggleRecording()
 		}
 		return 0
 	case WM_COMMAND:
@@ -1488,13 +1557,13 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case WM_CTLCOLORSTATIC:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x00F8FAFC) // White text #FCFAF8
-		procSetBkColor.Call(hdc, 0x0018110D)   // Dark Slate #0D1118
+		procSetTextColor.Call(hdc, 0x00F8FAFC)
+		procSetBkColor.Call(hdc, 0x0018110D)
 		return hBrushDarkBg
 	case WM_CTLCOLOREDIT:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x00F8E500) // Cyan text #00E5F8
-		procSetBkColor.Call(hdc, 0x00261D12)   // Dark Edit Bg #121D26
+		procSetTextColor.Call(hdc, 0x00F8E500)
+		procSetBkColor.Call(hdc, 0x00261D12)
 		return hBrushEditBg
 	case WM_CTLCOLORBTN:
 		hdc := wParam
@@ -1590,8 +1659,8 @@ func hudWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
 	case WM_CTLCOLORSTATIC:
 		hdc := wParam
-		procSetTextColor.Call(hdc, 0x0000E5FF) // Vibrant Cyan/Red #00E5FF
-		procSetBkColor.Call(hdc, 0x00111827)   // #271811 in BGR
+		procSetTextColor.Call(hdc, 0x0000E5FF) // Vibrant Cyan #00E5FF
+		procSetBkColor.Call(hdc, 0x00111827)
 		return hBrushDarkBg
 	default:
 		r, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
@@ -1601,8 +1670,8 @@ func hudWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 func initHUD() {
 	screenWidth, _, _ := procGetSystemMetrics.Call(0)
-	hudWidth := int32(460)
-	hudHeight := int32(48)
+	hudWidth := int32(480)
+	hudHeight := int32(50)
 	hudX := (int32(screenWidth) - hudWidth) / 2
 	hudY := int32(24) // Top-center float
 
@@ -1630,7 +1699,7 @@ func initHUD() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr("Ready"))),
 		WS_CHILD|WS_VISIBLE,
-		14, 12, uintptr(hudWidth-28), 24,
+		16, 12, uintptr(hudWidth-32), 26,
 		hwndHUD, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndHUDText, WM_SETFONT, hFontHUD, 1)
@@ -1639,8 +1708,9 @@ func initHUD() {
 func startHotkeyListener() {
 	go func() {
 		var wasPressed bool
+		var lastToggle time.Time
 		for {
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(15 * time.Millisecond)
 			vk := config.HotkeyVK
 			if vk == 0 {
 				vk = VK_F8
@@ -1651,8 +1721,11 @@ func startHotkeyListener() {
 
 			if isDown && !wasPressed {
 				wasPressed = true
-				writeLog(fmt.Sprintf("Hardware hotkey press: [%s] (VK %d)", config.Hotkey, vk))
-				toggleRecording()
+				if time.Since(lastToggle) > 300*time.Millisecond {
+					lastToggle = time.Now()
+					writeLog(fmt.Sprintf("Hardware hotkey press: [%s] (VK %d)", config.Hotkey, vk))
+					go toggleRecording()
+				}
 			} else if !isDown && wasPressed {
 				wasPressed = false
 			}
@@ -1740,7 +1813,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v006.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v007.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
@@ -1799,19 +1872,17 @@ func main() {
 	helpFile = filepath.Join(appDir, "setup_guide.html")
 	logFile = filepath.Join(appDir, "gin_voice.log")
 
-	writeLog("=== GIN-Voice [v006] Starting with Direct WaveIn Engine ===")
+	writeLog("=== GIN-Voice [v007] Starting with Event-Driven Audio Engine ===")
 
 	loadConfig()
 	loadDictionary()
 	loadIcons()
 
-	// Initialize Dark Brushes (Slate-900 / Dark Navy)
 	bDark, _, _ := procCreateSolidBrush.Call(0x0018110D)
 	hBrushDarkBg = bDark
 	bEdit, _, _ := procCreateSolidBrush.Call(0x00261D12)
 	hBrushEditBg = bEdit
 
-	// Create Modern Large Typography (Segoe UI)
 	hFontNormal, _, _ = procCreateFontW.Call(
 		19, 0, 0, 0, 400, 0, 0, 0,
 		0, 0, 0, 0, 0,

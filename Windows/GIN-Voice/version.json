@@ -1,7 +1,8 @@
 {
-  "version": "v006",
+  "version": "v007",
   "name": "GIN-Voice",
-  "updated_at": "2026-10-10",
-  "author": "Vladimir Bulantsev (GinCz)",
-  "changes": "Fixed Russian language dictation, white checkbox text, larger fonts, real-time HUD"
+  "engine": "WaveIn Event AI",
+  "release_date": "2026-10-10",
+  "author": "VladiMIR+AI",
+  "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 }
