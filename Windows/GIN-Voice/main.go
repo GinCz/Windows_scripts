@@ -30,8 +30,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v012"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v012]"
+	AppVersion    = "v013"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v013]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -120,6 +120,7 @@ const (
 	IDM_AUTOSTART     = 1006
 	IDM_OPEN_HELP     = 1007
 	IDM_EXIT          = 1008
+	IDM_UPDATE_APP    = 1009
 
 	IDM_UI_LANG_BASE = 1500
 	IDM_LANG_BASE    = 2000
@@ -329,13 +330,18 @@ type UIStringBundle struct {
 	SettingsBrowse     string
 	SettingsLangs      string
 	SettingsSave       string
-	SettingsDict       string
-	HudRecording       string
-	HudTranscribing    string
-	HudPasted          string
-	HudEmpty           string
-	HudError           string
-	Ready              string
+	SettingsDict        string
+	HudRecording        string
+	HudTranscribing     string
+	HudPasted           string
+	HudEmpty            string
+	HudError            string
+	HudUpdating         string
+	HudUpdateDone       string
+	HudUpdateError      string
+	HudUpdateNotice     string
+	MenuUpdateAvailable string
+	Ready               string
 }
 
 type Config struct {
@@ -356,34 +362,38 @@ type Config struct {
 }
 
 var (
-	appDir         string
-	configFile     string
-	dictFile       string
-	helpFile       string
-	logFile        string
-	config         Config
-	dictionary     map[string]string
-	dictMutex      sync.RWMutex
-	hwndMain       uintptr
-	hwndSetup      uintptr
-	hwndHUD        uintptr
-	hwndHUDText    uintptr
-	hwndEditKey    uintptr
-	hwndEditFolder uintptr
-	hwndEditHotkey uintptr
-	langCheckHWnd  = make(map[string]uintptr)
-	nid            NOTIFYICONDATAW
-	isRecording    bool
-	recordMutex    sync.Mutex
-	trayCreated    bool
-	hIconNormal    uintptr
-	hIconRec       uintptr
-	hBrushDarkBg   uintptr
-	hBrushEditBg   uintptr
-	hFontNormal    uintptr
-	hFontBold      uintptr
-	hFontHeader    uintptr
-	hFontHUD       uintptr
+	appDir          string
+	configFile      string
+	dictFile        string
+	helpFile        string
+	logFile         string
+	config          Config
+	dictionary      map[string]string
+	dictMutex       sync.RWMutex
+	hwndMain        uintptr
+	hwndSetup       uintptr
+	hwndHUD         uintptr
+	hwndHUDText     uintptr
+	hwndEditKey     uintptr
+	hwndEditFolder  uintptr
+	hwndEditHotkey  uintptr
+	langCheckHWnd   = make(map[string]uintptr)
+	nid             NOTIFYICONDATAW
+	isRecording     bool
+	recordMutex     sync.Mutex
+	trayCreated     bool
+	updateAvailable string
+	updateMutex     sync.Mutex
+	isUpdating      bool
+	updateExecMutex sync.Mutex
+	hIconNormal     uintptr
+	hIconRec        uintptr
+	hBrushDarkBg    uintptr
+	hBrushEditBg    uintptr
+	hFontNormal     uintptr
+	hFontBold       uintptr
+	hFontHeader     uintptr
+	hFontHUD        uintptr
 
 	// WaveIn Event Audio Engine
 	hWaveIn       uintptr
@@ -427,190 +437,220 @@ var (
 
 	UIStrings = map[string]UIStringBundle{
 		"EN": {
-			MenuStartDictation: "🔴 Start Dictation [%s]",
-			MenuStopDictation:  "⏹️ Stop Dictation [%s]",
-			MenuSpeechLang:     "🌐 Speech Recognition (Whisper AI)",
-			MenuInterfaceLang:  "🖥️ Interface Language",
-			MenuKeyConfigured:  "🔑 Groq API Key: Configured",
-			MenuKeyNotSet:      "⚠️ Groq API Key: NOT configured (Click to set)",
-			MenuOpenDict:       "📖 Open Dictionary (dictionary.json)",
-			MenuLinkFolder:     "📁 Link Knowledge Folder...",
-			MenuAutostart:      "⚡ Autostart on Windows Boot",
-			MenuHelp:           "❓ Setup Guide & Help",
-			MenuExit:           "❌ Exit GIN-Voice",
-			SettingsTitle:      "GIN-Voice - Settings & Control Center",
-			SettingsHeader:     "🎙️ GIN-Voice by VladiMIR+AI — Instant Voice Typing",
-			SettingsKeyLabel:   "🔑 Groq Whisper API Key:",
-			SettingsGetGroq:    "🌐 Get Free Key at Groq.com",
-			SettingsTestBtn:    "🧪 Test Key",
-			SettingsHotkey:     "⚡ Dictation Hotkey:",
-			SettingsHotkeyTip:  "(Available: F8, F4, F9, F10, F12 — Toggle Start/Stop)",
-			SettingsFolder:     "📁 Linked Knowledge / Project Folder (Auto-Dictionary):",
-			SettingsBrowse:     "📂 Browse...",
-			SettingsLangs:      "🌐 Active Recognition Languages (Whisper AI):",
-			SettingsSave:       "💾 Save & Apply",
-			SettingsDict:       "📖 Edit Dictionary",
-			HudRecording:       "🔴 RECORDING... Speak now [%s to Finish]",
-			HudTranscribing:    "⚡ Transcribing with Whisper AI...",
-			HudPasted:          "✅ Pasted: %s",
-			HudEmpty:           "⚠️ Audio recording was empty.",
-			HudError:           "❌ Error: %s",
-			Ready:              "Ready",
+			MenuStartDictation:  "🔴 Start Dictation [%s]",
+			MenuStopDictation:   "⏹️ Stop Dictation [%s]",
+			MenuUpdateAvailable: "✨ Update Available: %s (Click to Update)",
+			MenuSpeechLang:      "🌐 Speech Recognition (Whisper AI)",
+			MenuInterfaceLang:   "🖥️ Interface Language",
+			MenuKeyConfigured:   "🔑 Groq API Key: Configured",
+			MenuKeyNotSet:       "⚠️ Groq API Key: NOT configured (Click to set)",
+			MenuOpenDict:        "📖 Open Dictionary (dictionary.json)",
+			MenuLinkFolder:      "📁 Link Knowledge Folder...",
+			MenuAutostart:       "⚡ Autostart on Windows Boot",
+			MenuHelp:            "❓ Setup Guide & Help",
+			MenuExit:            "❌ Exit GIN-Voice",
+			SettingsTitle:       "GIN-Voice - Settings & Control Center",
+			SettingsHeader:      "🎙️ GIN-Voice by VladiMIR+AI — Instant Voice Typing",
+			SettingsKeyLabel:    "🔑 Groq Whisper API Key:",
+			SettingsGetGroq:     "🌐 Get Free Key at Groq.com",
+			SettingsTestBtn:     "🧪 Test Key",
+			SettingsHotkey:      "⚡ Dictation Hotkey:",
+			SettingsHotkeyTip:   "(Available: F8, F4, F9, F10, F12 — Toggle Start/Stop)",
+			SettingsFolder:      "📁 Linked Knowledge / Project Folder (Auto-Dictionary):",
+			SettingsBrowse:      "📂 Browse...",
+			SettingsLangs:       "🌐 Active Recognition Languages (Whisper AI):",
+			SettingsSave:        "💾 Save & Apply",
+			SettingsDict:        "📖 Edit Dictionary",
+			HudRecording:        "🔴 RECORDING... Speak now [%s to Finish]",
+			HudTranscribing:     "⚡ Transcribing with Whisper AI...",
+			HudPasted:           "✅ Pasted: %s",
+			HudEmpty:            "⚠️ Audio recording was empty.",
+			HudError:            "❌ Error: %s",
+			HudUpdating:         "⬇️ Downloading GIN-Voice %s update...",
+			HudUpdateDone:       "✅ Update downloaded! Restarting...",
+			HudUpdateError:      "❌ Update failed: %s",
+			HudUpdateNotice:     "✨ GIN-Voice %s update is available!",
+			Ready:               "Ready",
 		},
 		"RU": {
-			MenuStartDictation: "🔴 Начать диктовку [%s]",
-			MenuStopDictation:  "⏹️ Остановить диктовку [%s]",
-			MenuSpeechLang:     "🌐 Языки распознавания (Whisper AI)",
-			MenuInterfaceLang:  "🖥️ Язык интерфейса",
-			MenuKeyConfigured:  "🔑 Groq API Ключ: Настроен",
-			MenuKeyNotSet:      "⚠️ Groq API Ключ: НЕ задан (Нажмите для ввода)",
-			MenuOpenDict:       "📖 Открыть словарь автозамен (dictionary.json)",
-			MenuLinkFolder:     "📁 Привязать общую папку с базами знаний...",
-			MenuAutostart:      "⚡ Автозапуск при старте Windows",
-			MenuHelp:           "❓ Инструкция и справка",
-			MenuExit:           "❌ Выход из GIN-Voice",
-			SettingsTitle:      "GIN-Voice - Центр Управления",
-			SettingsHeader:     "🎙️ GIN-Voice by VladiMIR+AI — Мгновенный Голосовой Ввод",
-			SettingsKeyLabel:   "🔑 Groq Whisper API Key:",
-			SettingsGetGroq:    "🌐 Получить бесплатный ключ на Groq.com",
-			SettingsTestBtn:    "🧪 Проверить",
-			SettingsHotkey:     "⚡ Горячая клавиша диктовки:",
-			SettingsHotkeyTip:  "(Доступны: F8, F4, F9, F10, F12 — переключение Старт/Стоп)",
-			SettingsFolder:     "📁 Общая папка с базами знаний / проектами (Автословарь):",
-			SettingsBrowse:     "📂 Обзор...",
-			SettingsLangs:      "🌐 Активные языки распознавания (Whisper AI):",
-			SettingsSave:       "💾 Сохранить и Применить",
-			SettingsDict:       "📖 Редактировать словарь",
-			HudRecording:       "🔴 ИДЁТ ЗАПИСЬ... Говорите [%s для Завершения]",
-			HudTranscribing:    "⚡ Распознавание речи через Whisper AI...",
-			HudPasted:          "✅ Вставлено: %s",
-			HudEmpty:           "⚠️ Запись звука оказалась пустой.",
-			HudError:           "❌ Ошибка: %s",
-			Ready:              "Готов к работе",
+			MenuStartDictation:  "🔴 Начать диктовку [%s]",
+			MenuStopDictation:   "⏹️ Остановить диктовку [%s]",
+			MenuUpdateAvailable: "✨ Доступно обновление: %s (Нажмите для обновления)",
+			MenuSpeechLang:      "🌐 Языки распознавания (Whisper AI)",
+			MenuInterfaceLang:   "🖥️ Язык интерфейса",
+			MenuKeyConfigured:   "🔑 Groq API Ключ: Настроен",
+			MenuKeyNotSet:       "⚠️ Groq API Ключ: НЕ задан (Нажмите для ввода)",
+			MenuOpenDict:        "📖 Открыть словарь автозамен (dictionary.json)",
+			MenuLinkFolder:      "📁 Привязать общую папку с базами знаний...",
+			MenuAutostart:       "⚡ Автозапуск при старте Windows",
+			MenuHelp:            "❓ Инструкция и справка",
+			MenuExit:            "❌ Выход из GIN-Voice",
+			SettingsTitle:       "GIN-Voice - Центр Управления",
+			SettingsHeader:      "🎙️ GIN-Voice by VladiMIR+AI — Мгновенный Голосовой Ввод",
+			SettingsKeyLabel:    "🔑 Groq Whisper API Key:",
+			SettingsGetGroq:     "🌐 Получить бесплатный ключ на Groq.com",
+			SettingsTestBtn:     "🧪 Проверить",
+			SettingsHotkey:      "⚡ Горячая клавиша диктовки:",
+			SettingsHotkeyTip:   "(Доступны: F8, F4, F9, F10, F12 — переключение Старт/Стоп)",
+			SettingsFolder:      "📁 Общая папка с базами знаний / проектами (Автословарь):",
+			SettingsBrowse:      "📂 Обзор...",
+			SettingsLangs:       "🌐 Активные языки распознавания (Whisper AI):",
+			SettingsSave:        "💾 Сохранить и Применить",
+			SettingsDict:        "📖 Редактировать словарь",
+			HudRecording:        "🔴 ИДЁТ ЗАПИСЬ... Говорите [%s для Завершения]",
+			HudTranscribing:     "⚡ Распознавание речи через Whisper AI...",
+			HudPasted:           "✅ Вставлено: %s",
+			HudEmpty:            "⚠️ Запись звука оказалась пустой.",
+			HudError:            "❌ Ошибка: %s",
+			HudUpdating:         "⬇️ Загрузка обновления GIN-Voice %s...",
+			HudUpdateDone:       "✅ Обновление загружено! Перезапуск...",
+			HudUpdateError:      "❌ Ошибка обновления: %s",
+			HudUpdateNotice:     "✨ Доступна новая версия GIN-Voice %s!",
+			Ready:               "Готов к работе",
 		},
 		"CS": {
-			MenuStartDictation: "🔴 Spustit diktování [%s]",
-			MenuStopDictation:  "⏹️ Zastavit diktování [%s]",
-			MenuSpeechLang:     "🌐 Jazyky rozpoznávání (Whisper AI)",
-			MenuInterfaceLang:  "🖥️ Jazyk rozhraní",
-			MenuKeyConfigured:  "🔑 Groq API Klíč: Nastaven",
-			MenuKeyNotSet:      "⚠️ Groq API Klíč: NENÍ nastaven (Klikněte pro zadání)",
-			MenuOpenDict:       "📖 Otevřít slovník (dictionary.json)",
-			MenuLinkFolder:     "📁 Propojit složku znalostí...",
-			MenuAutostart:      "⚡ Automatické spuštění při startu Windows",
-			MenuHelp:           "❓ Nápověda a průvodce",
-			MenuExit:           "❌ Ukončit GIN-Voice",
-			SettingsTitle:      "GIN-Voice - Nastavení a Ovládací Centrum",
-			SettingsHeader:     "🎙️ GIN-Voice od VladiMIR+AI — Okamžité Hlasové Psaní",
-			SettingsKeyLabel:   "🔑 Groq Whisper API Klíč:",
-			SettingsGetGroq:    "🌐 Získat klíč zdarma na Groq.com",
-			SettingsTestBtn:    "🧪 Otestovat",
-			SettingsHotkey:     "⚡ Klávesová zkratka diktování:",
-			SettingsHotkeyTip:  "(Dostupné: F8, F4, F9, F10, F12 — Přepínač Start/Stop)",
-			SettingsFolder:     "📁 Propojená složka projektů (Automatický slovník):",
-			SettingsBrowse:     "📂 Procházet...",
-			SettingsLangs:      "🌐 Aktivní jazyky rozpoznávání (Whisper AI):",
-			SettingsSave:       "💾 Uložit a Použít",
-			SettingsDict:       "📖 Upravit slovník",
-			HudRecording:       "🔴 NAHRÁVÁNÍ... Mluvte [%s pro Dokončení]",
-			HudTranscribing:    "⚡ Přepisuji řeč pomocí Whisper AI...",
-			HudPasted:          "✅ Vloženo: %s",
-			HudEmpty:           "⚠️ Záznam byl prázdný.",
-			HudError:           "❌ Chyba: %s",
-			Ready:              "Připraven",
+			MenuStartDictation:  "🔴 Spustit diktování [%s]",
+			MenuStopDictation:   "⏹️ Zastavit diktování [%s]",
+			MenuUpdateAvailable: "✨ Dostupná aktualizace: %s (Klikněte pro instalaci)",
+			MenuSpeechLang:      "🌐 Jazyky rozpoznávání (Whisper AI)",
+			MenuInterfaceLang:   "🖥️ Jazyk rozhraní",
+			MenuKeyConfigured:   "🔑 Groq API Klíč: Nastaven",
+			MenuKeyNotSet:       "⚠️ Groq API Klíč: NENÍ nastaven (Klikněte pro zadání)",
+			MenuOpenDict:        "📖 Otevřít slovník (dictionary.json)",
+			MenuLinkFolder:      "📁 Propojit složku znalostí...",
+			MenuAutostart:       "⚡ Automatické spuštění při startu Windows",
+			MenuHelp:            "❓ Nápověda a průvodce",
+			MenuExit:            "❌ Ukončit GIN-Voice",
+			SettingsTitle:       "GIN-Voice - Nastavení a Ovládací Centrum",
+			SettingsHeader:      "🎙️ GIN-Voice od VladiMIR+AI — Okamžité Hlasové Psaní",
+			SettingsKeyLabel:    "🔑 Groq Whisper API Klíč:",
+			SettingsGetGroq:     "🌐 Získat klíč zdarma na Groq.com",
+			SettingsTestBtn:     "🧪 Otestovat",
+			SettingsHotkey:      "⚡ Klávesová zkratka diktování:",
+			SettingsHotkeyTip:   "(Dostupné: F8, F4, F9, F10, F12 — Přepínač Start/Stop)",
+			SettingsFolder:      "📁 Propojená složka projektů (Automatický slovník):",
+			SettingsBrowse:      "📂 Procházet...",
+			SettingsLangs:       "🌐 Aktivní jazyky rozpoznávání (Whisper AI):",
+			SettingsSave:        "💾 Uložit a Použít",
+			SettingsDict:        "📖 Upravit slovník",
+			HudRecording:        "🔴 NAHRÁVÁNÍ... Mluvte [%s pro Dokončení]",
+			HudTranscribing:     "⚡ Přepisuji řeč pomocí Whisper AI...",
+			HudPasted:           "✅ Vloženo: %s",
+			HudEmpty:            "⚠️ Záznam byl prázdný.",
+			HudError:            "❌ Chyba: %s",
+			HudUpdating:         "⬇️ Stahování aktualizace GIN-Voice %s...",
+			HudUpdateDone:       "✅ Aktualizace stažena! Restartuji...",
+			HudUpdateError:      "❌ Chyba aktualizace: %s",
+			HudUpdateNotice:     "✨ Je k dispozici nová verze GIN-Voice %s!",
+			Ready:               "Připraven",
 		},
 		"IT": {
-			MenuStartDictation: "🔴 Avvia dettatura [%s]",
-			MenuStopDictation:  "⏹️ Ferma dettatura [%s]",
-			MenuSpeechLang:     "🌐 Lingue di riconoscimento (Whisper AI)",
-			MenuInterfaceLang:  "🖥️ Lingua dell'interfaccia",
-			MenuKeyConfigured:  "🔑 Chiave Groq API: Configurato",
-			MenuKeyNotSet:      "⚠️ Chiave Groq API: NON impostata (Clicca per inserire)",
-			MenuOpenDict:       "📖 Apri dizionario (dictionary.json)",
-			MenuLinkFolder:     "📁 Collega cartella progetti...",
-			MenuAutostart:      "⚡ Avvio automatico con Windows",
-			MenuHelp:           "❓ Guida e supporto",
-			MenuExit:           "❌ Esci da GIN-Voice",
-			SettingsTitle:      "GIN-Voice - Centro di controllo",
-			SettingsHeader:     "🎙️ GIN-Voice by VladiMIR+AI — Digitazione vocale istantanea",
-			SettingsKeyLabel:   "🔑 Chiave Groq Whisper API:",
-			SettingsGetGroq:    "🌐 Ottieni chiave gratuita su Groq.com",
-			SettingsTestBtn:    "🧪 Verifica",
-			SettingsHotkey:     "⚡ Tasto rapido di dettatura:",
-			SettingsHotkeyTip:  "(Disponibili: F8, F4, F9, F10, F12 — Avvia/Ferma)",
-			SettingsFolder:     "📁 Cartella progetti collegata (Dizionario automatico):",
-			SettingsBrowse:     "📂 Sfoglia...",
-			SettingsLangs:      "🌐 Lingue di riconoscimento attive (Whisper AI):",
-			SettingsSave:       "💾 Salva e applica",
-			SettingsDict:       "📖 Modifica dizionario",
-			HudRecording:       "🔴 REGISTRAZIONE... Parla [%s per Terminare]",
-			HudTranscribing:    "⚡ Trascrizione vocale con Whisper AI...",
-			HudPasted:          "✅ Incollato: %s",
-			HudEmpty:           "⚠️ La registrazione audio era vuota.",
-			HudError:           "❌ Errore: %s",
-			Ready:              "Pronto",
+			MenuStartDictation:  "🔴 Avvia dettatura [%s]",
+			MenuStopDictation:   "⏹️ Ferma dettatura [%s]",
+			MenuUpdateAvailable: "✨ Aggiornamento disponibile: %s (Clicca per aggiornare)",
+			MenuSpeechLang:      "🌐 Lingue di riconoscimento (Whisper AI)",
+			MenuInterfaceLang:   "🖥️ Lingua dell'interfaccia",
+			MenuKeyConfigured:   "🔑 Chiave Groq API: Configurato",
+			MenuKeyNotSet:       "⚠️ Chiave Groq API: NON impostata (Clicca per inserire)",
+			MenuOpenDict:        "📖 Apri dizionario (dictionary.json)",
+			MenuLinkFolder:      "📁 Collega cartella progetti...",
+			MenuAutostart:       "⚡ Avvio automatico con Windows",
+			MenuHelp:            "❓ Guida e supporto",
+			MenuExit:            "❌ Esci da GIN-Voice",
+			SettingsTitle:       "GIN-Voice - Centro di controllo",
+			SettingsHeader:      "🎙️ GIN-Voice by VladiMIR+AI — Digitazione vocale istantanea",
+			SettingsKeyLabel:    "🔑 Chiave Groq Whisper API:",
+			SettingsGetGroq:     "🌐 Ottieni chiave gratuita su Groq.com",
+			SettingsTestBtn:     "🧪 Verifica",
+			SettingsHotkey:      "⚡ Tasto rapido di dettatura:",
+			SettingsHotkeyTip:   "(Disponibili: F8, F4, F9, F10, F12 — Avvia/Ferma)",
+			SettingsFolder:      "📁 Cartella progetti collegata (Dizionario automatico):",
+			SettingsBrowse:      "📂 Sfoglia...",
+			SettingsLangs:       "🌐 Lingue di riconoscimento attive (Whisper AI):",
+			SettingsSave:        "💾 Salva e applica",
+			SettingsDict:        "📖 Modifica dizionario",
+			HudRecording:        "🔴 REGISTRAZIONE... Parla [%s per Terminare]",
+			HudTranscribing:     "⚡ Trascrizione vocale con Whisper AI...",
+			HudPasted:           "✅ Incollato: %s",
+			HudEmpty:            "⚠️ La registrazione audio era vuota.",
+			HudError:            "❌ Errore: %s",
+			HudUpdating:         "⬇️ Download aggiornamento GIN-Voice %s...",
+			HudUpdateDone:       "✅ Aggiornamento pronto! Riavvio...",
+			HudUpdateError:      "❌ Errore aggiornamento: %s",
+			HudUpdateNotice:     "✨ È disponibile una nuova versione di GIN-Voice %s!",
+			Ready:               "Pronto",
 		},
 		"ES": {
-			MenuStartDictation: "🔴 Iniciar dictado [%s]",
-			MenuStopDictation:  "⏹️ Detener dictado [%s]",
-			MenuSpeechLang:     "🌐 Idiomas de reconocimiento (Whisper AI)",
-			MenuInterfaceLang:  "🖥️ Idioma de la interfaz",
-			MenuKeyConfigured:  "🔑 Clave Groq API: Configurada",
-			MenuKeyNotSet:      "⚠️ Clave Groq API: NO configurada (Haga clic para ingresar)",
-			MenuOpenDict:       "📖 Abrir diccionario (dictionary.json)",
-			MenuLinkFolder:     "📁 Vincular carpeta de conocimientos...",
-			MenuAutostart:      "⚡ Inicio automático con Windows",
-			MenuHelp:           "❓ Guía y ayuda",
-			MenuExit:           "❌ Salir de GIN-Voice",
-			SettingsTitle:      "GIN-Voice - Centro de control",
-			SettingsHeader:     "🎙️ GIN-Voice por VladiMIR+AI — Dictado por voz instantáneo",
-			SettingsKeyLabel:   "🔑 Clave Groq Whisper API:",
-			SettingsGetGroq:    "🌐 Obtener clave gratis en Groq.com",
-			SettingsTestBtn:    "🧪 Probar clave",
-			SettingsHotkey:     "⚡ Tecla de acceso rápido:",
-			SettingsHotkeyTip:  "(Disponibles: F8, F4, F9, F10, F12 — Iniciar/Detener)",
-			SettingsFolder:     "📁 Carpeta vinculada de proyectos (Diccionario automático):",
-			SettingsBrowse:     "📂 Examinar...",
-			SettingsLangs:      "🌐 Idiomas de reconocimiento activos (Whisper AI):",
-			SettingsSave:       "💾 Guardar y aplicar",
-			SettingsDict:       "📖 Editar diccionario",
-			HudRecording:       "🔴 GRABANDO... Hable [%s para Terminar]",
-			HudTranscribing:    "⚡ Transcribiendo voz con Whisper AI...",
-			HudPasted:          "✅ Pegado: %s",
-			HudEmpty:           "⚠️ La grabación de audio estaba vacía.",
-			HudError:           "❌ Error: %s",
-			Ready:              "Listo",
+			MenuStartDictation:  "🔴 Iniciar dictado [%s]",
+			MenuStopDictation:   "⏹️ Detener dictado [%s]",
+			MenuUpdateAvailable: "✨ Actualización disponible: %s (Haga clic para actualizar)",
+			MenuSpeechLang:      "🌐 Idiomas de reconocimiento (Whisper AI)",
+			MenuInterfaceLang:   "🖥️ Idioma de la interfaz",
+			MenuKeyConfigured:   "🔑 Clave Groq API: Configurada",
+			MenuKeyNotSet:       "⚠️ Clave Groq API: NO configurada (Haga clic para ingresar)",
+			MenuOpenDict:        "📖 Abrir diccionario (dictionary.json)",
+			MenuLinkFolder:      "📁 Vincular carpeta de conocimientos...",
+			MenuAutostart:       "⚡ Inicio automático con Windows",
+			MenuHelp:            "❓ Guía y ayuda",
+			MenuExit:            "❌ Salir de GIN-Voice",
+			SettingsTitle:       "GIN-Voice - Centro de control",
+			SettingsHeader:      "🎙️ GIN-Voice por VladiMIR+AI — Dictado por voz instantáneo",
+			SettingsKeyLabel:    "🔑 Clave Groq Whisper API:",
+			SettingsGetGroq:     "🌐 Obtener clave gratis en Groq.com",
+			SettingsTestBtn:     "🧪 Probar clave",
+			SettingsHotkey:      "⚡ Tecla de acceso rápido:",
+			SettingsHotkeyTip:   "(Disponibles: F8, F4, F9, F10, F12 — Iniciar/Detener)",
+			SettingsFolder:      "📁 Carpeta vinculada de proyectos (Diccionario automático):",
+			SettingsBrowse:      "📂 Examinar...",
+			SettingsLangs:       "🌐 Idiomas de reconocimiento activos (Whisper AI):",
+			SettingsSave:        "💾 Guardar y aplicar",
+			SettingsDict:        "📖 Editar diccionario",
+			HudRecording:        "🔴 GRABANDO... Hable [%s para Terminar]",
+			HudTranscribing:     "⚡ Transcribiendo voz con Whisper AI...",
+			HudPasted:           "✅ Pegado: %s",
+			HudEmpty:            "⚠️ La grabación de audio estaba vacía.",
+			HudError:            "❌ Error: %s",
+			HudUpdating:         "⬇️ Descargando actualización GIN-Voice %s...",
+			HudUpdateDone:       "✅ Actualización lista! Reiniciando...",
+			HudUpdateError:      "❌ Error al actualizar: %s",
+			HudUpdateNotice:     "✨ ¡Nueva versión de GIN-Voice %s disponible!",
+			Ready:               "Listo",
 		},
 		"FR": {
-			MenuStartDictation: "🔴 Démarrer la dictée [%s]",
-			MenuStopDictation:  "⏹️ Arrêter la dictée [%s]",
-			MenuSpeechLang:     "🌐 Langues de reconnaissance (Whisper AI)",
-			MenuInterfaceLang:  "🖥️ Langue de l'interface",
-			MenuKeyConfigured:  "🔑 Clé Groq API : Configurée",
-			MenuKeyNotSet:      "⚠️ Clé Groq API : NON configurée (Cliquez pour définir)",
-			MenuOpenDict:       "📖 Ouvrir le dictionnaire (dictionary.json)",
-			MenuLinkFolder:     "📁 Lier le dossier de connaissances...",
-			MenuAutostart:      "⚡ Démarrage automatique avec Windows",
-			MenuHelp:           "❓ Guide d'installation et aide",
-			MenuExit:           "❌ Quitter GIN-Voice",
-			SettingsTitle:      "GIN-Voice - Centre de configuration",
-			SettingsHeader:     "🎙️ GIN-Voice par VladiMIR+AI — Saisie vocale instantanée",
-			SettingsKeyLabel:   "🔑 Clé Groq Whisper API :",
-			SettingsGetGroq:    "🌐 Obtenir une clé gratuite sur Groq.com",
-			SettingsTestBtn:    "🧪 Tester",
-			SettingsHotkey:     "⚡ Raccourci de dictée :",
-			SettingsHotkeyTip:  "(Disponibles : F8, F4, F9, F10, F12 — Démarrer/Arrêter)",
-			SettingsFolder:     "📁 Dossier de projets lié (Dictionnaire automatique) :",
-			SettingsBrowse:     "📂 Parcourir...",
-			SettingsLangs:      "🌐 Langues de reconnaissance actives (Whisper AI) :",
-			SettingsSave:       "💾 Enregistrer et appliquer",
-			SettingsDict:       "📖 Modifier le dictionnaire",
-			HudRecording:       "🔴 ENREGISTREMENT... Parlez [%s pour Terminer]",
-			HudTranscribing:    "⚡ Transcription vocale avec Whisper AI...",
-			HudPasted:          "✅ Collé : %s",
-			HudEmpty:           "⚠️ L'enregistrement audio était vide.",
-			HudError:           "❌ Erreur : %s",
-			Ready:              "Prêt",
+			MenuStartDictation:  "🔴 Démarrer la dictée [%s]",
+			MenuStopDictation:   "⏹️ Arrêter la dictée [%s]",
+			MenuUpdateAvailable: "✨ Mise à jour disponible : %s (Cliquez pour installer)",
+			MenuSpeechLang:      "🌐 Langues de reconnaissance (Whisper AI)",
+			MenuInterfaceLang:   "🖥️ Langue de l'interface",
+			MenuKeyConfigured:   "🔑 Clé Groq API : Configurée",
+			MenuKeyNotSet:       "⚠️ Clé Groq API : NON configurée (Cliquez pour définir)",
+			MenuOpenDict:        "📖 Ouvrir le dictionnaire (dictionary.json)",
+			MenuLinkFolder:      "📁 Lier le dossier de connaissances...",
+			MenuAutostart:       "⚡ Démarrage automatique avec Windows",
+			MenuHelp:            "❓ Guide d'installation et aide",
+			MenuExit:            "❌ Quitter GIN-Voice",
+			SettingsTitle:       "GIN-Voice - Centre de configuration",
+			SettingsHeader:      "🎙️ GIN-Voice par VladiMIR+AI — Saisie vocale instantanée",
+			SettingsKeyLabel:    "🔑 Clé Groq Whisper API :",
+			SettingsGetGroq:     "🌐 Obtenir une clé gratuite sur Groq.com",
+			SettingsTestBtn:     "🧪 Tester",
+			SettingsHotkey:      "⚡ Raccourci de dictée :",
+			SettingsHotkeyTip:   "(Disponibles : F8, F4, F9, F10, F12 — Démarrer/Arrêter)",
+			SettingsFolder:      "📁 Dossier de projets lié (Dictionnaire automatique) :",
+			SettingsBrowse:      "📂 Parcourir...",
+			SettingsLangs:       "🌐 Langues de reconnaissance actives (Whisper AI) :",
+			SettingsSave:        "💾 Enregistrer et appliquer",
+			SettingsDict:        "📖 Modifier le dictionnaire",
+			HudRecording:        "🔴 ENREGISTREMENT... Parlez [%s pour Terminer]",
+			HudTranscribing:     "⚡ Transcription vocale avec Whisper AI...",
+			HudPasted:           "✅ Collé : %s",
+			HudEmpty:            "⚠️ L'enregistrement audio était vide.",
+			HudError:            "❌ Erreur : %s",
+			HudUpdating:         "⬇️ Téléchargement de la mise à jour GIN-Voice %s...",
+			HudUpdateDone:       "✅ Mise à jour prête ! Redémarrage...",
+			HudUpdateError:      "❌ Échec de la mise à jour : %s",
+			HudUpdateNotice:     "✨ Une nouvelle version de GIN-Voice %s est disponible !",
+			Ready:               "Prêt",
 		},
 	}
 )
@@ -1413,6 +1453,160 @@ func testGroqAPIKey(key string) (bool, string) {
 	return false, fmt.Sprintf("❌ API Key Error (%d): %s", resp.StatusCode, string(respBytes))
 }
 
+type RemoteVersionInfo struct {
+	Version     string `json:"version"`
+	Name        string `json:"name"`
+	ReleaseDate string `json:"release_date"`
+}
+
+func parseVerDigits(v string) int {
+	v = strings.TrimPrefix(strings.ToLower(v), "v")
+	v = strings.TrimLeft(v, "0")
+	var n int
+	fmt.Sscanf(v, "%d", &n)
+	return n
+}
+
+func isNewerVersion(remote, local string) bool {
+	rNum := parseVerDigits(remote)
+	lNum := parseVerDigits(local)
+	if rNum > 0 && lNum > 0 {
+		return rNum > lNum
+	}
+	return remote != "" && remote != local
+}
+
+func checkForUpdates() {
+	client := &http.Client{Timeout: 6 * time.Second}
+	url := "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/version.json"
+	resp, err := client.Get(url)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return
+	}
+
+	var info RemoteVersionInfo
+	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
+		return
+	}
+
+	remoteVer := strings.TrimSpace(info.Version)
+	if remoteVer != "" && isNewerVersion(remoteVer, AppVersion) {
+		updateMutex.Lock()
+		updateAvailable = remoteVer
+		updateMutex.Unlock()
+
+		writeLog(fmt.Sprintf("Update detected: %s (Current: %s)", remoteVer, AppVersion))
+	}
+}
+
+func performSelfUpdate(latestVer string) {
+	updateExecMutex.Lock()
+	if isUpdating {
+		updateExecMutex.Unlock()
+		return
+	}
+	isUpdating = true
+	updateExecMutex.Unlock()
+
+	ui := getUI()
+	updateHUD(true, fmt.Sprintf(ui.HudUpdating, latestVer))
+	playGentleSound("notice")
+
+	go func() {
+		defer func() {
+			updateExecMutex.Lock()
+			isUpdating = false
+			updateExecMutex.Unlock()
+		}()
+
+		client := &http.Client{Timeout: 60 * time.Second}
+		exeURL := "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice.exe"
+		resp, err := client.Get(exeURL)
+		if err != nil {
+			writeLog("Update download failed: " + err.Error())
+			updateHUD(true, fmt.Sprintf(ui.HudUpdateError, err.Error()))
+			time.Sleep(3 * time.Second)
+			updateHUD(false, "")
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			writeLog(fmt.Sprintf("Update HTTP status error: %d", resp.StatusCode))
+			updateHUD(true, fmt.Sprintf(ui.HudUpdateError, fmt.Sprintf("HTTP %d", resp.StatusCode)))
+			time.Sleep(3 * time.Second)
+			updateHUD(false, "")
+			return
+		}
+
+		tempExe := filepath.Join(os.TempDir(), fmt.Sprintf("GIN-Voice_Update_%s_%d.exe", latestVer, time.Now().Unix()))
+		f, err := os.Create(tempExe)
+		if err != nil {
+			writeLog("Update temp file create failed: " + err.Error())
+			updateHUD(true, fmt.Sprintf(ui.HudUpdateError, err.Error()))
+			time.Sleep(3 * time.Second)
+			updateHUD(false, "")
+			return
+		}
+
+		written, err := io.Copy(f, resp.Body)
+		f.Close()
+
+		if err != nil || written < 1000000 {
+			_ = os.Remove(tempExe)
+			writeLog(fmt.Sprintf("Update file too small or incomplete: %d bytes", written))
+			updateHUD(true, fmt.Sprintf(ui.HudUpdateError, "Incomplete download"))
+			time.Sleep(3 * time.Second)
+			updateHUD(false, "")
+			return
+		}
+
+		currExe, err := os.Executable()
+		if err != nil {
+			_ = os.Remove(tempExe)
+			return
+		}
+
+		updateHUD(true, ui.HudUpdateDone)
+		playGentleSound("save")
+		time.Sleep(900 * time.Millisecond)
+
+		pid := os.Getpid()
+		targetDir := filepath.Dir(currExe)
+		versionExe := filepath.Join(targetDir, fmt.Sprintf("GIN-Voice_%s.exe", latestVer))
+
+		// PowerShell script gracefully stops current process, replaces GIN-Voice.exe and GIN-Voice_<ver>.exe in target folder, preserves config.json and dictionary.json 100%, and relaunches GIN-Voice.exe
+		psScript := fmt.Sprintf(`
+Start-Sleep -Milliseconds 400
+Stop-Process -Id %d -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 400
+$tries = 0
+while ($tries -lt 25) {
+    try {
+        Copy-Item -Path '%s' -Destination '%s' -Force
+        Copy-Item -Path '%s' -Destination '%s' -Force -ErrorAction SilentlyContinue
+        break
+    } catch {
+        Start-Sleep -Milliseconds 300
+        $tries++
+    }
+}
+Remove-Item -Path '%s' -Force -ErrorAction SilentlyContinue
+Start-Process -FilePath '%s'
+`, pid, tempExe, currExe, tempExe, versionExe, tempExe, currExe)
+
+		cmd := exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psScript)
+		_ = cmd.Start()
+
+		os.Exit(0)
+	}()
+}
+
 func getClipboardText() string {
 	r, _, _ := procIsClipboardAvailable.Call(CF_UNICODETEXT)
 	if r == 0 {
@@ -1598,6 +1792,16 @@ func showContextMenu() {
 		titleText = fmt.Sprintf(ui.MenuStopDictation, config.Hotkey)
 	} else {
 		titleText = fmt.Sprintf(ui.MenuStartDictation, config.Hotkey)
+	}
+
+	updateMutex.Lock()
+	latestUpdate := updateAvailable
+	updateMutex.Unlock()
+
+	if latestUpdate != "" {
+		updateText := fmt.Sprintf(ui.MenuUpdateAvailable, latestUpdate)
+		procAppendMenuW.Call(hMenu, MF_STRING, IDM_UPDATE_APP, uintptr(unsafe.Pointer(strPtr(updateText))))
+		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 	}
 
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_TOGGLE_RECORD, uintptr(unsafe.Pointer(strPtr(titleText))))
@@ -1856,6 +2060,23 @@ func handleMenuCommand(cmdID uintptr) {
 	switch {
 	case cmdID == IDM_TOGGLE_RECORD:
 		go toggleRecording()
+	case cmdID == IDM_UPDATE_APP:
+		updateMutex.Lock()
+		latest := updateAvailable
+		updateMutex.Unlock()
+		if latest != "" {
+			go performSelfUpdate(latest)
+		} else {
+			go func() {
+				checkForUpdates()
+				updateMutex.Lock()
+				latest := updateAvailable
+				updateMutex.Unlock()
+				if latest != "" {
+					performSelfUpdate(latest)
+				}
+			}()
+		}
 	case cmdID == IDM_SETUP_KEY || cmdID == IDM_OPEN_CONFIG:
 		showSettingsDialog()
 	case cmdID >= IDM_UI_LANG_BASE && cmdID < IDM_UI_LANG_BASE+uintptr(len(UILanguages)):
@@ -2155,7 +2376,7 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
-    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v012.exe' -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v013.exe' -Force -ErrorAction SilentlyContinue
 }
 `, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath)
 
@@ -2192,7 +2413,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v012.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v013.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
@@ -2242,7 +2463,7 @@ func main() {
 	helpFile = filepath.Join(appDir, "setup_guide.html")
 	logFile = filepath.Join(appDir, "gin_voice.log")
 
-	writeLog("=== GIN-Voice [v009] Starting ===")
+	writeLog("=== GIN-Voice [" + AppVersion + "] Starting ===")
 
 	loadConfig()
 	loadDictionary()
@@ -2303,6 +2524,15 @@ func main() {
 
 	initHUD()
 	startHotkeyListener()
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		checkForUpdates()
+		ticker := time.NewTicker(2 * time.Hour)
+		for range ticker.C {
+			checkForUpdates()
+		}
+	}()
 
 	apiKey := strings.TrimSpace(config.GroqAPIKey)
 	if apiKey == "" || config.FirstRun {
