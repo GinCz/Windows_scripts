@@ -85,6 +85,7 @@ func main() {
 
 	fmt.Println("\033[92m[3/4] Cleaning Windows Autostart and Registry entries...\033[0m")
 	_ = exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, "/v", "GIN-Voice", "/f").Run()
+	_ = exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Voice`, "/f").Run()
 	_ = exec.Command("reg", "delete", `HKCU\Software\GIN-Voice`, "/f").Run()
 	fmt.Println("\033[90m      Done. Registry cleaned.\033[0m\n")
 

@@ -9,7 +9,6 @@ package main
 import (
 	"bytes"
 	_ "embed"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1077,60 +1076,9 @@ func cleanHallucinations(text string) string {
 }
 
 func trimAudioSilence(pcm []byte) []byte {
-	numSamples := len(pcm) / 2
-	if numSamples < 3200 { // less than 200ms
-		return pcm
-	}
-
-	samples := make([]int16, numSamples)
-	for i := 0; i < numSamples; i++ {
-		samples[i] = int16(binary.LittleEndian.Uint16(pcm[i*2 : i*2+2]))
-	}
-
-	windowSize := 800 // 50ms at 16000Hz
-	threshold := int64(250) // silence energy threshold
-
-	startWindow := -1
-	endWindow := -1
-
-	numWindows := numSamples / windowSize
-	for w := 0; w < numWindows; w++ {
-		var sum int64
-		for i := 0; i < windowSize; i++ {
-			val := int64(samples[w*windowSize+i])
-			if val < 0 {
-				val = -val
-			}
-			sum += val
-		}
-		avg := sum / int64(windowSize)
-		if avg > threshold {
-			if startWindow == -1 {
-				startWindow = w
-			}
-			endWindow = w
-		}
-	}
-
-	if startWindow == -1 {
-		return pcm
-	}
-
-	// 150ms padding before and 200ms after
-	startSample := (startWindow - 3) * windowSize
-	if startSample < 0 {
-		startSample = 0
-	}
-	endSample := (endWindow + 4) * windowSize
-	if endSample > numSamples {
-		endSample = numSamples
-	}
-
-	if endSample <= startSample {
-		return pcm
-	}
-
-	return pcm[startSample*2 : endSample*2]
+	// Whisper Large v3 naturally ignores silence and performs with peak accuracy on full sentences.
+	// Returning full PCM preserves natural speech cadence and prevents dropping trailing words.
+	return pcm
 }
 
 func createWAV(pcm []byte, sampleRate int, channels int, bits int) []byte {
@@ -1273,6 +1221,9 @@ func startRecordingWaveIn() error {
 }
 
 func stopRecordingWaveIn() []byte {
+	// Allow 200ms for in-flight audio DMA buffers to flush final spoken words into memory
+	time.Sleep(200 * time.Millisecond)
+
 	audioMutex.Lock()
 	curWaveIn := hWaveIn
 	curEvent := hWaveEvent
@@ -1289,7 +1240,7 @@ func stopRecordingWaveIn() []byte {
 
 	audioMutex.Lock()
 	for i := 0; i < 8; i++ {
-		if waveHeaders[i].DwBytesRecorded > 0 && (waveHeaders[i].DwFlags&WHDR_DONE) != 0 {
+		if waveHeaders[i].DwBytesRecorded > 0 {
 			chunk := (*[1 << 20]byte)(unsafe.Pointer(waveHeaders[i].LpData))[:waveHeaders[i].DwBytesRecorded]
 			capturedAudio = append(capturedAudio, chunk...)
 		}
@@ -1305,8 +1256,7 @@ func stopRecordingWaveIn() []byte {
 		procCloseHandle.Call(curEvent)
 	}
 
-	trimmedPCM := trimAudioSilence(pcm)
-	return createWAV(trimmedPCM, 16000, 1, 16)
+	return createWAV(pcm, 16000, 1, 16)
 }
 
 func startRecording() {
@@ -2568,6 +2518,24 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
 	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psCmd).Run()
 }
 
+func registerUninstallRegistry(targetDir, targetExe string) {
+	uninstKey := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Voice`
+	icoPath := filepath.Join(targetDir, "app.ico")
+	uninstExe := filepath.Join(targetDir, "Uninstall.exe")
+
+	_ = exec.Command("reg", "add", uninstKey, "/v", "DisplayName", "/t", "REG_SZ", "/d", "GIN-Voice", "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", AppVersion, "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI", "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf("\"%s\"", icoPath), "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "InstallLocation", "/t", "REG_SZ", "/d", fmt.Sprintf("\"%s\"", targetDir), "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "UninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf("\"%s\"", uninstExe), "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "QuietUninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf("\"%s\"", uninstExe), "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "EstimatedSize", "/t", "REG_DWORD", "/d", "18000", "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "URLInfoAbout", "/t", "REG_SZ", "/d", "https://github.com/GinCz/Windows_scripts", "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "NoModify", "/t", "REG_DWORD", "/d", "1", "/f").Run()
+	_ = exec.Command("reg", "add", uninstKey, "/v", "NoRepair", "/t", "REG_DWORD", "/d", "1", "/f").Run()
+}
+
 func checkAndSelfInstall() {
 	currExe, err := os.Executable()
 	if err != nil {
@@ -2582,6 +2550,7 @@ func checkAndSelfInstall() {
 	targetExe := filepath.Join(targetDir, "GIN-Voice.exe")
 
 	if strings.EqualFold(filepath.Dir(currExe), targetDir) {
+		registerUninstallRegistry(targetDir, targetExe)
 		return
 	}
 
@@ -2640,6 +2609,7 @@ func checkAndSelfInstall() {
 	}
 
 	createShortcuts(targetExe, targetDir)
+	registerUninstallRegistry(targetDir, targetExe)
 
 	// Open Setup Guide in Default Web Browser upon installation
 	procShellExecuteW.Call(
