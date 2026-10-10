@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --bg-primary: #17212b;
   --bg-secondary: #0e1621;
   --bg-sidebar: #242f3d;
@@ -24,6 +25,7 @@
 }
 
 body.light-theme {
+  color-scheme: light;
   --bg-primary: #ffffff;
   --bg-secondary: #f4f4f5;
   --bg-sidebar: #ffffff;
@@ -360,15 +362,17 @@ body {
 select {
   width: 100%;
   padding: 11px 14px;
-  background: var(--bg-input, #17212b);
+  background-color: #17212b !important;
+  background: #17212b !important;
   border: 1px solid var(--border-color, #10161e);
   border-radius: 10px;
-  color: var(--text-main, #f5f5f5);
+  color: #f5f5f5 !important;
   font-family: inherit;
   font-size: 14px;
   outline: none;
   transition: all 0.2s;
   box-sizing: border-box;
+  color-scheme: dark !important;
 }
 
 .form-group input:focus,
@@ -390,6 +394,7 @@ select option,
   background: #17212b !important;
   color: #f5f5f5 !important;
   padding: 8px 12px;
+  color-scheme: dark !important;
 }
 
 .input-with-prefix {
@@ -3163,15 +3168,18 @@ body.light-theme .form-group select,
 body.light-theme .form-select,
 body.light-theme .form-control,
 body.light-theme select {
+  background-color: #f8fafc !important;
   background: #f8fafc !important;
   border: 1px solid #cbd5e1 !important;
   color: #0f172a !important;
+  color-scheme: light !important;
 }
 
 body.light-theme select:focus,
 body.light-theme .form-select:focus,
 body.light-theme .form-control:focus,
 body.light-theme .form-group select:focus {
+  background-color: #ffffff !important;
   background: #ffffff !important;
   border-color: #2563eb !important;
 }
@@ -3183,6 +3191,7 @@ body.light-theme .form-group select option {
   background-color: #ffffff !important;
   background: #ffffff !important;
   color: #0f172a !important;
+  color-scheme: light !important;
 }
 
 body.light-theme .brand-signature {

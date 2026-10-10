@@ -3555,16 +3555,19 @@ function openAdminMergeModal(sourceUserId = null) {
   if (alertBox) alertBox.className = 'alert-box';
   if (confirmBox) confirmBox.checked = false;
 
+  const isLight = document.body.classList.contains('light-theme');
+  const optBg = isLight ? '#ffffff' : '#17212b';
+  const optColor = isLight ? '#0f172a' : '#f5f5f5';
   const usersList = adminAllUsersCache && adminAllUsersCache.length > 0 ? adminAllUsersCache : [];
   const optionsHtml = usersList.map(u => 
-    `<option value="${u.id}">${escapeHtml(u.name)} (@${escapeHtml(u.username)}) [ID: ${u.id}, ${u.role}]</option>`
+    `<option value="${u.id}" style="background-color: ${optBg} !important; color: ${optColor} !important;">${escapeHtml(u.name)} (@${escapeHtml(u.username)}) [ID: ${u.id}, ${u.role}]</option>`
   ).join('');
 
   if (targetSelect) {
-    targetSelect.innerHTML = '<option value="">-- Выберите основной аккаунт (куда переносим) --</option>' + optionsHtml;
+    targetSelect.innerHTML = `<option value="" style="background-color: ${optBg} !important; color: ${optColor} !important;">-- Выберите основной аккаунт (куда переносим) --</option>` + optionsHtml;
   }
   if (sourceSelect) {
-    sourceSelect.innerHTML = '<option value="">-- Выберите дубликат для слияния (который удалится) --</option>' + optionsHtml;
+    sourceSelect.innerHTML = `<option value="" style="background-color: ${optBg} !important; color: ${optColor} !important;">-- Выберите дубликат для слияния (который удалится) --</option>` + optionsHtml;
     if (sourceUserId) {
       sourceSelect.value = sourceUserId;
     }

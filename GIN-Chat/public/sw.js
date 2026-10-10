@@ -1,9 +1,9 @@
 // ==============================================================================
 // GIN-Chat Service Worker (PWA & Web Push Notification Handler)
-// Version: v0.3.4
+// Version: v0.3.5
 // ==============================================================================
 
-const CACHE_NAME = "gin-chat-v034";
+const CACHE_NAME = "gin-chat-v035";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
