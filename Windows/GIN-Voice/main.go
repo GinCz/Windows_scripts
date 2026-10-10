@@ -1,7 +1,7 @@
 // =============================================================================
 // Execution Context : Go 1.22+ (Windows AMD64)
 // Target Server     : Local Windows Desktop PC
-// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI, WaveIn Event Engine, Multi-Language UI, Cyber Dark GUI, On-Screen HUD [v008]
+// Description       : GIN-Voice Native Windows Client & Installer with Whisper AI, WaveIn Event Engine, Multi-Language UI, Cyber Dark GUI, On-Screen HUD [v009]
 // =============================================================================
 
 package main
@@ -27,8 +27,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v008"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v008]"
+	AppVersion    = "v009"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v009]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -354,7 +354,6 @@ type Config struct {
 var (
 	appDir         string
 	configFile     string
-	keyFile        string
 	dictFile       string
 	helpFile       string
 	logFile        string
@@ -400,7 +399,7 @@ var (
 		{"FR", "Français"},
 	}
 
-	// Recognition languages ordered by user preference: EN first, CS second, RU third, followed by others
+	// Recognition languages: EN first (checked by default), CS second, RU third, followed by others
 	MasterLanguages = []LanguageItem{
 		{"EN", "English (Английский)"},
 		{"CS", "Čeština (Czech)"},
@@ -732,7 +731,7 @@ func loadConfig() {
 		HotkeyMod:        0,
 		ActiveLanguages:  []string{"EN"}, // English checked by default
 		AllLanguages:     MasterLanguages,
-		GroqAPIKey:       "", // Empty by default
+		GroqAPIKey:       "", // Strictly empty by default - no hardcoded keys, no env fallback
 		SoundFeedback:    true,
 		AutoPaste:        true,
 		RestoreClipboard: true,
@@ -742,12 +741,6 @@ func loadConfig() {
 	data, err := os.ReadFile(configFile)
 	if err == nil {
 		_ = json.Unmarshal(data, &config)
-	}
-
-	if config.GroqAPIKey == "" {
-		if kData, kErr := os.ReadFile(keyFile); kErr == nil {
-			config.GroqAPIKey = strings.TrimSpace(string(kData))
-		}
 	}
 
 	if config.UILanguage == "" {
@@ -766,9 +759,6 @@ func saveConfig() {
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err == nil {
 		_ = os.WriteFile(configFile, data, 0644)
-	}
-	if config.GroqAPIKey != "" {
-		_ = os.WriteFile(keyFile, []byte(config.GroqAPIKey), 0644)
 	}
 }
 
@@ -1004,7 +994,8 @@ func startRecording() {
 		return
 	}
 
-	if config.GroqAPIKey == "" && os.Getenv("GROQ_API_KEY") == "" {
+	cleanKey := strings.TrimSpace(config.GroqAPIKey)
+	if cleanKey == "" {
 		playBeep(250, 200)
 		showSettingsDialog()
 		return
@@ -1108,10 +1099,7 @@ func getTranscriptionLanguage() string {
 }
 
 func transcribeAudioBytes(wavBytes []byte) (string, error) {
-	apiKey := config.GroqAPIKey
-	if apiKey == "" {
-		apiKey = os.Getenv("GROQ_API_KEY")
-	}
+	apiKey := strings.TrimSpace(config.GroqAPIKey)
 	if apiKey == "" {
 		return "", fmt.Errorf("Groq API Key is not configured. Please open settings and enter your key.")
 	}
@@ -1438,8 +1426,9 @@ func showContextMenu() {
 	}
 	procAppendMenuW.Call(hMenu, MF_POPUP, hUILangSubMenu, uintptr(unsafe.Pointer(strPtr(ui.MenuInterfaceLang))))
 
+	cleanKey := strings.TrimSpace(config.GroqAPIKey)
 	statusKey := ui.MenuKeyConfigured
-	if config.GroqAPIKey == "" {
+	if cleanKey == "" {
 		statusKey = ui.MenuKeyNotSet
 	}
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_SETUP_KEY, uintptr(unsafe.Pointer(strPtr(statusKey))))
@@ -1965,8 +1954,9 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
+    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v009.exe' -Force -ErrorAction SilentlyContinue
 }
-`, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath)
+`, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath)
 
 	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psCmd).Run()
 }
@@ -2001,7 +1991,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v008.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v009.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
@@ -2047,12 +2037,11 @@ func main() {
 	exePath, _ := os.Executable()
 	appDir = filepath.Dir(exePath)
 	configFile = filepath.Join(appDir, "config.json")
-	keyFile = filepath.Join(appDir, "api_key.txt")
 	dictFile = filepath.Join(appDir, "dictionary.json")
 	helpFile = filepath.Join(appDir, "setup_guide.html")
 	logFile = filepath.Join(appDir, "gin_voice.log")
 
-	writeLog("=== GIN-Voice [v008] Starting ===")
+	writeLog("=== GIN-Voice [v009] Starting ===")
 
 	loadConfig()
 	loadDictionary()
@@ -2114,11 +2103,7 @@ func main() {
 	initHUD()
 	startHotkeyListener()
 
-	apiKey := config.GroqAPIKey
-	if apiKey == "" {
-		apiKey = os.Getenv("GROQ_API_KEY")
-	}
-
+	apiKey := strings.TrimSpace(config.GroqAPIKey)
 	if apiKey == "" || config.FirstRun {
 		config.FirstRun = false
 		saveConfig()
