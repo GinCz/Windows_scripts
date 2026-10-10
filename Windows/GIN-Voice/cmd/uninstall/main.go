@@ -71,6 +71,7 @@ func main() {
 
 	_ = os.Remove(filepath.Join(desktopDir, "GIN-Voice.lnk"))
 	_ = os.Remove(filepath.Join(startMenuDir, "GIN-Voice.lnk"))
+	_ = os.Remove(filepath.Join(startMenuDir, "Uninstall GIN-Voice.lnk"))
 	_ = os.Remove(filepath.Join(megaDesktopDir, "GIN-Voice.lnk"))
 
 	if entries, err := os.ReadDir(megaDesktopDir); err == nil {

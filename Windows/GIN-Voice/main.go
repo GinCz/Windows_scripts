@@ -30,8 +30,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v014"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v014]"
+	AppVersion    = "v015"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v015]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -155,6 +155,9 @@ var defaultUninstallBAT []byte
 
 //go:embed uninstall.ps1
 var defaultUninstallPS1 []byte
+
+//go:embed Uninstall.exe
+var defaultUninstallEXE []byte
 
 var (
 	user32   = syscall.NewLazyDLL("user32.dll")
@@ -859,11 +862,11 @@ func loadConfig() {
 	config = Config{
 		Version:               AppVersion,
 		UILanguage:            "EN", // English by default
-		FirstRun:              false,
+		FirstRun:              true,
 		Hotkey:                "F4",
 		HotkeyVK:              VK_F4,
 		HotkeyMod:             0,
-		ActiveLanguages:       []string{"EN", "CS", "RU", "DE"}, // EN, CS, RU, DE enabled by default
+		ActiveLanguages:       []string{"EN"}, // Only English selected by default upon initial installation
 		AllLanguages:          MasterLanguages,
 		GroqAPIKey:            "", // Strictly empty by default - no hardcoded keys, no env fallback
 		SoundFeedback:         true,
@@ -892,7 +895,7 @@ func loadConfig() {
 	}
 
 	if len(config.ActiveLanguages) == 0 {
-		config.ActiveLanguages = []string{"EN", "CS", "RU", "DE"}
+		config.ActiveLanguages = []string{"EN"}
 	}
 
 	config.AllLanguages = MasterLanguages
@@ -2370,7 +2373,7 @@ func copyFile(src, dst string) error {
 func createShortcuts(exePath, targetDir string) {
 	icoPath := filepath.Join(targetDir, "app.ico")
 	recIcoPath := filepath.Join(targetDir, "app_rec.ico")
-	uninstBat := filepath.Join(targetDir, "uninstall.bat")
+	uninstExe := filepath.Join(targetDir, "Uninstall.exe")
 
 	psCmd := fmt.Sprintf(`
 $w = New-Object -ComObject WScript.Shell
@@ -2404,9 +2407,8 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
-    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v014.exe' -Force -ErrorAction SilentlyContinue
 }
-`, exePath, targetDir, icoPath, exePath, targetDir, icoPath, uninstBat, targetDir, recIcoPath, exePath, targetDir, icoPath, exePath)
+`, exePath, targetDir, icoPath, exePath, targetDir, icoPath, uninstExe, targetDir, recIcoPath, exePath, targetDir, icoPath)
 
 	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", psCmd).Run()
 }
@@ -2440,8 +2442,8 @@ func checkAndSelfInstall() {
 		}
 	}
 
+	// Copy runtime executable only (no redundant installer copies inside targetDir)
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v014.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {
@@ -2463,6 +2465,11 @@ func checkAndSelfInstall() {
 		_ = os.WriteFile(dstUninstPS1, defaultUninstallPS1, 0644)
 	}
 
+	dstUninstEXE := filepath.Join(targetDir, "Uninstall.exe")
+	if len(defaultUninstallEXE) > 0 {
+		_ = os.WriteFile(dstUninstEXE, defaultUninstallEXE, 0755)
+	}
+
 	dictDest := filepath.Join(targetDir, "dictionary.json")
 	if _, err := os.Stat(dictDest); os.IsNotExist(err) && len(defaultDictionaryJSON) > 0 {
 		_ = os.WriteFile(dictDest, defaultDictionaryJSON, 0644)
@@ -2475,6 +2482,17 @@ func checkAndSelfInstall() {
 
 	createShortcuts(targetExe, targetDir)
 
+	// Open Setup Guide in Default Web Browser upon installation
+	procShellExecuteW.Call(
+		0,
+		uintptr(unsafe.Pointer(strPtr("open"))),
+		uintptr(unsafe.Pointer(strPtr(guideDest))),
+		0,
+		0,
+		SW_SHOWNORMAL,
+	)
+
+	// Launch installed main application
 	procShellExecuteW.Call(
 		0,
 		uintptr(unsafe.Pointer(strPtr("open"))),
@@ -2495,6 +2513,11 @@ func main() {
 	dictFile = filepath.Join(appDir, "dictionary.json")
 	helpFile = filepath.Join(appDir, "setup_guide.html")
 	logFile = filepath.Join(appDir, "gin_voice.log")
+
+	// Ensure setup guide is extracted
+	if _, err := os.Stat(helpFile); os.IsNotExist(err) && len(defaultSetupGuideHTML) > 0 {
+		_ = os.WriteFile(helpFile, defaultSetupGuideHTML, 0644)
+	}
 
 	writeLog("=== GIN-Voice [" + AppVersion + "] Starting ===")
 
@@ -2569,8 +2592,13 @@ func main() {
 
 	apiKey := strings.TrimSpace(config.GroqAPIKey)
 	if apiKey == "" || config.FirstRun {
-		config.FirstRun = false
-		saveConfig()
+		if config.FirstRun {
+			config.FirstRun = false
+			saveConfig()
+			if _, err := os.Stat(helpFile); err == nil {
+				procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(helpFile))), 0, 0, SW_SHOWNORMAL)
+			}
+		}
 		showSettingsDialog()
 	} else {
 		initTrayIcon()

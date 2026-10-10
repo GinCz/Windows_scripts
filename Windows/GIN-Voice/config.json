@@ -1,15 +1,12 @@
 {
-  "version": "v014",
+  "version": "v015",
   "ui_language": "EN",
   "first_run": false,
   "hotkey": "F4",
   "hotkey_vk": 115,
   "hotkey_mod": 0,
   "active_languages": [
-    "EN",
-    "CS",
-    "RU",
-    "DE"
+    "EN"
   ],
   "all_languages": [
     {
