@@ -1,12 +1,13 @@
-# 🎙️ GIN-Voice [v018]
+# 🎙️ GIN-Voice [v019]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v018`  
+> *Version:* `v019`  
 
 ---
 
-## 🎯 What's New in v018
+## 🎯 What's New in v019
+* **Clean Uninstaller & Bulletproof Process Termination:** Fixed issue where the uninstaller couldn't terminate active running processes and wipe installation files. Added multi-tier process termination (`taskkill`, `PowerShell`, `wmic`) and automatic post-exit directory purge.
 * **In-App Interactive Language Switcher:** Settings window now includes real-time `🇬🇧 English` and `🇷🇺 Русский` toggle buttons that dynamically re-render all UI elements without restarting.
 * **Persistent UI Language:** Saved in `config.json` and retained across reboots and application restarts.
 * **Windows Installed Apps List Integration:** Full registry registration (`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Voice`) for proper appearance in Windows 10/11 "Apps & features".
@@ -18,8 +19,8 @@
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v018.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v018.exe` — Portable executable
+* `GIN-Voice_Setup_v019.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v019.exe` — Portable executable
 * `GIN-Voice.exe` — Main runtime executable
 * `Uninstall.exe` — Standalone Uninstaller with icon and signature 90-character terminal styling
 * `uninstall.ps1` — PowerShell Uninstaller script

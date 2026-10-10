@@ -45,6 +45,22 @@ func enableVTMode() {
 	}
 }
 
+func terminateAllGINVoiceProcesses() {
+	// Method 1: taskkill exact executable name
+	_ = exec.Command("taskkill", "/F", "/IM", "GIN-Voice.exe", "/T").Run()
+
+	// Method 2: taskkill filter wildcard
+	_ = exec.Command("taskkill", "/F", "/FI", "IMAGENAME eq GIN-Voice*").Run()
+
+	// Method 3: PowerShell Stop-Process
+	_ = exec.Command("powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command", "Get-Process -Name 'GIN-Voice*' -ErrorAction SilentlyContinue | Stop-Process -Force").Run()
+
+	// Method 4: wmic terminate fallback
+	_ = exec.Command("wmic", "process", "where", "name like 'GIN-Voice%'", "call", "terminate").Run()
+
+	time.Sleep(800 * time.Millisecond)
+}
+
 func main() {
 	procSetConsoleTitleW.Call(uintptr(unsafe.Pointer(strPtr("GIN-Voice Clean Uninstaller by VladiMIR+AI"))))
 	enableVTMode()
@@ -58,13 +74,14 @@ func main() {
 	fmt.Println("\033[96m" + line90 + "\033[0m\n")
 
 	fmt.Println("\033[92m[1/4] Stopping all active GIN-Voice background processes...\033[0m")
-	_ = exec.Command("taskkill", "/F", "/IM", "GIN-Voice.exe", "/IM", "GIN-Voice_*.exe", "/IM", "GIN-Voice_Setup*.exe").Run()
-	time.Sleep(500 * time.Millisecond)
-	fmt.Println("\033[90m      Done. Processes terminated.\033[0m\n")
+	terminateAllGINVoiceProcesses()
+	fmt.Println("\033[90m      Done. All GIN-Voice processes terminated.\033[0m\n")
 
 	fmt.Println("\033[92m[2/4] Removing desktop, start menu, and cloud shortcuts...\033[0m")
 	userProfile := os.Getenv("USERPROFILE")
 	appData := os.Getenv("APPDATA")
+	localAppData := os.Getenv("LOCALAPPDATA")
+
 	desktopDir := filepath.Join(userProfile, "Desktop")
 	startMenuDir := filepath.Join(appData, "Microsoft", "Windows", "Start Menu", "Programs")
 	megaDesktopDir := `D:\MEGA\DOCS\desktop`
@@ -72,11 +89,12 @@ func main() {
 	_ = os.Remove(filepath.Join(desktopDir, "GIN-Voice.lnk"))
 	_ = os.Remove(filepath.Join(startMenuDir, "GIN-Voice.lnk"))
 	_ = os.Remove(filepath.Join(startMenuDir, "Uninstall GIN-Voice.lnk"))
+	_ = os.RemoveAll(filepath.Join(startMenuDir, "GIN-Voice"))
 	_ = os.Remove(filepath.Join(megaDesktopDir, "GIN-Voice.lnk"))
 
 	if entries, err := os.ReadDir(megaDesktopDir); err == nil {
 		for _, e := range entries {
-			if strings.HasPrefix(e.Name(), "GIN-Voice_Setup") {
+			if strings.HasPrefix(e.Name(), "GIN-Voice") {
 				_ = os.Remove(filepath.Join(megaDesktopDir, e.Name()))
 			}
 		}
@@ -90,18 +108,35 @@ func main() {
 	fmt.Println("\033[90m      Done. Registry cleaned.\033[0m\n")
 
 	fmt.Println("\033[92m[4/4] Removing application directory and local data...\033[0m")
-	currExe, err := os.Executable()
-	appDir := filepath.Dir(currExe)
-	if err == nil {
-		if entries, err := os.ReadDir(appDir); err == nil {
-			for _, e := range entries {
-				name := strings.ToLower(e.Name())
-				if !strings.HasPrefix(name, "uninstall") {
-					_ = os.RemoveAll(filepath.Join(appDir, e.Name()))
+	installDir := filepath.Join(localAppData, "GIN-Voice")
+
+	// 1. Delete all non-uninstaller files in installDir
+	if entries, err := os.ReadDir(installDir); err == nil {
+		for _, e := range entries {
+			name := strings.ToLower(e.Name())
+			if !strings.HasPrefix(name, "uninstall") {
+				_ = os.RemoveAll(filepath.Join(installDir, e.Name()))
+			}
+		}
+	}
+
+	// 2. Also check current running directory if different
+	if currExe, err := os.Executable(); err == nil {
+		currDir := filepath.Dir(currExe)
+		if strings.EqualFold(currDir, installDir) {
+			// Inside install dir, handled by post-exit cleanup
+		} else if strings.Contains(strings.ToLower(currDir), "gin-voice") {
+			if entries, err := os.ReadDir(currDir); err == nil {
+				for _, e := range entries {
+					name := strings.ToLower(e.Name())
+					if !strings.HasPrefix(name, "uninstall") {
+						_ = os.RemoveAll(filepath.Join(currDir, e.Name()))
+					}
 				}
 			}
 		}
 	}
+
 	fmt.Println("\033[90m      Done. Application folder cleared.\033[0m\n")
 
 	fmt.Println("\033[92m" + line90)
@@ -110,7 +145,7 @@ func main() {
 	fmt.Println("\033[90mThis window will close automatically in 3 seconds...\033[0m")
 	time.Sleep(3 * time.Second)
 
-	// Clean up appDir in background
-	cmd := exec.Command("cmd.exe", "/c", fmt.Sprintf("timeout /t 1 >nul & rd /s /q \"%s\"", appDir))
+	// Post-exit self-delete for installDir
+	cmd := exec.Command("cmd.exe", "/c", fmt.Sprintf("ping -n 3 127.0.0.1 >nul & rd /s /q \"%s\"", installDir))
 	_ = cmd.Start()
 }

@@ -18,11 +18,11 @@ Write-Host ""
 
 # 1. Stopping processes
 Write-Host "[1/4] Stopping all active GIN-Voice background processes..." -ForegroundColor Green
-$targets = @("GIN-Voice", "GIN-Voice_v*", "GIN-Voice_Setup*")
-foreach ($t in $targets) {
-    Get-Process -Name $t -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-}
-Start-Sleep -Milliseconds 600
+Get-Process -Name "GIN-Voice*" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Stop-Process -Name "GIN-Voice" -Force -ErrorAction SilentlyContinue
+Start-Process "taskkill.exe" -ArgumentList "/F /IM GIN-Voice.exe /T" -WindowStyle Hidden -Wait -ErrorAction SilentlyContinue
+Start-Process "taskkill.exe" -ArgumentList "/F /FI `"IMAGENAME eq GIN-Voice*`"" -WindowStyle Hidden -Wait -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 800
 Write-Host "      Done. Processes terminated." -ForegroundColor Gray
 Write-Host ""
 
@@ -31,9 +31,11 @@ Write-Host "[2/4] Removing desktop, start menu, and cloud shortcuts..." -Foregro
 $shortcuts = @(
     "$([Environment]::GetFolderPath('Desktop'))\GIN-Voice.lnk",
     "$([Environment]::GetFolderPath('Programs'))\GIN-Voice.lnk",
-    "$([Environment]::GetFolderPath('Programs'))\GIN-Voice\Uninstall GIN-Voice.lnk",
+    "$([Environment]::GetFolderPath('Programs'))\Uninstall GIN-Voice.lnk",
+    "$([Environment]::GetFolderPath('Programs'))\GIN-Voice",
     "D:\MEGA\DOCS\desktop\GIN-Voice.lnk",
-    "D:\MEGA\DOCS\desktop\GIN-Voice_Setup*.exe"
+    "D:\MEGA\DOCS\desktop\GIN-Voice_Setup*.exe",
+    "D:\MEGA\DOCS\desktop\GIN-Voice.exe"
 )
 foreach ($sc in $shortcuts) {
     if (Test-Path $sc) {
@@ -46,6 +48,7 @@ Write-Host ""
 # 3. Cleaning Windows Registry
 Write-Host "[3/4] Cleaning Windows Autostart and Registry entries..." -ForegroundColor Green
 Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "GIN-Voice" -ErrorAction SilentlyContinue
+Remove-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Voice" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path "HKCU:\Software\GIN-Voice" -Recurse -Force -ErrorAction SilentlyContinue
 Write-Host "      Done. Registry cleaned." -ForegroundColor Gray
 Write-Host ""
@@ -68,4 +71,4 @@ Write-Host "This window will close automatically in 3 seconds..." -ForegroundCol
 Start-Sleep -Seconds 3
 
 # Self-delete remaining uninstaller files
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c timeout /t 1 >nul & rd /s /q `"$appDir`"" -WindowStyle Hidden
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c ping -n 3 127.0.0.1 >nul & rd /s /q `"$appDir`"" -WindowStyle Hidden
