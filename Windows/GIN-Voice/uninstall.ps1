@@ -26,16 +26,14 @@ Start-Sleep -Milliseconds 800
 Write-Host "      Done. Processes terminated." -ForegroundColor Gray
 Write-Host ""
 
-# 2. Removing shortcuts
+# 2. Removing shortcuts (preserving installer binaries on Desktop/MEGA)
 Write-Host "[2/4] Removing desktop, start menu, and cloud shortcuts..." -ForegroundColor Green
 $shortcuts = @(
     "$([Environment]::GetFolderPath('Desktop'))\GIN-Voice.lnk",
     "$([Environment]::GetFolderPath('Programs'))\GIN-Voice.lnk",
     "$([Environment]::GetFolderPath('Programs'))\Uninstall GIN-Voice.lnk",
     "$([Environment]::GetFolderPath('Programs'))\GIN-Voice",
-    "D:\MEGA\DOCS\desktop\GIN-Voice.lnk",
-    "D:\MEGA\DOCS\desktop\GIN-Voice_Setup*.exe",
-    "D:\MEGA\DOCS\desktop\GIN-Voice.exe"
+    "D:\MEGA\DOCS\desktop\GIN-Voice.lnk"
 )
 foreach ($sc in $shortcuts) {
     if (Test-Path $sc) {
@@ -57,8 +55,10 @@ Write-Host ""
 Write-Host "[4/4] Removing application directory and local data..." -ForegroundColor Green
 $localApp = [Environment]::GetFolderPath('LocalApplicationData')
 $appDir = Join-Path $localApp "GIN-Voice"
+$tempDir = [System.IO.Path]::GetTempPath()
+
 if (Test-Path $appDir) {
-    Get-ChildItem -Path $appDir -Exclude "uninstall.*", "Uninstall.*" -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Get-ChildItem -Path $appDir -Exclude "uninstall.ps1" -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 }
 Write-Host "      Done. Application folder cleared." -ForegroundColor Gray
 Write-Host ""
@@ -68,7 +68,11 @@ Write-Host "   GIN-Voice was successfully and completely uninstalled from your s
 Write-Host $Line90 -ForegroundColor Green
 Write-Host ""
 Write-Host "This window will close automatically in 3 seconds..." -ForegroundColor Gray
-Start-Sleep -Seconds 3
 
-# Self-delete remaining uninstaller files
-Start-Process -FilePath "cmd.exe" -ArgumentList "/c ping -n 3 127.0.0.1 >nul & rd /s /q `"$appDir`"" -WindowStyle Hidden
+# Write detached self-cleanup batch in %TEMP%
+$cleanBat = Join-Path $tempDir "gin_ps1_cleanup.bat"
+$cleanContent = "@echo off`r`ncd /d `"$tempDir`"`r`nping -n 3 127.0.0.1 >nul`r`nrd /s /q `"$appDir`" 2>nul`r`ndel `"%~f0`" 2>nul`r`n"
+[System.IO.File]::WriteAllText($cleanBat, $cleanContent)
+
+Start-Process -FilePath "cmd.exe" -ArgumentList "/c start /b `"$cleanBat`"" -WorkingDirectory $tempDir -WindowStyle Hidden
+Start-Sleep -Seconds 3

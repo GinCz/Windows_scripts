@@ -1,13 +1,15 @@
-# 🎙️ GIN-Voice [v019]
+# 🎙️ GIN-Voice [v020]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v019`  
+> *Version:* `v020`  
 
 ---
 
-## 🎯 What's New in v019
-* **Clean Uninstaller & Bulletproof Process Termination:** Fixed issue where the uninstaller couldn't terminate active running processes and wipe installation files. Added multi-tier process termination (`taskkill`, `PowerShell`, `wmic`) and automatic post-exit directory purge.
+## 🎯 What's New in v020
+* **100% Complete Folder Removal on Uninstall:** Guaranteed complete wiping of `%LOCALAPPDATA%\GIN-Voice` and all uninstaller files via detached post-exit cleanup batch.
+* **Installer Preservation:** Uninstaller now only removes shortcuts (`.lnk`), strictly preserving installer `.exe` files on Desktop and cloud folders.
+* **Clean Uninstaller & Bulletproof Process Termination:** Fixed process termination issues using multi-tier fallback (`taskkill`, `PowerShell`, `wmic`).
 * **In-App Interactive Language Switcher:** Settings window now includes real-time `🇬🇧 English` and `🇷🇺 Русский` toggle buttons that dynamically re-render all UI elements without restarting.
 * **Persistent UI Language:** Saved in `config.json` and retained across reboots and application restarts.
 * **Windows Installed Apps List Integration:** Full registry registration (`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Voice`) for proper appearance in Windows 10/11 "Apps & features".
@@ -19,8 +21,8 @@
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v019.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v019.exe` — Portable executable
+* `GIN-Voice_Setup_v020.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v020.exe` — Portable executable
 * `GIN-Voice.exe` — Main runtime executable
 * `Uninstall.exe` — Standalone Uninstaller with icon and signature 90-character terminal styling
 * `uninstall.ps1` — PowerShell Uninstaller script

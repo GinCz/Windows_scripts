@@ -81,25 +81,19 @@ func main() {
 	userProfile := os.Getenv("USERPROFILE")
 	appData := os.Getenv("APPDATA")
 	localAppData := os.Getenv("LOCALAPPDATA")
+	tempDir := os.TempDir()
 
 	desktopDir := filepath.Join(userProfile, "Desktop")
 	startMenuDir := filepath.Join(appData, "Microsoft", "Windows", "Start Menu", "Programs")
 	megaDesktopDir := `D:\MEGA\DOCS\desktop`
 
+	// Remove shortcuts only (NEVER touch installers or other executables on Desktop/MEGA)
 	_ = os.Remove(filepath.Join(desktopDir, "GIN-Voice.lnk"))
 	_ = os.Remove(filepath.Join(startMenuDir, "GIN-Voice.lnk"))
 	_ = os.Remove(filepath.Join(startMenuDir, "Uninstall GIN-Voice.lnk"))
 	_ = os.RemoveAll(filepath.Join(startMenuDir, "GIN-Voice"))
 	_ = os.Remove(filepath.Join(megaDesktopDir, "GIN-Voice.lnk"))
-
-	if entries, err := os.ReadDir(megaDesktopDir); err == nil {
-		for _, e := range entries {
-			if strings.HasPrefix(e.Name(), "GIN-Voice") {
-				_ = os.Remove(filepath.Join(megaDesktopDir, e.Name()))
-			}
-		}
-	}
-	fmt.Println("\033[90m      Done. Shortcuts removed.\033[0m\n")
+	fmt.Println("\033[90m      Done. Shortcuts removed (installers preserved).\033[0m\n")
 
 	fmt.Println("\033[92m[3/4] Cleaning Windows Autostart and Registry entries...\033[0m")
 	_ = exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, "/v", "GIN-Voice", "/f").Run()
@@ -110,29 +104,14 @@ func main() {
 	fmt.Println("\033[92m[4/4] Removing application directory and local data...\033[0m")
 	installDir := filepath.Join(localAppData, "GIN-Voice")
 
-	// 1. Delete all non-uninstaller files in installDir
+	// Delete all files in installDir except the running uninstaller binary
+	currExe, _ := os.Executable()
+	currExeName := filepath.Base(currExe)
+
 	if entries, err := os.ReadDir(installDir); err == nil {
 		for _, e := range entries {
-			name := strings.ToLower(e.Name())
-			if !strings.HasPrefix(name, "uninstall") {
+			if !strings.EqualFold(e.Name(), currExeName) {
 				_ = os.RemoveAll(filepath.Join(installDir, e.Name()))
-			}
-		}
-	}
-
-	// 2. Also check current running directory if different
-	if currExe, err := os.Executable(); err == nil {
-		currDir := filepath.Dir(currExe)
-		if strings.EqualFold(currDir, installDir) {
-			// Inside install dir, handled by post-exit cleanup
-		} else if strings.Contains(strings.ToLower(currDir), "gin-voice") {
-			if entries, err := os.ReadDir(currDir); err == nil {
-				for _, e := range entries {
-					name := strings.ToLower(e.Name())
-					if !strings.HasPrefix(name, "uninstall") {
-						_ = os.RemoveAll(filepath.Join(currDir, e.Name()))
-					}
-				}
 			}
 		}
 	}
@@ -143,9 +122,15 @@ func main() {
 	fmt.Println("   GIN-Voice was successfully and completely uninstalled from your system!")
 	fmt.Println(line90 + "\033[0m\n")
 	fmt.Println("\033[90mThis window will close automatically in 3 seconds...\033[0m")
-	time.Sleep(3 * time.Second)
 
-	// Post-exit self-delete for installDir
-	cmd := exec.Command("cmd.exe", "/c", fmt.Sprintf("ping -n 3 127.0.0.1 >nul & rd /s /q \"%s\"", installDir))
+	// Create a detached cleanup batch in %TEMP% to wipe the installDir after this uninstaller exits
+	cleanBatPath := filepath.Join(tempDir, "gin_voice_uninst_cleanup.bat")
+	cleanBatContent := fmt.Sprintf("@echo off\r\ncd /d \"%s\"\r\nping -n 3 127.0.0.1 >nul\r\nrd /s /q \"%s\" 2>nul\r\ndel \"%%~f0\" 2>nul\r\n", tempDir, installDir)
+	_ = os.WriteFile(cleanBatPath, []byte(cleanBatContent), 0755)
+
+	cmd := exec.Command("cmd.exe", "/c", "start", "/b", cleanBatPath)
+	cmd.Dir = tempDir
 	_ = cmd.Start()
+
+	time.Sleep(3 * time.Second)
 }
