@@ -1,25 +1,23 @@
-# 🎙️ GIN-Voice [v009]
+# 🎙️ GIN-Voice [v010]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v009`  
+> *Version:* `v010`  
 
 ---
 
-## 🎯 What's New in v009
-* **Strict Zero-Key Architecture (100% Secure):** Absolutely no hardcoded keys, no fallback to system/user environment variables (`GROQ_API_KEY`), and no auto-population. Fresh installations strictly start with an empty key field, ensuring complete security for public distribution.
-* **Direct MEGA Cloud Synchronisation:** Binary `GIN-Voice_Setup_v009.exe` is uploaded directly to `D:\MEGA\DOCS\desktop\` via MEGA cloud CLI.
-* **Multi-Language UI (Menu & Interface):** Default interface language is English (`EN`), with instant switching to `RU` (Русский), `CS` (Čeština), `IT` (Italiano), `ES` (Español), or `FR` (Français) via Tray Menu.
-* **Recognition Languages Priority:** English (`EN`) is set as first and checked by default, followed by Czech (`CS`) and Russian (`RU`).
-* **Streamlined Tray Menu:** Removed redundant "Uninstall" and "Open Folder" menu items for a cleaner, focused experience.
-* **Guaranteed Windows PE Resource Icon:** Native compilation embeds 32bpp DIB multi-resolution icons (16x16 to 256x256) directly into the executable `.rsrc` table so Windows Explorer and Desktop render the neon microphone icon.
-* **Event-Driven Audio Engine (`CALLBACK_EVENT`):** Complete isolation of WinMM audio driver from window messages for 100% deadlock-free continuous dictation.
+## 🎯 What's New in v010
+* **White Checkbox Text Fix (Cyber Dark Theme):** Explicit `SetWindowTheme` override on checkbox buttons guarantees 100% crisp white readable text (`#F8FAFC`) on dark background in Windows 10/11.
+* **Auto-Detect Multilingual Speech (No Unwanted Translation):** When multiple languages are active (`EN`, `CS`, `RU`), Whisper automatically detects the spoken language and transcribes directly in Russian, Czech, or English without unwanted translation.
+* **Direct MEGA Cloud Synchronisation:** `GIN-Voice_Setup_v010.exe` is uploaded directly to `D:\MEGA\DOCS\desktop\` via MEGA cloud CLI.
+* **Multi-Language UI:** Instant switching to `EN` (English), `RU` (Русский), `CS` (Čeština), `IT` (Italiano), `ES` (Español), or `FR` (Français).
+* **Guaranteed Windows PE Resource Icon:** 32bpp DIB multi-resolution icons embedded directly in the `.rsrc` table.
 
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v009.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v009.exe` — Portable executable
+* `GIN-Voice_Setup_v010.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v010.exe` — Portable executable
 * `setup_guide.html` — Visual HTML guide with step-by-step setup
 * `dictionary.json` — Custom vocabulary replacements
 * `version.json` — Release metadata

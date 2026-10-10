@@ -27,8 +27,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v009"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v009]"
+	AppVersion    = "v010"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v010]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -729,7 +729,7 @@ func loadConfig() {
 		Hotkey:           "F8",
 		HotkeyVK:         VK_F8,
 		HotkeyMod:        0,
-		ActiveLanguages:  []string{"EN"}, // English checked by default
+		ActiveLanguages:  []string{"EN", "CS", "RU"}, // English, Czech and Russian enabled by default for multi-lingual dictation
 		AllLanguages:     MasterLanguages,
 		GroqAPIKey:       "", // Strictly empty by default - no hardcoded keys, no env fallback
 		SoundFeedback:    true,
@@ -748,7 +748,7 @@ func loadConfig() {
 	}
 
 	if len(config.ActiveLanguages) == 0 {
-		config.ActiveLanguages = []string{"EN"}
+		config.ActiveLanguages = []string{"EN", "CS", "RU"}
 	}
 
 	config.AllLanguages = MasterLanguages
@@ -1079,23 +1079,12 @@ func toggleRecording() {
 }
 
 func getTranscriptionLanguage() string {
-	hasEN := hasLang("EN")
-	hasCS := hasLang("CS")
-	hasRU := hasLang("RU")
-
-	if hasEN && !hasCS && !hasRU {
-		return "en"
-	}
-	if hasCS && !hasRU {
-		return "cs"
-	}
-	if hasRU {
-		return "ru"
-	}
+	// If only 1 specific language is selected, enforce it.
+	// If multiple languages are selected (e.g. EN+RU+CS), return "" so Whisper automatically detects and transcribes without translation!
 	if len(config.ActiveLanguages) == 1 {
 		return strings.ToLower(config.ActiveLanguages[0])
 	}
-	return "en"
+	return ""
 }
 
 func transcribeAudioBytes(wavBytes []byte) (string, error) {
@@ -1121,7 +1110,9 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 	_ = writer.WriteField("temperature", "0.0")
 
 	langCode := getTranscriptionLanguage()
-	_ = writer.WriteField("language", langCode)
+	if langCode != "" {
+		_ = writer.WriteField("language", langCode)
+	}
 
 	dictMutex.RLock()
 	var dictTerms []string
@@ -1596,6 +1587,7 @@ func showSettingsDialog() {
 			uintptr(cX), uintptr(cY), uintptr(colW-12), uintptr(rowH-4),
 			hwndSetup, uintptr(IDC_LANG_CHK_BASE+i), hInstance, 0,
 		)
+		procSetWindowTheme.Call(chkHwnd, uintptr(unsafe.Pointer(strPtr(""))), uintptr(unsafe.Pointer(strPtr(""))))
 		procSendMessageW.Call(chkHwnd, WM_SETFONT, hFontNormal, 1)
 
 		if hasLang(lang.Code) {
@@ -1954,7 +1946,7 @@ if (Test-Path 'D:\MEGA\DOCS\desktop') {
     $s3.IconLocation = '%s'
     $s3.Description = 'GIN-Voice by VladiMIR+AI - Instant Voice Typing'
     $s3.Save()
-    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v009.exe' -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path '%s' -Destination 'D:\MEGA\DOCS\desktop\GIN-Voice_Setup_v010.exe' -Force -ErrorAction SilentlyContinue
 }
 `, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath, targetDir, icoPath, exePath)
 
@@ -1991,7 +1983,7 @@ func checkAndSelfInstall() {
 	}
 
 	_ = copyFile(currExe, targetExe)
-	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v009.exe"))
+	_ = copyFile(currExe, filepath.Join(targetDir, "GIN-Voice_v010.exe"))
 
 	dstIco := filepath.Join(targetDir, "app.ico")
 	if len(defaultAppIco) > 0 {

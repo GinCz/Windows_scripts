@@ -1,12 +1,14 @@
 {
-  "version": "v009",
+  "version": "v010",
   "ui_language": "EN",
   "first_run": false,
   "hotkey": "F8",
   "hotkey_vk": 119,
   "hotkey_mod": 0,
   "active_languages": [
-    "EN"
+    "EN",
+    "CS",
+    "RU"
   ],
   "all_languages": [
     {
