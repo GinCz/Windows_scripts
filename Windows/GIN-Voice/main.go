@@ -29,8 +29,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v021"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v021]"
+	AppVersion    = "v022"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v022]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )

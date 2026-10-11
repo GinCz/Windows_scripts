@@ -1,30 +1,24 @@
-# 🎙️ GIN-Voice [v021]
+# 🎙️ GIN-Voice [v022]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v021`  
+> *Version:* `v022`  
+> *Changelog:* [CHANGELOG.md ↗](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Voice/CHANGELOG.md) | *Rules:* [RULES.md ↗](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Voice/RULES.md)  
 
 ---
 
-## 🎯 What's New in v021
-* **Whisper Repetition Loop Guard:** Automatic detection and elimination of prompt hallucination loops, trailing brand spam, and repeated trailing phrases.
-* **Prompt Vocabulary Context Cap:** Deduplicated and capped dictionary prompt terms (max 12) preventing Whisper decoder attention lock-in.
-* **100% Complete Folder Removal on Uninstall:** Guaranteed complete wiping of `%LOCALAPPDATA%\GIN-Voice` and all uninstaller files via detached post-exit cleanup batch.
-* **Installer Preservation:** Uninstaller now only removes shortcuts (`.lnk`), strictly preserving installer `.exe` files on Desktop and cloud folders.
-* **Clean Uninstaller & Bulletproof Process Termination:** Fixed process termination issues using multi-tier fallback (`taskkill`, `PowerShell`, `wmic`).
-* **In-App Interactive Language Switcher:** Settings window now includes real-time `🇬🇧 English` and `🇷🇺 Русский` toggle buttons that dynamically re-render all UI elements without restarting.
-* **Persistent UI Language:** Saved in `config.json` and retained across reboots and application restarts.
-* **Windows Installed Apps List Integration:** Full registry registration (`HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Voice`) for proper appearance in Windows 10/11 "Apps & features".
-* **Tail-End Speech Preservation:** Removed aggressive silence trimming and added 200ms audio buffer flush ensuring no trailing words are dropped.
-* **Dual-Layer API Key Storage:** Primary local storage in working directory (`config.json`) with automated fallback to Windows Registry.
-* **HUD Font Selector:** Configurable font styles with non-bold default (`Comfortaa`).
-* **Strict Versioning Policy:** Every modification automatically increments the version.
+## 🎯 What's New in v022
+* **Full Changelog & Architecture Codification:** Created comprehensive `CHANGELOG.md` covering all releases from `v001` to `v022` with hard-learned lessons and regression prevention rules.
+* **Codified 7 Iron Rules in `RULES.md`:** Embedded zero-desync release pipeline, installer preservation on desktop, trailing speech protection, and loop guards.
+* **Zero-Desync Auto-Update Release Pipeline:** Release and self-update validation guarantees zero desync between GitHub and MEGA cloud.
+* **Whisper Repetition Loop Guard (v021):** Automatic detection and elimination of prompt hallucination loops, trailing brand spam, and repeated trailing phrases.
+* **Prompt Vocabulary Context Cap (v021):** Deduplicated and capped dictionary prompt terms (max 12) preventing Whisper decoder attention lock-in.
 
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v021.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v021.exe` — Portable executable
+* `GIN-Voice_Setup_v022.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v022.exe` — Portable executable
 * `GIN-Voice.exe` — Main runtime executable
 * `Uninstall.exe` — Standalone Uninstaller with icon and signature 90-character terminal styling
 * `uninstall.ps1` — PowerShell Uninstaller script
