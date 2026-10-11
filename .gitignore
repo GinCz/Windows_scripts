@@ -4,3 +4,5 @@
 Windows/GIN-Voice/api_key.txt
 Windows/GIN-Voice/*.log
 api_key.txt
+Windows/GIN-Voice/*_Setup_*.exe
+Windows/GIN-Voice/*_v*.exe
