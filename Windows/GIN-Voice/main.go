@@ -29,8 +29,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v020"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v020]"
+	AppVersion    = "v021"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v021]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -1074,11 +1074,43 @@ var hallucinationRegexes = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)\((музыка|аплодисменты|смех|вздох|тишина|шум|звонок|music|applause|laughter|silence|noise|bell|cough)\)`),
 }
 
+var trailingSpamRegex = regexp.MustCompile(`(?i)(?:,\s*|\s+)?(?:GIN-[A-Za-z0-9]+[,\s]*){2,}$`)
+
+func removeRepetitiveLoops(text string) string {
+	trimmed := strings.TrimSpace(text)
+	// 1. Remove trailing spam bursts of GIN-* brands (caused by Whisper prompt loop artifacts)
+	trimmed = trailingSpamRegex.ReplaceAllString(trimmed, "")
+
+	// 2. Detect and strip trailing word/phrase repetition loops (n words repeated >= 2 times at the end)
+	words := strings.Fields(trimmed)
+	if len(words) >= 4 {
+		for n := 1; n <= 4 && n*2 <= len(words); n++ {
+			phrase1 := strings.ToLower(strings.Join(words[len(words)-n:], " "))
+			phrase2 := strings.ToLower(strings.Join(words[len(words)-2*n:len(words)-n], " "))
+			if phrase1 == phrase2 && len(phrase1) > 2 {
+				for len(words) >= 2*n {
+					p1 := strings.ToLower(strings.Join(words[len(words)-n:], " "))
+					p2 := strings.ToLower(strings.Join(words[len(words)-2*n:len(words)-n], " "))
+					if p1 == p2 {
+						words = words[:len(words)-n]
+					} else {
+						break
+					}
+				}
+				trimmed = strings.Join(words, " ")
+				break
+			}
+		}
+	}
+	return strings.TrimSpace(trimmed)
+}
+
 func cleanHallucinations(text string) string {
 	res := text
 	for _, re := range hallucinationRegexes {
 		res = re.ReplaceAllString(res, "")
 	}
+	res = removeRepetitiveLoops(res)
 	res = strings.TrimSpace(res)
 	res = strings.TrimRight(res, " ,;:-–—")
 	return res
@@ -1405,15 +1437,28 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 
 	dictMutex.RLock()
 	var dictTerms []string
+	seenTerms := make(map[string]bool)
 	for _, v := range dictionary {
-		dictTerms = append(dictTerms, v)
+		val := strings.TrimSpace(v)
+		if val != "" && !seenTerms[strings.ToLower(val)] {
+			seenTerms[strings.ToLower(val)] = true
+			dictTerms = append(dictTerms, val)
+		}
 	}
 	dictMutex.RUnlock()
 
-	promptContext := "GIN-Voice, GIN-Cinema, GIN-TV, GIN-NetScan, GIN-Chat, GIN-VPN, Secret_Privat, ORACLE_157, Server_222, Antigravity, Gemini, Python, Windows 11"
-	if len(dictTerms) > 0 {
-		promptContext = strings.Join(dictTerms, ", ")
+	defaultTerms := []string{"GIN-Voice", "GIN-Cinema", "GIN-TV", "GIN-NetScan", "GIN-Chat", "GIN-VPN", "Secret_Privat", "ORACLE_157", "Server_222", "Antigravity", "Gemini", "Python", "Windows 11"}
+	for _, dt := range defaultTerms {
+		if !seenTerms[strings.ToLower(dt)] {
+			seenTerms[strings.ToLower(dt)] = true
+			dictTerms = append(dictTerms, dt)
+		}
 	}
+	// Limit to max 12 unique terms to prevent Whisper decoder repetition loops
+	if len(dictTerms) > 12 {
+		dictTerms = dictTerms[:12]
+	}
+	promptContext := strings.Join(dictTerms, ", ")
 	_ = writer.WriteField("prompt", promptContext)
 
 	err = writer.Close()

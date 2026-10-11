@@ -1,12 +1,14 @@
-# 🎙️ GIN-Voice [v020]
+# 🎙️ GIN-Voice [v021]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v020`  
+> *Version:* `v021`  
 
 ---
 
-## 🎯 What's New in v020
+## 🎯 What's New in v021
+* **Whisper Repetition Loop Guard:** Automatic detection and elimination of prompt hallucination loops, trailing brand spam, and repeated trailing phrases.
+* **Prompt Vocabulary Context Cap:** Deduplicated and capped dictionary prompt terms (max 12) preventing Whisper decoder attention lock-in.
 * **100% Complete Folder Removal on Uninstall:** Guaranteed complete wiping of `%LOCALAPPDATA%\GIN-Voice` and all uninstaller files via detached post-exit cleanup batch.
 * **Installer Preservation:** Uninstaller now only removes shortcuts (`.lnk`), strictly preserving installer `.exe` files on Desktop and cloud folders.
 * **Clean Uninstaller & Bulletproof Process Termination:** Fixed process termination issues using multi-tier fallback (`taskkill`, `PowerShell`, `wmic`).
@@ -21,8 +23,8 @@
 ---
 
 ## 📦 Files
-* `GIN-Voice_Setup_v020.exe` — All-in-one Single-File Installer and Application
-* `GIN-Voice_v020.exe` — Portable executable
+* `GIN-Voice_Setup_v021.exe` — All-in-one Single-File Installer and Application
+* `GIN-Voice_v021.exe` — Portable executable
 * `GIN-Voice.exe` — Main runtime executable
 * `Uninstall.exe` — Standalone Uninstaller with icon and signature 90-character terminal styling
 * `uninstall.ps1` — PowerShell Uninstaller script
