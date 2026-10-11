@@ -47,6 +47,25 @@ mega-put -c "<path_to_new_binary_with_version.exe>" "/MEGA/DOCS/desktop/"
 
 ---
 
+## ⚡ 4. Железный Регламент Автообновления и GitHub Синхронизации (Zero-Desync Pipeline)
+
+1. **Архитектура встроенного обновления:**
+   - Пункт контекстного меню в трее **«Проверить обновление»** и встроенные апдейтеры приложений опрашивают GitHub:  
+     `https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/<Project>/version.json`
+   - И скачивают исполняемый файл:  
+     `https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/<Project>/<App>.exe`
+2. **Запрет рассинхрона (MEGA без GitHub):**
+   - Категорически запрещено выкладывать новый установщик в MEGA (`/MEGA/DOCS/desktop/`) без синхронного коммита и пуша на GitHub (`git push origin main`).
+   - Если установщик на Рабочем столе уже обновлен, а на GitHub осталась старая версия `version.json` — запущенная программа при проверке обновлений ложно сообщает: *«У вас последняя версия»* и отказывается обновляться.
+3. **Строгая последовательность релиза:**
+   1. Компиляция и сборка бинарников (`.exe`, `Setup_vXXX.exe`).
+   2. Синхронное обновление `version.json`, `version.txt` и документации.
+   3. `git add`, `git commit` и `git push origin main` на GitHub.
+   4. Проверка ответа: `curl -s https://raw.githubusercontent.com/GinCz/Windows_scripts/main/.../version.json` == `vXXX`.
+   5. Очистка старых версий и загрузка инсталлятора в MEGA `/MEGA/DOCS/desktop/`.
+
+---
+
 ## 🏷️ ПРАВИЛО НАИМЕНОВАНИЯ ЧАТОВ И ТЕМ (Chat Title Naming Convention)
 1. **Строгий стандарт названия темы/сессии:**
    - При создании нового диалога или получении любого вопроса/задачи в рамках этого проекта, тема чата (Chat / Topic / Session Title) **ОБЯЗАТЕЛЬНО** должна именоваться строго в формате:
