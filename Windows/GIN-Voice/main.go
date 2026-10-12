@@ -19,7 +19,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -29,8 +28,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v024"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v024]"
+	AppVersion    = "v025"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v025]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -125,9 +124,11 @@ const (
 	IDM_OPEN_CONFIG   = 1005
 	IDM_AUTOSTART     = 1006
 	IDM_OPEN_HELP     = 1007
-	IDM_EXIT          = 1008
-	IDM_UPDATE_APP    = 1009
-	IDM_CHECK_UPDATE  = 1010
+	IDM_EXIT           = 1008
+	IDM_UPDATE_APP     = 1009
+	IDM_CHECK_UPDATE   = 1010
+	IDM_SAVE_CLIPBOARD = 1011
+	IDM_AUTO_PASTE     = 1012
 
 	IDM_UI_LANG_BASE = 1500
 	IDM_LANG_BASE    = 2000
@@ -339,6 +340,8 @@ type UIStringBundle struct {
 	MenuOpenDict        string
 	MenuLinkFolder      string
 	MenuAutostart       string
+	MenuSaveClipboard   string
+	MenuAutoPaste       string
 	MenuHelp            string
 	MenuExit            string
 	MenuCheckUpdates    string
@@ -390,6 +393,7 @@ type Config struct {
 	SoundFeedback         bool           `json:"sound_feedback"`
 	AutoPaste             bool           `json:"auto_paste"`
 	RestoreClipboard      bool           `json:"restore_clipboard"`
+	SaveClipboard         bool           `json:"save_clipboard"`
 	Autostart             bool           `json:"autostart"`
 	LinkedKnowledgeFolder string         `json:"linked_knowledge_folder"`
 }
@@ -497,6 +501,8 @@ var (
 			MenuOpenDict:        "📖 Open Dictionary (dictionary.json)",
 			MenuLinkFolder:      "📁 Link Knowledge Folder...",
 			MenuAutostart:       "⚡ Autostart on Windows Boot",
+			MenuSaveClipboard:   "📋 Keep Recognized Text in Clipboard",
+			MenuAutoPaste:       "⌨️ Auto-Paste Text at Cursor",
 			MenuHelp:            "❓ Setup Guide & Help",
 			MenuCheckUpdates:    "🔄 Check for Updates...",
 			MenuExit:            "❌ Exit GIN-Voice",
@@ -543,6 +549,8 @@ var (
 			MenuOpenDict:        "📖 Открыть словарь автозамен (dictionary.json)",
 			MenuLinkFolder:      "📁 Привязать общую папку с базами знаний...",
 			MenuAutostart:       "⚡ Автозапуск при старте Windows",
+			MenuSaveClipboard:   "📋 Сохранять распознанный текст в буфер обмена",
+			MenuAutoPaste:       "⌨️ Автоматическая вставка текста у курсора",
 			MenuHelp:            "❓ Инструкция и справка",
 			MenuCheckUpdates:    "🔄 Проверить обновления...",
 			MenuExit:            "❌ Выход из GIN-Voice",
@@ -589,6 +597,8 @@ var (
 			MenuOpenDict:        "📖 Otevřít slovník (dictionary.json)",
 			MenuLinkFolder:      "📁 Propojit složku znalostí...",
 			MenuAutostart:       "⚡ Automatické spuštění při startu Windows",
+			MenuSaveClipboard:   "📋 Ponechat rozpoznaný text ve schránce",
+			MenuAutoPaste:       "⌨️ Automaticky vložit text u kurzoru",
 			MenuHelp:            "❓ Nápověda a průvodce",
 			MenuCheckUpdates:    "🔄 Zkontrolovat aktualizace...",
 			MenuExit:            "❌ Ukončit GIN-Voice",
@@ -635,6 +645,8 @@ var (
 			MenuOpenDict:        "📖 Apri dizionario (dictionary.json)",
 			MenuLinkFolder:      "📁 Collega cartella progetti...",
 			MenuAutostart:       "⚡ Avvio automatico con Windows",
+			MenuSaveClipboard:   "📋 Mantieni il testo negli appunti",
+			MenuAutoPaste:       "⌨️ Incolla automaticamente al cursore",
 			MenuHelp:            "❓ Guida e supporto",
 			MenuCheckUpdates:    "🔄 Controlla aggiornamenti...",
 			MenuExit:            "❌ Esci da GIN-Voice",
@@ -681,6 +693,8 @@ var (
 			MenuOpenDict:        "📖 Abrir diccionario (dictionary.json)",
 			MenuLinkFolder:      "📁 Vincular carpeta de conocimientos...",
 			MenuAutostart:       "⚡ Inicio automático con Windows",
+			MenuSaveClipboard:   "📋 Mantener texto en el portapapeles",
+			MenuAutoPaste:       "⌨️ Pegar automáticamente en el cursor",
 			MenuHelp:            "❓ Guía y ayuda",
 			MenuCheckUpdates:    "🔄 Buscar actualizaciones...",
 			MenuExit:            "❌ Salir de GIN-Voice",
@@ -727,6 +741,8 @@ var (
 			MenuOpenDict:        "📖 Ouvrir le dictionnaire (dictionary.json)",
 			MenuLinkFolder:      "📁 Lier le dossier de connaissances...",
 			MenuAutostart:       "⚡ Démarrage automatique avec Windows",
+			MenuSaveClipboard:   "📋 Conserver le texte dans le presse-papiers",
+			MenuAutoPaste:       "⌨️ Coller automatiquement au curseur",
 			MenuHelp:            "❓ Guide d'installation et aide",
 			MenuCheckUpdates:    "🔄 Vérifier les mises à jour...",
 			MenuExit:            "❌ Quitter GIN-Voice",
@@ -898,7 +914,7 @@ func playGentleSound(soundType string) {
 			procPlaySoundW.Call(
 				uintptr(unsafe.Pointer(&data[0])),
 				0,
-				0x0000|0x0004|0x0002, // SND_SYNC | SND_MEMORY | SND_NODEFAULT on dedicated thread
+				0x0001|0x0004|0x0002, // SND_ASYNC | SND_MEMORY | SND_NODEFAULT
 			)
 		}(soundData)
 	}
@@ -971,6 +987,7 @@ func loadConfig() {
 		SoundFeedback:         true,
 		AutoPaste:             true,
 		RestoreClipboard:      true,
+		SaveClipboard:         true, // Keeps recognized text in clipboard by default
 		Autostart:             false,
 		LinkedKnowledgeFolder: `D:\AI\BASE`,
 	}
@@ -1035,29 +1052,46 @@ func applyDictionary(input string) string {
 	defer dictMutex.RUnlock()
 
 	type dictEntry struct {
-		key   string
-		value string
+		pattern *regexp.Regexp
+		value   string
 	}
 	var entries []dictEntry
 	for k, v := range dictionary {
-		entries = append(entries, dictEntry{key: k, value: v})
+		trimmedKey := strings.TrimSpace(k)
+		if trimmedKey == "" {
+			continue
+		}
+		// Match whole word or phrase, surrounded by start/end, whitespace, or punctuation
+		escaped := regexp.QuoteMeta(trimmedKey)
+		re, err := regexp.Compile(`(?i)(?:^|[\s\p{P}])(` + escaped + `)(?:$|[\s\p{P}])`)
+		if err == nil {
+			entries = append(entries, dictEntry{pattern: re, value: v})
+		}
 	}
-
-	sort.Slice(entries, func(i, j int) bool {
-		return len(entries[i].key) > len(entries[j].key)
-	})
 
 	result := input
 	for _, entry := range entries {
-		pattern := strings.ToLower(entry.key)
-		lowerRes := strings.ToLower(result)
-
-		idx := strings.Index(lowerRes, pattern)
-		for idx != -1 {
-			result = result[:idx] + entry.value + result[idx+len(pattern):]
-			lowerRes = strings.ToLower(result)
-			idx = strings.Index(lowerRes, pattern)
-		}
+		result = entry.pattern.ReplaceAllStringFunc(result, func(m string) string {
+			// Preserve leading/trailing punctuation or space
+			lead := ""
+			trail := ""
+			inner := m
+			if len(m) > 0 {
+				rFirst := rune(m[0])
+				if rFirst == ' ' || (rFirst < 'A' || (rFirst > 'Z' && rFirst < 'a') || (rFirst > 'z' && rFirst < 0x0400)) {
+					lead = string(m[0])
+					inner = inner[1:]
+				}
+			}
+			if len(inner) > 0 {
+				rLast := rune(inner[len(inner)-1])
+				if rLast == ' ' || (rLast < 'A' || (rLast > 'Z' && rLast < 'a') || (rLast > 'z' && rLast < 0x0400)) {
+					trail = string(inner[len(inner)-1])
+					inner = inner[:len(inner)-1]
+				}
+			}
+			return lead + entry.value + trail
+		})
 	}
 	return result
 }
@@ -1099,6 +1133,9 @@ var hallucinationRegexes = []*regexp.Regexp{
 	// Acoustic markers in brackets
 	regexp.MustCompile(`(?i)\[(музыка|аплодисменты|смех|вздох|тишина|шум|звонок|music|applause|laughter|silence|noise|bell|cough)\]`),
 	regexp.MustCompile(`(?i)\((музыка|аплодисменты|смех|вздох|тишина|шум|звонок|music|applause|laughter|silence|noise|bell|cough)\)`),
+
+	// Trailing conversational fillers and common trailing hallucination artifacts
+	regexp.MustCompile(`(?i)(?:,\s*|\s+)?(и\s+так\s+далее|и\s+т\.\s*д\.|и\s+тому\s+подобное|and\s+so\s+on|etc\.|a\s+tak\s+dále|a\s+pod\.)[\.\s]*$`),
 }
 
 var trailingSpamRegex = regexp.MustCompile(`(?i)(?:,\s*|\s+)?(?:GIN-[A-Za-z0-9]+[,\s]*){2,}$`)
@@ -1462,31 +1499,10 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 		_ = writer.WriteField("language", langCode)
 	}
 
-	dictMutex.RLock()
-	var dictTerms []string
-	seenTerms := make(map[string]bool)
-	for _, v := range dictionary {
-		val := strings.TrimSpace(v)
-		if val != "" && !seenTerms[strings.ToLower(val)] {
-			seenTerms[strings.ToLower(val)] = true
-			dictTerms = append(dictTerms, val)
-		}
-	}
-	dictMutex.RUnlock()
-
-	defaultTerms := []string{"GIN-Voice", "GIN-Cinema", "GIN-TV", "GIN-NetScan", "GIN-Chat", "GIN-VPN", "Secret_Privat", "ORACLE_157", "Server_222", "Antigravity", "Gemini", "Python", "Windows 11"}
-	for _, dt := range defaultTerms {
-		if !seenTerms[strings.ToLower(dt)] {
-			seenTerms[strings.ToLower(dt)] = true
-			dictTerms = append(dictTerms, dt)
-		}
-	}
-	// Limit to max 12 unique terms to prevent Whisper decoder repetition loops
-	if len(dictTerms) > 12 {
-		dictTerms = dictTerms[:12]
-	}
-	promptContext := strings.Join(dictTerms, ", ")
-	_ = writer.WriteField("prompt", promptContext)
+	// Note: We intentionally do NOT pass raw brand keywords into Whisper's 'prompt' field,
+	// because Whisper Large v3 tends to hallucinate and inject prompt words (like 'GIN-Cinema')
+	// during silent pauses or low-confidence segments.
+	// Accurate vocabulary mapping is handled cleanly post-transcription by applyDictionary()!
 
 	err = writer.Close()
 	if err != nil {
@@ -1811,13 +1827,32 @@ func setClipboardText(text string) bool {
 }
 
 func pasteText(text string) {
+	// 1. If user wants recognized text to stay in clipboard, we set it and do NOT restore old clipboard
+	if config.SaveClipboard {
+		setClipboardText(text)
+		if !config.AutoPaste {
+			return
+		}
+		time.Sleep(30 * time.Millisecond)
+		procKeybdEvent.Call(VK_CONTROL, 0, 0, 0)
+		procKeybdEvent.Call(uintptr('V'), 0, 0, 0)
+		procKeybdEvent.Call(uintptr('V'), 0, KEYEVENTF_KEYUP, 0)
+		procKeybdEvent.Call(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0)
+		return
+	}
+
+	// 2. Normal mode (RestoreClipboard enabled): backup old clipboard, inject text, paste, wait 600ms, then restore
+	if !config.AutoPaste {
+		return
+	}
+
 	oldClip := ""
 	if config.RestoreClipboard {
 		oldClip = getClipboardText()
 	}
 
 	setClipboardText(text)
-	time.Sleep(30 * time.Millisecond)
+	time.Sleep(40 * time.Millisecond)
 
 	procKeybdEvent.Call(VK_CONTROL, 0, 0, 0)
 	procKeybdEvent.Call(uintptr('V'), 0, 0, 0)
@@ -1826,7 +1861,8 @@ func pasteText(text string) {
 
 	if config.RestoreClipboard && oldClip != "" {
 		go func(prev string) {
-			time.Sleep(250 * time.Millisecond)
+			// Allow 600ms for web applications (like ChatGPT Lexical editor) to finish reading clipboard
+			time.Sleep(600 * time.Millisecond)
 			setClipboardText(prev)
 		}(oldClip)
 	}
@@ -1986,6 +2022,19 @@ func showContextMenu() {
 		autoFlags |= MF_CHECKED
 	}
 	procAppendMenuW.Call(hMenu, autoFlags, IDM_AUTOSTART, uintptr(unsafe.Pointer(strPtr(ui.MenuAutostart))))
+
+	clipFlags := uintptr(MF_STRING)
+	if config.SaveClipboard {
+		clipFlags |= MF_CHECKED
+	}
+	procAppendMenuW.Call(hMenu, clipFlags, IDM_SAVE_CLIPBOARD, uintptr(unsafe.Pointer(strPtr(ui.MenuSaveClipboard))))
+
+	pasteFlags := uintptr(MF_STRING)
+	if config.AutoPaste {
+		pasteFlags |= MF_CHECKED
+	}
+	procAppendMenuW.Call(hMenu, pasteFlags, IDM_AUTO_PASTE, uintptr(unsafe.Pointer(strPtr(ui.MenuAutoPaste))))
+
 	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_HELP, uintptr(unsafe.Pointer(strPtr(ui.MenuHelp))))
 
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
@@ -2606,8 +2655,8 @@ func startRecordingHotkeyUI() {
 				if hwndEditHotkey != 0 {
 					procSetWindowTextW.Call(hwndEditHotkey, uintptr(unsafe.Pointer(strPtr(newHotkeyStr))))
 				}
-				playGentleSound("save")
 				stopRecordingHotkeyUI()
+				go playGentleSound("save")
 				return
 			}
 		}
@@ -2677,6 +2726,12 @@ func handleMenuCommand(cmdID uintptr) {
 		}
 	case cmdID == IDM_AUTOSTART:
 		toggleAutostart()
+	case cmdID == IDM_SAVE_CLIPBOARD:
+		config.SaveClipboard = !config.SaveClipboard
+		saveConfig()
+	case cmdID == IDM_AUTO_PASTE:
+		config.AutoPaste = !config.AutoPaste
+		saveConfig()
 	case cmdID == IDM_OPEN_HELP:
 		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(helpFile))), 0, 0, SW_SHOWNORMAL)
 	case cmdID == IDM_EXIT:
