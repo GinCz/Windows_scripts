@@ -28,8 +28,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v025"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v025]"
+	AppVersion    = "v026"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v026]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -1094,6 +1094,46 @@ func applyDictionary(input string) string {
 		})
 	}
 	return result
+}
+
+func openDictionaryEditor() {
+	dictMutex.RLock()
+	targetFile := dictFile
+	dictMutex.RUnlock()
+
+	if targetFile == "" {
+		targetFile = filepath.Join(appDir, "dictionary.json")
+	}
+
+	// Ensure file exists before opening
+	if _, err := os.Stat(targetFile); os.IsNotExist(err) {
+		if len(defaultDictionaryJSON) > 0 {
+			_ = os.WriteFile(targetFile, defaultDictionaryJSON, 0644)
+		} else {
+			_ = os.WriteFile(targetFile, []byte("{\n}\n"), 0644)
+		}
+	}
+
+	go func(fPath string) {
+		// Launch notepad safely in background without blocking Win32 message loop
+		cmd := exec.Command("notepad.exe", fPath)
+		_ = cmd.Start()
+	}(targetFile)
+}
+
+func openHelpFile() {
+	if _, err := os.Stat(helpFile); os.IsNotExist(err) && len(defaultSetupGuideHTML) > 0 {
+		_ = os.WriteFile(helpFile, defaultSetupGuideHTML, 0644)
+	}
+	go func(fPath string) {
+		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(fPath))), 0, 0, SW_SHOWNORMAL)
+	}(helpFile)
+}
+
+func openBrowserURL(urlStr string) {
+	go func(target string) {
+		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(target))), 0, 0, SW_SHOWNORMAL)
+	}(urlStr)
 }
 
 var hallucinationRegexes = []*regexp.Regexp{
@@ -2709,7 +2749,7 @@ func handleMenuCommand(cmdID uintptr) {
 			saveConfig()
 		}
 	case cmdID == IDM_OPEN_DICT:
-		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("notepad.exe"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
+		openDictionaryEditor()
 	case cmdID == IDM_LINK_FOLDER:
 		folder := pickFolderNative(hwndMain)
 		if folder != "" {
@@ -2733,7 +2773,7 @@ func handleMenuCommand(cmdID uintptr) {
 		config.AutoPaste = !config.AutoPaste
 		saveConfig()
 	case cmdID == IDM_OPEN_HELP:
-		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(helpFile))), 0, 0, SW_SHOWNORMAL)
+		openHelpFile()
 	case cmdID == IDM_EXIT:
 		procShellNotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 		procPostQuitMessage.Call(0)
@@ -2900,7 +2940,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			}(testKey)
 			return 0
 		} else if cmdID == IDC_BTN_GROQ {
-			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(GroqKeysURL))), 0, 0, SW_SHOWNORMAL)
+			openBrowserURL(GroqKeysURL)
 			return 0
 		} else if cmdID == IDC_BTN_BROWSE {
 			folder := pickFolderNative(hwnd)
@@ -2909,7 +2949,7 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			}
 			return 0
 		} else if cmdID == IDC_BTN_DICT {
-			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(dictFile))), 0, SW_SHOWNORMAL)
+			openDictionaryEditor()
 			return 0
 		}
 	case WM_CLOSE:
