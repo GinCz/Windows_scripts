@@ -1,23 +1,22 @@
-# 🎙️ GIN-Voice [v026]
+# 🎙️ GIN-Voice [v027]
 
 > **High-Speed Multilingual Voice-to-Text Desktop Tool for Windows 10/11**  
 > *Author:* VladiMIR+AI (Vladimir Bulantsev - [GinCz ↗](https://github.com/GinCz))  
-> *Version:* `v026`  
+> *Version:* `v027`  
 > *Changelog:* [CHANGELOG.md ↗](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Voice/CHANGELOG.md) | *Rules:* [RULES.md ↗](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Voice/RULES.md)  
 
 ---
 
-## 🎯 What's New in v026
-* **Dictionary Editor Crash Fixed:** Resolved Win32 runtime crash when clicking "Edit Dictionary" in settings dialog. `dictionary.json` is now verified/created automatically and opened in Windows Notepad via a non-blocking background goroutine.
-* **Safe Asynchronous External Launches:** Web URLs and HTML guide are decoupled from the Win32 window procedure to guarantee smooth, non-freezing UI interactions.
-* **Restored Embedded PE Icon:** Single-binary installer and main application embed high-res `.rsrc` icons (`app.ico`).
-* **Settings Dialog Freeze Fixed:** Eliminated WinMM audio deadlock in key recording routine by using non-blocking asynchronous audio.
-* **Direct Tray Clipboard Toggle:** Added "Keep Recognized Text in Clipboard" and "Auto-Paste Text at Cursor" tray menu options.
+## 🎯 What's New in v027
+* **Owner-Drawn Font Dropdown (WYSIWYG Font Selector):** Replaced manual font text input with an interactive Win32 combobox (`CBS_DROPDOWNLIST | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS`). It dynamically enumerates all installed system fonts (`EnumFontFamiliesExW`) alongside curated popular typography (Comfortaa, Segoe UI, Bahnschrift, Cascadia Code, Consolas, Arial, Impact, Georgia, etc.).
+* **Live Font Preview in Dropdown:** Every single font name in the dropdown list is rendered directly using its own typeface and style with GDI font caching. Selecting any font instantly reflects on the active on-screen HUD in real time.
+* **Streamlined Language Switcher:** Settings window header now features clean, compact, flag-branded language switch buttons: `🇬🇧 EN` and `🇷🇺 RU`.
+* **Guaranteed Embedded PE Installer Icon:** Verified `.rsrc` section embedding (370 KB) containing multi-resolution DIB icon resources for all installer and runtime executables (`GIN-Voice.exe`, `GIN-Voice_Setup_v027.exe`).
 
 ---
 
 ## 📦 Distribution
-* `GIN-Voice_Setup_v026.exe` — Single-File Self-Extracting Installer, Application & Uninstaller (Deployed to MEGA Desktop).
+* `GIN-Voice_Setup_v027.exe` — Single-File Self-Extracting Installer, Application & Uninstaller (Deployed to MEGA Desktop).
 * `setup_guide.html` — Visual HTML guide with bilingual EN/RU tabs.
 * `dictionary.json` — Custom vocabulary replacements.
 * `version.json` / `version.txt` — Release metadata.

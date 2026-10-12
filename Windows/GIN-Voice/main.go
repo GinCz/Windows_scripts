@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -28,8 +29,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v026"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v026]"
+	AppVersion    = "v027"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v027]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -106,6 +107,8 @@ const (
 	WS_VISIBLE          = 0x10000000
 	WS_CHILD            = 0x40000000
 	WS_BORDER           = 0x00800000
+	WS_VSCROLL          = 0x00200000
+	WS_TABSTOP          = 0x00010000
 	ES_AUTOHSCROLL      = 0x0080
 	BS_DEFPUSHBUTTON    = 0x0001
 	BS_AUTOCHECKBOX     = 0x0003
@@ -142,12 +145,37 @@ const (
 	IDC_EDIT_HOTKEY = 3006
 	IDC_BTN_DICT    = 3007
 	IDC_BTN_TEST    = 3008
-	IDC_EDIT_FONT   = 3009
+	IDC_COMBO_FONT  = 3009
 	IDC_BTN_LANG_EN = 3010
 	IDC_BTN_LANG_RU = 3011
 	IDC_BTN_RECORD  = 3012
 
 	IDC_LANG_CHK_BASE = 4000
+
+	// Win32 ComboBox & OwnerDraw Constants
+	CBS_DROPDOWNLIST   = 0x0003
+	CBS_OWNERDRAWFIXED = 0x0010
+	CBS_HASSTRINGS     = 0x0200
+	CB_ADDSTRING       = 0x0143
+	CB_SETCURSEL       = 0x014E
+	CB_GETCURSEL       = 0x0147
+	CB_GETLBTEXT       = 0x0148
+	CB_SETITEMHEIGHT   = 0x0153
+	CBN_SELCHANGE      = 1
+
+	WM_DRAWITEM        = 0x002B
+	WM_MEASUREITEM     = 0x002C
+	WM_CTLCOLORLISTBOX = 0x0134
+
+	ODT_COMBOBOX     = 3
+	ODS_SELECTED     = 0x0001
+	ODS_FOCUS        = 0x0010
+	ODS_COMBOBOXEDIT = 0x1000
+
+	DT_LEFT       = 0x00000000
+	DT_VCENTER    = 0x00000004
+	DT_SINGLELINE = 0x00000020
+	DT_NOPREFIX   = 0x00000800
 )
 
 //go:embed app.ico
@@ -215,6 +243,10 @@ var (
 	procFindWindowW          = user32.NewProc("FindWindowW")
 	procIsDialogMessageW     = user32.NewProc("IsDialogMessageW")
 	procIsWindowVisible      = user32.NewProc("IsWindowVisible")
+	procGetDC                = user32.NewProc("GetDC")
+	procReleaseDC            = user32.NewProc("ReleaseDC")
+	procFillRect             = user32.NewProc("FillRect")
+	procDrawTextW            = user32.NewProc("DrawTextW")
 
 	procShellNotifyIconW     = shell32.NewProc("Shell_NotifyIconW")
 	procShellExecuteW        = shell32.NewProc("ShellExecuteW")
@@ -242,6 +274,10 @@ var (
 	procCreateFontW      = gdi32.NewProc("CreateFontW")
 	procSetTextColor     = gdi32.NewProc("SetTextColor")
 	procSetBkColor       = gdi32.NewProc("SetBkColor")
+	procSelectObject     = gdi32.NewProc("SelectObject")
+	procDeleteObject     = gdi32.NewProc("DeleteObject")
+	procSetBkMode        = gdi32.NewProc("SetBkMode")
+	procEnumFontFamilies = gdi32.NewProc("EnumFontFamiliesExW")
 
 	procWaveInOpen            = winmm.NewProc("waveInOpen")
 	procWaveInPrepareHeader   = winmm.NewProc("waveInPrepareHeader")
@@ -253,6 +289,60 @@ var (
 	procWaveInClose           = winmm.NewProc("waveInClose")
 	procPlaySoundW            = winmm.NewProc("PlaySoundW")
 )
+
+type RECT struct {
+	Left   int32
+	Top    int32
+	Right  int32
+	Bottom int32
+}
+
+type DRAWITEMSTRUCT struct {
+	CtlType    uint32
+	CtlID      uint32
+	ItemID     int32
+	ItemAction uint32
+	ItemState  uint32
+	_          uint32
+	HwndItem   uintptr
+	HDC        uintptr
+	RcItem     RECT
+	ItemData   uintptr
+}
+
+type MEASUREITEMSTRUCT struct {
+	CtlType    uint32
+	CtlID      uint32
+	ItemID     int32
+	ItemWidth  uint32
+	ItemHeight uint32
+	_          uint32
+	ItemData   uintptr
+}
+
+type LOGFONTW struct {
+	LfHeight         int32
+	LfWidth          int32
+	LfEscapement     int32
+	LfOrientation    int32
+	LfWeight         int32
+	LfItalic         byte
+	LfUnderline      byte
+	LfStrikeOut      byte
+	LfCharSet        byte
+	LfOutPrecision   byte
+	LfClipPrecision  byte
+	LfQuality        byte
+	LfPitchAndFamily byte
+	LfFaceName       [32]uint16
+}
+
+type ENUMLOGFONTEXW struct {
+	ElfLogFont  LOGFONTW
+	ElfFullName [64]uint16
+	ElfStyle    [32]uint16
+	ElfScript   [32]uint16
+}
 
 type POINT struct {
 	X int32
@@ -423,9 +513,12 @@ var (
 	hwndEditHotkey    uintptr
 	hwndBtnRecord     uintptr
 	isRecordingHotkey bool
-	hwndEditFont      uintptr
-	btnLangEN       uintptr
-	btnLangRU       uintptr
+	hwndComboFont     uintptr
+	systemFontsList   []string
+	fontCache         = make(map[string]uintptr)
+	fontCacheMutex    sync.Mutex
+	btnLangEN         uintptr
+	btnLangRU         uintptr
 	btnGroq         uintptr
 	btnTest         uintptr
 	btnBrowse       uintptr
@@ -2097,7 +2190,16 @@ func showSettingsDialog() {
 	if hwndSetup != 0 {
 		procSetWindowTextW.Call(hwndEditKey, uintptr(unsafe.Pointer(strPtr(config.GroqAPIKey))))
 		procSetWindowTextW.Call(hwndEditHotkey, uintptr(unsafe.Pointer(strPtr(config.Hotkey))))
-		procSetWindowTextW.Call(hwndEditFont, uintptr(unsafe.Pointer(strPtr(config.HUDFont))))
+		curIdx := -1
+		for i, f := range systemFontsList {
+			if strings.EqualFold(f, config.HUDFont) {
+				curIdx = i
+				break
+			}
+		}
+		if curIdx >= 0 {
+			procSendMessageW.Call(hwndComboFont, CB_SETCURSEL, uintptr(curIdx), 0)
+		}
 		procSetWindowTextW.Call(hwndEditFolder, uintptr(unsafe.Pointer(strPtr(config.LinkedKnowledgeFolder))))
 		procShowWindow.Call(hwndSetup, SW_SHOWNORMAL)
 		procSetForegroundWindow.Call(hwndSetup)
@@ -2128,24 +2230,24 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHeader))),
 		WS_CHILD|WS_VISIBLE,
-		24, 20, 510, 32, hwndSetup, 0, hInstance, 0,
+		24, 20, 570, 32, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndHeader, WM_SETFONT, hFontHeader, 1)
 
-	// Top Language Switcher in Settings Window
+	// Top Language Switcher in Settings Window (🇬🇧 EN / 🇷🇺 RU)
 	btnLangEN, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🇬🇧 English"))),
+		uintptr(unsafe.Pointer(strPtr("🇬🇧 EN"))),
 		WS_CHILD|WS_VISIBLE,
-		550, 16, 114, 34, hwndSetup, uintptr(IDC_BTN_LANG_EN), hInstance, 0,
+		610, 16, 90, 34, hwndSetup, uintptr(IDC_BTN_LANG_EN), hInstance, 0,
 	)
 	procSendMessageW.Call(btnLangEN, WM_SETFONT, hFontBold, 1)
 
 	btnLangRU, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
-		uintptr(unsafe.Pointer(strPtr("🇷🇺 Русский"))),
+		uintptr(unsafe.Pointer(strPtr("🇷🇺 RU"))),
 		WS_CHILD|WS_VISIBLE,
-		674, 16, 130, 34, hwndSetup, uintptr(IDC_BTN_LANG_RU), hInstance, 0,
+		710, 16, 90, 34, hwndSetup, uintptr(IDC_BTN_LANG_RU), hInstance, 0,
 	)
 	procSendMessageW.Call(btnLangRU, WM_SETFONT, hFontBold, 1)
 
@@ -2215,21 +2317,35 @@ func showSettingsDialog() {
 	)
 	procSendMessageW.Call(hwndLblFont, WM_SETFONT, hFontBold, 1)
 
-	hwndEditFont, _, _ = procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
-		uintptr(unsafe.Pointer(strPtr(config.HUDFont))),
-		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		584, 142, 120, 32, hwndSetup, uintptr(IDC_EDIT_FONT), hInstance, 0,
-	)
-	procSendMessageW.Call(hwndEditFont, WM_SETFONT, hFontNormal, 1)
+	initSystemFonts()
 
-	hwndLblHotTip, _, _ = procCreateWindowExW.Call(
-		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
-		uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))),
-		WS_CHILD|WS_VISIBLE,
-		712, 146, 110, 26, hwndSetup, 0, hInstance, 0,
+	hwndComboFont, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("COMBOBOX"))),
+		0,
+		WS_CHILD|WS_VISIBLE|WS_VSCROLL|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_OWNERDRAWFIXED|CBS_HASSTRINGS,
+		584, 142, 220, 360, hwndSetup, uintptr(IDC_COMBO_FONT), hInstance, 0,
 	)
-	procSendMessageW.Call(hwndLblHotTip, WM_SETFONT, hFontNormal, 1)
+	procSendMessageW.Call(hwndComboFont, WM_SETFONT, hFontNormal, 1)
+	procSendMessageW.Call(hwndComboFont, CB_SETITEMHEIGHT, ^uintptr(0), 28)
+	procSendMessageW.Call(hwndComboFont, CB_SETITEMHEIGHT, 0, 30)
+
+	for _, fontName := range systemFontsList {
+		procSendMessageW.Call(hwndComboFont, CB_ADDSTRING, 0, uintptr(unsafe.Pointer(strPtr(fontName))))
+	}
+
+	curIdx := -1
+	for i, f := range systemFontsList {
+		if strings.EqualFold(f, config.HUDFont) {
+			curIdx = i
+			break
+		}
+	}
+	if curIdx >= 0 {
+		procSendMessageW.Call(hwndComboFont, CB_SETCURSEL, uintptr(curIdx), 0)
+	} else {
+		procSendMessageW.Call(hwndComboFont, CB_SETCURSEL, 0, 0)
+	}
+	hwndLblHotTip = 0
 
 	// 3. Knowledge Base Linking
 	hwndLblFolder, _, _ = procCreateWindowExW.Call(
@@ -2327,7 +2443,15 @@ func refreshSettingsDialogUI() {
 		procSetWindowTextW.Call(hwndBtnRecord, uintptr(unsafe.Pointer(strPtr(ui.SettingsRecordBtn))))
 	}
 	procSetWindowTextW.Call(hwndLblFont, uintptr(unsafe.Pointer(strPtr(ui.SettingsFont))))
-	procSetWindowTextW.Call(hwndLblHotTip, uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))))
+	if hwndLblHotTip != 0 {
+		procSetWindowTextW.Call(hwndLblHotTip, uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))))
+	}
+	if btnLangEN != 0 {
+		procSetWindowTextW.Call(btnLangEN, uintptr(unsafe.Pointer(strPtr("🇬🇧 EN"))))
+	}
+	if btnLangRU != 0 {
+		procSetWindowTextW.Call(btnLangRU, uintptr(unsafe.Pointer(strPtr("🇷🇺 RU"))))
+	}
 	procSetWindowTextW.Call(hwndLblFolder, uintptr(unsafe.Pointer(strPtr(ui.SettingsFolder))))
 	procSetWindowTextW.Call(btnBrowse, uintptr(unsafe.Pointer(strPtr(ui.SettingsBrowse))))
 	procSetWindowTextW.Call(hwndLblLangs, uintptr(unsafe.Pointer(strPtr(ui.SettingsLangs))))
@@ -2818,13 +2942,80 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		}
 		procSetBkColor.Call(hdc, 0x002E2722) // Cool Slate Gray #22272E
 		return hBrushDarkBg
+	case WM_MEASUREITEM:
+		mis := (*MEASUREITEMSTRUCT)(unsafe.Pointer(lParam))
+		if mis.CtlID == IDC_COMBO_FONT {
+			mis.ItemHeight = 30
+			return 1
+		}
+		return 0
+	case WM_DRAWITEM:
+		dis := (*DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
+		if dis.CtlID == IDC_COMBO_FONT {
+			if dis.ItemID < 0 {
+				hBrush, _, _ := procCreateSolidBrush.Call(0x0028211C)
+				procFillRect.Call(dis.HDC, uintptr(unsafe.Pointer(&dis.RcItem)), hBrush)
+				procDeleteObject.Call(hBrush)
+				return 1
+			}
+
+			var fontName string
+			if int(dis.ItemID) < len(systemFontsList) {
+				fontName = systemFontsList[dis.ItemID]
+			} else {
+				var buf [128]uint16
+				procSendMessageW.Call(dis.HwndItem, CB_GETLBTEXT, uintptr(dis.ItemID), uintptr(unsafe.Pointer(&buf[0])))
+				fontName = syscall.UTF16ToString(buf[:])
+			}
+
+			isSelected := (dis.ItemState & ODS_SELECTED) != 0
+			isEdit := (dis.ItemState & ODS_COMBOBOXEDIT) != 0
+
+			var bgColor uint32 = 0x0028211C // Deep Slate (#1C2128)
+			var textColor uint32 = 0x00FCFAF8 // Crisp White (#F8FAFC)
+
+			if isSelected && !isEdit {
+				bgColor = 0x008A3B0E // Highlight
+				textColor = 0x00FFFFFF
+			} else if isEdit {
+				bgColor = 0x0028211C
+				textColor = 0x00FFE500 // Cyan text for active font preview
+			}
+
+			hBrush, _, _ := procCreateSolidBrush.Call(uintptr(bgColor))
+			procFillRect.Call(dis.HDC, uintptr(unsafe.Pointer(&dis.RcItem)), hBrush)
+			procDeleteObject.Call(hBrush)
+
+			procSetBkMode.Call(dis.HDC, 1) // TRANSPARENT
+			procSetTextColor.Call(dis.HDC, uintptr(textColor))
+
+			hItemFont := getCachedFont(fontName, 19)
+			oldFont, _, _ := procSelectObject.Call(dis.HDC, hItemFont)
+
+			rcText := dis.RcItem
+			rcText.Left += 8
+			rcText.Right -= 4
+
+			procDrawTextW.Call(
+				dis.HDC,
+				uintptr(unsafe.Pointer(strPtr(fontName))),
+				uintptr(len([]rune(fontName))),
+				uintptr(unsafe.Pointer(&rcText)),
+				DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX,
+			)
+
+			procSelectObject.Call(dis.HDC, oldFont)
+			return 1
+		}
+		return 0
+	case WM_CTLCOLORLISTBOX:
+		hdc := wParam
+		procSetTextColor.Call(hdc, 0x00FCFAF8)
+		procSetBkColor.Call(hdc, 0x0028211C)
+		return hBrushEditBg
 	case WM_CTLCOLOREDIT:
 		hdc := wParam
-		ctrlHwnd := lParam
 		procSetTextColor.Call(hdc, 0x00FCFAF8) // Crisp White Text
-		if ctrlHwnd == hwndEditFont {
-			procSetTextColor.Call(hdc, 0x00FFE500) // Cyan text for HUD Font preview
-		}
 		procSetBkColor.Call(hdc, 0x0028211C) // Deep Slate #1C2128
 		return hBrushEditBg
 	case WM_CTLCOLORBTN:
@@ -2834,7 +3025,16 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		return hBrushDarkBg
 	case WM_COMMAND:
 		cmdID := wParam & 0xFFFF
-		if cmdID == IDC_BTN_LANG_EN {
+		cmdCode := (wParam >> 16) & 0xFFFF
+		if cmdID == IDC_COMBO_FONT && cmdCode == CBN_SELCHANGE {
+			selIdx, _, _ := procSendMessageW.Call(hwndComboFont, CB_GETCURSEL, 0, 0)
+			if int(int32(selIdx)) >= 0 && int(selIdx) < len(systemFontsList) {
+				selectedFont := systemFontsList[selIdx]
+				config.HUDFont = selectedFont
+				updateHUDFont()
+			}
+			return 0
+		} else if cmdID == IDC_BTN_LANG_EN {
 			config.UILanguage = "EN"
 			saveConfig()
 			refreshSettingsDialogUI()
@@ -2869,13 +3069,18 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				config.HotkeyMod = mod
 			}
 
-			var bufFont [128]uint16
-			procGetWindowTextW.Call(hwndEditFont, uintptr(unsafe.Pointer(&bufFont[0])), 128)
-			newFont := strings.TrimSpace(syscall.UTF16ToString(bufFont[:]))
-			if newFont != "" {
-				config.HUDFont = newFont
+			selIdx, _, _ := procSendMessageW.Call(hwndComboFont, CB_GETCURSEL, 0, 0)
+			if int(int32(selIdx)) >= 0 && int(selIdx) < len(systemFontsList) {
+				config.HUDFont = systemFontsList[selIdx]
 			} else {
-				config.HUDFont = "Comfortaa"
+				var bufFont [128]uint16
+				procGetWindowTextW.Call(hwndComboFont, uintptr(unsafe.Pointer(&bufFont[0])), 128)
+				newFont := strings.TrimSpace(syscall.UTF16ToString(bufFont[:]))
+				if newFont != "" {
+					config.HUDFont = newFont
+				} else {
+					config.HUDFont = "Comfortaa"
+				}
 			}
 			updateHUDFont()
 
@@ -2972,6 +3177,105 @@ func hudWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		r, _, _ := procDefWindowProcW.Call(hwnd, uintptr(msg), wParam, lParam)
 		return r
 	}
+}
+
+func getCachedFont(fontName string, height int32) uintptr {
+	key := fmt.Sprintf("%s_%d", fontName, height)
+	fontCacheMutex.Lock()
+	defer fontCacheMutex.Unlock()
+	if hf, ok := fontCache[key]; ok && hf != 0 {
+		return hf
+	}
+	hf, _, _ := procCreateFontW.Call(
+		uintptr(height), 0, 0, 0, 600, 0, 0, 0,
+		1, // DEFAULT_CHARSET
+		0, 0, 5, // CLEARTYPE_QUALITY
+		0,
+		uintptr(unsafe.Pointer(strPtr(fontName))),
+	)
+	if hf != 0 {
+		fontCache[key] = hf
+	}
+	return hf
+}
+
+func initSystemFonts() {
+	if len(systemFontsList) > 0 {
+		return
+	}
+	seen := make(map[string]bool)
+	var fonts []string
+
+	curated := []string{
+		"Comfortaa",
+		"Segoe UI",
+		"Arial",
+		"Bahnschrift",
+		"Calibri",
+		"Cascadia Code",
+		"Century Gothic",
+		"Comic Sans MS",
+		"Consolas",
+		"Constantia",
+		"Corbel",
+		"Courier New",
+		"Franklin Gothic Medium",
+		"Gabriola",
+		"Georgia",
+		"Impact",
+		"Lucida Console",
+		"Lucida Sans Unicode",
+		"Palatino Linotype",
+		"Segoe Print",
+		"Segoe Script",
+		"Sitka Text",
+		"Tahoma",
+		"Times New Roman",
+		"Trebuchet MS",
+		"Verdana",
+	}
+
+	hdc, _, _ := procGetDC.Call(0)
+	if hdc != 0 {
+		var lf LOGFONTW
+		lf.LfCharSet = 1 // DEFAULT_CHARSET
+		cb := syscall.NewCallback(func(lpelfe uintptr, lpntme uintptr, fontType uint32, lParam uintptr) uintptr {
+			elf := (*ENUMLOGFONTEXW)(unsafe.Pointer(lpelfe))
+			name := strings.TrimSpace(syscall.UTF16ToString(elf.ElfLogFont.LfFaceName[:]))
+			if name != "" && !strings.HasPrefix(name, "@") {
+				lower := strings.ToLower(name)
+				if !seen[lower] {
+					seen[lower] = true
+					fonts = append(fonts, name)
+				}
+			}
+			return 1
+		})
+		procEnumFontFamilies.Call(hdc, uintptr(unsafe.Pointer(&lf)), cb, 0, 0)
+		procReleaseDC.Call(0, hdc)
+	}
+
+	for _, c := range curated {
+		lower := strings.ToLower(c)
+		if !seen[lower] {
+			seen[lower] = true
+			fonts = append(fonts, c)
+		}
+	}
+
+	if config.HUDFont != "" {
+		lower := strings.ToLower(config.HUDFont)
+		if !seen[lower] {
+			seen[lower] = true
+			fonts = append(fonts, config.HUDFont)
+		}
+	}
+
+	sort.Slice(fonts, func(i, j int) bool {
+		return strings.ToLower(fonts[i]) < strings.ToLower(fonts[j])
+	})
+
+	systemFontsList = fonts
 }
 
 func createHUDFont(fontName string) uintptr {
