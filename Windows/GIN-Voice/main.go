@@ -29,8 +29,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v023"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v023]"
+	AppVersion    = "v024"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v024]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -80,8 +80,14 @@ const (
 	VK_F9           = 0x78
 	VK_F10          = 0x79
 	VK_F12          = 0x7B
+	VK_OEM_3        = 0xC0
 	VK_CONTROL      = 0x11
 	KEYEVENTF_KEYUP = 0x0002
+
+	MOD_ALT     = 0x0001
+	MOD_CONTROL = 0x0002
+	MOD_SHIFT   = 0x0004
+	MOD_WIN     = 0x0008
 
 	CF_UNICODETEXT = 13
 	GMEM_MOVEABLE  = 0x0002
@@ -138,6 +144,7 @@ const (
 	IDC_EDIT_FONT   = 3009
 	IDC_BTN_LANG_EN = 3010
 	IDC_BTN_LANG_RU = 3011
+	IDC_BTN_RECORD  = 3012
 
 	IDC_LANG_CHK_BASE = 4000
 )
@@ -342,6 +349,8 @@ type UIStringBundle struct {
 	SettingsTestBtn     string
 	SettingsHotkey      string
 	SettingsHotkeyTip   string
+	SettingsRecordBtn   string
+	SettingsRecording   string
 	SettingsFont        string
 	SettingsFontTip     string
 	SettingsFolder      string
@@ -407,8 +416,10 @@ var (
 	hwndLblLangs    uintptr
 	hwndEditKey     uintptr
 	hwndEditFolder  uintptr
-	hwndEditHotkey  uintptr
-	hwndEditFont    uintptr
+	hwndEditHotkey    uintptr
+	hwndBtnRecord     uintptr
+	isRecordingHotkey bool
+	hwndEditFont      uintptr
 	btnLangEN       uintptr
 	btnLangRU       uintptr
 	btnGroq         uintptr
@@ -495,7 +506,9 @@ var (
 			SettingsGetGroq:     "🌐 Get Free Key at Groq.com",
 			SettingsTestBtn:     "🧪 Test Key",
 			SettingsHotkey:      "⚡ Hotkey:",
-			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsHotkeyTip:   "(Alt+~, Ctrl+Shift+S, F13-F24)",
+			SettingsRecordBtn:   "🔴 Record...",
+			SettingsRecording:   "⏳ Press keys...",
 			SettingsFont:        "🎨 HUD Font:",
 			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift, Consolas)",
 			SettingsFolder:      "📁 Linked Knowledge / Project Folder (Auto-Dictionary):",
@@ -539,7 +552,9 @@ var (
 			SettingsGetGroq:     "🌐 Получить бесплатный ключ на Groq.com",
 			SettingsTestBtn:     "🧪 Проверить",
 			SettingsHotkey:      "⚡ Горячая клавиша:",
-			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsHotkeyTip:   "(Alt+~, Ctrl+Shift+S, F13-F24)",
+			SettingsRecordBtn:   "🔴 Записать...",
+			SettingsRecording:   "⏳ Нажмите клавиши...",
 			SettingsFont:        "🎨 Шрифт HUD:",
 			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift, Consolas)",
 			SettingsFolder:      "📁 Общая папка с базами знаний / проектами (Автословарь):",
@@ -583,7 +598,9 @@ var (
 			SettingsGetGroq:     "🌐 Získat klíč zdarma na Groq.com",
 			SettingsTestBtn:     "🧪 Otestovat",
 			SettingsHotkey:      "⚡ Klávesová zkratka:",
-			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsHotkeyTip:   "(Alt+~, Ctrl+Shift+S, F13-F24)",
+			SettingsRecordBtn:   "🔴 Zaznamenat...",
+			SettingsRecording:   "⏳ Stiskněte klávesy...",
 			SettingsFont:        "🎨 Písmo HUD:",
 			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Propojená složka projektů (Automatický slovník):",
@@ -627,7 +644,9 @@ var (
 			SettingsGetGroq:     "🌐 Ottieni chiave gratuita su Groq.com",
 			SettingsTestBtn:     "🧪 Verifica",
 			SettingsHotkey:      "⚡ Tasto rapido:",
-			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsHotkeyTip:   "(Alt+~, Ctrl+Shift+S, F13-F24)",
+			SettingsRecordBtn:   "🔴 Registra...",
+			SettingsRecording:   "⏳ Premi i tasti...",
 			SettingsFont:        "🎨 Font HUD:",
 			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Cartella progetti collegata (Dizionario automatico):",
@@ -671,7 +690,9 @@ var (
 			SettingsGetGroq:     "🌐 Obtener clave gratis en Groq.com",
 			SettingsTestBtn:     "🧪 Probar clave",
 			SettingsHotkey:      "⚡ Tecla rápida:",
-			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsHotkeyTip:   "(Alt+~, Ctrl+Shift+S, F13-F24)",
+			SettingsRecordBtn:   "🔴 Grabar...",
+			SettingsRecording:   "⏳ Presione teclas...",
 			SettingsFont:        "🎨 Fuente HUD:",
 			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Carpeta vinculada de proyectos (Diccionario automático):",
@@ -715,7 +736,9 @@ var (
 			SettingsGetGroq:     "🌐 Obtenir une clé gratuite sur Groq.com",
 			SettingsTestBtn:     "🧪 Tester",
 			SettingsHotkey:      "⚡ Raccourci :",
-			SettingsHotkeyTip:   "(F8, F4, F9, F10, F12)",
+			SettingsHotkeyTip:   "(Alt+~, Ctrl+Shift+S, F13-F24)",
+			SettingsRecordBtn:   "🔴 Enregistrer...",
+			SettingsRecording:   "⏳ Appuyez sur touches...",
 			SettingsFont:        "🎨 Police HUD :",
 			SettingsFontTip:     "(Comfortaa, Segoe UI, Bahnschrift)",
 			SettingsFolder:      "📁 Dossier de projets lié (Dictionnaire automatique) :",
@@ -938,9 +961,9 @@ func loadConfig() {
 		Version:               AppVersion,
 		UILanguage:            "EN", // English by default
 		FirstRun:              true,
-		Hotkey:                "F4",
-		HotkeyVK:              VK_F4,
-		HotkeyMod:             0,
+		Hotkey:                "Alt + ~",
+		HotkeyVK:              VK_OEM_3,
+		HotkeyMod:             MOD_ALT,
 		HUDFont:               "Comfortaa",
 		ActiveLanguages:       []string{"EN"}, // Only English selected by default upon initial installation
 		AllLanguages:          MasterLanguages,
@@ -961,9 +984,10 @@ func loadConfig() {
 		config.UILanguage = "EN"
 	}
 
-	if config.Hotkey == "" {
-		config.Hotkey = "F4"
-		config.HotkeyVK = VK_F4
+	if config.Hotkey == "" || config.HotkeyVK == 0 {
+		config.Hotkey = "Alt + ~"
+		config.HotkeyVK = VK_OEM_3
+		config.HotkeyMod = MOD_ALT
 	}
 
 	if config.HUDFont == "" {
@@ -2074,7 +2098,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkey))),
 		WS_CHILD|WS_VISIBLE,
-		24, 146, 170, 26, hwndSetup, 0, hInstance, 0,
+		24, 146, 140, 26, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndLblHot, WM_SETFONT, hFontBold, 1)
 
@@ -2082,15 +2106,23 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(config.Hotkey))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		198, 142, 80, 32, hwndSetup, uintptr(IDC_EDIT_HOTKEY), hInstance, 0,
+		168, 142, 170, 32, hwndSetup, uintptr(IDC_EDIT_HOTKEY), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditHotkey, WM_SETFONT, hFontBold, 1)
+
+	hwndBtnRecord, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr(ui.SettingsRecordBtn))),
+		WS_CHILD|WS_VISIBLE,
+		346, 141, 125, 34, hwndSetup, uintptr(IDC_BTN_RECORD), hInstance, 0,
+	)
+	procSendMessageW.Call(hwndBtnRecord, WM_SETFONT, hFontBold, 1)
 
 	hwndLblFont, _, _ = procCreateWindowExW.Call(
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsFont))),
 		WS_CHILD|WS_VISIBLE,
-		296, 146, 140, 26, hwndSetup, 0, hInstance, 0,
+		485, 146, 95, 26, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndLblFont, WM_SETFONT, hFontBold, 1)
 
@@ -2098,7 +2130,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
 		uintptr(unsafe.Pointer(strPtr(config.HUDFont))),
 		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
-		440, 142, 160, 32, hwndSetup, uintptr(IDC_EDIT_FONT), hInstance, 0,
+		584, 142, 120, 32, hwndSetup, uintptr(IDC_EDIT_FONT), hInstance, 0,
 	)
 	procSendMessageW.Call(hwndEditFont, WM_SETFONT, hFontNormal, 1)
 
@@ -2106,7 +2138,7 @@ func showSettingsDialog() {
 		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))),
 		WS_CHILD|WS_VISIBLE,
-		610, 146, 200, 26, hwndSetup, 0, hInstance, 0,
+		712, 146, 110, 26, hwndSetup, 0, hInstance, 0,
 	)
 	procSendMessageW.Call(hwndLblHotTip, WM_SETFONT, hFontNormal, 1)
 
@@ -2202,6 +2234,9 @@ func refreshSettingsDialogUI() {
 	procSetWindowTextW.Call(btnGroq, uintptr(unsafe.Pointer(strPtr(ui.SettingsGetGroq))))
 	procSetWindowTextW.Call(btnTest, uintptr(unsafe.Pointer(strPtr(ui.SettingsTestBtn))))
 	procSetWindowTextW.Call(hwndLblHot, uintptr(unsafe.Pointer(strPtr(ui.SettingsHotkey))))
+	if !isRecordingHotkey && hwndBtnRecord != 0 {
+		procSetWindowTextW.Call(hwndBtnRecord, uintptr(unsafe.Pointer(strPtr(ui.SettingsRecordBtn))))
+	}
 	procSetWindowTextW.Call(hwndLblFont, uintptr(unsafe.Pointer(strPtr(ui.SettingsFont))))
 	procSetWindowTextW.Call(hwndLblHotTip, uintptr(unsafe.Pointer(strPtr(ui.SettingsFontTip))))
 	procSetWindowTextW.Call(hwndLblFolder, uintptr(unsafe.Pointer(strPtr(ui.SettingsFolder))))
@@ -2221,21 +2256,369 @@ func hasLang(code string) bool {
 	return false
 }
 
-func parseVK(keyStr string) uint32 {
-	u := strings.ToUpper(strings.TrimSpace(keyStr))
-	switch u {
-	case "F4":
-		return VK_F4
-	case "F8":
-		return VK_F8
-	case "F9":
-		return VK_F9
-	case "F10":
-		return VK_F10
-	case "F12":
-		return VK_F12
-	default:
-		return VK_F8
+func vkToName(vk uint32) string {
+	switch {
+	case vk >= 0x70 && vk <= 0x87: // F1 to F24
+		return fmt.Sprintf("F%d", vk-0x70+1)
+	case vk >= 0x30 && vk <= 0x39: // '0'..'9'
+		return string(rune('0' + (vk - 0x30)))
+	case vk >= 0x41 && vk <= 0x5A: // 'A'..'Z'
+		return string(rune('A' + (vk - 0x41)))
+	case vk >= 0x60 && vk <= 0x69: // NumPad 0..9
+		return fmt.Sprintf("Num%d", vk-0x60)
+	}
+	switch vk {
+	case 0xC0:
+		return "~" // Tilde / Backtick (Ё)
+	case 0x20:
+		return "Space"
+	case 0x09:
+		return "Tab"
+	case 0x1B:
+		return "Esc"
+	case 0x2D:
+		return "Insert"
+	case 0x2E:
+		return "Delete"
+	case 0x24:
+		return "Home"
+	case 0x23:
+		return "End"
+	case 0x21:
+		return "PageUp"
+	case 0x22:
+		return "PageDown"
+	case 0x25:
+		return "Left"
+	case 0x26:
+		return "Up"
+	case 0x27:
+		return "Right"
+	case 0x28:
+		return "Down"
+	case 0x14:
+		return "CapsLock"
+	case 0x90:
+		return "NumLock"
+	case 0x91:
+		return "ScrollLock"
+	case 0x2C:
+		return "PrintScreen"
+	case 0x13:
+		return "Pause"
+	case 0xBA:
+		return ";"
+	case 0xBB:
+		return "="
+	case 0xBC:
+		return ","
+	case 0xBD:
+		return "-"
+	case 0xBE:
+		return "."
+	case 0xBF:
+		return "/"
+	case 0xDB:
+		return "["
+	case 0xDC:
+		return "\\"
+	case 0xDD:
+		return "]"
+	case 0xDE:
+		return "'"
+	// Media and extended keys
+	case 0xAD:
+		return "VolumeMute"
+	case 0xAE:
+		return "VolumeDown"
+	case 0xAF:
+		return "VolumeUp"
+	case 0xB0:
+		return "MediaNext"
+	case 0xB1:
+		return "MediaPrev"
+	case 0xB2:
+		return "MediaStop"
+	case 0xB3:
+		return "MediaPlayPause"
+	case 0xA6:
+		return "BrowserBack"
+	case 0xA7:
+		return "BrowserForward"
+	case 0xA8:
+		return "BrowserRefresh"
+	case 0xAA:
+		return "BrowserHome"
+	}
+	return fmt.Sprintf("Key_0x%X", vk)
+}
+
+func formatHotkeyName(mod, vk uint32) string {
+	var parts []string
+	if (mod & MOD_CONTROL) != 0 {
+		parts = append(parts, "Ctrl")
+	}
+	if (mod & MOD_ALT) != 0 {
+		parts = append(parts, "Alt")
+	}
+	if (mod & MOD_SHIFT) != 0 {
+		parts = append(parts, "Shift")
+	}
+	if (mod & MOD_WIN) != 0 {
+		parts = append(parts, "Win")
+	}
+	parts = append(parts, vkToName(vk))
+	return strings.Join(parts, " + ")
+}
+
+func parseHotkeyString(s string) (uint32, uint32) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return VK_OEM_3, MOD_ALT
+	}
+	var mod uint32
+	var mainKey string
+
+	parts := strings.Split(s, "+")
+	for i, p := range parts {
+		trimmed := strings.TrimSpace(p)
+		upper := strings.ToUpper(trimmed)
+		if i < len(parts)-1 || upper == "CTRL" || upper == "CONTROL" || upper == "ALT" || upper == "SHIFT" || upper == "WIN" {
+			switch upper {
+			case "CTRL", "CONTROL":
+				mod |= MOD_CONTROL
+				continue
+			case "ALT":
+				mod |= MOD_ALT
+				continue
+			case "SHIFT":
+				mod |= MOD_SHIFT
+				continue
+			case "WIN", "WINDOWS":
+				mod |= MOD_WIN
+				continue
+			}
+		}
+		mainKey = trimmed
+	}
+
+	u := strings.ToUpper(mainKey)
+	var vk uint32
+
+	// Check F1..F24
+	if strings.HasPrefix(u, "F") && len(u) >= 2 {
+		var fNum int
+		if _, err := fmt.Sscanf(u[1:], "%d", &fNum); err == nil && fNum >= 1 && fNum <= 24 {
+			vk = uint32(0x70 + (fNum - 1))
+		}
+	}
+
+	if vk == 0 {
+		switch u {
+		case "~", "`", "Ё", "TILDE":
+			vk = VK_OEM_3
+		case "SPACE", "ПРОБЕЛ":
+			vk = 0x20
+		case "TAB":
+			vk = 0x09
+		case "ESC", "ESCAPE":
+			vk = 0x1B
+		case "INSERT", "INS":
+			vk = 0x2D
+		case "DELETE", "DEL":
+			vk = 0x2E
+		case "HOME":
+			vk = 0x24
+		case "END":
+			vk = 0x23
+		case "PAGEUP", "PGUP":
+			vk = 0x21
+		case "PAGEDOWN", "PGDN":
+			vk = 0x22
+		case "LEFT":
+			vk = 0x25
+		case "UP":
+			vk = 0x26
+		case "RIGHT":
+			vk = 0x27
+		case "DOWN":
+			vk = 0x28
+		case ";":
+			vk = 0xBA
+		case "=":
+			vk = 0xBB
+		case ",":
+			vk = 0xBC
+		case "-":
+			vk = 0xBD
+		case ".":
+			vk = 0xBE
+		case "/":
+			vk = 0xBF
+		case "[":
+			vk = 0xDB
+		case "\\":
+			vk = 0xDC
+		case "]":
+			vk = 0xDD
+		case "'":
+			vk = 0xDE
+		default:
+			if len(u) == 1 {
+				ch := u[0]
+				if ch >= '0' && ch <= '9' {
+					vk = uint32(ch)
+				} else if ch >= 'A' && ch <= 'Z' {
+					vk = uint32(ch)
+				}
+			}
+		}
+	}
+
+	if vk == 0 {
+		vk = VK_OEM_3
+		mod = MOD_ALT
+	}
+
+	return vk, mod
+}
+
+func matchModifiers(targetMod uint32) bool {
+	ctrlDown := isKeyPhysicallyDown(0x11) || isKeyPhysicallyDown(0xA2) || isKeyPhysicallyDown(0xA3) // VK_CONTROL, LCONTROL, RCONTROL
+	altDown := isKeyPhysicallyDown(0x12) || isKeyPhysicallyDown(0xA4) || isKeyPhysicallyDown(0xA5)  // VK_MENU, LMENU, RMENU
+	shiftDown := isKeyPhysicallyDown(0x10) || isKeyPhysicallyDown(0xA0) || isKeyPhysicallyDown(0xA1) // VK_SHIFT, LSHIFT, RSHIFT
+	winDown := isKeyPhysicallyDown(0x5B) || isKeyPhysicallyDown(0x5C)                                // LWIN, RWIN
+
+	targetCtrl := (targetMod & MOD_CONTROL) != 0
+	targetAlt := (targetMod & MOD_ALT) != 0
+	targetShift := (targetMod & MOD_SHIFT) != 0
+	targetWin := (targetMod & MOD_WIN) != 0
+
+	return ctrlDown == targetCtrl && altDown == targetAlt && shiftDown == targetShift && winDown == targetWin
+}
+
+func isKeyPhysicallyDown(vk uint32) bool {
+	state, _, _ := procGetAsyncKeyState.Call(uintptr(vk))
+	return (state & 0x8000) != 0
+}
+
+func startRecordingHotkeyUI() {
+	if isRecordingHotkey {
+		return
+	}
+	isRecordingHotkey = true
+	ui := getUI()
+	if hwndBtnRecord != 0 {
+		procSetWindowTextW.Call(hwndBtnRecord, uintptr(unsafe.Pointer(strPtr(ui.SettingsRecording))))
+	}
+
+	go func() {
+		// Wait for existing pressed keys to be released first
+		time.Sleep(300 * time.Millisecond)
+
+		for isRecordingHotkey {
+			time.Sleep(15 * time.Millisecond)
+
+			// Check modifier keys currently pressed
+			ctrlDown := isKeyPhysicallyDown(0x11) || isKeyPhysicallyDown(0xA2) || isKeyPhysicallyDown(0xA3)
+			altDown := isKeyPhysicallyDown(0x12) || isKeyPhysicallyDown(0xA4) || isKeyPhysicallyDown(0xA5)
+			shiftDown := isKeyPhysicallyDown(0x10) || isKeyPhysicallyDown(0xA0) || isKeyPhysicallyDown(0xA1)
+			winDown := isKeyPhysicallyDown(0x5B) || isKeyPhysicallyDown(0x5C)
+
+			var mod uint32
+			if ctrlDown {
+				mod |= MOD_CONTROL
+			}
+			if altDown {
+				mod |= MOD_ALT
+			}
+			if shiftDown {
+				mod |= MOD_SHIFT
+			}
+			if winDown {
+				mod |= MOD_WIN
+			}
+
+			// Scan non-modifier key presses:
+			var hitVK uint32
+
+			// 1. Function keys F1..F24 (0x70..0x87)
+			for k := uint32(0x70); k <= 0x87; k++ {
+				if isKeyPhysicallyDown(k) {
+					hitVK = k
+					break
+				}
+			}
+
+			// 2. Letters A..Z (0x41..0x5A)
+			if hitVK == 0 {
+				for k := uint32(0x41); k <= 0x5A; k++ {
+					if isKeyPhysicallyDown(k) {
+						hitVK = k
+						break
+					}
+				}
+			}
+
+			// 3. Digits 0..9 (0x30..0x39)
+			if hitVK == 0 {
+				for k := uint32(0x30); k <= 0x39; k++ {
+					if isKeyPhysicallyDown(k) {
+						hitVK = k
+						break
+					}
+				}
+			}
+
+			// 4. NumPad keys (0x60..0x69)
+			if hitVK == 0 {
+				for k := uint32(0x60); k <= 0x69; k++ {
+					if isKeyPhysicallyDown(k) {
+						hitVK = k
+						break
+					}
+				}
+			}
+
+			// 5. Special OEM and punctuation keys: OEM_3 (~/`), Space, Tab, Esc, Navigation, Multimedia
+			if hitVK == 0 {
+				specialKeys := []uint32{
+					0xC0, 0x20, 0x09, 0x1B, 0x2D, 0x2E, 0x24, 0x23, 0x21, 0x22,
+					0x25, 0x26, 0x27, 0x28, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+					0xDB, 0xDC, 0xDD, 0xDE, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3,
+					0xA6, 0xA7, 0xA8, 0xAA,
+				}
+				for _, k := range specialKeys {
+					if isKeyPhysicallyDown(k) {
+						hitVK = k
+						break
+					}
+				}
+			}
+
+			if hitVK != 0 {
+				// We captured a full hotkey combination!
+				newHotkeyStr := formatHotkeyName(mod, hitVK)
+				config.Hotkey = newHotkeyStr
+				config.HotkeyVK = hitVK
+				config.HotkeyMod = mod
+
+				if hwndEditHotkey != 0 {
+					procSetWindowTextW.Call(hwndEditHotkey, uintptr(unsafe.Pointer(strPtr(newHotkeyStr))))
+				}
+				playGentleSound("save")
+				stopRecordingHotkeyUI()
+				return
+			}
+		}
+	}()
+}
+
+func stopRecordingHotkeyUI() {
+	isRecordingHotkey = false
+	ui := getUI()
+	if hwndBtnRecord != 0 {
+		procSetWindowTextW.Call(hwndBtnRecord, uintptr(unsafe.Pointer(strPtr(ui.SettingsRecordBtn))))
 	}
 }
 
@@ -2366,7 +2749,17 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			saveConfig()
 			refreshSettingsDialogUI()
 			return 0
+		} else if cmdID == IDC_BTN_RECORD {
+			if isRecordingHotkey {
+				stopRecordingHotkeyUI()
+			} else {
+				startRecordingHotkeyUI()
+			}
+			return 0
 		} else if cmdID == IDC_BTN_SAVE {
+			if isRecordingHotkey {
+				stopRecordingHotkeyUI()
+			}
 			var bufKey [512]uint16
 			procGetWindowTextW.Call(hwndEditKey, uintptr(unsafe.Pointer(&bufKey[0])), 512)
 			config.GroqAPIKey = strings.TrimSpace(syscall.UTF16ToString(bufKey[:]))
@@ -2376,7 +2769,9 @@ func setupWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			newHotkey := strings.TrimSpace(syscall.UTF16ToString(bufHotkey[:]))
 			if newHotkey != "" {
 				config.Hotkey = newHotkey
-				config.HotkeyVK = parseVK(newHotkey)
+				vk, mod := parseHotkeyString(newHotkey)
+				config.HotkeyVK = vk
+				config.HotkeyMod = mod
 			}
 
 			var bufFont [128]uint16
@@ -2547,20 +2942,30 @@ func startHotkeyListener() {
 		var lastToggle time.Time
 		for {
 			time.Sleep(15 * time.Millisecond)
+
+			if isRecordingHotkey {
+				time.Sleep(50 * time.Millisecond)
+				continue
+			}
+
 			vk := config.HotkeyVK
+			mod := config.HotkeyMod
 			if vk == 0 {
-				vk = VK_F8
+				vk = VK_OEM_3
+				mod = MOD_ALT
 			}
 
 			state, _, _ := procGetAsyncKeyState.Call(uintptr(vk))
 			isDown := (state & 0x8000) != 0
 
 			if isDown && !wasPressed {
-				wasPressed = true
-				if time.Since(lastToggle) > 300*time.Millisecond {
-					lastToggle = time.Now()
-					writeLog(fmt.Sprintf("Hardware hotkey press: [%s] (VK %d)", config.Hotkey, vk))
-					go toggleRecording()
+				if matchModifiers(mod) {
+					wasPressed = true
+					if time.Since(lastToggle) > 300*time.Millisecond {
+						lastToggle = time.Now()
+						writeLog(fmt.Sprintf("Hardware hotkey press: [%s] (VK %d, MOD %d)", config.Hotkey, vk, mod))
+						go toggleRecording()
+					}
 				}
 			} else if !isDown && wasPressed {
 				wasPressed = false
@@ -2761,7 +3166,7 @@ func main() {
 		} else {
 			procMessageBoxW.Call(
 				0,
-				uintptr(unsafe.Pointer(strPtr("GIN-Voice is already active and running in the System Tray (near the clock).\n\n• Press [F4] (or your hotkey) to dictate.\n• Right-click the microphone icon in tray to open settings."))),
+				uintptr(unsafe.Pointer(strPtr("GIN-Voice is already active and running in the System Tray (near the clock).\n\n• Press [Alt + ~] (or your hotkey) to dictate.\n• Right-click the microphone icon in tray to open settings."))),
 				uintptr(unsafe.Pointer(strPtr("GIN-Voice - Already Running"))),
 				0x00000040,
 			)
