@@ -6,7 +6,7 @@
 ![Language](https://img.shields.io/badge/Language-Go%201.22+-00ADD8?logo=go&logoColor=white)
 ![Speech Engine](https://img.shields.io/badge/STT-Groq%20Whisper%20Large%20v3-F55036?logo=openai&logoColor=white)
 ![AI Normalizer](https://img.shields.io/badge/AI%20Post--Processor-Qwen%2027B%20LPU-8A2BE2)
-![Version](https://img.shields.io/badge/Release-v030-brightgreen)
+![Version](https://img.shields.io/badge/Release-v031-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 ![CPU Overhead](https://img.shields.io/badge/Local%20CPU%20Load-0%25-success)
 

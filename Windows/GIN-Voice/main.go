@@ -29,8 +29,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v030"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v030]"
+	AppVersion    = "v031"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v031]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -1619,6 +1619,43 @@ func getTranscriptionLanguage() string {
 	return ""
 }
 
+func getMultilingualWhisperPrompt() string {
+	if len(config.ActiveLanguages) <= 1 {
+		return ""
+	}
+
+	var hasRU, hasCS, hasEN bool
+	for _, l := range config.ActiveLanguages {
+		code := strings.ToUpper(strings.TrimSpace(l))
+		if code == "RU" {
+			hasRU = true
+		} else if code == "CS" {
+			hasCS = true
+		} else if code == "EN" {
+			hasEN = true
+		}
+	}
+
+	if hasRU && hasCS && hasEN {
+		return "Multilingual conversation mixing Russian, English, and Czech code-switching. Transcribe exact words in their original languages without translating. Привет! How are you today? Ahoj, jak se máš? Dobře, děkuji."
+	}
+	if hasRU && hasCS {
+		return "Multilingual conversation mixing Russian and Czech code-switching. Transcribe exact words in their original languages without translating. Привет! Ahoj, jak se máš? Dobře, děkuji."
+	}
+	if hasRU && hasEN {
+		return "Multilingual conversation mixing Russian and English code-switching. Transcribe exact words in their original languages without translating. Привет! Hello, how are you today?"
+	}
+	if hasCS && hasEN {
+		return "Multilingual conversation mixing Czech and English code-switching. Transcribe exact words in their original languages without translating. Ahoj! Hello, how are you today? Dobrý den."
+	}
+
+	var list []string
+	for _, l := range config.ActiveLanguages {
+		list = append(list, strings.ToUpper(strings.TrimSpace(l)))
+	}
+	return fmt.Sprintf("Multilingual speech with code-switching between: %s. Transcribe verbatim in original spoken languages. Do not translate.", strings.Join(list, ", "))
+}
+
 func transcribeAudioBytes(wavBytes []byte) (string, error) {
 	apiKey := strings.TrimSpace(config.GroqAPIKey)
 	if apiKey == "" {
@@ -1644,12 +1681,17 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 	langCode := getTranscriptionLanguage()
 	if langCode != "" {
 		_ = writer.WriteField("language", langCode)
+	} else {
+		// When multiple languages are active, Whisper MUST be conditioned with a multilingual prompt!
+		// Without this prompt, Whisper locks onto the first spoken language and aggressively
+		// translates foreign speech into the dominant language!
+		whisperPrompt := getMultilingualWhisperPrompt()
+		if whisperPrompt != "" {
+			_ = writer.WriteField("prompt", whisperPrompt)
+		}
 	}
 
-	// Note: We intentionally do NOT pass raw brand keywords into Whisper's 'prompt' field,
-	// because Whisper Large v3 tends to hallucinate and inject prompt words (like 'GIN-Cinema')
-	// during silent pauses or low-confidence segments.
-	// Accurate vocabulary mapping is handled cleanly post-transcription by applyDictionary()!
+	// Note: Accurate vocabulary mapping is handled cleanly post-transcription by applyDictionary()!
 
 	err = writer.Close()
 	if err != nil {
