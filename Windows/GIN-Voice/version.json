@@ -1,8 +1,8 @@
 {
-  "version": "v029",
+  "version": "v030",
   "name": "GIN-Voice",
-  "engine": "WaveIn Event AI",
-  "release_date": "2026-10-13",
+  "engine": "WaveIn Event AI + Multilingual Post-Processor",
+  "release_date": "2026-10-16",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 }

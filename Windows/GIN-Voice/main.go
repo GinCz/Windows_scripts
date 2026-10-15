@@ -29,8 +29,8 @@ import (
 
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v029"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v029]"
+	AppVersion    = "v030"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v030]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -133,6 +133,7 @@ const (
 	IDM_CHECK_UPDATE   = 1010
 	IDM_SAVE_CLIPBOARD = 1011
 	IDM_AUTO_PASTE     = 1012
+	IDM_AI_MULTILANG   = 1013
 
 	IDM_UI_LANG_BASE = 1500
 	IDM_LANG_BASE    = 2000
@@ -435,6 +436,7 @@ type UIStringBundle struct {
 	MenuAutostart       string
 	MenuSaveClipboard   string
 	MenuAutoPaste       string
+	MenuAIMultiLangFix  string
 	MenuHelp            string
 	MenuExit            string
 	MenuCheckUpdates    string
@@ -487,6 +489,7 @@ type Config struct {
 	AutoPaste             bool           `json:"auto_paste"`
 	RestoreClipboard      bool           `json:"restore_clipboard"`
 	SaveClipboard         bool           `json:"save_clipboard"`
+	AIMultiLangFix        bool           `json:"ai_multilang_fix"`
 	Autostart             bool           `json:"autostart"`
 	LinkedKnowledgeFolder string         `json:"linked_knowledge_folder"`
 }
@@ -599,6 +602,7 @@ var (
 			MenuAutostart:       "⚡ Autostart on Windows Boot",
 			MenuSaveClipboard:   "📋 Keep Recognized Text in Clipboard",
 			MenuAutoPaste:       "⌨️ Auto-Paste Text at Cursor",
+			MenuAIMultiLangFix:  "✨ AI Multi-Language Auto-Fix (CS/EN/RU)",
 			MenuHelp:            "❓ Setup Guide & Help",
 			MenuCheckUpdates:    "🔄 Check for Updates...",
 			MenuExit:            "❌ Exit GIN-Voice",
@@ -647,6 +651,7 @@ var (
 			MenuAutostart:       "⚡ Автозапуск при старте Windows",
 			MenuSaveClipboard:   "📋 Сохранять распознанный текст в буфер обмена",
 			MenuAutoPaste:       "⌨️ Автоматическая вставка текста у курсора",
+			MenuAIMultiLangFix:  "✨ Умная мультиязычность AI (CS/EN/RU)",
 			MenuHelp:            "❓ Инструкция и справка",
 			MenuCheckUpdates:    "🔄 Проверить обновления...",
 			MenuExit:            "❌ Выход из GIN-Voice",
@@ -695,6 +700,7 @@ var (
 			MenuAutostart:       "⚡ Automatické spuštění při startu Windows",
 			MenuSaveClipboard:   "📋 Ponechat rozpoznaný text ve schránce",
 			MenuAutoPaste:       "⌨️ Automaticky vložit text u kurzoru",
+			MenuAIMultiLangFix:  "✨ Inteligentní vícejazyčnost AI (CS/EN/RU)",
 			MenuHelp:            "❓ Nápověda a průvodce",
 			MenuCheckUpdates:    "🔄 Zkontrolovat aktualizace...",
 			MenuExit:            "❌ Ukončit GIN-Voice",
@@ -743,6 +749,7 @@ var (
 			MenuAutostart:       "⚡ Avvio automatico con Windows",
 			MenuSaveClipboard:   "📋 Mantieni il testo negli appunti",
 			MenuAutoPaste:       "⌨️ Incolla automaticamente al cursore",
+			MenuAIMultiLangFix:  "✨ Correzione multilingue automatica AI",
 			MenuHelp:            "❓ Guida e supporto",
 			MenuCheckUpdates:    "🔄 Controlla aggiornamenti...",
 			MenuExit:            "❌ Esci da GIN-Voice",
@@ -791,6 +798,7 @@ var (
 			MenuAutostart:       "⚡ Inicio automático con Windows",
 			MenuSaveClipboard:   "📋 Mantener texto en el portapapeles",
 			MenuAutoPaste:       "⌨️ Pegar automáticamente en el cursor",
+			MenuAIMultiLangFix:  "✨ Corrección multilingüe inteligente IA",
 			MenuHelp:            "❓ Guía y ayuda",
 			MenuCheckUpdates:    "🔄 Buscar actualizaciones...",
 			MenuExit:            "❌ Salir de GIN-Voice",
@@ -839,6 +847,7 @@ var (
 			MenuAutostart:       "⚡ Démarrage automatique avec Windows",
 			MenuSaveClipboard:   "📋 Conserver le texte dans le presse-papiers",
 			MenuAutoPaste:       "⌨️ Coller automatiquement au curseur",
+			MenuAIMultiLangFix:  "✨ Correction multilingue intelligente IA",
 			MenuHelp:            "❓ Guide d'installation et aide",
 			MenuCheckUpdates:    "🔄 Vérifier les mises à jour...",
 			MenuExit:            "❌ Quitter GIN-Voice",
@@ -1084,6 +1093,7 @@ func loadConfig() {
 		AutoPaste:             true,
 		RestoreClipboard:      true,
 		SaveClipboard:         true, // Keeps recognized text in clipboard by default
+		AIMultiLangFix:        true, // Auto-fix mixed language phonetics (CS/EN/RU)
 		Autostart:             false,
 		LinkedKnowledgeFolder: `D:\AI\BASE`,
 	}
@@ -1574,6 +1584,7 @@ func stopRecordingAndTranscribe() {
 			return
 		}
 
+		text = postProcessMultilingual(text)
 		text = applyDictionary(text)
 		text = cleanHallucinations(text)
 		text = strings.TrimSpace(text)
@@ -1677,6 +1688,96 @@ func transcribeAudioBytes(wavBytes []byte) (string, error) {
 	}
 
 	return parsed.Text, nil
+}
+
+func postProcessMultilingual(text string) string {
+	if !config.AIMultiLangFix || len(config.ActiveLanguages) <= 1 {
+		return text
+	}
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return text
+	}
+
+	apiKey := strings.TrimSpace(config.GroqAPIKey)
+	if apiKey == "" {
+		return text
+	}
+
+	var langs []string
+	for _, l := range config.ActiveLanguages {
+		langs = append(langs, strings.ToUpper(strings.TrimSpace(l)))
+	}
+	activeLangsStr := strings.Join(langs, ", ")
+
+	systemPrompt := fmt.Sprintf(
+		"You are a high-speed multilingual speech post-processor for GIN-Voice. "+
+			"Active recognition languages: %s. "+
+			"The user speaks and switches between these languages within a single sentence. "+
+			"When Whisper transcribes speech, it locks into one language (usually Russian) and phonetically transliterates Czech or English words into Russian Cyrillic (e.g., 'Ахой, як се маш? Добже, мамсе добже' -> 'Ahoj, jak se máš? Dobře, mám se dobře').\n"+
+			"Rules:\n"+
+			"1. Detect segments spoken in Czech or other Latin languages that were transliterated into Cyrillic, and restore them to proper native Latin orthography with accurate diacritics.\n"+
+			"2. Keep genuine Russian in Russian Cyrillic. Keep English in English Latin.\n"+
+			"3. DO NOT translate any words into another language. Preserve the user's spoken words.\n"+
+			"4. Return ONLY the final corrected text without explanations or quotes.",
+		activeLangsStr,
+	)
+
+	reqBody := map[string]interface{}{
+		"model": "qwen/qwen3.8-27b",
+		"messages": []map[string]string{
+			{"role": "system", "content": systemPrompt},
+			{"role": "user", "content": text},
+		},
+		"temperature": 0.0,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return text
+	}
+
+	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/chat/completions", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return text
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "GIN-Voice/1.0")
+
+	client := &http.Client{Timeout: 4 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		writeLog("AI Multi-Lang Fix network error: " + err.Error())
+		return text
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		writeLog(fmt.Sprintf("AI Multi-Lang Fix HTTP error: %d", resp.StatusCode))
+		return text
+	}
+
+	var res struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+		return text
+	}
+
+	if len(res.Choices) > 0 {
+		fixed := strings.TrimSpace(res.Choices[0].Message.Content)
+		if fixed != "" {
+			writeLog(fmt.Sprintf("AI Multi-Lang Fix applied: [%s] -> [%s]", text, fixed))
+			return fixed
+		}
+	}
+	return text
 }
 
 func testGroqAPIKey(key string) (bool, string) {
@@ -2173,6 +2274,13 @@ func showContextMenu() {
 		pasteFlags |= MF_CHECKED
 	}
 	procAppendMenuW.Call(hMenu, pasteFlags, IDM_AUTO_PASTE, uintptr(unsafe.Pointer(strPtr(ui.MenuAutoPaste))))
+
+	// 6b. AI Multi-Language Auto-Fix (Умная мультиязычность)
+	aiFlags := uintptr(MF_STRING)
+	if config.AIMultiLangFix {
+		aiFlags |= MF_CHECKED
+	}
+	procAppendMenuW.Call(hMenu, aiFlags, IDM_AI_MULTILANG, uintptr(unsafe.Pointer(strPtr(ui.MenuAIMultiLangFix))))
 
 	// 7. Help & Guide (Инструкция и справка)
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
@@ -2903,6 +3011,9 @@ func handleMenuCommand(cmdID uintptr) {
 		saveConfig()
 	case cmdID == IDM_AUTO_PASTE:
 		config.AutoPaste = !config.AutoPaste
+		saveConfig()
+	case cmdID == IDM_AI_MULTILANG:
+		config.AIMultiLangFix = !config.AIMultiLangFix
 		saveConfig()
 	case cmdID == IDM_OPEN_HELP:
 		openHelpFile()
