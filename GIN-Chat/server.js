@@ -9,7 +9,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const crypto = require('crypto');
-const webpush = require('web-push');
 const { db, encryptText, decryptText } = require('./db');
 
 const app = express();
@@ -19,80 +18,14 @@ const io = new Server(server, {
   maxHttpBufferSize: 50 * 1024 * 1024 // 50MB file support
 });
 
-// Real-time online users tracking Map (userId -> Set of socket.ids)
-const onlineUsers = new Map();
-function isUserOnline(userId) {
-  const uid = Number(userId);
-  return onlineUsers.has(uid) && onlineUsers.get(uid).size > 0;
-}
-
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'gin_super_jwt_secret_chat_2026';
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
 const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN || '1226649515:AAF_jIP6ol767vCh9Ur__rEI5onTmIz2z2g';
 const TG_ADMIN_CHAT_ID = process.env.TG_ADMIN_CHAT_ID || '261784949';
 
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-// Initialize / Load Persistent VAPID keys for Web Push Notifications
-const VAPID_PATH = path.join(DATA_DIR, 'vapid.json');
-let vapidKeys;
-if (fs.existsSync(VAPID_PATH)) {
-  try {
-    vapidKeys = JSON.parse(fs.readFileSync(VAPID_PATH, 'utf8'));
-  } catch (e) {
-    vapidKeys = webpush.generateVAPIDKeys();
-    fs.writeFileSync(VAPID_PATH, JSON.stringify(vapidKeys, null, 2));
-  }
-} else {
-  vapidKeys = webpush.generateVAPIDKeys();
-  fs.writeFileSync(VAPID_PATH, JSON.stringify(vapidKeys, null, 2));
-}
-
-webpush.setVapidDetails(
-  'mailto:gin.vladimir@gmail.com',
-  vapidKeys.publicKey,
-  vapidKeys.privateKey
-);
-
-// Helper to send Web Push Notification to user (all active devices)
-async function sendPushToUser(targetUserId, payload) {
-  try {
-    const subs = db.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?').all(targetUserId);
-    if (!subs || subs.length === 0) return;
-
-    const pushPayload = JSON.stringify(payload);
-    const promises = subs.map(async (sub) => {
-      const pushSubscription = {
-        endpoint: sub.endpoint,
-        keys: {
-          p256dh: sub.p256dh,
-          auth: sub.auth
-        }
-      };
-      try {
-        await webpush.sendNotification(pushSubscription, pushPayload, {
-          TTL: payload.ttl || 86400,
-          urgency: payload.urgency || 'normal'
-        });
-      } catch (err) {
-        if (err.statusCode === 404 || err.statusCode === 410) {
-          db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(sub.endpoint);
-        } else {
-          console.warn(`Push notification failed for user ${targetUserId}:`, err.message);
-        }
-      }
-    });
-    await Promise.allSettled(promises);
-  } catch (err) {
-    console.error('sendPushToUser error:', err);
-  }
 }
 
 // Telegram Alert Helper with Inline Buttons
@@ -343,6 +276,36 @@ function escapeTgHtml(str) {
 // AUTH ROUTES
 // ----------------------------------------------------
 
+// Transliteration map for generating Latin usernames from Cyrillic names
+const translitMap = {
+  'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo', 'Ж': 'Zh',
+  'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N', 'О': 'O',
+  'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U', 'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts',
+  'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Shch', 'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+  'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+  'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+  'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+  'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+  'І': 'I', 'і': 'i', 'Ї': 'Yi', 'ї': 'yi', 'Є': 'Ye', 'є': 'ye', 'Ґ': 'G', 'ґ': 'g', 'Ў': 'U', 'ў': 'u'
+};
+
+function transliterateToLatin(str) {
+  if (!str) return '';
+  return str.split('').map(ch => (translitMap[ch] !== undefined ? translitMap[ch] : ch)).join('');
+}
+
+function generateUsernameFromName(name) {
+  if (!name) return '';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const latinParts = parts.map(part => {
+    const translit = transliterateToLatin(part);
+    return translit.replace(/[^a-zA-Z0-9]/g, '');
+  }).filter(Boolean);
+
+  if (latinParts.length === 0) return '';
+  return latinParts.join('_');
+}
+
 // Register
 app.post('/api/auth/register', (req, res) => {
   const { name, email, phone, username, password } = req.body;
@@ -350,17 +313,30 @@ app.post('/api/auth/register', (req, res) => {
     return res.status(400).json({ error: 'Заполните все обязательные поля (Имя, Email, Телефон, Пароль)' });
   }
 
-  let finalUsername = username ? username.trim().toLowerCase().replace(/^@/, '') : email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
-  if (!finalUsername) finalUsername = 'user_' + Math.floor(Math.random() * 10000);
+  // Generate username from Name and Surname (e.g. Илья Иванов => Ilya_Ivanov)
+  let candidateUsername = (username && username.trim()) 
+    ? username.trim().replace(/^@/, '') 
+    : generateUsernameFromName(name);
 
-  const existing = db.prepare('SELECT email, username FROM users WHERE email = ? OR username = ?').get(email.trim().toLowerCase(), finalUsername);
-  if (existing) {
-    if (existing.email === email.trim().toLowerCase()) {
-      return res.status(400).json({ error: 'Пользователь с таким email уже зарегистрирован' });
-    }
-    if (existing.username === finalUsername) {
-      return res.status(400).json({ error: 'Логин @' + finalUsername + ' уже занят. Выберите другой.' });
-    }
+  if (!candidateUsername) {
+    candidateUsername = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '');
+  }
+  if (!candidateUsername) {
+    candidateUsername = 'User_' + Math.floor(1000 + Math.random() * 9000);
+  }
+
+  // Check if email is already registered
+  const existingEmail = db.prepare('SELECT email FROM users WHERE LOWER(email) = ?').get(email.trim().toLowerCase());
+  if (existingEmail) {
+    return res.status(400).json({ error: 'Пользователь с таким email уже зарегистрирован' });
+  }
+
+  // Ensure unique username by checking DB and appending _1, _2 if taken
+  let finalUsername = candidateUsername;
+  let counter = 1;
+  while (db.prepare('SELECT 1 FROM users WHERE LOWER(username) = ?').get(finalUsername.toLowerCase())) {
+    finalUsername = `${candidateUsername}_${counter}`;
+    counter++;
   }
 
   const salt = bcrypt.genSaltSync(10);
@@ -398,7 +374,7 @@ app.post('/api/auth/register', (req, res) => {
           { text: '🗑 Удалить', callback_data: `delete_${newUserId}` }
         ],
         [
-          { text: '🌐 Открыть GIN-Chat', url: process.env.APP_URL || 'https://4at.gincz.com' }
+          { text: '🌐 Открыть GIN-Chat', url: 'https://4at.gincz.com' }
         ]
       ]
     });
@@ -516,81 +492,6 @@ app.put('/api/auth/profile', authMiddleware, (req, res) => {
 });
 
 // ----------------------------------------------------
-// WEB PUSH NOTIFICATION ROUTES (iOS Safari, Android, PC)
-// ----------------------------------------------------
-
-// Get VAPID public key
-app.get('/api/push/vapid-public-key', (req, res) => {
-  res.json({ publicKey: vapidKeys.publicKey });
-});
-
-// Register or update Web Push Subscription
-app.post('/api/push/subscribe', authMiddleware, (req, res) => {
-  try {
-    const { subscription, userAgent } = req.body;
-    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
-      return res.status(400).json({ error: 'Некорректные параметры подписки Push' });
-    }
-
-    const { endpoint, keys } = subscription;
-    db.prepare(`
-      INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
-      VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(endpoint) DO UPDATE SET
-        user_id = excluded.user_id,
-        p256dh = excluded.p256dh,
-        auth = excluded.auth,
-        user_agent = excluded.user_agent,
-        created_at = CURRENT_TIMESTAMP
-    `).run(req.user.id, endpoint, keys.p256dh, keys.auth, userAgent || req.headers['user-agent'] || '');
-
-    res.json({ success: true, message: 'Push подписка успешно сохранена' });
-  } catch (err) {
-    console.error('Push subscribe error:', err);
-    res.status(500).json({ error: 'Ошибка сохранения подписки' });
-  }
-});
-
-// Unsubscribe Web Push
-app.post('/api/push/unsubscribe', authMiddleware, (req, res) => {
-  try {
-    const { endpoint } = req.body;
-    if (endpoint) {
-      db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ? AND user_id = ?').run(endpoint, req.user.id);
-    } else {
-      db.prepare('DELETE FROM push_subscriptions WHERE user_id = ?').run(req.user.id);
-    }
-    res.json({ success: true, message: 'Push подписка удалена' });
-  } catch (err) {
-    console.error('Push unsubscribe error:', err);
-    res.status(500).json({ error: 'Ошибка удаления подписки' });
-  }
-});
-
-// Send Test Push Notification
-app.post('/api/push/test', authMiddleware, async (req, res) => {
-  try {
-    const subs = db.prepare('SELECT * FROM push_subscriptions WHERE user_id = ?').all(req.user.id);
-    if (!subs || subs.length === 0) {
-      return res.status(400).json({ error: 'Нет активных Push-подписок на сервере. Пожалуйста, сначала включите Push на этом устройстве.' });
-    }
-    await sendPushToUser(req.user.id, {
-      title: '🔔 Тестовое оповещение GIN-Chat',
-      body: 'Поздравляем! Web Push успешно работает на вашем устройстве.',
-      icon: '/icons/icon-192-v30.png',
-      badge: '/icons/badge-monochrome.png',
-      tag: 'test_push',
-      renotify: true,
-      data: { url: '/' }
-    });
-    res.json({ success: true, message: `Тестовый пуш отправлен на ${subs.length} устр.!` });
-  } catch (err) {
-    console.error('Push test error:', err);
-    res.status(500).json({ error: 'Ошибка отправки тестового пуша' });
-  }
-});
-
-// ----------------------------------------------------
 // ADMIN ROUTES (Владимир and Admins)
 // ----------------------------------------------------
 
@@ -601,11 +502,7 @@ app.get('/api/admin/users', authMiddleware, requireAdmin, (req, res) => {
     FROM users
     ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END, id DESC
   `).all();
-  const enrichedUsers = users.map(u => ({
-    ...u,
-    is_online: isUserOnline(u.id)
-  }));
-  res.json({ users: enrichedUsers });
+  res.json({ users });
 });
 
 // Get single user details by ID
@@ -838,58 +735,17 @@ app.get('/api/admin/stats', authMiddleware, requireAdmin, (req, res) => {
 // CHATS & GROUPS ROUTES
 // ----------------------------------------------------
 
-
-// Helper to guarantee direct chats exist with ALL approved users
-function ensureDirectChatsForUser(userId) {
-  try {
-    const approvedUsers = db.prepare(`
-      SELECT id FROM users WHERE status = 'approved' AND id != ?
-    `).all(userId);
-
-    if (!approvedUsers || approvedUsers.length === 0) return;
-
-    const insertDirect = db.transaction(() => {
-      for (const target of approvedUsers) {
-        const existing = db.prepare(`
-          SELECT c.id FROM chats c
-          JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = ?
-          JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = ?
-          WHERE c.type = 'direct'
-        `).get(userId, target.id);
-
-        if (!existing) {
-          const info = db.prepare(`
-            INSERT INTO chats (type, created_by, updated_at) VALUES ('direct', ?, '2000-01-01 00:00:00')
-          `).run(userId);
-          const chatId = info.lastInsertRowid;
-          db.prepare(`INSERT INTO chat_members (chat_id, user_id, role) VALUES (?, ?, 'member')`).run(chatId, userId);
-          db.prepare(`INSERT INTO chat_members (chat_id, user_id, role) VALUES (?, ?, 'member')`).run(chatId, target.id);
-        }
-      }
-    });
-
-    insertDirect();
-  } catch (err) {
-    console.error('ensureDirectChatsForUser error:', err);
-  }
-}
-
 // Get user's active chats list
 app.get('/api/chats', authMiddleware, (req, res) => {
   const userId = req.user.id;
-  ensureDirectChatsForUser(userId);
   
   const chats = db.prepare(`
     SELECT c.id, c.type, c.name, c.description, c.avatar, c.created_by, c.invite_code, c.pinned_message_id, c.updated_at,
-           cm.role as my_role,
-           (SELECT MAX(id) FROM messages WHERE chat_id = c.id AND (scheduled_at IS NULL OR scheduled_at <= CURRENT_TIMESTAMP)) as last_msg_id
+           cm.role as my_role
     FROM chats c
     JOIN chat_members cm ON c.id = cm.chat_id
     WHERE cm.user_id = ?
-    ORDER BY 
-      CASE WHEN (SELECT MAX(id) FROM messages WHERE chat_id = c.id AND (scheduled_at IS NULL OR scheduled_at <= CURRENT_TIMESTAMP)) IS NOT NULL THEN 1 ELSE 2 END ASC,
-      c.updated_at DESC,
-      c.id ASC
+    ORDER BY c.updated_at DESC
   `).all(userId);
 
   const enrichedChats = chats.map(chat => {
@@ -906,18 +762,12 @@ app.get('/api/chats', authMiddleware, (req, res) => {
       `).get(chat.id, userId);
 
       if (otherMember) {
-        partner = {
-          ...otherMember,
-          is_online: isUserOnline(otherMember.id)
-        };
+        partner = otherMember;
         chatName = otherMember.name;
         chatAvatar = otherMember.avatar;
       } else {
         const selfMember = db.prepare(`SELECT id, name, username, avatar, last_seen FROM users WHERE id = ?`).get(userId);
-        partner = {
-          ...selfMember,
-          is_online: isUserOnline(userId)
-        };
+        partner = selfMember;
         chatName = 'Избранное (Заметки)';
       }
     }
@@ -1072,15 +922,14 @@ app.get('/api/chats/:id', authMiddleware, (req, res) => {
   if (!chat) return res.status(404).json({ error: 'Чат не найден' });
 
   let enrichedChat = { ...chat };
-  let commonGroups = [];
   if (chat.type === 'direct') {
     const otherMember = db.prepare(`
-      SELECT u.id, u.name, u.username, u.avatar, u.last_seen, u.bio, u.role
+      SELECT u.id, u.name, u.username, u.avatar, u.last_seen
       FROM chat_members cm
       JOIN users u ON cm.user_id = u.id
       WHERE cm.chat_id = ? AND cm.user_id != ?
     `).get(chatId, userId) || db.prepare(`
-      SELECT u.id, u.name, u.username, u.avatar, u.last_seen, u.bio, u.role
+      SELECT u.id, u.name, u.username, u.avatar, u.last_seen
       FROM chat_members cm
       JOIN users u ON cm.user_id = u.id
       WHERE cm.chat_id = ?
@@ -1089,37 +938,19 @@ app.get('/api/chats/:id', authMiddleware, (req, res) => {
     if (otherMember) {
       enrichedChat.name = otherMember.name;
       enrichedChat.avatar = otherMember.avatar;
-      enrichedChat.partner = {
-        ...otherMember,
-        is_online: isUserOnline(otherMember.id)
-      };
-
-      commonGroups = db.prepare(`
-        SELECT c.id, c.name, c.avatar,
-               (SELECT COUNT(*) FROM chat_members WHERE chat_id = c.id) as member_count
-        FROM chats c
-        JOIN chat_members cm1 ON c.id = cm1.chat_id AND cm1.user_id = ?
-        JOIN chat_members cm2 ON c.id = cm2.chat_id AND cm2.user_id = ?
-        WHERE c.type = 'group'
-        ORDER BY c.name ASC
-      `).all(userId, otherMember.id);
+      enrichedChat.partner = otherMember;
     } else {
       enrichedChat.name = 'Личный диалог';
     }
   }
 
-  const rawMembers = db.prepare(`
+  const members = db.prepare(`
     SELECT u.id, u.name, u.username, u.avatar, u.last_seen, cm.role, cm.joined_at
     FROM chat_members cm
     JOIN users u ON cm.user_id = u.id
     WHERE cm.chat_id = ?
     ORDER BY CASE cm.role WHEN 'owner' THEN 1 WHEN 'admin' THEN 2 ELSE 3 END, u.name ASC
   `).all(chatId);
-
-  const members = rawMembers.map(m => ({
-    ...m,
-    is_online: isUserOnline(m.id)
-  }));
 
   let pinnedMessage = null;
   if (chat.pinned_message_id) {
@@ -1141,8 +972,7 @@ app.get('/api/chats/:id', authMiddleware, (req, res) => {
     chat: enrichedChat,
     myRole: memberRecord ? memberRecord.role : 'superadmin',
     members,
-    pinnedMessage,
-    commonGroups
+    pinnedMessage
   });
 });
 
@@ -1281,16 +1111,11 @@ app.post('/api/chats/:id/join', authMiddleware, (req, res) => {
       });
     });
 
-    // Notify group admins
-    const groupAdminIds = groupAdmins.map(a => a.user_id);
-    const superAdmin = db.prepare("SELECT id FROM users WHERE role = 'superadmin'").get();
-    if (superAdmin && groupAdminIds.includes(superAdmin.id)) {
-      sendTelegramNotification(
-        `🔔 <b>Новый участник в группе «${escapeTgHtml(chat.name)}»:</b>\n` +
-        `👤 <b>Имя:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
-        `Все администраторы группы оповещены.`
-      );
-    }
+    sendTelegramNotification(
+      `🔔 <b>Новый участник в группе «${escapeTgHtml(chat.name)}»:</b>\n` +
+      `👤 <b>Имя:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
+      `Все администраторы группы оповещены.`
+    );
   }
 
   res.json({ success: true, chatId: Number(chatId), name: chat.name });
@@ -1328,16 +1153,11 @@ app.post('/api/chats/join/:code', authMiddleware, (req, res) => {
       });
     });
 
-    // Notify group admins
-    const groupAdminIds = groupAdmins.map(a => a.user_id);
-    const superAdmin = db.prepare("SELECT id FROM users WHERE role = 'superadmin'").get();
-    if (superAdmin && groupAdminIds.includes(superAdmin.id)) {
-      sendTelegramNotification(
-        `🔔 <b>Новый участник в группе «${escapeTgHtml(chat.name)}»:</b>\n` +
-        `👤 <b>Имя:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
-        `Все администраторы группы оповещены.`
-      );
-    }
+    sendTelegramNotification(
+      `🔔 <b>Новый участник в группе «${escapeTgHtml(chat.name)}»:</b>\n` +
+      `👤 <b>Имя:</b> ${escapeTgHtml(req.user.name)} (@${escapeTgHtml(req.user.username)})\n` +
+      `Все администраторы группы оповещены.`
+    );
   }
 
   res.json({ success: true, chatId: chat.id, name: chat.name });
@@ -1685,12 +1505,7 @@ app.get('/api/users/search', authMiddleware, (req, res) => {
     `).all(myId);
   }
 
-  const enrichedUsers = users.map(u => ({
-    ...u,
-    is_online: isUserOnline(u.id)
-  }));
-
-  res.json({ users: enrichedUsers });
+  res.json({ users });
 });
 
 // ----------------------------------------------------
@@ -1761,6 +1576,8 @@ setInterval(() => {
 // SOCKET.IO REAL-TIME LOGIC
 // ----------------------------------------------------
 
+const onlineUsers = new Map();
+
 io.use((socket, next) => {
   const token = socket.handshake.auth.token;
   if (!token) return next(new Error('Authentication error'));
@@ -1815,10 +1632,6 @@ io.on('connection', (socket) => {
 
       const messageId = info.lastInsertRowid;
 
-      socket.join("chat_" + chatId);
-      const members = db.prepare("SELECT user_id FROM chat_members WHERE chat_id = ?").all(chatId);
-      members.forEach(m => io.to("user_" + m.user_id).socketsJoin("chat_" + chatId));
-
       if (!scheduledValue) {
         db.prepare('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(chatId);
 
@@ -1858,38 +1671,6 @@ io.on('connection', (socket) => {
 
         io.to('chat_' + chatId).emit('new_message', messagePayload);
         if (callback) callback({ success: true, message: messagePayload });
-
-        // Dispatch Web Push Notifications to all other chat members
-        try {
-          const chatInfo = db.prepare('SELECT type, name FROM chats WHERE id = ?').get(chatId);
-          const isGroup = chatInfo && chatInfo.type === 'group';
-          const chatTitle = isGroup ? (chatInfo.name || 'Групповой чат') : sender.name;
-
-          let bodyPreview = text || '';
-          if (type === 'voice') bodyPreview = '🎤 Голосовое сообщение';
-          else if (type === 'image') bodyPreview = '📷 Фотография';
-          else if (type === 'file') bodyPreview = `📎 Файл: ${fileName || 'документ'}`;
-
-          members.forEach(m => {
-            if (m.user_id !== userId) {
-              sendPushToUser(m.user_id, {
-                title: isGroup ? `${chatTitle} (${sender.name})` : sender.name,
-                body: bodyPreview,
-                icon: sender.avatar || '/icons/icon-192.png',
-                badge: '/icons/badge-monochrome.png',
-                tag: `chat_${chatId}`,
-                renotify: true,
-                data: {
-                  url: `/?chat=${chatId}`,
-                  chatId: chatId,
-                  type: 'new_message'
-                }
-              });
-            }
-          });
-        } catch (pushErr) {
-          console.error('Push dispatch error on send_message:', pushErr);
-        }
       } else {
         if (callback) callback({ success: true, scheduled: true, scheduledAt: scheduledValue });
       }
@@ -1951,108 +1732,12 @@ io.on('connection', (socket) => {
 
         io.to('chat_' + targetChatId).emit('new_message', messagePayload);
         forwardedCount++;
-
-        // Push notification for forwarded message
-        try {
-          const targetChatInfo = db.prepare('SELECT type, name FROM chats WHERE id = ?').get(targetChatId);
-          const isGroup = targetChatInfo && targetChatInfo.type === 'group';
-          const chatTitle = isGroup ? (targetChatInfo.name || 'Групповой чат') : sender.name;
-          const targetMembers = db.prepare("SELECT user_id FROM chat_members WHERE chat_id = ?").all(targetChatId);
-
-          targetMembers.forEach(m => {
-            if (m.user_id !== userId) {
-              sendPushToUser(m.user_id, {
-                title: isGroup ? `${chatTitle} • ${sender.name}` : sender.name,
-                body: `↪️ Переслано: ${origMsg.type === 'text' ? (textDecrypted || '') : origMsg.type}`,
-                icon: sender.avatar || '/icons/icon-192.png',
-                badge: '/icons/badge-monochrome.png',
-                tag: `chat_${targetChatId}`,
-                renotify: true,
-                data: {
-                  url: `/?chat=${targetChatId}`,
-                  chatId: targetChatId,
-                  type: 'new_message'
-                }
-              });
-            }
-          });
-        } catch (fwdPushErr) {
-          console.error('Push error on forward_message:', fwdPushErr);
-        }
       }
 
       if (callback) callback({ success: true, count: forwardedCount });
     } catch (err) {
       console.error('Socket forward_message error:', err);
       if (callback) callback({ error: 'Ошибка пересылки сообщения' });
-    }
-  });
-
-  socket.on('forward_messages', async ({ messageIds, targetChatIds }, callback) => {
-    try {
-      if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
-        if (callback) callback({ error: 'Не выбраны сообщения' });
-        return;
-      }
-      if (!targetChatIds || !Array.isArray(targetChatIds) || targetChatIds.length === 0) {
-        if (callback) callback({ error: 'Не выбраны получатели' });
-        return;
-      }
-
-      const placeholders = messageIds.map(() => '?').join(',');
-      const origMessages = db.prepare(`SELECT * FROM messages WHERE id IN (${placeholders}) ORDER BY id ASC`).all(...messageIds);
-      if (!origMessages || origMessages.length === 0) {
-        if (callback) callback({ error: 'Сообщения не найдены' });
-        return;
-      }
-
-      const sender = db.prepare('SELECT id, name, username, avatar FROM users WHERE id = ?').get(userId);
-      let totalForwarded = 0;
-
-      for (const origMsg of origMessages) {
-        const origSender = db.prepare('SELECT name, username FROM users WHERE id = ?').get(origMsg.sender_id);
-        const origSenderName = origSender ? origSender.name : 'Пользователь';
-        const textDecrypted = origMsg.type === 'text' && origMsg.text_encrypted ? decryptText(origMsg.text_encrypted) : '';
-        const forwardText = origMsg.type === 'text' ? `↪️ Переслано от ${origSenderName}:\n${textDecrypted}` : (origMsg.text_encrypted ? decryptText(origMsg.text_encrypted) : null);
-        const encryptedForwardText = forwardText ? encryptText(forwardText) : null;
-
-        for (const targetChatId of targetChatIds) {
-          const member = db.prepare('SELECT 1 FROM chat_members WHERE chat_id = ? AND user_id = ?').get(targetChatId, userId);
-          if (!member && user.role !== 'superadmin') continue;
-
-          const info = db.prepare(`
-            INSERT INTO messages (chat_id, sender_id, text_encrypted, reply_to_id, type, file_url, file_name, file_size, file_duration)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(targetChatId, userId, encryptedForwardText, null, origMsg.type, origMsg.file_url, origMsg.file_name, origMsg.file_size, origMsg.file_duration);
-
-          db.prepare('UPDATE chats SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(targetChatId);
-
-          const messagePayload = {
-            id: info.lastInsertRowid,
-            chat_id: targetChatId,
-            sender_id: userId,
-            sender,
-            text: forwardText || '',
-            type: origMsg.type,
-            file_url: origMsg.file_url,
-            file_name: origMsg.file_name,
-            file_size: origMsg.file_size,
-            file_duration: origMsg.file_duration,
-            reply_to: null,
-            reactions: {},
-            is_edited: false,
-            created_at: new Date().toISOString()
-          };
-
-          io.to('chat_' + targetChatId).emit('new_message', messagePayload);
-          totalForwarded++;
-        }
-      }
-
-      if (callback) callback({ success: true, count: totalForwarded });
-    } catch (err) {
-      console.error('Socket forward_messages error:', err);
-      if (callback) callback({ error: 'Ошибка пакетной пересылки' });
     }
   });
 
@@ -2097,37 +1782,6 @@ io.on('connection', (socket) => {
       if (callback) callback({ success: true });
     } catch (err) {
       if (callback) callback({ error: 'Ошибка удаления' });
-    }
-  });
-
-  socket.on('delete_messages', ({ messageIds, chatId }, callback) => {
-    try {
-      if (!Array.isArray(messageIds) || messageIds.length === 0) {
-        return callback && callback({ error: 'Не выбраны сообщения для удаления' });
-      }
-
-      const isPrivileged = (user.role === 'superadmin' || user.role === 'admin');
-      const deletedIds = [];
-
-      for (const mid of messageIds) {
-        const msg = db.prepare('SELECT * FROM messages WHERE id = ? AND chat_id = ?').get(mid, chatId);
-        if (msg && (msg.sender_id === userId || isPrivileged)) {
-          db.prepare('DELETE FROM messages WHERE id = ?').run(mid);
-          deletedIds.push(Number(mid));
-        }
-      }
-
-      if (deletedIds.length > 0) {
-        io.to('chat_' + chatId).emit('messages_deleted', {
-          chatId: Number(chatId),
-          messageIds: deletedIds
-        });
-      }
-
-      if (callback) callback({ success: true, count: deletedIds.length });
-    } catch (err) {
-      console.error('delete_messages error:', err);
-      if (callback) callback({ error: 'Ошибка пакетного удаления' });
     }
   });
 
@@ -2178,40 +1832,19 @@ io.on('connection', (socket) => {
   // ----------------------------------------------------
   socket.on('call_start', ({ toUserId, type, offer, chatId }) => {
     const targetUserId = Number(toUserId);
-    const isOnline = onlineUsers.has(targetUserId) && onlineUsers.get(targetUserId).size > 0;
-
-    // Send high-priority Push Notification for incoming call (crucial for iOS and background/sleep mode!)
-    sendPushToUser(targetUserId, {
-      title: `📞 Входящий ${type === 'video' ? 'видеозвонок' : 'аудиозвонок'}`,
-      body: `${user.name} (@${user.username}) вызывает вас в GIN-Chat`,
-      icon: user.avatar || '/icons/icon-192.png',
-      badge: '/icons/badge-monochrome.png',
-      tag: `call_${userId}`,
-      urgency: 'high',
-      ttl: 45,
-      renotify: true,
-      data: {
-        url: `/?chat=${chatId}`,
-        chatId: chatId,
-        type: 'incoming_call',
-        fromUserId: userId
-      }
-    });
-
-    if (isOnline) {
-      io.to('user_' + targetUserId).emit('incoming_call', {
-        fromUserId: userId,
-        callerName: user.name,
-        callerUsername: user.username,
-        callerAvatar: user.avatar,
-        type: type || 'audio',
-        offer,
-        chatId
-      });
-    } else {
-      // User is currently disconnected from socket; push notification sent to wake device
-      socket.emit('call_ringing', { message: 'Оповещение отправлено на устройство пользователя...' });
+    if (!onlineUsers.has(targetUserId) || onlineUsers.get(targetUserId).size === 0) {
+      return socket.emit('call_failed', { reason: 'offline', message: 'Пользователь сейчас не в сети' });
     }
+
+    io.to('user_' + targetUserId).emit('incoming_call', {
+      fromUserId: userId,
+      callerName: user.name,
+      callerUsername: user.username,
+      callerAvatar: user.avatar,
+      type: type || 'audio',
+      offer,
+      chatId
+    });
   });
 
   socket.on('call_accept', ({ toUserId, answer }) => {
@@ -2264,7 +1897,6 @@ app.get('*', (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 GIN-Chat running on http://0.0.0.0:${PORT}`);
-  const domainUrl = (process.env.APP_URL || '4at.gincz.com').replace(/^https?:\/\/(www\.)?/, '').replace(/\/+$/, '');
-  sendTelegramNotification(`🚀 <b>GIN-Chat сервер v030 (с поддержкой Web Push для iOS/Safari и Desktop) запущен:</b>\n${domainUrl}`);
-  // pollTelegramUpdates(); // Delegated to centralized bot
+  sendTelegramNotification('🚀 <b>GIN-Chat сервер v021 запущен:</b>\nhttps://4at.gincz.com');
+  pollTelegramUpdates();
 });
