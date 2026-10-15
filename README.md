@@ -26,6 +26,7 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 ## Table of Contents
 
 - [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
+  - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](Windows/GIN-Voice/README.md)
   - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
   - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](Windows/VPN/GIN-VPN/README.md)
   - [MEGA Drive — Universal Standalone Cloud Mount Engine](Windows/MEGA/README.md)
@@ -58,6 +59,7 @@ All native Windows applications are developed with zero external runtime depende
 
 | Application / Package | Binary (.exe) / Launcher | Description & Key Architecture | Release & Status |
 | :--- | :--- | :--- | :---: |
+| 🎙️ **[GIN-Voice](Windows/GIN-Voice/README.md)** | `GIN-Voice.exe` | Ultra-fast native Win32 voice typing with Groq Whisper Large v3 + Qwen 27B AI Code-Switching post-processor. 0.15s latency, multilingual transliteration auto-repair (Czech/English/Russian), live customizable HUD typography, 0% CPU. | 🟢 **`v030`** |
 | 🌐 **[GIN-NetScan](Windows/GIN-NetScan/README.md)** | `GIN-NetScan_v025.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v025`** |
 | 🛡️ **[GIN-VPN](Windows/VPN/GIN-VPN/README.md)** | `GIN-VPN_v013.exe`<br>`GIN-VPN.ps1` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v013`** |
 | ☁️ **[MEGA Drive](Windows/MEGA/README.md)** | `MEGA_Drive_Universal.cmd` | Standalone universal cloud drive mount engine (`M:`) with 2FA support and auto-reconnect. | 🟢 **Stable** |
