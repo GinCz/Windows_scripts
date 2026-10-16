@@ -12,9 +12,26 @@
 
 **Lightning-fast, native Win32 voice dictation utility with dynamic multilingual code-switching (Czech, English, Russian + 15 languages), live on-screen HUD, customizable typography, and zero local CPU footprint.**
 
-[Overview](#-overview) • [Key Features](#-key-features) • [Settings & Control Center](#-settings--control-center-deep-dive) • [Architecture](#-architecture--how-it-works) • [Installation](#-installation--quick-start) • [Configuration](#-configuration--groq-api-key) • [Changelog](CHANGELOG.md)
+[⬇️ Download v032](#-quick-download--latest-release-v032) • [Overview](#-overview) • [Key Features](#-key-features) • [Settings & Control Center](#-settings--control-center-deep-dive) • [Architecture](#-architecture--how-it-works) • [Installation](#-installation--quick-start) • [Configuration](#-configuration--groq-api-key) • [Changelog](CHANGELOG.md)
 
 </div>
+
+---
+
+## 🚀 Quick Download & Latest Release (v032)
+
+| Package | Filename | Direct Download Link | Format |
+| :--- | :--- | :---: | :--- |
+| 🎙️ **GIN-Voice (Latest)** | `GIN-Voice.exe` | [**⬇️ Download GIN-Voice.exe (v032)**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe) | Portable & Auto-Installer |
+| 📦 **Versioned Setup** | `GIN-Voice_Setup_v032.exe` | [**⬇️ Download GIN-Voice_Setup_v032.exe**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice_Setup_v032.exe) | Standalone Installer |
+
+### ⚡ 1-Click PowerShell Install
+Copy and paste into Windows PowerShell:
+```powershell
+Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe" -OutFile "$env:USERPROFILE\Downloads\GIN-Voice.exe"; Start-Process "$env:USERPROFILE\Downloads\GIN-Voice.exe"
+```
+
+> **Zero Complex Setup:** Download `GIN-Voice.exe` and double-click to run. On launch, it automatically registers in `%LOCALAPPDATA%\GIN-Voice\`, creates desktop shortcuts, adds a system tray microphone icon, and prompts for your free Groq API key.
 
 ---
 
@@ -134,11 +151,13 @@ GIN-Voice v030 detects when multiple alphabets are active and routes the text th
 
 ## 📥 Installation & Quick Start
 
-### Method 1: Precompiled Portable Executable (Recommended)
-1. Download the latest **`GIN-Voice.exe`** from the [GitHub Releases](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice).
-2. Run `GIN-Voice.exe`. On first launch, it will automatically register itself in `%LOCALAPPDATA%\GIN-Voice\`, install desktop shortcuts, and configure the system tray icon.
-3. Paste your free Groq API key in the setup window and click **«💾 Save & Apply»**.
-4. Press **`[ F4 ]`** anywhere in Windows to begin voice typing!
+### Method 1: Precompiled Executable (Recommended)
+1. Download either the direct executable or versioned installer:
+   - [**Direct Executable: `GIN-Voice.exe`**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe)
+   - [**Versioned Package: `GIN-Voice_Setup_v032.exe`**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice_Setup_v032.exe)
+2. Run the downloaded file. It automatically registers in `%LOCALAPPDATA%\GIN-Voice\`, installs the desktop shortcut, and starts the system tray icon.
+3. Paste your free Groq API key into the Settings window and click **«💾 Save & Apply»**.
+4. Press **`[ F4 ]`** anywhere in Windows to begin voice dictation!
 
 ### Method 2: Build from Source (Cross-Compile with Go)
 GIN-Voice can be cross-compiled for Windows from Linux, macOS, or Windows with Go 1.22+:
