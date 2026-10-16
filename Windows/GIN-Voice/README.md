@@ -7,7 +7,7 @@
 ![Speech Engine](https://img.shields.io/badge/STT-Groq%20Whisper%20Large%20v3-F55036?logo=openai&logoColor=white)
 ![AI Normalizer](https://img.shields.io/badge/AI%20Post--Processor-Qwen%2027B%20LPU-8A2BE2)
 ![Version](https://img.shields.io/badge/Release-v032-brightgreen)
-![License](https://img.shields.io/badge/License-MIT-blue)
+![License](https://img.shields.io/badge/License-Freeware%20%7C%20Free%20to%20Use-blue)
 ![CPU Overhead](https://img.shields.io/badge/Local%20CPU%20Load-0%25-success)
 
 **Lightning-fast, native Win32 voice dictation utility with dynamic multilingual code-switching (Czech, English, Russian + 15 languages), live on-screen HUD, customizable typography, and zero local CPU footprint.**
@@ -20,10 +20,15 @@
 
 ## 🚀 Quick Download & Latest Release (v032)
 
-| Package | Filename | Direct Download Link | Format |
-| :--- | :--- | :---: | :--- |
-| 🎙️ **GIN-Voice (Latest)** | `GIN-Voice.exe` | [**⬇️ Download GIN-Voice.exe (v032)**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe) | Portable & Auto-Installer |
-| 📦 **Versioned Setup** | `GIN-Voice_Setup_v032.exe` | [**⬇️ Download GIN-Voice_Setup_v032.exe**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice_Setup_v032.exe) | Standalone Installer |
+<div align="center">
+
+### 🎙️ [⬇️ Click Here to Download GIN-Voice.exe (v032)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe)
+*Single standalone executable & auto-installer (13.7 MB) • Windows 10/11 64-bit*
+
+</div>
+
+> [!NOTE]
+> **Strict Single-Release Policy:** We intentionally distribute **only the latest, thoroughly tested production build**. Outdated legacy versions are retired and not hosted here to ensure all users receive the most stable, bug-free, and optimized experience.
 
 ### ⚡ 1-Click PowerShell Install
 Copy and paste into Windows PowerShell:
@@ -228,6 +233,8 @@ Customize word mappings, technical abbreviations, and project names by editing `
 
 ---
 
-## 📄 License
+## 📄 License & Distribution
 
-This project is licensed under the **MIT License** — free for personal, educational, and commercial use. See `LICENSE` for details.
+This application is provided completely **free of charge (Freeware)** for personal, educational, and commercial use.
+- **100% Free:** Zero ads, zero telemetry, zero hidden monetization, zero subscription fees.
+- **Proprietary Freeware Core:** The engine core and multilingual AI code-switching architecture are developed and maintained exclusively by Vladimir Bulantsev. Reverse engineering, decompilation, redistribution for a fee, or unauthorized repackaging are strictly prohibited.
