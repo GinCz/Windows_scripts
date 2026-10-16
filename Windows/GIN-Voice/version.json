@@ -1,7 +1,7 @@
 {
-  "version": "v031",
+  "version": "v032",
   "name": "GIN-Voice",
-  "engine": "WaveIn Event AI + Multilingual Conditioning & Normalizer",
+  "engine": "WaveIn Event AI Lock-Free Anti-Deadlock Engine + Multilingual Conditioning",
   "release_date": "2026-10-16",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"

@@ -19,18 +19,24 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"unsafe"
 )
 
+func init() {
+	runtime.LockOSThread()
+}
+
 const (
 	AppName       = "GIN-Voice"
-	AppVersion    = "v031"
-	AppTitle      = "GIN-Voice by VladiMIR+AI [v031]"
+	AppVersion    = "v032"
+	AppTitle      = "GIN-Voice by VladiMIR+AI [v032]"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 	GroqKeysURL   = "https://console.groq.com/keys"
 )
@@ -532,7 +538,7 @@ var (
 	btnDict         uintptr
 	langCheckHWnd   = make(map[string]uintptr)
 	nid             NOTIFYICONDATAW
-	isRecording     bool
+	isRecording     atomic.Bool
 	recordMutex     sync.Mutex
 	trayCreated     bool
 	updateAvailable string
@@ -549,12 +555,13 @@ var (
 	hFontHUD        uintptr
 
 	// WaveIn Event Audio Engine
-	hWaveIn       uintptr
-	hWaveEvent    uintptr
-	waveBuffers   [8][]byte
-	waveHeaders   [8]WAVEHDR
-	capturedAudio []byte
-	audioMutex    sync.Mutex
+	hWaveIn         uintptr
+	hWaveEvent      uintptr
+	captureDoneChan chan struct{}
+	waveBuffers     [8][]byte
+	waveHeaders     [8]WAVEHDR
+	capturedAudio   []byte
+	audioMutex      sync.Mutex
 
 	// UI Languages supported
 	UILanguages = []LanguageItem{
@@ -1438,7 +1445,13 @@ func startRecordingWaveIn() error {
 	}
 
 	// Dedicated background event capture goroutine (100% decoupled from Windows GUI message loop)
-	go func(targetWaveIn, targetEvent uintptr) {
+	captureDone := make(chan struct{})
+	audioMutex.Lock()
+	captureDoneChan = captureDone
+	audioMutex.Unlock()
+
+	go func(targetWaveIn, targetEvent uintptr, done chan struct{}) {
+		defer close(done)
 		for {
 			r, _, _ := procWaitForSingleObject.Call(targetEvent, 60)
 			if r != 0 && r != 258 {
@@ -1446,7 +1459,7 @@ func startRecordingWaveIn() error {
 			}
 
 			audioMutex.Lock()
-			active := isRecording && hWaveIn == targetWaveIn
+			active := isRecording.Load() && hWaveIn == targetWaveIn
 			if !active {
 				audioMutex.Unlock()
 				break
@@ -1459,14 +1472,14 @@ func startRecordingWaveIn() error {
 						capturedAudio = append(capturedAudio, chunk...)
 					}
 					waveHeaders[i].DwFlags &^= WHDR_DONE
-					if isRecording && hWaveIn == targetWaveIn {
+					if isRecording.Load() && hWaveIn == targetWaveIn {
 						procWaveInAddBuffer.Call(targetWaveIn, uintptr(unsafe.Pointer(&waveHeaders[i])), uintptr(unsafe.Sizeof(waveHeaders[i])))
 					}
 				}
 			}
 			audioMutex.Unlock()
 		}
-	}(hWaveIn, hWaveEvent)
+	}(hWaveIn, hWaveEvent, captureDone)
 
 	return nil
 }
@@ -1478,12 +1491,27 @@ func stopRecordingWaveIn() []byte {
 	audioMutex.Lock()
 	curWaveIn := hWaveIn
 	curEvent := hWaveEvent
+	doneChan := captureDoneChan
 	hWaveIn = 0
 	hWaveEvent = 0
+	captureDoneChan = nil
 	audioMutex.Unlock()
 
 	if curWaveIn == 0 {
 		return nil
+	}
+
+	// Signal event to immediately unblock background capture goroutine so it exits cleanly
+	if curEvent != 0 {
+		procSetEvent.Call(curEvent)
+	}
+
+	// Wait up to 300ms for capture goroutine to finish safely
+	if doneChan != nil {
+		select {
+		case <-doneChan:
+		case <-time.After(300 * time.Millisecond):
+		}
 	}
 
 	procWaveInStop.Call(curWaveIn)
@@ -1512,14 +1540,14 @@ func stopRecordingWaveIn() []byte {
 
 func startRecording() {
 	recordMutex.Lock()
-	defer recordMutex.Unlock()
-
-	if isRecording {
+	if isRecording.Load() {
+		recordMutex.Unlock()
 		return
 	}
 
 	cleanKey := strings.TrimSpace(config.GroqAPIKey)
 	if cleanKey == "" {
+		recordMutex.Unlock()
 		playGentleSound("notice")
 		showSettingsDialog()
 		return
@@ -1527,12 +1555,15 @@ func startRecording() {
 
 	err := startRecordingWaveIn()
 	if err != nil {
+		recordMutex.Unlock()
 		writeLog("WaveIn start error: " + err.Error())
 		playGentleSound("notice")
 		return
 	}
 
-	isRecording = true
+	isRecording.Store(true)
+	recordMutex.Unlock()
+
 	playGentleSound("start")
 	ui := getUI()
 	updateTrayState(true, fmt.Sprintf("%s | %s", AppTitle, fmt.Sprintf(ui.HudRecording, config.Hotkey)))
@@ -1542,11 +1573,11 @@ func startRecording() {
 
 func stopRecordingAndTranscribe() {
 	recordMutex.Lock()
-	if !isRecording {
+	if !isRecording.Load() {
 		recordMutex.Unlock()
 		return
 	}
-	isRecording = false
+	isRecording.Store(false)
 	recordMutex.Unlock()
 
 	ui := getUI()
@@ -1599,14 +1630,10 @@ func stopRecordingAndTranscribe() {
 }
 
 func toggleRecording() {
-	recordMutex.Lock()
-	rec := isRecording
-	recordMutex.Unlock()
-
-	if !rec {
-		startRecording()
-	} else {
+	if isRecording.Load() {
 		stopRecordingAndTranscribe()
+	} else {
+		startRecording()
 	}
 }
 
@@ -2241,9 +2268,7 @@ func showContextMenu() {
 
 	ui := getUI()
 	var titleText string
-	recordMutex.Lock()
-	rec := isRecording
-	recordMutex.Unlock()
+	rec := isRecording.Load()
 
 	if rec {
 		titleText = fmt.Sprintf(ui.MenuStopDictation, config.Hotkey)
@@ -3823,6 +3848,7 @@ func checkAndSelfInstall() {
 }
 
 func main() {
+	runtime.LockOSThread()
 	checkAndSelfInstall()
 
 	// Single Instance Mutex
