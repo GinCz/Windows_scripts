@@ -1,72 +1,116 @@
-# 🛡️ GIN-VPN: High-Speed Native Xray Desktop Client (VLESS + Reality + Vision)
+# 🛡️ GIN-VPN by VladiMIR+AI (v058)
+### Нативный высокоскоростной Xray клиент (VLESS + Reality + Vision) для Windows
+
+---
 
 <div align="center">
 
-![Platform](https://img.shields.io/badge/Platform-Windows%207%20%7C%208.1%20%7C%2010%20%7C%2011%20%7C%20Server-0078D4?logo=windows&logoColor=white)
-![Language](https://img.shields.io/badge/Language-Go%201.22+-00ADD8?logo=go&logoColor=white)
-![Core](https://img.shields.io/badge/Core-Xray%20VLESS%20Reality%20Vision-FF6D00)
-![Release](https://img.shields.io/badge/Release-v056-brightgreen)
-![License](https://img.shields.io/badge/License-Freeware%20%7C%20Free%20to%20Use-blue)
+# 🚀 [СКАЧАТЬ ПОСЛЕДНЮЮ ВЕРСИЮ GIN-VPN (v058)](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe)
+### ⚡ Нажмите на зелёную кнопку для мгновенного скачивания готовой программы:
 
-**Ultra-fast, native Win32 anti-censorship desktop client with embedded Xray-core. Bypasses deep packet inspection (DPI) with zero external dependencies and zero background runtime overhead.**
+<br/>
 
-[⬇️ Download v056](#-quick-download--latest-release-v056) • [Quick Start](#-quick-start) • [Key Features](#-key-features) • [Changelog](CHANGELOG.md)
+[![Download GIN-VPN](https://img.shields.io/badge/📥_СКАЧАТЬ_GIN--VPN.exe_(v058)-ПРЯМАЯ_ЗАГРУЗКА_(15_МБ)-00C853?style=for-the-badge&logo=windows&logoColor=white)](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe)
+
+<br/>
+
+[![Alternative Mirror](https://img.shields.io/badge/Зеркало_загрузки_(GitHub_Raw)-1E88E5?style=flat-square&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-VPN/GIN-VPN.exe)
+[![Version](https://img.shields.io/badge/Version-v058_(Latest_Release)-00E676.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts)
+[![Platform](https://img.shields.io/badge/Платформа-Windows_7_/_8.1_/_10_/_11_/_Server-0288D1.svg?style=flat-square)](https://microsoft.com/windows)
+[![Engine](https://img.shields.io/badge/Движок-Xray_Core_VLESS--Reality-FF6D00.svg?style=flat-square)](https://github.com/XTLS/Xray-core)
+[![License](https://img.shields.io/badge/Лицензия-MIT_%7C_100%25_Free-76FF03.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 </div>
 
 ---
 
-## 🚀 Quick Download & Latest Release (v056)
+## ⚡ Быстрый старт (Zero Installation)
 
-<div align="center">
+1. **Скачайте** единственный файл [`GIN-VPN.exe`](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe) (15 МБ).
+2. **Запустите его** на любом компьютере с Windows (Windows 7 SP1, 8.1, 10, 11, Windows Server 2008–2025). Никаких сторонних программ, библиотек или Python устанавливать не нужно — высокоскоростной движок Xray Core уже встроен внутрь файла.
+3. **Вставьте ваш VLESS-ключ** (кнопка `[ 📋 Вставить ]`) и нажмите **`[ ▶ ПОДКЛЮЧИТЬ VPN ]`**.
 
-### 🛡️ [⬇️ Click Here to Download GIN-VPN.exe (v056)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-VPN/GIN-VPN.exe)
-*Single standalone executable & auto-installer (15.9 MB) • Windows 7/8.1/10/11 & Server*
+---
 
-</div>
+## 🌟 Ключевые возможности GIN-VPN (v056)
 
-> [!NOTE]
-> **Strict Single-Release Policy:** We exclusively distribute **only the latest, thoroughly tested production build**. Outdated legacy versions are retired and not hosted here to ensure all users receive the most stable, bug-free, and optimized experience.
+### 🛡️ 0. Защита от повторного запуска (Single-Instance Protection) (Новинка v056)
+- **Игнорирование повторных запусков:** при попытке открыть приложение второй и более раз, новые копии процесса полностью игнорируются и закрываются.
+- **Фокусировка активного окна:** при повторном запуске уже запущенное главное окно GIN-VPN автоматически разворачивается (в том числе из трея) и выводится на передний план.
+- **Двухуровневый контроль ядра:** комбинация именованного мьютекса Windows (`CreateMutexW`) и проверка зарегистрированного класса окна намертво предотвращает дублирование процессов.
 
-### ⚡ 1-Click PowerShell Install
-Copy and paste into Windows PowerShell:
-```powershell
-Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-VPN/GIN-VPN.exe" -OutFile "$env:USERPROFILE\Downloads\GIN-VPN.exe"; Start-Process "$env:USERPROFILE\Downloads\GIN-VPN.exe"
+### 🔃 1. Наглядные кнопки сортировки серверов [ ▲ Вверх ] и [ ▼ Вниз ]
+- **Полноразмерные кнопки сортировки:** кнопки `[ ▲ Вверх ]` и `[ ▼ Вниз ]` над таблицей серверов позволяют мгновенно перемещать выбранный сервер в любую позицию списка с автоматическим выделением и сохранением порядка.
+- **Сортировка из контекстного меню:** при правом клике на любой сервер в списке пункты `▲ Переместить выше (Вверх)` и `▼ Переместить ниже (Вниз)` доступны в самом начале меню.
+
+### 🚀 1. Авто-обновление по правой кнопке мыши со строгой проверкой версии
+- **Правый клик по кнопке `[ 🔄 Обновить ]`:** мгновенно запускает загрузку и обновление без подтверждений ТОЛЬКО если на сервере действительно есть более новая версия. Если установлена последняя версия, программа сообщает об этом в логе и не выполняет лишних скачиваний и перезапусков.
+- **Чистое контекстное меню трея:** лаконичный пункт `[ 🔄 Обновить сейчас ]` без лишних скобок.
+- **Обязательная доставка установщиков:** каждый новый релиз автоматически развертывается на Рабочий стол (`/MEGA/DOCS/desktop/`, `/mega/docs/desktop/`) и в хранилище сетевых утилит VPN: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN\`.
+
+### 🔄 2. Встроенное умное автообновление (In-App Auto-Updater)
+- При нажатии левой кнопки мыши на **`[ 🔄 Обновить ]`** программа проверяет наличие обновлений на GitHub.
+- Если доступна новая версия, предлагается стандартный диалог с подтверждением. При правом клике — обновление происходит мгновенно при наличии свежей версии.
+
+### 💾 2. Надежное сохранение всех настроек и языка (Persistence)
+- Выбранный язык (**RU / EN**) и тема оформления (**Дневная / Ночная OLED**) мгновенно сохраняются в Windows Registry (`HKCU\Software\VladiMIR\GIN-VPN`) и файле `settings.json`.
+- При перезагрузке компьютера или перезапуске приложения все ваши настройки, выбранный сервер и тема восстанавливаются мгновенно с первого кадра.
+
+### 📑 3. Установка и чистое удаление (Official Windows Uninstaller)
+- Кнопка **`[ 📑 Установить ]`** создает ярлыки с золотым щитом на Рабочем столе и в меню Пуск, регистрирует приложение в «Установке и удалении программ Windows».
+- Встроенная программа удаления **`uninstall.exe`** чисто и безопасно удаляет приложение, восстанавливает системные прокси-настройки и очищает ярлыки.
+
+### 🛡️ 4. Умный сплит-туннель (Smart Split Shield)
+- Российские сайты (`.ru`, Госуслуги, Сбер, Т-Банк, ВКонтакте, Яндекс) работают напрямую на максимальной скорости вашего провайдера.
+- Заблокированные и международные сервисы (YouTube, Instagram, ChatGPT, Twitter/X) направляются через скоростной шифрованный туннель VLESS Reality.
+- Встроенный редактор правил позволяет добавлять собственные домены исключений (ЖКХ, локальные сервисы).
+
+### 📦 5. Экспорт и импорт бэкапов серверов в 1 клик
+- Экспорт всей вашей базы серверов в текстовый файл `GIN-VPN_BackUp__YYYY-MM-DD.txt` на Рабочий стол.
+- Быстрый импорт серверов из файлов бэкапа или списка ключей с автоматической защитой от дубликатов.
+
+---
+
+## 🖥️ Скриншоты и режимы оформления
+
+| Дневной режим (Light Theme) | Ночной OLED режим (Dark Theme) |
+| :---: | :---: |
+| Чистый контрастный светлый интерфейс | Глубокий черный OLED-интерфейс без артефактов |
+
+---
+
+## 🏛️ Архитектура приложения
+
+```text
+┌────────────────────────────────────────────────────────┐
+│               GIN-VPN.exe (Единый файл)               │
+│  ┌─────────────────────────┐  ┌─────────────────────┐  │
+│  │    Win32 GUI Клиент     │  │ Встроенный Xray     │  │
+│  │ (Dark/Day, Трей, Языки) │  │ Core Engine (Gzip)  │  │
+│  └────────────┬────────────┘  └──────────┬──────────┘  │
+└───────────────┼──────────────────────────┼─────────────┘
+                │                          │ (Распаковка в памяти)
+                │ IPC                      ▼
+        ┌───────▼───────────────────────────────┐
+        │       Локальный демон Xray Core       │
+        └───────────────────┬───────────────────┘
+                            │ (TLS Reality Vision)
+        ┌───────────────────▼───────────────────┐
+        │      Серверы DE / RU / FI / ES        │
+        └───────────────────────────────────────┘
 ```
 
 ---
 
-## ⚡ Quick Start
-
-1. **Download** the single standalone binary [`GIN-VPN.exe`](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-VPN/GIN-VPN.exe).
-2. **Run it** — no Python, .NET, or external runtimes required. The high-speed Xray-core engine is embedded directly inside the PE binary.
-3. **Paste your VLESS URL** (click `[ 📋 Paste ]`) and press **`[ ▶ CONNECT VPN ]`**.
-
----
-
-## 🌟 Key Features
-
-* **🛡️ Single-Instance Guard (v056):** Prevents multiple running processes via named Win32 mutex and window class detection. Auto-restores and focuses existing window on duplicate launches.
-* **⚡ Native Embedded Xray-Core:** High-performance VLESS + Reality + Vision implementation capable of gigabit throughput with low memory footprint (~25 MB RAM).
-* **🌐 Dual IP Leak Verification:** Simultaneous real-time detection of external ISP IP and VPN tunnel IP with ping latency measurements.
-* **🔃 Interactive Server Management:** Reorder connection priority with `[ ▲ Up ]` and `[ ▼ Down ]` buttons, auto-reconnect, and health checks.
-* **🔄 Smart In-App Auto-Updater:** 1-Click background check against GitHub raw releases; right-click for silent instant update.
-* **💾 Windows Persistence:** Remembers selected language (RU/EN), dark/OLED themes, and active servers across restarts in Windows Registry and local config.
+## 🔒 Безопасность и конфиденциальность (Privacy-First)
+- **100% чистый открытый исходный код:** исходники на Go доступны прямо в этом репозитории (`main.go`).
+- **Защита от утечек:** при первом запуске список серверов пуст — ваши приватные ключи никогда не попадут к третьим лицам.
+- **Шифрование настроек:** конфигурации профилей хранятся локально в системном реестре Windows текущего пользователя.
 
 ---
 
-## 👤 Author & Maintainer
-
-* **Author:** **Vladimir Bulantsev** ([GinCz ↗](https://github.com/GinCz))
-* **Specialization:** Senior Infrastructure & DevOps Engineer, PCI DSS Certified Analyst, Windows & Linux Sysadmin.
-* **Email:** `gin@volny.cz` | `gin.vladimir@gmail.com`
-* **LinkedIn:** [linkedin.com/in/gincz ↗](https://www.linkedin.com/in/gincz/)
-* **Repository:** [https://github.com/GinCz/Windows_scripts ↗](https://github.com/GinCz/Windows_scripts)
-
----
-
-## 📄 License & Distribution
-
-This application is provided completely **free of charge (Freeware)** for personal, educational, and commercial use.
-- **100% Free:** Zero ads, zero telemetry, zero hidden monetization, zero subscription fees.
-- **Proprietary Freeware Core:** The network management engine, system tray integration, and UI architecture are developed and maintained exclusively by Vladimir Bulantsev. Reverse engineering, decompilation, redistribution for a fee, or unauthorized repackaging are strictly prohibited.
+## 👨‍💻 Автор и разработка
+- **Автор:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI Assistant
+- **Репозитории проекта:**
+  - [Windows_scripts / Windows / GIN-VPN ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN)
+  - [Linux_Server_Public / Windows / GIN-VPN ↗](https://github.com/GinCz/Linux_Server_Public/tree/main/Windows/GIN-VPN)
