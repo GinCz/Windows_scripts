@@ -30,11 +30,16 @@ var embeddedXrayGz []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v060"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v060]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v060]"
+	AppVersion    = "v061"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v061]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v061]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
+
+	// 3-Way Theme Modes (Day / Gray / Night)
+	ThemeDay   = 0 // ☀️ Day (Light)
+	ThemeGray  = 1 // ⛅ Gray / Cloud (Graphite / Slate)
+	ThemeNight = 2 // 🌙 Night (Dark OLED)
 
 	// Dual IP Verification Endpoints
 	EndpointServerDE = "152.53.182.222"
@@ -427,6 +432,7 @@ var (
 	hwndMain    uintptr
 	hwndTitle   uintptr
 	hwndBtnDay  uintptr
+	hwndBtnGray uintptr
 	hwndBtnNight uintptr
 	hwndBtnLangEN uintptr
 	hwndBtnLangRU uintptr
@@ -502,18 +508,23 @@ var (
 	hIconConnected uintptr
 
 	hBrushBgDay      uintptr
+	hBrushBgGray     uintptr
 	hBrushBgNight    uintptr
 	hBrushWhite      uintptr
 	hBrushCardDay    uintptr
+	hBrushCardGray   uintptr
 	hBrushCardNight  uintptr
+	hBrushInputGray  uintptr
 	hBrushInputNight uintptr
+	hBrushLogGray    uintptr
 	hBrushLogNight   uintptr
 
 	nid         NOTIFYICONDATAW
 	trayCreated bool
 
-	isDarkMode      = false
-	isRussianLang   = false // Default: English (EN)
+	currentTheme    = ThemeDay // 0: Day (☀️), 1: Gray (⛅), 2: Night (🌙)
+	isDarkMode      = false    // Kept for backwards compatibility: true if currentTheme != ThemeDay
+	isRussianLang   = false    // Default: English (EN)
 	isConnected     = false
 	isConnecting    = false
 	sessionStart    time.Time
@@ -910,7 +921,9 @@ func showRulesEditorDialog() {
 	wc.HInstance = hInstance
 	wc.HCursor, _, _ = procLoadCursorW.Call(0, uintptr(IDC_ARROW))
 	wc.HbrBackground = hBrushBgDay
-	if isDarkMode {
+	if currentTheme == ThemeGray {
+		wc.HbrBackground = hBrushBgGray
+	} else if currentTheme == ThemeNight {
 		wc.HbrBackground = hBrushBgNight
 	}
 	wc.LpszClassName = className
@@ -1099,7 +1112,9 @@ func rulesWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		var rc RECT
 		procGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&rc)))
 		brush := hBrushBgDay
-		if isDarkMode {
+		if currentTheme == ThemeGray {
+			brush = hBrushBgGray
+		} else if currentTheme == ThemeNight {
 			brush = hBrushBgNight
 		}
 		procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), brush)
@@ -1108,7 +1123,10 @@ func rulesWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	case WM_CTLCOLORSTATIC:
 		hDC := wParam
 		procSetBkMode.Call(hDC, 1)
-		if isDarkMode {
+		if currentTheme == ThemeGray {
+			procSetTextColor.Call(hDC, 0x00F0ECE8)
+			return hBrushBgGray
+		} else if currentTheme == ThemeNight {
 			procSetTextColor.Call(hDC, 0x00E0E0E0)
 			return hBrushBgNight
 		}
@@ -1117,12 +1135,14 @@ func rulesWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_CTLCOLOREDIT:
 		hDC := wParam
-		if isDarkMode {
-			procSetBkMode.Call(hDC, 1)
-			procSetTextColor.Call(hDC, 0x0033FF33) // Terminal Green in dark mode
+		procSetBkMode.Call(hDC, 1)
+		if currentTheme == ThemeGray {
+			procSetTextColor.Call(hDC, 0x00AAF564) // Light Mint Green
+			return hBrushLogGray
+		} else if currentTheme == ThemeNight {
+			procSetTextColor.Call(hDC, 0x0033FF33) // Terminal Green
 			return hBrushLogNight
 		}
-		procSetBkMode.Call(hDC, 1)
 		procSetTextColor.Call(hDC, 0x00111111)
 		return hBrushWhite
 	}
@@ -1166,6 +1186,11 @@ func initTooltips() {
 	attachTooltipToControl(hwndDiagProt)
 	attachTooltipToControl(hwndDiagLat)
 	attachTooltipToControl(hwndDiagUptime)
+	attachTooltipToControl(hwndBtnDay)
+	attachTooltipToControl(hwndBtnGray)
+	attachTooltipToControl(hwndBtnNight)
+	attachTooltipToControl(hwndBtnLangEN)
+	attachTooltipToControl(hwndBtnLangRU)
 	attachTooltipToControl(hwndBtnVerify)
 	attachTooltipToControl(hwndBtnCopyLog)
 	attachTooltipToControl(hwndBtnInstall)
@@ -1208,6 +1233,11 @@ func updateAllTooltips() {
 	updateControlTooltip(hwndDiagUptime, tipText)
 
 	if isRussianLang {
+		updateControlTooltip(hwndBtnDay, "Светлая дневная тема (☀️ День)")
+		updateControlTooltip(hwndBtnGray, "Серая графитовая тема (⛅ Облачно / Графит)")
+		updateControlTooltip(hwndBtnNight, "Тёмная OLED тема (🌙 Ночь)")
+		updateControlTooltip(hwndBtnLangEN, "Переключить язык интерфейса на английский (EN)")
+		updateControlTooltip(hwndBtnLangRU, "Переключить язык интерфейса на русский (RU)")
 		updateControlTooltip(hwndBtnConnect, "Запустить подключение к выбранному серверу (Пуск)")
 		updateControlTooltip(hwndBtnSetDefault, "Установить сервер для авто-подключения при старте (Авто)")
 		updateControlTooltip(hwndBtnUp, "Переместить выбранный сервер выше (▲)")
@@ -1221,6 +1251,11 @@ func updateAllTooltips() {
 		updateControlTooltip(hwndBtnClearLog, "🧹 Очистить окно лога")
 		updateControlTooltip(hwndBtnInstall, "📑 Установить приложение в Windows")
 	} else {
+		updateControlTooltip(hwndBtnDay, "Light Day Theme (☀️ Day)")
+		updateControlTooltip(hwndBtnGray, "Gray Graphite Theme (⛅ Cloud / Slate)")
+		updateControlTooltip(hwndBtnNight, "Dark OLED Theme (🌙 Night)")
+		updateControlTooltip(hwndBtnLangEN, "Switch interface language to English (EN)")
+		updateControlTooltip(hwndBtnLangRU, "Switch interface language to Russian (RU)")
 		updateControlTooltip(hwndBtnConnect, "Connect to selected server (Start)")
 		updateControlTooltip(hwndBtnSetDefault, "Set profile as default (Auto-connect)")
 		updateControlTooltip(hwndBtnUp, "Move selected profile up (▲)")
@@ -1449,8 +1484,9 @@ func loadProfilesFromStorage() {
 }
 
 type AppSettings struct {
-	Language string `json:"language"` // "RU" or "EN"
-	DarkMode bool   `json:"dark_mode"`
+	Language  string `json:"language"` // "RU" or "EN"
+	DarkMode  bool   `json:"dark_mode"`
+	ThemeMode int    `json:"theme_mode"` // 0: Day, 1: Gray, 2: Night
 }
 
 func getSettingsFilePath() string {
@@ -1521,6 +1557,17 @@ func saveSettingsToRegistry(langStr string, dark bool, jsonStr string) {
 		uintptr(unsafe.Pointer(&darkVal)),
 		4,
 	)
+
+	// Save explicit ThemeMode key
+	themeVal := uint32(currentTheme)
+	procRegSetValueExW.Call(
+		hKey,
+		uintptr(unsafe.Pointer(strPtr("ThemeMode"))),
+		0,
+		REG_DWORD,
+		uintptr(unsafe.Pointer(&themeVal)),
+		4,
+	)
 }
 
 func loadSettingsFromRegistry() (string, error) {
@@ -1589,8 +1636,9 @@ func loadSettingsFromRegistry() (string, error) {
 		if ret == 0 {
 			lStr := strings.TrimSpace(syscall.UTF16ToString(buf))
 			s := AppSettings{
-				Language: lStr,
-				DarkMode: false,
+				Language:  lStr,
+				DarkMode:  false,
+				ThemeMode: ThemeDay,
 			}
 			b, _ := json.Marshal(s)
 			return string(b), nil
@@ -1606,8 +1654,9 @@ func saveSettingsToStorage() {
 		langStr = "RU"
 	}
 	cfg := AppSettings{
-		Language: langStr,
-		DarkMode: isDarkMode,
+		Language:  langStr,
+		DarkMode:  isDarkMode,
+		ThemeMode: currentTheme,
 	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
@@ -1626,18 +1675,29 @@ func saveSettingsToStorage() {
 	}
 }
 
+func parseAppSettings(cfg AppSettings) {
+	if strings.EqualFold(cfg.Language, "RU") || strings.EqualFold(cfg.Language, "Russian") {
+		isRussianLang = true
+	} else {
+		isRussianLang = false
+	}
+	if cfg.ThemeMode >= ThemeDay && cfg.ThemeMode <= ThemeNight {
+		currentTheme = cfg.ThemeMode
+	} else if cfg.DarkMode {
+		currentTheme = ThemeNight
+	} else {
+		currentTheme = ThemeDay
+	}
+	isDarkMode = (currentTheme != ThemeDay)
+}
+
 func loadSettingsFromStorage() {
 	// 1. Try Registry first
 	regData, err := loadSettingsFromRegistry()
 	if err == nil && strings.TrimSpace(regData) != "" {
 		var cfg AppSettings
 		if err := json.Unmarshal([]byte(regData), &cfg); err == nil && cfg.Language != "" {
-			if strings.EqualFold(cfg.Language, "RU") || strings.EqualFold(cfg.Language, "Russian") {
-				isRussianLang = true
-			} else {
-				isRussianLang = false
-			}
-			isDarkMode = cfg.DarkMode
+			parseAppSettings(cfg)
 			return
 		}
 	}
@@ -1649,12 +1709,7 @@ func loadSettingsFromStorage() {
 		if fileData, err := os.ReadFile(appFile); err == nil && len(fileData) > 0 {
 			var cfg AppSettings
 			if err := json.Unmarshal(fileData, &cfg); err == nil && cfg.Language != "" {
-				if strings.EqualFold(cfg.Language, "RU") || strings.EqualFold(cfg.Language, "Russian") {
-					isRussianLang = true
-				} else {
-					isRussianLang = false
-				}
-				isDarkMode = cfg.DarkMode
+				parseAppSettings(cfg)
 				saveSettingsToRegistry(cfg.Language, isDarkMode, string(fileData))
 				return
 			}
@@ -1666,12 +1721,7 @@ func loadSettingsFromStorage() {
 	if fileData, err := os.ReadFile(filePath); err == nil && len(fileData) > 0 {
 		var cfg AppSettings
 		if err := json.Unmarshal(fileData, &cfg); err == nil && cfg.Language != "" {
-			if strings.EqualFold(cfg.Language, "RU") || strings.EqualFold(cfg.Language, "Russian") {
-				isRussianLang = true
-			} else {
-				isRussianLang = false
-			}
-			isDarkMode = cfg.DarkMode
+			parseAppSettings(cfg)
 			saveSettingsToRegistry(cfg.Language, isDarkMode, string(fileData))
 			return
 		}
@@ -1689,6 +1739,7 @@ func loadSettingsFromStorage() {
 	} else {
 		isRussianLang = false
 	}
+	currentTheme = ThemeDay
 	isDarkMode = false
 }
 
@@ -3649,24 +3700,32 @@ func setColumnText(colIdx int, text string) {
 	procSendMessageW.Call(hwndListView, LVM_SETCOLUMNW, uintptr(colIdx), uintptr(unsafe.Pointer(&col)))
 }
 
-func applyTheme(dark bool) {
-	isDarkMode = dark
-	if isDarkMode {
-		procSetWindowTheme.Call(hwndListView, uintptr(unsafe.Pointer(strPtr(""))), uintptr(unsafe.Pointer(strPtr(""))))
-		procSendMessageW.Call(hwndListView, LVM_SETBKCOLOR, 0, 0x00141414)
-		procSendMessageW.Call(hwndListView, LVM_SETTEXTBKCOLOR, 0, 0x00141414)
-		procSendMessageW.Call(hwndListView, LVM_SETTEXTCOLOR, 0, 0x00EAEAEA)
-	} else {
+func applyTheme(themeMode int) {
+	currentTheme = themeMode
+	isDarkMode = (currentTheme != ThemeDay)
+
+	switch currentTheme {
+	case ThemeDay:
 		procSetWindowTheme.Call(hwndListView, uintptr(unsafe.Pointer(strPtr(""))), uintptr(unsafe.Pointer(strPtr(""))))
 		procSendMessageW.Call(hwndListView, LVM_SETBKCOLOR, 0, 0x00FFFFFF)
 		procSendMessageW.Call(hwndListView, LVM_SETTEXTBKCOLOR, 0, 0x00FFFFFF)
 		procSendMessageW.Call(hwndListView, LVM_SETTEXTCOLOR, 0, 0x00222222)
+	case ThemeGray:
+		procSetWindowTheme.Call(hwndListView, uintptr(unsafe.Pointer(strPtr(""))), uintptr(unsafe.Pointer(strPtr(""))))
+		procSendMessageW.Call(hwndListView, LVM_SETBKCOLOR, 0, 0x003C342D)
+		procSendMessageW.Call(hwndListView, LVM_SETTEXTBKCOLOR, 0, 0x003C342D)
+		procSendMessageW.Call(hwndListView, LVM_SETTEXTCOLOR, 0, 0x00F0ECE8)
+	case ThemeNight:
+		procSetWindowTheme.Call(hwndListView, uintptr(unsafe.Pointer(strPtr(""))), uintptr(unsafe.Pointer(strPtr(""))))
+		procSendMessageW.Call(hwndListView, LVM_SETBKCOLOR, 0, 0x00141414)
+		procSendMessageW.Call(hwndListView, LVM_SETTEXTBKCOLOR, 0, 0x00141414)
+		procSendMessageW.Call(hwndListView, LVM_SETTEXTCOLOR, 0, 0x00EAEAEA)
 	}
 
 	procInvalidateRect.Call(hwndMain, 0, 1)
 
 	allControls := []uintptr{
-		hwndTitle, hwndBtnDay, hwndBtnNight, hwndBtnLangEN, hwndBtnLangRU,
+		hwndTitle, hwndBtnDay, hwndBtnGray, hwndBtnNight, hwndBtnLangEN, hwndBtnLangRU,
 		hwndBtnMainAction, hwndBtnDisconnect, hwndKeyLabel, hwndBtnPasteQr, hwndBtnSave, hwndKeyEdit,
 		hwndProfilesLbl, hwndBtnUp, hwndBtnDown, hwndBtnConnect, hwndBtnSetDefault,
 		hwndBtnSubToggle, hwndSubTitle, hwndBtnSubPing, hwndBtnSubRefresh, hwndListView,
@@ -3719,7 +3778,9 @@ func renameWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		var rc RECT
 		procGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&rc)))
 		brush := hBrushBgDay
-		if isDarkMode {
+		if currentTheme == ThemeGray {
+			brush = hBrushBgGray
+		} else if currentTheme == ThemeNight {
 			brush = hBrushBgNight
 		}
 		procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), brush)
@@ -3728,7 +3789,10 @@ func renameWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	case WM_CTLCOLORSTATIC:
 		hDC := wParam
 		procSetBkMode.Call(hDC, 1)
-		if isDarkMode {
+		if currentTheme == ThemeGray {
+			procSetTextColor.Call(hDC, 0x00F0ECE8)
+			return hBrushBgGray
+		} else if currentTheme == ThemeNight {
 			procSetTextColor.Call(hDC, 0x00E0E0E0)
 			return hBrushBgNight
 		}
@@ -3737,12 +3801,14 @@ func renameWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_CTLCOLOREDIT:
 		hDC := wParam
-		if isDarkMode {
-			procSetBkMode.Call(hDC, 1)
+		procSetBkMode.Call(hDC, 1)
+		if currentTheme == ThemeGray {
+			procSetTextColor.Call(hDC, 0x00FFFFFF)
+			return hBrushInputGray
+		} else if currentTheme == ThemeNight {
 			procSetTextColor.Call(hDC, 0x00FFFFFF)
 			return hBrushInputNight
 		}
-		procSetBkMode.Call(hDC, 1)
 		procSetTextColor.Call(hDC, 0x001A1A1A)
 		return hBrushWhite
 
@@ -3987,7 +4053,9 @@ func showRenameDialog(sel int) {
 	wc.HInstance = hInstance
 	wc.HCursor, _, _ = procLoadCursorW.Call(0, uintptr(IDC_ARROW))
 	wc.HbrBackground = hBrushBgDay
-	if isDarkMode {
+	if currentTheme == ThemeGray {
+		wc.HbrBackground = hBrushBgGray
+	} else if currentTheme == ThemeNight {
 		wc.HbrBackground = hBrushBgNight
 	}
 	wc.LpszClassName = className
@@ -5588,27 +5656,42 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 201: // Day Theme
-		btnText = "☀️ Day"
-		if !isDarkMode {
-			baseColor = 0x0677D9
+		btnText = "☀️"
+		font = hFontRegular
+		if currentTheme == ThemeDay {
+			baseColor = 0x0677D9 // Sky Blue Active Glow
 			borderDark = 0x034988
 			borderLight = 0x58A5F0
 		} else {
-			baseColor = 0x383838
-			borderDark = 0x222222
-			borderLight = 0x555555
+			baseColor = 0x484E5A
+			borderDark = 0x2A303A
+			borderLight = 0x626A7A
+		}
+
+	case 205: // Gray / Cloud Theme
+		btnText = "⛅"
+		font = hFontRegular
+		if currentTheme == ThemeGray {
+			baseColor = 0x4A6B82 // Slate Steel Cyan Active Glow
+			borderDark = 0x2C4659
+			borderLight = 0x789EBA
+		} else {
+			baseColor = 0x484E5A
+			borderDark = 0x2A303A
+			borderLight = 0x626A7A
 		}
 
 	case 202: // Night Theme
-		btnText = "🌙 Night"
-		if isDarkMode {
-			baseColor = 0xC1466B
+		btnText = "🌙"
+		font = hFontRegular
+		if currentTheme == ThemeNight {
+			baseColor = 0xC1466B // Rose Purple Active Glow
 			borderDark = 0x8A2A47
 			borderLight = 0xE57395
 		} else {
-			baseColor = 0x606060
-			borderDark = 0x404040
-			borderLight = 0x808080
+			baseColor = 0x484E5A
+			borderDark = 0x2A303A
+			borderLight = 0x626A7A
 		}
 
 	case 203: // Language EN
@@ -6007,21 +6090,30 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			showAboutDialog()
 
 		case 201: // Day Theme
-			applyTheme(false)
+			applyTheme(ThemeDay)
 			saveSettingsToStorage()
 			if isRussianLang {
-				writeLog("THEME", "Светлая дневная тема активирована. Настройки сохранены.")
+				writeLog("THEME", "☀️ Светлая дневная тема активирована. Настройки сохранены.")
 			} else {
-				writeLog("THEME", "Light Day Theme activated. Settings saved.")
+				writeLog("THEME", "☀️ Light Day Theme activated. Settings saved.")
+			}
+
+		case 205: // Gray / Cloud Theme
+			applyTheme(ThemeGray)
+			saveSettingsToStorage()
+			if isRussianLang {
+				writeLog("THEME", "⛅ Серая графитовая тема активирована. Настройки сохранены.")
+			} else {
+				writeLog("THEME", "⛅ Gray Graphite Theme activated. Settings saved.")
 			}
 
 		case 202: // Night Theme
-			applyTheme(true)
+			applyTheme(ThemeNight)
 			saveSettingsToStorage()
 			if isRussianLang {
-				writeLog("THEME", "Темная OLED ночная тема активирована. Настройки сохранены.")
+				writeLog("THEME", "🌙 Тёмная OLED ночная тема активирована. Настройки сохранены.")
 			} else {
-				writeLog("THEME", "Dark OLED Night Theme activated. Settings saved.")
+				writeLog("THEME", "🌙 Dark OLED Night Theme activated. Settings saved.")
 			}
 
 		case 203: // Switch to English (EN)
@@ -6407,7 +6499,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 					// Subscription Header Row Styling
 					if actualIdx == -1 {
-						if isDarkMode {
+						if currentTheme == ThemeNight {
 							pcd.ClrTextBk = 0x002A1830 // Soft rich purple/slate background
 							switch subItemIdx {
 							case 0:
@@ -6422,6 +6514,22 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 								pcd.ClrText = 0x00E080 // Light green
 							default:
 								pcd.ClrText = 0x00E0E0E0
+							}
+						} else if currentTheme == ThemeGray {
+							pcd.ClrTextBk = 0x003A2840 // Slate violet background
+							switch subItemIdx {
+							case 0:
+								pcd.ClrText = 0x0000FFFF // Bright Yellow [+] / [-]
+							case 1:
+								pcd.ClrText = 0x00E0E0
+							case 2:
+								pcd.ClrText = 0x00FFFFFF
+							case 3:
+								pcd.ClrText = 0x80D0FF
+							case 4:
+								pcd.ClrText = 0x00E080
+							default:
+								pcd.ClrText = 0x00F0ECE8
 							}
 						} else {
 							pcd.ClrTextBk = 0x00EAE6F4 // Soft pastel lavender background
@@ -6458,7 +6566,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 						}
 
 						p := profiles[actualIdx]
-						if isDarkMode {
+						if currentTheme == ThemeNight {
 							pcd.ClrTextBk = 0x00141414
 							switch subItemIdx {
 							case 0:
@@ -6487,6 +6595,36 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 								pcd.ClrText = 0xFFA060 // Orange
 							default:
 								pcd.ClrText = 0x00E0E0E0
+							}
+						} else if currentTheme == ThemeGray {
+							pcd.ClrTextBk = 0x003C342D // Slate Gray Background
+							switch subItemIdx {
+							case 0:
+								pcd.ClrText = 0x00B0B8C0 // Silver Number
+							case 1:
+								if p.Default != "" {
+									pcd.ClrText = 0x0066FF66 // Crisp Light Green
+								} else {
+									pcd.ClrText = 0x00889098
+								}
+							case 2:
+								pcd.ClrText = 0x00F0E0B0 // Soft Ice Gold Name
+							case 3:
+								pcd.ClrText = 0x00D0B880 // Cyan/Teal Host
+							case 4:
+								if p.PingMs > 0 && p.PingMs < 120 {
+									pcd.ClrText = 0x0066FF66 // Crisp Light Green
+								} else if p.PingMs >= 120 && p.PingMs < 250 {
+									pcd.ClrText = 0x0066D9FF // Light Amber
+								} else if p.PingMs >= 250 || p.PingMs < 0 {
+									pcd.ClrText = 0x006666FF // Soft Red
+								} else {
+									pcd.ClrText = 0x00889098
+								}
+							case 5:
+								pcd.ClrText = 0x00FFA870 // Soft Amber Orange
+							default:
+								pcd.ClrText = 0x00F0ECE8
 							}
 						} else {
 							pcd.ClrTextBk = 0x00FFFFFF
@@ -6548,18 +6686,27 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		hDC := wParam
 		var rc RECT
 		procGetClientRect.Call(hwnd, uintptr(unsafe.Pointer(&rc)))
-		brush := hBrushBgDay
-		if isDarkMode {
+		var brush uintptr
+		switch currentTheme {
+		case ThemeGray:
+			brush = hBrushBgGray
+		case ThemeNight:
 			brush = hBrushBgNight
+		default:
+			brush = hBrushBgDay
 		}
 		procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), brush)
 
 		// Draw smooth rounded card for Diagnostics (x: 18..550, y: 274..342)
 		var cardBrush, cardPen uintptr
-		if isDarkMode {
+		switch currentTheme {
+		case ThemeGray:
+			cardBrush, _, _ = procCreateSolidBrush.Call(0x004C423A)
+			cardPen, _, _ = procCreatePen.Call(0, 1, 0x00645A50)
+		case ThemeNight:
 			cardBrush, _, _ = procCreateSolidBrush.Call(0x001F1F1F)
 			cardPen, _, _ = procCreatePen.Call(0, 1, 0x00333333)
-		} else {
+		default:
 			cardBrush, _, _ = procCreateSolidBrush.Call(0x00F0F2F5)
 			cardPen, _, _ = procCreatePen.Call(0, 1, 0x00D0D4DC)
 		}
@@ -6580,18 +6727,20 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		ctrlHwnd := uintptr(lParam)
 
 		if ctrlHwnd == hwndLogEdit {
-			if isDarkMode {
-				procSetBkMode.Call(hDC, 1)
+			procSetBkMode.Call(hDC, 1)
+			if currentTheme == ThemeNight {
 				procSetTextColor.Call(hDC, 0x0033FF33) // Terminal Neon Green
 				return hBrushLogNight
+			} else if currentTheme == ThemeGray {
+				procSetTextColor.Call(hDC, 0x00AAF564) // Crisp Mint Green
+				return hBrushLogGray
 			}
-			procSetBkMode.Call(hDC, 1)
 			procSetTextColor.Call(hDC, 0x00111111)
 			return hBrushWhite
 		}
 
 		procSetBkMode.Call(hDC, 1) // TRANSPARENT
-		if isDarkMode {
+		if currentTheme == ThemeNight {
 			if ctrlHwnd == hwndDiagProt {
 				if isConnected {
 					procSetTextColor.Call(hDC, 0x0033FF33) // Bright Neon Green
@@ -6628,6 +6777,43 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				procSetTextColor.Call(hDC, 0x00D0D0D0)
 			}
 			return hBrushBgNight
+		} else if currentTheme == ThemeGray {
+			if ctrlHwnd == hwndDiagProt {
+				if isConnected {
+					procSetTextColor.Call(hDC, 0x0066FF66) // Crisp Light Green
+				} else if isConnecting {
+					procSetTextColor.Call(hDC, 0x0055D0FF) // Amber Gold
+				} else {
+					procSetTextColor.Call(hDC, 0x007777FF) // Soft Red
+				}
+				return hBrushCardGray
+			} else if ctrlHwnd == hwndDiagHeader {
+				if isConnected {
+					procSetTextColor.Call(hDC, 0x0066FF66)
+				} else if isConnecting {
+					procSetTextColor.Call(hDC, 0x0055D0FF)
+				} else {
+					procSetTextColor.Call(hDC, 0x00F0ECE8)
+				}
+				return hBrushCardGray
+			} else if ctrlHwnd == hwndTitle {
+				procSetTextColor.Call(hDC, 0x00F5EFEB) // Crisp Silver
+			} else if ctrlHwnd == hwndBannerLbl {
+				procSetTextColor.Call(hDC, 0x00D8C8B8)
+			} else if ctrlHwnd == hwndBrand {
+				procSetTextColor.Call(hDC, 0x0050BEFF) // Soft Gold
+			} else if ctrlHwnd == hwndKeyLabel || ctrlHwnd == hwndProfilesLbl || ctrlHwnd == hwndLogLbl {
+				procSetTextColor.Call(hDC, 0x00E8E2DC)
+			} else if ctrlHwnd == hwndSubTitle {
+				procSetTextColor.Call(hDC, 0x0080D0FF)
+				return hBrushBgGray
+			} else if ctrlHwnd == hwndDiagOrig || ctrlHwnd == hwndDiagLat || ctrlHwnd == hwndDiagUptime {
+				procSetTextColor.Call(hDC, 0x00F0ECE8)
+				return hBrushCardGray
+			} else {
+				procSetTextColor.Call(hDC, 0x00F0ECE8)
+			}
+			return hBrushBgGray
 		}
 
 		if ctrlHwnd == hwndDiagProt {
@@ -6667,18 +6853,20 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_CTLCOLOREDIT:
 		hDC := wParam
-		if isDarkMode {
-			procSetBkMode.Call(hDC, 1)
+		procSetBkMode.Call(hDC, 1)
+		if currentTheme == ThemeNight {
 			procSetTextColor.Call(hDC, 0x00FFFFFF)
 			return hBrushInputNight
+		} else if currentTheme == ThemeGray {
+			procSetTextColor.Call(hDC, 0x00FFFFFF)
+			return hBrushInputGray
 		}
-		procSetBkMode.Call(hDC, 1)
 		procSetTextColor.Call(hDC, 0x001A1A1A)
 		return hBrushWhite
 
 	case WM_SETCURSOR:
 		ctrlHwnd := uintptr(wParam)
-		if ctrlHwnd != 0 && (ctrlHwnd == hwndBtnDay || ctrlHwnd == hwndBtnNight || ctrlHwnd == hwndBtnLangEN || ctrlHwnd == hwndBtnLangRU || ctrlHwnd == hwndBtnMainAction || ctrlHwnd == hwndBtnPasteQr || ctrlHwnd == hwndBtnSave || ctrlHwnd == hwndBtnConnect || ctrlHwnd == hwndBtnSetDefault || ctrlHwnd == hwndBtnSubToggle || ctrlHwnd == hwndSubTitle || ctrlHwnd == hwndBtnSubPing || ctrlHwnd == hwndBtnSubRefresh || ctrlHwnd == hwndBtnInstall || ctrlHwnd == hwndBtnVerify || ctrlHwnd == hwndBtnCopyLog || ctrlHwnd == hwndBtnClearLog || ctrlHwnd == hwndBrand) {
+		if ctrlHwnd != 0 && (ctrlHwnd == hwndBtnDay || ctrlHwnd == hwndBtnGray || ctrlHwnd == hwndBtnNight || ctrlHwnd == hwndBtnLangEN || ctrlHwnd == hwndBtnLangRU || ctrlHwnd == hwndBtnMainAction || ctrlHwnd == hwndBtnPasteQr || ctrlHwnd == hwndBtnSave || ctrlHwnd == hwndBtnConnect || ctrlHwnd == hwndBtnSetDefault || ctrlHwnd == hwndBtnSubToggle || ctrlHwnd == hwndSubTitle || ctrlHwnd == hwndBtnSubPing || ctrlHwnd == hwndBtnSubRefresh || ctrlHwnd == hwndBtnInstall || ctrlHwnd == hwndBtnVerify || ctrlHwnd == hwndBtnCopyLog || ctrlHwnd == hwndBtnClearLog || ctrlHwnd == hwndBrand) {
 			procSetCursor.Call(hCursorHand)
 			return 1
 		}
@@ -6762,6 +6950,7 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V061",
 		"GIN_VPN_WINDOW_CLASS_V060",
 		"GIN_VPN_WINDOW_CLASS_V059",
 		"GIN_VPN_WINDOW_CLASS_V058",
@@ -6858,11 +7047,15 @@ func main() {
 	hFontConsolasLog = hFontConsolasLogRet
 
 	hBrushBgDay, _, _ = procCreateSolidBrush.Call(0x00F8F9FA)
+	hBrushBgGray, _, _ = procCreateSolidBrush.Call(0x003C342D)
 	hBrushBgNight, _, _ = procCreateSolidBrush.Call(0x00141414)
 	hBrushWhite, _, _ = procCreateSolidBrush.Call(0x00FFFFFF)
 	hBrushCardDay, _, _ = procCreateSolidBrush.Call(0x00F0F2F5)
+	hBrushCardGray, _, _ = procCreateSolidBrush.Call(0x004C423A)
 	hBrushCardNight, _, _ = procCreateSolidBrush.Call(0x001F1F1F)
+	hBrushInputGray, _, _ = procCreateSolidBrush.Call(0x00433A32)
 	hBrushInputNight, _, _ = procCreateSolidBrush.Call(0x00202020)
+	hBrushLogGray, _, _ = procCreateSolidBrush.Call(0x00322A24)
 	hBrushLogNight, _, _ = procCreateSolidBrush.Call(0x000D0D0D)
 	hBrushBlack, _, _ = procCreateSolidBrush.Call(0x00000000)
 	hPenCyan, _, _ = procCreatePen.Call(0, 2, 0x00FFFF)
@@ -6876,7 +7069,9 @@ func main() {
 	wc.HIcon = hIconApp
 	wc.HIconSm = hIconApp
 	wc.HCursor, _, _ = procLoadCursorW.Call(0, uintptr(IDC_ARROW))
-	if isDarkMode {
+	if currentTheme == ThemeGray {
+		wc.HbrBackground = hBrushBgGray
+	} else if currentTheme == ThemeNight {
 		wc.HbrBackground = hBrushBgNight
 	} else {
 		wc.HbrBackground = hBrushBgDay
@@ -6904,12 +7099,13 @@ func main() {
 		procSendMessageW.Call(hwndMain, WM_SETICON, 0, hIconApp)
 	}
 
-	// 1. Header Title & Day/Night & EN/RU Language Buttons
-	hwndTitle = createStatic("🛡️ GIN-VPN by VladiMIR+AI", 18, 12, 255, 26, hFontTitle)
-	hwndBtnDay = createOwnerButton(201, 280, 12, 52, 26)
-	hwndBtnNight = createOwnerButton(202, 338, 12, 58, 26)
-	hwndBtnLangEN = createOwnerButton(203, 432, 12, 52, 26)
-	hwndBtnLangRU = createOwnerButton(204, 490, 12, 52, 26)
+	// 1. Header Title & 3 Themes (Day ☀️ / Gray ⛅ / Night 🌙) & EN/RU Language Buttons
+	hwndTitle = createStatic("🛡️ GIN-VPN by VladiMIR+AI", 18, 12, 250, 26, hFontTitle)
+	hwndBtnDay = createOwnerButton(201, 274, 12, 38, 26)
+	hwndBtnGray = createOwnerButton(205, 316, 12, 38, 26)
+	hwndBtnNight = createOwnerButton(202, 358, 12, 38, 26)
+	hwndBtnLangEN = createOwnerButton(203, 420, 12, 50, 26)
+	hwndBtnLangRU = createOwnerButton(204, 474, 12, 50, 26)
 
 	// 2. Main Large Action Button & Split Disconnect Button
 	hwndBtnMainAction = createOwnerButton(101, 18, 44, 532, 44)
@@ -7020,7 +7216,7 @@ func main() {
 	loadCustomRulesFromStorage()
 	installedState = checkIsInstalled()
 	updateLanguageUI()
-	applyTheme(isDarkMode)
+	applyTheme(currentTheme)
 	initTooltips()
 
 	// Initial Tray
@@ -7034,16 +7230,20 @@ func main() {
 
 	if isRussianLang {
 		writeLog("INIT", fmt.Sprintf("GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент %s готов.", AppVersion))
-		themeName := "Дневная (Светлая)"
-		if isDarkMode {
-			themeName = "Ночная OLED (Темная)"
+		themeName := "Дневная (☀️ Светлая)"
+		if currentTheme == ThemeGray {
+			themeName = "Серая (⛅ Облачно / Графит)"
+		} else if currentTheme == ThemeNight {
+			themeName = "Ночная OLED (🌙 Тёмная)"
 		}
 		writeLog("CONFIG", fmt.Sprintf("Настройки сохранены и загружены: Язык = RU, Тема = %s.", themeName))
 	} else {
 		writeLog("INIT", fmt.Sprintf("GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client %s ready.", AppVersion))
-		themeName := "Light Day"
-		if isDarkMode {
-			themeName = "Dark OLED"
+		themeName := "Light Day (☀️)"
+		if currentTheme == ThemeGray {
+			themeName = "Gray Graphite (⛅ Cloud)"
+		} else if currentTheme == ThemeNight {
+			themeName = "Dark OLED (🌙 Night)"
 		}
 		writeLog("CONFIG", fmt.Sprintf("Settings loaded & persisted: Language = EN, Theme = %s.", themeName))
 	}
