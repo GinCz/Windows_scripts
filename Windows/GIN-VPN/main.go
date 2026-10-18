@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -29,9 +30,9 @@ var embeddedXrayGz []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v059"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v059]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v059]"
+	AppVersion    = "v060"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v060]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v060]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -358,6 +359,17 @@ type NMLVKEYDOWN struct {
 	Flags uint32
 }
 
+type NMLISTVIEW struct {
+	Hdr       NMHDR
+	IItem     int32
+	ISubItem  int32
+	UNewState uint32
+	UOldState uint32
+	UChanged  uint32
+	PtAction  POINT
+	LParam    uintptr
+}
+
 type NOTIFYICONDATAW struct {
 	CbSize            uint32
 	Hwnd              uintptr
@@ -443,6 +455,7 @@ var (
 	visibleProfileIndices []int
 	isPingTesting         = false
 	isSubUpdating         = false
+	sortByPing            = false
 
 	hwndListView      uintptr
 
@@ -1195,25 +1208,31 @@ func updateAllTooltips() {
 	updateControlTooltip(hwndDiagUptime, tipText)
 
 	if isRussianLang {
-		updateControlTooltip(hwndBtnUp, "Переместить выбранный сервер выше (Вверх)")
-		updateControlTooltip(hwndBtnDown, "Переместить выбранный сервер ниже (Вниз)")
-		updateControlTooltip(hwndBtnConnect, "Подключиться к выбранному серверу")
-		updateControlTooltip(hwndBtnSetDefault, "Установить сервер по умолчанию (Авто-подключение)")
-		updateControlTooltip(hwndBtnSubToggle, "Свернуть / развернуть список серверов подписки")
-		updateControlTooltip(hwndSubTitle, "Подписка Jin Proxy hub (кликните для сворачивания/разворачивания)")
-		updateControlTooltip(hwndBtnSubPing, "⏱️ Проверить время соединения (пинг) всех серверов подписки")
-		updateControlTooltip(hwndBtnSubRefresh, "🔄 Обновить весь список серверов из подписки Jin Proxy hub")
-		updateControlTooltip(hwndBtnInstall, "Левый клик: проверить/установить. Правый клик: быстрое авто-обновление.")
+		updateControlTooltip(hwndBtnConnect, "Запустить подключение к выбранному серверу (Пуск)")
+		updateControlTooltip(hwndBtnSetDefault, "Установить сервер для авто-подключения при старте (Авто)")
+		updateControlTooltip(hwndBtnUp, "Переместить выбранный сервер выше (▲)")
+		updateControlTooltip(hwndBtnDown, "Переместить выбранный сервер ниже (▼)")
+		updateControlTooltip(hwndBtnSubPing, "⏱️ Замерить пинг всех серверов и отсортировать по скорости")
+		updateControlTooltip(hwndBtnSubRefresh, "🔄 Обновить список серверов из подписки")
+		updateControlTooltip(hwndBtnPasteQr, "📋 Вставить ключ или ссылку на подписку из буфера обмена")
+		updateControlTooltip(hwndBtnSave, "💾 Сохранить новый ключ в индивидуальные серверы")
+		updateControlTooltip(hwndBtnVerify, "🔍 Проверить маршруты и внешние IP адреса (EU-222 / RU-109)")
+		updateControlTooltip(hwndBtnCopyLog, "📋 Скопировать весь лог событий в буфер обмена")
+		updateControlTooltip(hwndBtnClearLog, "🧹 Очистить окно лога")
+		updateControlTooltip(hwndBtnInstall, "📑 Установить приложение в Windows")
 	} else {
-		updateControlTooltip(hwndBtnUp, "Move selected profile up")
-		updateControlTooltip(hwndBtnDown, "Move selected profile down")
-		updateControlTooltip(hwndBtnConnect, "Connect to selected profile")
+		updateControlTooltip(hwndBtnConnect, "Connect to selected server (Start)")
 		updateControlTooltip(hwndBtnSetDefault, "Set profile as default (Auto-connect)")
-		updateControlTooltip(hwndBtnSubToggle, "Collapse / expand subscription server list")
-		updateControlTooltip(hwndSubTitle, "Jin Proxy hub subscription (click to collapse/expand)")
-		updateControlTooltip(hwndBtnSubPing, "⏱️ Test connection latency (ping) for all subscription servers")
-		updateControlTooltip(hwndBtnSubRefresh, "🔄 Refresh entire server list from Jin Proxy hub subscription")
-		updateControlTooltip(hwndBtnInstall, "Left click: check/install. Right click: fast auto-update.")
+		updateControlTooltip(hwndBtnUp, "Move selected profile up (▲)")
+		updateControlTooltip(hwndBtnDown, "Move selected profile down (▼)")
+		updateControlTooltip(hwndBtnSubPing, "⏱️ Test ping for all servers and sort by speed")
+		updateControlTooltip(hwndBtnSubRefresh, "🔄 Refresh server list from subscription")
+		updateControlTooltip(hwndBtnPasteQr, "📋 Paste key or subscription URL from clipboard")
+		updateControlTooltip(hwndBtnSave, "💾 Save new key to individual servers")
+		updateControlTooltip(hwndBtnVerify, "🔍 Verify routing and exit IPs (EU-222 / RU-109)")
+		updateControlTooltip(hwndBtnCopyLog, "📋 Copy entire event log to clipboard")
+		updateControlTooltip(hwndBtnClearLog, "🧹 Clear log buffer")
+		updateControlTooltip(hwndBtnInstall, "📑 Install application in Windows")
 	}
 }
 
@@ -1401,11 +1420,30 @@ func loadProfilesFromStorage() {
 		profiles = []Profile{}
 	}
 
-	// Assign default subscription if empty
-	subName := loadSubscriptionNameFromRegistry()
+	// Clean up any individual profiles wrongly tagged as subscription in v058/v059
 	for i := range profiles {
-		if profiles[i].Subscription == "" {
-			profiles[i].Subscription = subName
+		if profiles[i].Subscription != "" {
+			p := &profiles[i]
+			isSubNode := strings.HasPrefix(p.Name, "GIN-") ||
+				strings.Contains(p.Name, "GIN-NL") ||
+				strings.Contains(p.Name, "GIN-EU") ||
+				strings.Contains(p.Name, "GIN-ES") ||
+				strings.Contains(p.Name, "GIN-DE") ||
+				strings.Contains(p.Name, "GIN-US") ||
+				strings.Contains(p.Name, "GIN-BG") ||
+				p.Host == "78.159.250.214" ||
+				p.Host == "edge.bookmai.com" ||
+				p.Host == "145.249.109.112" ||
+				p.Host == "193.163.203.170" ||
+				p.Host == "157.228.149.211" ||
+				p.Host == "31.77.157.178" ||
+				p.Host == "45.133.151.187" ||
+				p.Host == "140.225.199.241" ||
+				p.Host == "finkawwwbroy5.qcloud.surf" ||
+				p.Host == "45.9.156.42"
+			if !isSubNode {
+				p.Subscription = ""
+			}
 		}
 	}
 }
@@ -2214,23 +2252,52 @@ func checkIsInstalled() bool {
 }
 
 func updateBannerAndInstallButton() {
-	if hwndBannerLbl == 0 || hwndBtnInstall == 0 {
+	if hwndBannerLbl == 0 {
 		return
 	}
 	if installedState {
+		if hwndBtnInstall != 0 {
+			procShowWindow.Call(hwndBtnInstall, 0 /* SW_HIDE */)
+		}
+		if hwndBtnVerify != 0 {
+			procMoveWindow.Call(hwndBtnVerify, 18, 582, 170, 26, 1)
+		}
+		if hwndBtnCopyLog != 0 {
+			procMoveWindow.Call(hwndBtnCopyLog, 196, 582, 180, 26, 1)
+		}
+		if hwndBtnClearLog != 0 {
+			procMoveWindow.Call(hwndBtnClearLog, 384, 582, 166, 26, 1)
+		}
+
 		if isRussianLang {
 			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("✔️ GIN-VPN установлен (%s). Нажмите [ 🔄 Обновить ] для проверки новой версии.", AppVersion)))))
 		} else {
 			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("✔️ GIN-VPN is installed (%s). Click [ 🔄 Check Updates ] to verify latest release.", AppVersion)))))
 		}
 	} else {
+		if hwndBtnInstall != 0 {
+			procShowWindow.Call(hwndBtnInstall, 5 /* SW_SHOW */)
+			procMoveWindow.Call(hwndBtnInstall, 18, 582, 126, 26, 1)
+		}
+		if hwndBtnVerify != 0 {
+			procMoveWindow.Call(hwndBtnVerify, 150, 582, 120, 26, 1)
+		}
+		if hwndBtnCopyLog != 0 {
+			procMoveWindow.Call(hwndBtnCopyLog, 276, 582, 144, 26, 1)
+		}
+		if hwndBtnClearLog != 0 {
+			procMoveWindow.Call(hwndBtnClearLog, 426, 582, 124, 26, 1)
+		}
+
 		if isRussianLang {
-			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr("⚠️ GIN-VPN не установлен! Запущен портативно. Нажмите [ 📑 Установить ] ниже."))))
+			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr("⚠️ GIN-VPN не установлен! Запущен портативно. Нажмите [ 📑 Установить ] выше."))))
 		} else {
-			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr("⚠️ GIN-VPN is not installed! Running portable. Click [ 📑 Install App ] below to install."))))
+			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr("⚠️ GIN-VPN is not installed! Running portable. Click [ 📑 Install App ] above."))))
 		}
 	}
-	procInvalidateRect.Call(hwndBtnInstall, 0, 1)
+	if hwndBtnInstall != 0 {
+		procInvalidateRect.Call(hwndBtnInstall, 0, 1)
+	}
 	procInvalidateRect.Call(hwndBannerLbl, 0, 1)
 }
 
@@ -3169,91 +3236,195 @@ func toggleVpn() {
 }
 
 func getActualProfileIndex(listIdx int) int {
-	if !subscriptionExpanded {
-		return -1
-	}
 	if listIdx >= 0 && listIdx < len(visibleProfileIndices) {
 		return visibleProfileIndices[listIdx]
 	}
 	return -1
 }
 
+func sortIndicesByPing(indices []int) {
+	sort.SliceStable(indices, func(i, j int) bool {
+		p1 := profiles[indices[i]]
+		p2 := profiles[indices[j]]
+		lat1 := p1.PingMs
+		lat2 := p2.PingMs
+		if lat1 > 0 && lat2 > 0 {
+			return lat1 < lat2
+		}
+		if lat1 > 0 && lat2 <= 0 {
+			return true
+		}
+		if lat1 <= 0 && lat2 > 0 {
+			return false
+		}
+		return indices[i] < indices[j]
+	})
+}
+
 func updateSubscriptionBar() {
 	if hwndMain == 0 {
 		return
 	}
-	subName := loadSubscriptionNameFromRegistry()
-	if subName == "" {
-		subName = "Jin Proxy hub"
-	}
-	subCount := 0
-	for _, p := range profiles {
-		if p.Subscription == subName || p.Subscription != "" {
-			subCount++
-		}
-	}
-	if subCount == 0 && len(profiles) > 0 {
-		subCount = len(profiles)
-	}
+	refreshProfilesListView()
+}
 
-	var titleText string
-	if subscriptionExpanded {
-		if isRussianLang {
-			titleText = fmt.Sprintf("📂 %s (%d серверов)", subName, subCount)
-		} else {
-			titleText = fmt.Sprintf("📂 %s (%d servers)", subName, subCount)
-		}
-	} else {
-		if isRussianLang {
-			titleText = fmt.Sprintf("📁 %s (%d серверов) [свернуто]", subName, subCount)
-		} else {
-			titleText = fmt.Sprintf("📁 %s (%d servers) [collapsed]", subName, subCount)
-		}
-	}
+func addProfileRowToListView(rowIdx int, displayNum int, p Profile) {
+	var item LVITEMW
+	item.Mask = 0x0001
+	item.IItem = int32(rowIdx)
+	item.ISubItem = 0
+	item.PszText = strPtr(fmt.Sprintf("%d", displayNum))
+	procSendMessageW.Call(hwndListView, LVM_INSERTITEMW, 0, uintptr(unsafe.Pointer(&item)))
 
-	if hwndSubTitle != 0 {
-		procSetWindowTextW.Call(hwndSubTitle, uintptr(unsafe.Pointer(strPtr(titleText))))
-		procInvalidateRect.Call(hwndSubTitle, 0, 1)
+	var subItem LVITEMW
+	subItem.IItem = int32(rowIdx)
+
+	// Column 1: Default
+	subItem.ISubItem = 1
+	defText := ""
+	if p.Default != "" {
+		defText = "✅"
 	}
-	if hwndBtnSubToggle != 0 {
-		procInvalidateRect.Call(hwndBtnSubToggle, 0, 1)
+	subItem.PszText = strPtr(defText)
+	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+	// Column 2: Name
+	subItem.ISubItem = 2
+	subItem.PszText = strPtr(p.Name)
+	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+	// Column 3: Host
+	subItem.ISubItem = 3
+	subItem.PszText = strPtr(p.Host)
+	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+	// Column 4: Ping
+	subItem.ISubItem = 4
+	pingTxt := "-- ms"
+	if p.PingMs > 0 {
+		pingTxt = fmt.Sprintf("⚡ %d ms", p.PingMs)
+	} else if p.PingMs < 0 {
+		pingTxt = "⏱️ Timeout"
 	}
-	if hwndBtnSubPing != 0 {
-		procInvalidateRect.Call(hwndBtnSubPing, 0, 1)
-	}
-	if hwndBtnSubRefresh != 0 {
-		procInvalidateRect.Call(hwndBtnSubRefresh, 0, 1)
-	}
+	subItem.PszText = strPtr(pingTxt)
+	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+	// Column 5: Port
+	subItem.ISubItem = 5
+	subItem.PszText = strPtr(strconv.Itoa(p.Port))
+	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
 }
 
 func refreshProfilesListView() {
+	if hwndListView == 0 {
+		return
+	}
 	procSendMessageW.Call(hwndListView, LVM_DELETEALLITEMS, 0, 0)
 	visibleProfileIndices = nil
 
-	if !subscriptionExpanded {
+	subName := loadSubscriptionNameFromRegistry()
+	if subName == "" {
+		subName = "Djinn Proxy hub"
+	}
+
+	var subIndices []int
+	var indIndices []int
+
+	for i, p := range profiles {
+		if p.Subscription != "" {
+			subIndices = append(subIndices, i)
+		} else {
+			indIndices = append(indIndices, i)
+		}
+	}
+
+	if sortByPing {
+		sortIndicesByPing(subIndices)
+		sortIndicesByPing(indIndices)
+	}
+
+	rowIdx := 0
+
+	// 1. Subscription above (if exists)
+	if len(subIndices) > 0 {
+		visibleProfileIndices = append(visibleProfileIndices, -1) // -1 marks Subscription Header
+
 		var item LVITEMW
 		item.Mask = 0x0001
-		item.IItem = 0
+		item.IItem = int32(rowIdx)
 		item.ISubItem = 0
-		item.PszText = strPtr("+")
+		subToggleIcon := "[+]"
+		if subscriptionExpanded {
+			subToggleIcon = "[-]"
+		}
+		item.PszText = strPtr(subToggleIcon)
 		procSendMessageW.Call(hwndListView, LVM_INSERTITEMW, 0, uintptr(unsafe.Pointer(&item)))
 
 		var subItem LVITEMW
-		subItem.IItem = 0
+		subItem.IItem = int32(rowIdx)
+
+		// Column 1: Folder icon
+		subItem.ISubItem = 1
+		subItem.PszText = strPtr("📁")
+		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+		// Column 2: Name
 		subItem.ISubItem = 2
-		subName := loadSubscriptionNameFromRegistry()
-		collapsedMsg := fmt.Sprintf("📁 %s (%d серверов свернуто — нажмите [+] выше)", subName, len(profiles))
-		if !isRussianLang {
-			collapsedMsg = fmt.Sprintf("📁 %s (%d servers collapsed — click [+] above)", subName, len(profiles))
+		statusMsg := "нажмите [+] чтобы раскрыть"
+		if subscriptionExpanded {
+			statusMsg = "нажмите [-] чтобы свернуть"
 		}
-		subItem.PszText = strPtr(collapsedMsg)
-		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, 0, uintptr(unsafe.Pointer(&subItem)))
-		return
+		if !isRussianLang {
+			statusMsg = "click [+] to expand"
+			if subscriptionExpanded {
+				statusMsg = "click [-] to collapse"
+			}
+		}
+		titleText := fmt.Sprintf("📁 %s (%d серверов) — %s", subName, len(subIndices), statusMsg)
+		subItem.PszText = strPtr(titleText)
+		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+		// Column 3: Host / Type
+		subItem.ISubItem = 3
+		subTypeText := "Подписка"
+		if !isRussianLang {
+			subTypeText = "Subscription"
+		}
+		subItem.PszText = strPtr(subTypeText)
+		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+		// Column 4: Ping
+		subItem.ISubItem = 4
+		subPingText := "⏱️"
+		if isPingTesting {
+			subPingText = "⏳..."
+		}
+		subItem.PszText = strPtr(subPingText)
+		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+		// Column 5: Port
+		subItem.ISubItem = 5
+		subItem.PszText = strPtr("--")
+		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
+
+		rowIdx++
+
+		if subscriptionExpanded {
+			for num, actualIdx := range subIndices {
+				visibleProfileIndices = append(visibleProfileIndices, actualIdx)
+				addProfileRowToListView(rowIdx, num+1, profiles[actualIdx])
+				rowIdx++
+			}
+		}
 	}
 
-	for i, p := range profiles {
-		visibleProfileIndices = append(visibleProfileIndices, i)
-		addProfileToListView(len(visibleProfileIndices)-1, p)
+	// 2. Individual servers below
+	if len(indIndices) > 0 {
+		for num, actualIdx := range indIndices {
+			visibleProfileIndices = append(visibleProfileIndices, actualIdx)
+			addProfileRowToListView(rowIdx, num+1, profiles[actualIdx])
+			rowIdx++
+		}
 	}
 }
 
@@ -3279,32 +3450,58 @@ func selectListViewItem(actualIdx int) {
 }
 
 func moveProfileUp(actualIdx int) {
-	if actualIdx <= 0 || actualIdx >= len(profiles) {
+	if actualIdx < 0 || actualIdx >= len(profiles) {
 		return
 	}
-	profiles[actualIdx], profiles[actualIdx-1] = profiles[actualIdx-1], profiles[actualIdx]
+	sortByPing = false
+
+	isSub := profiles[actualIdx].Subscription != ""
+	targetIdx := -1
+	for i := actualIdx - 1; i >= 0; i-- {
+		if (profiles[i].Subscription != "") == isSub {
+			targetIdx = i
+			break
+		}
+	}
+	if targetIdx < 0 {
+		return
+	}
+	profiles[actualIdx], profiles[targetIdx] = profiles[targetIdx], profiles[actualIdx]
 	saveProfilesToStorage()
 	refreshProfilesListView()
-	selectListViewItem(actualIdx - 1)
+	selectListViewItem(targetIdx)
 	if isRussianLang {
-		writeLog("ORDER", fmt.Sprintf("▲ Сервер '%s' перемещен выше (№%d)", profiles[actualIdx-1].Name, actualIdx))
+		writeLog("ORDER", fmt.Sprintf("▲ Сервер '%s' перемещен выше", profiles[targetIdx].Name))
 	} else {
-		writeLog("ORDER", fmt.Sprintf("▲ Profile '%s' moved up to position #%d", profiles[actualIdx-1].Name, actualIdx))
+		writeLog("ORDER", fmt.Sprintf("▲ Profile '%s' moved up", profiles[targetIdx].Name))
 	}
 }
 
 func moveProfileDown(actualIdx int) {
-	if actualIdx < 0 || actualIdx >= len(profiles)-1 {
+	if actualIdx < 0 || actualIdx >= len(profiles) {
 		return
 	}
-	profiles[actualIdx], profiles[actualIdx+1] = profiles[actualIdx+1], profiles[actualIdx]
+	sortByPing = false
+
+	isSub := profiles[actualIdx].Subscription != ""
+	targetIdx := -1
+	for i := actualIdx + 1; i < len(profiles); i++ {
+		if (profiles[i].Subscription != "") == isSub {
+			targetIdx = i
+			break
+		}
+	}
+	if targetIdx < 0 {
+		return
+	}
+	profiles[actualIdx], profiles[targetIdx] = profiles[targetIdx], profiles[actualIdx]
 	saveProfilesToStorage()
 	refreshProfilesListView()
-	selectListViewItem(actualIdx + 1)
+	selectListViewItem(targetIdx)
 	if isRussianLang {
-		writeLog("ORDER", fmt.Sprintf("▼ Сервер '%s' перемещен ниже (№%d)", profiles[actualIdx+1].Name, actualIdx+2))
+		writeLog("ORDER", fmt.Sprintf("▼ Сервер '%s' перемещен ниже", profiles[targetIdx].Name))
 	} else {
-		writeLog("ORDER", fmt.Sprintf("▼ Profile '%s' moved down to position #%d", profiles[actualIdx+1].Name, actualIdx+2))
+		writeLog("ORDER", fmt.Sprintf("▼ Profile '%s' moved down", profiles[targetIdx].Name))
 	}
 }
 
@@ -3400,8 +3597,7 @@ func updateLanguageUI() {
 	if isRussianLang {
 		procSetWindowTextW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(AppTitleRU))))
 		procSetWindowTextW.Call(hwndTitle, uintptr(unsafe.Pointer(strPtr("🛡️ GIN-VPN от VladiMIR+AI"))))
-		procSetWindowTextW.Call(hwndKeyLabel, uintptr(unsafe.Pointer(strPtr("Активный ключ или ссылка на подписку:"))))
-		procSetWindowTextW.Call(hwndProfilesLbl, uintptr(unsafe.Pointer(strPtr("🌐 Серверы:"))))
+		procSetWindowTextW.Call(hwndKeyLabel, uintptr(unsafe.Pointer(strPtr("🔑 Активный VLESS ключ или ссылка на подписку:"))))
 		procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr("⚡ Диагностика и маршрутизация"))))
 		procSetWindowTextW.Call(hwndLogLbl, uintptr(unsafe.Pointer(strPtr("📊 Лог сетевых событий и трафика в реальном времени:"))))
 		if hwndBrand != 0 {
@@ -3418,8 +3614,7 @@ func updateLanguageUI() {
 	} else {
 		procSetWindowTextW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(AppTitleEN))))
 		procSetWindowTextW.Call(hwndTitle, uintptr(unsafe.Pointer(strPtr("🛡️ GIN-VPN by VladiMIR+AI"))))
-		procSetWindowTextW.Call(hwndKeyLabel, uintptr(unsafe.Pointer(strPtr("Active Key or Subscription URL:"))))
-		procSetWindowTextW.Call(hwndProfilesLbl, uintptr(unsafe.Pointer(strPtr("🌐 Servers:"))))
+		procSetWindowTextW.Call(hwndKeyLabel, uintptr(unsafe.Pointer(strPtr("🔑 Active VLESS Key or Subscription URL:"))))
 		procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr("⚡ Diagnostics & Routing"))))
 		procSetWindowTextW.Call(hwndLogLbl, uintptr(unsafe.Pointer(strPtr("📊 Real-Time Event & Traffic Log:"))))
 		if hwndBrand != 0 {
@@ -4559,6 +4754,7 @@ func testSubscriptionPingAsync() {
 		wg.Wait()
 
 		saveProfilesToStorage()
+		sortByPing = true
 		if hwndMain != 0 {
 			procPostMessageW.Call(hwndMain, WM_APP_UPDATE_PING, 0, 0)
 		}
@@ -4567,12 +4763,14 @@ func testSubscriptionPingAsync() {
 		maxPing := 0
 		totalPing := 0
 		validCount := 0
+		fastestName := ""
 		for _, p := range profiles {
 			if p.PingMs > 0 {
 				validCount++
 				totalPing += p.PingMs
 				if p.PingMs < minPing {
 					minPing = p.PingMs
+					fastestName = p.Name
 				}
 				if p.PingMs > maxPing {
 					maxPing = p.PingMs
@@ -4583,15 +4781,15 @@ func testSubscriptionPingAsync() {
 		if validCount > 0 {
 			avg := totalPing / validCount
 			if isRussianLang {
-				writeLog("PING_OK", fmt.Sprintf("✅ %s: пинг обновлен (%d/%d онлайн). Мин: %d ms, Макс: %d ms, Средняя: %d ms.", subName, validCount, len(profiles), minPing, maxPing, avg))
+				writeLog("PING_OK", fmt.Sprintf("✅ Пинг завершен (%d/%d онлайн). Самый быстрый: '%s' (%d ms). Средняя: %d ms. Серверы отсортированы по скорости.", validCount, len(profiles), fastestName, minPing, avg))
 			} else {
-				writeLog("PING_OK", fmt.Sprintf("✅ %s: ping updated (%d/%d online). Min: %d ms, Max: %d ms, Avg: %d ms.", subName, validCount, len(profiles), minPing, maxPing, avg))
+				writeLog("PING_OK", fmt.Sprintf("✅ Ping test complete (%d/%d online). Fastest: '%s' (%d ms). Avg: %d ms. Profiles sorted by speed.", validCount, len(profiles), fastestName, minPing, avg))
 			}
 		} else {
 			if isRussianLang {
-				writeLog("PING_WARN", fmt.Sprintf("⚠️ %s: серверы не ответили на TCP пинг.", subName))
+				writeLog("PING_WARN", "⚠️ Серверы не ответили на TCP пинг.")
 			} else {
-				writeLog("PING_WARN", fmt.Sprintf("⚠️ %s: servers did not respond to TCP ping.", subName))
+				writeLog("PING_WARN", "⚠️ Servers did not respond to TCP ping.")
 			}
 		}
 	}()
@@ -4632,10 +4830,22 @@ func importNodesFromContent(rawText string, sourceTitle string) {
 	lines := strings.Split(decodedText, "\n")
 
 	importedCount := 0
-	updatedCount := 0
 
 	subName := loadSubscriptionNameFromRegistry()
+	if subName == "" {
+		subName = "Djinn Proxy hub"
+	}
 
+	// 1. Keep existing individual profiles intact below
+	var indivProfiles []Profile
+	for _, ep := range profiles {
+		if ep.Subscription == "" {
+			indivProfiles = append(indivProfiles, ep)
+		}
+	}
+
+	// 2. Parse new subscription profiles to be placed above
+	var newSubProfiles []Profile
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "vless://") {
@@ -4665,47 +4875,39 @@ func importNodesFromContent(rawText string, sourceTitle string) {
 			RawUri:       line,
 			Subscription: subName,
 		}
-
-		existingIdx := -1
-		for i, ep := range profiles {
-			if (ep.Host == p.Host && ep.Port == p.Port) || ep.RawUri == p.RawUri {
-				existingIdx = i
-				break
-			}
-		}
-		if existingIdx >= 0 {
-			profiles[existingIdx].Name = p.Name
-			profiles[existingIdx].Country = p.Country
-			profiles[existingIdx].RawUri = p.RawUri
-			profiles[existingIdx].Subscription = subName
-			updatedCount++
-		} else {
-			profiles = append(profiles, p)
-			importedCount++
-		}
+		newSubProfiles = append(newSubProfiles, p)
+		importedCount++
 	}
 
-	if importedCount > 0 || updatedCount > 0 {
+	if importedCount > 0 {
 		hasDefault := false
-		for _, p := range profiles {
+		for _, p := range indivProfiles {
 			if p.Default != "" {
 				hasDefault = true
 				break
 			}
 		}
-		if !hasDefault && len(profiles) > 0 {
-			profiles[0].Default = "yes"
+		for _, p := range newSubProfiles {
+			if p.Default != "" {
+				hasDefault = true
+				break
+			}
+		}
+		if !hasDefault && len(newSubProfiles) > 0 {
+			newSubProfiles[0].Default = "yes"
 		}
 
+		// Subscription placed ABOVE, individual profiles kept BELOW
+		profiles = append(newSubProfiles, indivProfiles...)
+
 		saveProfilesToStorage()
-		updateSubscriptionBar()
 		refreshProfilesListView()
 
-		writeLog("SUB", fmt.Sprintf("Processed nodes from %s: added %d new, updated %d existing. Total: %d", sourceTitle, importedCount, updatedCount, len(profiles)))
+		writeLog("SUB", fmt.Sprintf("Processed nodes from %s: added %d subscription nodes. Total servers: %d", sourceTitle, importedCount, len(profiles)))
 
-		msgTxt := fmt.Sprintf("Подписка «%s» успешно обработана!\n\nДобавлено новых серверов: %d\nОбновлено существующих: %d\nВсего серверов в списке: %d", subName, importedCount, updatedCount, len(profiles))
+		msgTxt := fmt.Sprintf("Подписка «%s» успешно обновлена!\n\nСерверов в подписке: %d\nИндивидуальных серверов: %d\nВсего серверов в списке: %d", subName, importedCount, len(indivProfiles), len(profiles))
 		if !isRussianLang {
-			msgTxt = fmt.Sprintf("Subscription '%s' successfully processed!\n\nAdded new nodes: %d\nUpdated existing: %d\nTotal nodes in list: %d", subName, importedCount, updatedCount, len(profiles))
+			msgTxt = fmt.Sprintf("Subscription '%s' successfully updated!\n\nSubscription servers: %d\nIndividual servers: %d\nTotal servers: %d", subName, importedCount, len(indivProfiles), len(profiles))
 		}
 		procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(msgTxt))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000040)
 	} else {
@@ -5111,9 +5313,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 102: // Paste Key / QR
-		btnText = "📋 Paste Key / 📷 QR"
+		btnText = "📋 Paste / QR"
 		if isRussianLang {
-			btnText = "📋 Вставить / 📷 QR"
+			btnText = "📋 Вставить / QR"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -5143,11 +5345,8 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 112: // Move Up Button
-		btnText = "▲ Вверх"
-		if !isRussianLang {
-			btnText = "▲ Up"
-		}
-		font = hFontRegular
+		btnText = "▲"
+		font = hFontBold
 		if isPressed {
 			baseColor = 0x2A3E70
 			borderDark = 0x1E2B50
@@ -5159,11 +5358,8 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 113: // Move Down Button
-		btnText = "▼ Вниз"
-		if !isRussianLang {
-			btnText = "▼ Down"
-		}
-		font = hFontRegular
+		btnText = "▼"
+		font = hFontBold
 		if isPressed {
 			baseColor = 0x2A3E70
 			borderDark = 0x1E2B50
@@ -5175,11 +5371,11 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 104: // Connect Selected
-		btnText = "⚡ Connect"
+		btnText = "▶ Connect"
 		if isRussianLang {
-			btnText = "⚡ Пуск"
+			btnText = "▶ Пуск"
 		}
-		font = hFontRegular
+		font = hFontBold
 		if isPressed {
 			baseColor = 0x256322
 			borderDark = 0x1B5E20
@@ -5191,9 +5387,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 105: // Set Default
-		btnText = "★ Default"
+		btnText = "⭐ Auto"
 		if isRussianLang {
-			btnText = "★ Авто"
+			btnText = "⭐ Авто"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -5328,9 +5524,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 107: // Verify IP
-		btnText = "🌐 IP (EU/RU)"
+		btnText = "🔍 Refresh IP"
 		if isRussianLang {
-			btnText = "🌐 IP (EU/RU)"
+			btnText = "🔍 Обновить IP"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -5346,7 +5542,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 	case 108: // Copy All
 		btnText = "📋 Copy All"
 		if isRussianLang {
-			btnText = "📋 Копировать всё"
+			btnText = "📋 Скопировать всё"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -5948,7 +6144,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					}
 					profiles = append(profiles, p)
 					saveProfilesToStorage()
-					addProfileToListView(len(profiles)-1, p)
+					refreshProfilesListView()
 					writeLog("PROFILE", fmt.Sprintf("New profile '%s' saved successfully.", pName))
 					msg := "Профиль успешно сохранен!"
 					if !isRussianLang {
@@ -5966,11 +6162,15 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(msg))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000030)
 			}
 
-		case 104: // Connect Selected
+		case 104: // Connect Selected / Toggle Subscription Header
 			selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
 			sel := int(selRet)
 			actualIdx := getActualProfileIndex(sel)
-			if actualIdx >= 0 && actualIdx < len(profiles) {
+			if actualIdx == -1 {
+				subscriptionExpanded = !subscriptionExpanded
+				saveSubscriptionExpandedToRegistry(subscriptionExpanded)
+				refreshProfilesListView()
+			} else if actualIdx >= 0 && actualIdx < len(profiles) {
 				p := profiles[actualIdx]
 				connectToNodeAsync(p.Name, p.Host, p.Port, p.Country, p.RawUri, true)
 			}
@@ -5983,7 +6183,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				setDefaultProfile(actualIdx)
 			}
 
-		case 106: // Install / Update
+		case 106, 1020: // Install / Update Banner
 			if !installedState {
 				performInstall()
 			} else {
@@ -6101,15 +6301,34 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				return 0
 			}
 
-			// Connect on Double-Click
-			if nmhdr.Code == NM_DBLCLK {
-				if !subscriptionExpanded {
-					subscriptionExpanded = true
-					saveSubscriptionExpandedToRegistry(true)
-					updateSubscriptionBar()
+			// Column Click: Sort by Ping (Col 4) or restore manual order (Col 0)
+			if nmhdr.Code == ^uint32(107) /* LVN_COLUMNCLICK (-108) */ {
+				pnmv := (*NMLISTVIEW)(unsafe.Pointer(lParam))
+				col := int(pnmv.ISubItem)
+				if col == 4 { // Ping column
+					sortByPing = !sortByPing
+					refreshProfilesListView()
+				} else if col == 0 { // Number / Default column
+					sortByPing = false
+					refreshProfilesListView()
+				}
+				return 0
+			}
+
+			// Single-Click on Subscription Header -> Toggle Collapse / Expand
+			if nmhdr.Code == ^uint32(1) /* NM_CLICK */ {
+				nmia := (*NMITEMACTIVATE)(unsafe.Pointer(lParam))
+				sel := int(nmia.IItem)
+				if sel >= 0 && getActualProfileIndex(sel) == -1 {
+					subscriptionExpanded = !subscriptionExpanded
+					saveSubscriptionExpandedToRegistry(subscriptionExpanded)
 					refreshProfilesListView()
 					return 0
 				}
+			}
+
+			// Connect on Double-Click (or toggle subscription header)
+			if nmhdr.Code == NM_DBLCLK {
 				nmia := (*NMITEMACTIVATE)(unsafe.Pointer(lParam))
 				sel := int(nmia.IItem)
 				if sel < 0 || sel >= len(visibleProfileIndices) {
@@ -6117,6 +6336,12 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					sel = int(selRet)
 				}
 				actualIdx := getActualProfileIndex(sel)
+				if actualIdx == -1 {
+					subscriptionExpanded = !subscriptionExpanded
+					saveSubscriptionExpandedToRegistry(subscriptionExpanded)
+					refreshProfilesListView()
+					return 0
+				}
 				if actualIdx >= 0 && actualIdx < len(profiles) {
 					p := profiles[actualIdx]
 					connectToNodeAsync(p.Name, p.Host, p.Port, p.Country, p.RawUri, true)
@@ -6126,10 +6351,6 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 			// Context menu on Right-Click
 			if nmhdr.Code == NM_RCLICK {
-				if !subscriptionExpanded {
-					showSubscriptionContextMenu()
-					return 0
-				}
 				var pt POINT
 				procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
 				clientPt := pt
@@ -6145,6 +6366,10 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					targetIdx = int(selRet)
 				}
 				actualIdx := getActualProfileIndex(targetIdx)
+				if actualIdx == -1 {
+					showSubscriptionContextMenu()
+					return 0
+				}
 				if actualIdx >= 0 && actualIdx < len(profiles) {
 					var item LVITEMW
 					item.StateMask = LVIS_SELECTED | LVIS_FOCUSED
@@ -6179,6 +6404,46 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					itemIdx := int(pcd.Nmcd.DwItemSpec)
 					subItemIdx := int(pcd.ISubItem)
 					actualIdx := getActualProfileIndex(itemIdx)
+
+					// Subscription Header Row Styling
+					if actualIdx == -1 {
+						if isDarkMode {
+							pcd.ClrTextBk = 0x002A1830 // Soft rich purple/slate background
+							switch subItemIdx {
+							case 0:
+								pcd.ClrText = 0x0000FFFF // Bright Yellow [+] / [-]
+							case 1:
+								pcd.ClrText = 0x00E0E0 // Golden folder
+							case 2:
+								pcd.ClrText = 0x00FFFFFF // Bright White
+							case 3:
+								pcd.ClrText = 0x80D0FF // Ice blue
+							case 4:
+								pcd.ClrText = 0x00E080 // Light green
+							default:
+								pcd.ClrText = 0x00E0E0E0
+							}
+						} else {
+							pcd.ClrTextBk = 0x00EAE6F4 // Soft pastel lavender background
+							switch subItemIdx {
+							case 0:
+								pcd.ClrText = 0x000088 // Bold Dark red/blue
+							case 1:
+								pcd.ClrText = 0x008800
+							case 2:
+								pcd.ClrText = 0x501010 // Dark slate
+							case 3:
+								pcd.ClrText = 0x117A8B
+							case 4:
+								pcd.ClrText = 0x008000
+							default:
+								pcd.ClrText = 0x00222222
+							}
+						}
+						procSelectObject.Call(pcd.Nmcd.Hdc, hFontBold)
+						return CDRF_NEWFONT
+					}
+
 					if actualIdx >= 0 && actualIdx < len(profiles) {
 						isActiveConnected := isConnected && (profiles[actualIdx].Name == activeNodeName || profiles[actualIdx].Host == activeNodeIP || (verifiedExitIP != "" && profiles[actualIdx].Host == verifiedExitIP))
 
@@ -6497,6 +6762,7 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V060",
 		"GIN_VPN_WINDOW_CLASS_V059",
 		"GIN_VPN_WINDOW_CLASS_V058",
 		"GIN_VPN_WINDOW_CLASS_V057",
@@ -6650,21 +6916,32 @@ func main() {
 	hwndBtnDisconnect = createOwnerButton(111, 382, 44, 168, 44)
 	procShowWindow.Call(hwndBtnDisconnect, 0 /* SW_HIDE initially */)
 
-	// 3. Saved Profiles Table (Directly below Main Action Button)
-	hwndProfilesLbl = createStatic("🌐 Servers:", 18, 94, 145, 20, hFontSection)
-	hwndBtnUp = createOwnerButton(112, 168, 92, 74, 24)
-	hwndBtnDown = createOwnerButton(113, 248, 92, 74, 24)
-	hwndBtnConnect = createOwnerButton(104, 328, 92, 106, 24)
-	hwndBtnSetDefault = createOwnerButton(105, 440, 92, 110, 24)
+	// 3. Saved Profiles Controls: 6 buttons in 1 single row (y: 94, h: 28)
+	// Word "Servers:" / "Серверы:" is removed to save vertical space
+	hwndProfilesLbl = createStatic("", 0, 0, 0, 0, 0)
+	procShowWindow.Call(hwndProfilesLbl, 0)
 
-	// Subscription Header Row (y: 118, h: 26)
-	hwndBtnSubToggle = createOwnerButton(114, 18, 118, 32, 26)
-	hwndSubTitle = createStaticNotify("📂 Jin Proxy hub", 54, 120, 328, 22, hFontBold, 1016)
-	hwndBtnSubPing = createOwnerButton(115, 388, 118, 70, 26)
-	hwndBtnSubRefresh = createOwnerButton(116, 462, 118, 88, 26)
+	// Button 1: ▶ Пуск (Connect)
+	hwndBtnConnect = createOwnerButton(104, 18, 94, 90, 28)
+	// Button 2: ⭐ Авто (Set Default / Auto)
+	hwndBtnSetDefault = createOwnerButton(105, 114, 94, 84, 28)
+	// Button 3: ▲ (Move Up)
+	hwndBtnUp = createOwnerButton(112, 204, 94, 38, 28)
+	// Button 4: ▼ (Move Down)
+	hwndBtnDown = createOwnerButton(113, 248, 94, 38, 28)
+	// Button 5: ⏱️ Пинг (Ping & Sort)
+	hwndBtnSubPing = createOwnerButton(115, 292, 94, 96, 28)
+	// Button 6: 🔄 Обновить (Refresh)
+	hwndBtnSubRefresh = createOwnerButton(116, 394, 94, 156, 28)
 
-	// SysListView32 (y: 146, h: 122)
-	hwndListView, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("SysListView32"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|LVS_REPORT|LVS_SINGLESEL|LVS_SHOWSELALWAYS, 18, 146, 532, 122, hwndMain, 0, hInstance, 0)
+	// Deprecated separate sub toggle bar controls kept hidden for safety
+	hwndBtnSubToggle = createOwnerButton(114, 0, 0, 0, 0)
+	procShowWindow.Call(hwndBtnSubToggle, 0)
+	hwndSubTitle = createStaticNotify("", 0, 0, 0, 0, 0, 1016)
+	procShowWindow.Call(hwndSubTitle, 0)
+
+	// SysListView32 (y: 128, h: 140)
+	hwndListView, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("SysListView32"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|LVS_REPORT|LVS_SINGLESEL|LVS_SHOWSELALWAYS, 18, 128, 532, 140, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndListView, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES|LVS_EX_DOUBLEBUFFER|0x00000400)
 	procSendMessageW.Call(hwndListView, WM_SETFONT, hFontRegular, 1)
 
@@ -6672,7 +6949,7 @@ func main() {
 	var col LVCOLUMNW
 	col.Mask = 0x0001 | 0x0002 | 0x0004 | 0x0008
 	col.Fmt = 0x0002 // Center
-	col.Cx = 30
+	col.Cx = 32
 	col.PszText = strPtr("№")
 	procSendMessageW.Call(hwndListView, LVM_INSERTCOLUMNW, 0, uintptr(unsafe.Pointer(&col)))
 
@@ -6684,64 +6961,61 @@ func main() {
 
 	// Column 2: Name
 	col.Fmt = 0x0000 // Left
-	col.Cx = 170
+	col.Cx = 172
 	col.PszText = strPtr("Profile / Device Name")
 	procSendMessageW.Call(hwndListView, LVM_INSERTCOLUMNW, 2, uintptr(unsafe.Pointer(&col)))
 
 	// Column 3: Host
-	col.Cx = 145
+	col.Cx = 144
 	col.PszText = strPtr("Server Host Address")
 	procSendMessageW.Call(hwndListView, LVM_INSERTCOLUMNW, 3, uintptr(unsafe.Pointer(&col)))
 
 	// Column 4: Ping
 	col.Fmt = 0x0002 // Center
-	col.Cx = 75
+	col.Cx = 78
 	col.PszText = strPtr("Ping")
 	procSendMessageW.Call(hwndListView, LVM_INSERTCOLUMNW, 4, uintptr(unsafe.Pointer(&col)))
 
 	// Column 5: Port
 	col.Fmt = 0x0002 // Center
-	col.Cx = 50
+	col.Cx = 52
 	col.PszText = strPtr("Port")
 	procSendMessageW.Call(hwndListView, LVM_INSERTCOLUMNW, 5, uintptr(unsafe.Pointer(&col)))
 
 	loadProfilesFromStorage()
 	subscriptionExpanded = loadSubscriptionExpandedFromRegistry()
-	updateSubscriptionBar()
 	refreshProfilesListView()
 
-	// 4. Diagnostics Panel (Rounded Card in WM_ERASEBKGND: y: 274..342)
-	hwndDiagHeader = createStaticNotify("⚡ Diagnostics & Routing", 28, 278, 430, 18, hFontBold, 1010)
-	hwndBtnDiagInfo = createOwnerButton(110, 465, 276, 75, 20)
-	hwndDiagOrig = createStaticNotify("ISP IP: Detecting...", 28, 300, 245, 18, hFontSmall, 1011)
-	hwndDiagProt = createStaticNotify("VPN IP: 🔴 Disconnected", 275, 300, 265, 18, hFontSmall, 1012)
-	hwndDiagLat = createStaticNotify("Ping: -- ms", 28, 320, 245, 18, hFontSmall, 1013)
-	hwndDiagUptime = createStaticNotify("Uptime: Disconnected", 275, 320, 265, 18, hFontSmall, 1014)
+	// 4. Diagnostics Panel (Rounded Card in WM_ERASEBKGND: y: 274..338)
+	hwndDiagHeader = createStaticNotify("⚡ Diagnostics & Routing", 28, 276, 430, 18, hFontBold, 1010)
+	hwndBtnDiagInfo = createOwnerButton(110, 465, 274, 75, 20)
+	hwndDiagOrig = createStaticNotify("ISP IP: Detecting...", 28, 296, 245, 18, hFontSmall, 1011)
+	hwndDiagProt = createStaticNotify("VPN IP: 🔴 Disconnected", 275, 296, 265, 18, hFontSmall, 1012)
+	hwndDiagLat = createStaticNotify("Ping: -- ms", 28, 316, 245, 18, hFontSmall, 1013)
+	hwndDiagUptime = createStaticNotify("Uptime: Disconnected", 275, 316, 265, 18, hFontSmall, 1014)
 
-	// 5. Active VLESS Key Header & Buttons (Under Saved Profiles & Diagnostics)
-	hwndKeyLabel = createStatic("Active VLESS Reality Key: (Ready)", 18, 350, 250, 20, hFontSection)
-	hwndBtnPasteQr = createOwnerButton(102, 270, 348, 180, 24)
-	hwndBtnSave = createOwnerButton(103, 458, 348, 92, 24)
-
-	hwndKeyEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL, 18, 374, 532, 36, hwndMain, 0, hInstance, 0)
+	// 5. Active VLESS Key Header, Text Field (Left) & Two Stacked Buttons (Right)
+	hwndKeyLabel = createStatic("🔑 Active VLESS Key or Subscription URL:", 18, 344, 384, 16, hFontSection)
+	hwndKeyEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL, 18, 362, 384, 52, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndKeyEdit, WM_SETFONT, hFontConsolas, 1)
 
-	// 6. Banner & Bottom Buttons
-	hwndBannerLbl = createStatic("⚠️ GIN-VPN is not installed! Running portable. Click [ 📑 Install App ] below to install", 18, 414, 532, 18, hFontSmall)
+	hwndBtnPasteQr = createOwnerButton(102, 410, 362, 140, 24)
+	hwndBtnSave = createOwnerButton(103, 410, 390, 140, 24)
 
-	hwndBtnInstall = createOwnerButton(106, 18, 436, 145, 26)
-	hwndBtnVerify = createOwnerButton(107, 172, 436, 115, 26)
-	hwndBtnCopyLog = createOwnerButton(108, 296, 436, 145, 26)
-	hwndBtnClearLog = createOwnerButton(109, 450, 436, 100, 26)
-
-	// 7. Log Box (Crisp compact font)
-	hwndLogLbl = createStatic("📊 Real-Time Event & Traffic Log:", 18, 468, 260, 18, hFontSection)
-
-	hwndLogEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL|ES_READONLY|WS_VSCROLL, 18, 488, 532, 140, hwndMain, 0, hInstance, 0)
+	// 6. Log Box
+	hwndLogLbl = createStatic("📊 Real-Time Event & Traffic Log:", 18, 422, 532, 16, hFontSection)
+	hwndLogEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL|ES_READONLY|WS_VSCROLL, 18, 440, 532, 136, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndLogEdit, WM_SETFONT, hFontConsolasLog, 1)
 
-	// 8. Brand Signature at Bottom (Clickable -> 3D Easter Egg)
-	hwndBrand = createStaticNotify("VladiMIR+AI", 18, 632, 532, 20, hFontBold, 1004)
+	// 7. Buttons under the Log Window (y: 582, h: 26)
+	hwndBtnInstall = createOwnerButton(106, 18, 582, 126, 26)
+	hwndBtnVerify = createOwnerButton(107, 18, 582, 170, 26)
+	hwndBtnCopyLog = createOwnerButton(108, 196, 582, 180, 26)
+	hwndBtnClearLog = createOwnerButton(109, 384, 582, 166, 26)
+
+	// 8. Bottom Status Banner & Brand in ONE line (y: 614, h: 20)
+	hwndBannerLbl = createStaticNotify("✔️ GIN-VPN is installed. Click to check updates.", 18, 614, 434, 20, hFontSmall, 1020)
+	hwndBrand = createStaticNotify("VladiMIR+AI", 456, 614, 94, 20, hFontBold, 1004)
 
 	loadCustomRulesFromStorage()
 	installedState = checkIsInstalled()
