@@ -33,9 +33,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v066"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v066]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v066]"
+	AppVersion    = "v068"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v068]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v068]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -1464,27 +1464,14 @@ func loadProfilesFromStorage() {
 		profiles = []Profile{}
 	}
 
-	// Clean up any individual profiles wrongly tagged as subscription in v058/v059
+	// Ensure subscription profiles retain their subscription tag
 	for i := range profiles {
 		if profiles[i].Subscription != "" {
 			p := &profiles[i]
-			isSubNode := strings.HasPrefix(p.Name, "GIN-") ||
-				strings.Contains(p.Name, "GIN-NL") ||
-				strings.Contains(p.Name, "GIN-EU") ||
-				strings.Contains(p.Name, "GIN-ES") ||
-				strings.Contains(p.Name, "GIN-DE") ||
-				strings.Contains(p.Name, "GIN-US") ||
-				strings.Contains(p.Name, "GIN-BG") ||
-				p.Host == "78.159.250.214" ||
-				p.Host == "edge.bookmai.com" ||
-				p.Host == "145.249.109.112" ||
-				p.Host == "193.163.203.170" ||
-				p.Host == "157.228.149.211" ||
-				p.Host == "31.77.157.178" ||
-				p.Host == "45.133.151.187" ||
-				p.Host == "140.225.199.241" ||
-				p.Host == "finkawwwbroy5.qcloud.surf" ||
-				p.Host == "45.9.156.42"
+			isSubNode := strings.Contains(p.Name, "GIN-") ||
+				p.Subscription == "GIN-Proxy-HUB" ||
+				strings.Contains(strings.ToLower(p.Subscription), "hub") ||
+				strings.Contains(strings.ToLower(p.Subscription), "proxy")
 			if !isSubNode {
 				p.Subscription = ""
 			}
@@ -1927,10 +1914,15 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 		},
 	}
 
+	flow := cfg.Flow
+	if strings.ToLower(cfg.Network) != "tcp" {
+		flow = "" // xtls-rprx-vision is only valid on tcp transport
+	}
+
 	user := User{
 		ID:         cfg.UUID,
 		Encryption: "none",
-		Flow:       cfg.Flow,
+		Flow:       flow,
 		Level:      0,
 	}
 
@@ -1938,8 +1930,13 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 	if strings.ToLower(cfg.Network) == "grpc" && cfg.ServiceName != "" {
 		grpcCfg = &GrpcSettings{
 			ServiceName: cfg.ServiceName,
-			MultiMode:   cfg.Mode == "gun" || cfg.Mode == "multi",
+			MultiMode:   strings.EqualFold(cfg.Mode, "multi"), // gun mode is false, only multi mode is true
 		}
+	}
+
+	spiderX := cfg.SpiderX
+	if spiderX == "" {
+		spiderX = "/"
 	}
 
 	xc.Outbounds = []Outbound{
@@ -1964,7 +1961,7 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 					ServerName:  cfg.SNI,
 					PublicKey:   cfg.PublicKey,
 					ShortId:     cfg.ShortId,
-					SpiderX:     cfg.SpiderX,
+					SpiderX:     spiderX,
 				},
 				GrpcSettings: grpcCfg,
 			},
@@ -2083,20 +2080,26 @@ func stopXrayCore() {
 		_ = xrayCmd.Process.Kill()
 		_ = xrayCmd.Wait()
 		xrayCmd = nil
-		writeLog("CORE", "Xray Core process stopped.")
 	}
+	_ = exec.Command("taskkill", "/F", "/IM", "xray.exe").Run()
+	writeLog("CORE", "Xray Core process stopped.")
 }
 
 var activeXrayExePath = `C:\Windows\Temp\xray.exe`
 
 func ensureXrayBinaryExists() error {
 	targetExe := `C:\Windows\Temp\xray.exe`
-	if fi, err := os.Stat(targetExe); err == nil && fi.Size() > 20000000 {
+	const expectedXraySize int64 = 36904960
+	if fi, err := os.Stat(targetExe); err == nil && fi.Size() == expectedXraySize {
 		activeXrayExePath = targetExe
 		return nil
 	}
 
-	writeLog("CORE", "Unpacking embedded Xray Core payload (Standalone All-In-One)...")
+	// Terminate any stale xray.exe before replacing binary
+	_ = exec.Command("taskkill", "/F", "/IM", "xray.exe").Run()
+	time.Sleep(100 * time.Millisecond)
+
+	writeLog("CORE", "Unpacking verified Xray Core v26.7.28 payload...")
 	gzReader, err := gzip.NewReader(bytes.NewReader(embeddedXrayGz))
 	if err != nil {
 		return fmt.Errorf("failed to init gzip decompressor: %w", err)
@@ -2139,7 +2142,7 @@ func ensureXrayBinaryExists() error {
 	}
 
 	activeXrayExePath = targetExe
-	writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core unpacked and ready: %s", targetExe))
+	writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core v26.7.28 ready: %s", targetExe))
 	return nil
 }
 
@@ -2186,7 +2189,7 @@ func startXrayCore(cfg *VlessConfig) error {
 
 	// Wait for port 10809 to open
 	bound := false
-	for i := 0; i < 25; i++ {
+	for i := 0; i < 35; i++ {
 		time.Sleep(100 * time.Millisecond)
 		conn, err := net.DialTimeout("tcp", "127.0.0.1:10809", 100*time.Millisecond)
 		if err == nil {
@@ -2215,7 +2218,7 @@ func verifyTunnelRouting() (string, error) {
 			Proxy:             http.ProxyURL(proxyUrl),
 			DisableKeepAlives: true,
 		},
-		Timeout: 2200 * time.Millisecond,
+		Timeout: 4500 * time.Millisecond,
 	}
 
 	// 1. Try ip-api.com to get live verified IP + City + Country
@@ -2236,10 +2239,8 @@ func verifyTunnelRouting() (string, error) {
 		}
 	}
 
-	// 2. Try fast server endpoints
+	// 2. Try fast reliable server endpoints
 	endpoints := []string{
-		"http://152.53.182.222:8443/ip",
-		"http://212.109.223.109:8443/ip",
 		"https://api.ipify.org",
 		"https://icanhazip.com",
 	}
@@ -2249,7 +2250,7 @@ func verifyTunnelRouting() (string, error) {
 			defer r.Body.Close()
 			b, _ := io.ReadAll(r.Body)
 			ip := strings.TrimSpace(string(b))
-			if ip != "" {
+			if ip != "" && !strings.Contains(ip, "<") && !strings.Contains(ip, " ") {
 				return ip, nil
 			}
 		}
@@ -2298,6 +2299,8 @@ func setWindowsProxy(enabled bool, server string) {
 	if enabled {
 		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "1", "/f").Run()
 		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", server, "/f").Run()
+		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyOverride", "/t", "REG_SZ", "/d", "<local>;localhost;127.0.0.1", "/f").Run()
+		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "AutoConfigURL", "/f").Run()
 	} else {
 		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "0", "/f").Run()
 	}
@@ -3269,23 +3272,22 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 		// 3. Verify actual live tunnel before activating system proxy!
 		exitIp, err := verifyTunnelRouting()
 		if err != nil {
-			writeLog("WARN", fmt.Sprintf("Handshake fast verify returned: %v. Checking node TCP reachability...", err))
-			tcpConn, tcpErr := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 1500*time.Millisecond)
-			if tcpErr != nil {
-				writeLog("FAIL", fmt.Sprintf("Handshake failed with %s: node is unreachable (%v).", activeNodeName, tcpErr))
-				writeLog("ERR", "Connection failed! Restoring direct ISP internet routing.")
-				stopXrayCore()
-				setWindowsProxy(false, "")
-				isConnected = false
-				updateTrayIcon(false, "", "")
-				if hwndMain != 0 {
-					procShowWindow.Call(hwndMain, 5) // SW_SHOW
-					procSetForegroundWindow.Call(hwndMain)
-				}
-				return
+			writeLog("WARN", fmt.Sprintf("Initial tunnel verify: %v. Retrying handshake verification...", err))
+			time.Sleep(400 * time.Millisecond)
+			exitIp, err = verifyTunnelRouting()
+		}
+		if err != nil {
+			writeLog("FAIL", fmt.Sprintf("Handshake failed with %s: proxy tunnel not responding (%v).", activeNodeName, err))
+			writeLog("ERR", "Connection failed! Restoring direct ISP internet routing.")
+			stopXrayCore()
+			setWindowsProxy(false, "")
+			isConnected = false
+			updateTrayIcon(false, "", "")
+			if hwndMain != 0 {
+				procShowWindow.Call(hwndMain, 5) // SW_SHOW
+				procSetForegroundWindow.Call(hwndMain)
 			}
-			tcpConn.Close()
-			exitIp = host
+			return
 		}
 
 		// 4. Dual IP Check on DE-222 (EU) and RU-109 (RU)
@@ -3683,6 +3685,10 @@ func triggerDeleteSelectedProfile() {
 	selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
 	sel := int(selRet)
 	actualIdx := getActualProfileIndex(sel)
+	if actualIdx == -1 {
+		deleteSubscription()
+		return
+	}
 	if actualIdx < 0 && selectedProfileIdx >= 0 && selectedProfileIdx < len(profiles) {
 		actualIdx = selectedProfileIdx
 	}
@@ -3730,6 +3736,97 @@ func deleteProfileWithConfirmation(actualIdx int) {
 		} else {
 			writeLog("PROFILE", fmt.Sprintf("🗑️ Profile '%s' deleted and updated in registry.", delName))
 		}
+	}
+}
+
+func deleteSubscription() {
+	subName := loadSubscriptionNameFromRegistry()
+	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
+		subName = "GIN-Proxy-HUB"
+	}
+	subCount := 0
+	for _, p := range profiles {
+		if p.Subscription != "" {
+			subCount++
+		}
+	}
+
+	if subCount == 0 && loadSubscriptionUrlFromRegistry() == "" {
+		warnMsg := "В списке нет активных подписок или серверов из подписки."
+		warnTitle := "Удаление подписки — GIN-VPN"
+		if !isRussianLang {
+			warnMsg = "No active subscription or subscription servers found in the list."
+			warnTitle = "Delete Subscription — GIN-VPN"
+		}
+		procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(warnMsg))), uintptr(unsafe.Pointer(strPtr(warnTitle))), 0x00000030)
+		return
+	}
+
+	confirmMsg := fmt.Sprintf("Вы уверены, что хотите полностью удалить подписку:\n\n\"%s\" (%d серверов)?\n\nВсе серверы этой подписки будут удалены из списка.", subName, subCount)
+	confirmTitle := "Удаление подписки — GIN-VPN"
+	if !isRussianLang {
+		confirmMsg = fmt.Sprintf("Are you sure you want to completely delete subscription:\n\n\"%s\" (%d servers)?\n\nAll servers from this subscription will be permanently removed.", subName, subCount)
+		confirmTitle = "Delete Subscription — GIN-VPN"
+	}
+
+	// MB_YESNO (0x04) | MB_ICONQUESTION (0x20)
+	ret, _, _ := procMessageBoxW.Call(
+		hwndMain,
+		uintptr(unsafe.Pointer(strPtr(confirmMsg))),
+		uintptr(unsafe.Pointer(strPtr(confirmTitle))),
+		0x00000004|0x00000020,
+	)
+	if ret != 6 { // IDYES
+		return
+	}
+
+	hasActiveDeleted := false
+	var remaining []Profile
+	for _, p := range profiles {
+		if p.Subscription == "" {
+			remaining = append(remaining, p)
+		} else {
+			if isConnected && (p.Name == activeNodeName || p.Host == activeNodeIP || (verifiedExitIP != "" && p.Host == verifiedExitIP)) {
+				hasActiveDeleted = true
+			}
+		}
+	}
+
+	profiles = remaining
+
+	// Ensure there is a default server if remaining profiles exist
+	if len(profiles) > 0 {
+		hasDefault := false
+		for _, p := range profiles {
+			if p.Default != "" {
+				hasDefault = true
+				break
+			}
+		}
+		if !hasDefault {
+			profiles[0].Default = "yes"
+		}
+	}
+
+	// Reset subscription in registry
+	saveSubscriptionUrlToRegistry("")
+	saveSubscriptionNameToRegistry("GIN-Proxy-HUB")
+	if hwndKeyEdit != 0 {
+		procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(""))))
+	}
+
+	saveProfilesToStorage()
+	updateSubscriptionBar()
+	refreshProfilesListView()
+
+	if hasActiveDeleted {
+		disconnectVpnAsync()
+	}
+
+	if isRussianLang {
+		writeLog("SUB", fmt.Sprintf("🗑️ Подписка '%s' и все серверы (%d шт.) полностью удалены.", subName, subCount))
+	} else {
+		writeLog("SUB", fmt.Sprintf("🗑️ Subscription '%s' and all servers (%d) completely deleted.", subName, subCount))
 	}
 }
 
@@ -3842,7 +3939,25 @@ func renameWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			var buf [512]uint16
 			procGetWindowTextW.Call(hwndRenameEdit, uintptr(unsafe.Pointer(&buf[0])), 512)
 			newName := strings.TrimSpace(syscall.UTF16ToString(buf[:]))
-			if newName != "" && renameTargetIdx >= 0 && renameTargetIdx < len(profiles) {
+			if renameTargetIdx == -1 {
+				if newName != "" {
+					oldName := loadSubscriptionNameFromRegistry()
+					saveSubscriptionNameToRegistry(newName)
+					for i := range profiles {
+						if profiles[i].Subscription != "" {
+							profiles[i].Subscription = newName
+						}
+					}
+					saveProfilesToStorage()
+					updateSubscriptionBar()
+					refreshProfilesListView()
+					if isRussianLang {
+						writeLog("SUB", fmt.Sprintf("✏️ Подписка '%s' переименована в: '%s'", oldName, newName))
+					} else {
+						writeLog("SUB", fmt.Sprintf("✏️ Subscription '%s' renamed to: '%s'", oldName, newName))
+					}
+				}
+			} else if newName != "" && renameTargetIdx >= 0 && renameTargetIdx < len(profiles) {
 				oldName := profiles[renameTargetIdx].Name
 				profiles[renameTargetIdx].Name = newName
 
@@ -4220,6 +4335,94 @@ func showRenameDialog(sel int) {
 	procSetForegroundWindow.Call(hwndRenameDlg)
 }
 
+func showRenameSubscriptionDialog() {
+	renameTargetIdx = -1
+	subName := loadSubscriptionNameFromRegistry()
+	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
+		subName = "GIN-Proxy-HUB"
+	}
+
+	className := strPtr("GIN_VPN_RENAME_CLASS")
+	var wc WNDCLASSEXW
+	wc.CbSize = uint32(unsafe.Sizeof(wc))
+	wc.LpfnWndProc = syscall.NewCallback(renameWndProc)
+	wc.HInstance = hInstance
+	wc.HCursor, _, _ = procLoadCursorW.Call(0, uintptr(IDC_ARROW))
+	wc.HbrBackground = hBrushBgDay
+	if currentTheme == ThemeGray {
+		wc.HbrBackground = hBrushBgGray
+	} else if currentTheme == ThemeNight {
+		wc.HbrBackground = hBrushBgNight
+	}
+	wc.LpszClassName = className
+	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wc)))
+
+	var mainRc RECT
+	procGetWindowRect.Call(hwndMain, uintptr(unsafe.Pointer(&mainRc)))
+	x := mainRc.Left + (mainRc.Right-mainRc.Left-380)/2
+	y := mainRc.Top + (mainRc.Bottom-mainRc.Top-170)/2
+
+	titleText := "✏️ Rename Subscription — GIN-VPN"
+	promptText := "Enter new subscription name:"
+	btnSaveText := "💾 Save"
+	btnCancelText := "❌ Cancel"
+	if isRussianLang {
+		titleText = "✏️ Переименовать подписку — GIN-VPN"
+		promptText = "Введите новое имя подписки:"
+		btnSaveText = "💾 Сохранить"
+		btnCancelText = "❌ Отмена"
+	}
+
+	hwndRenameDlg, _, _ = procCreateWindowExW.Call(
+		0x00010000,
+		uintptr(unsafe.Pointer(className)),
+		uintptr(unsafe.Pointer(strPtr(titleText))),
+		WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_VISIBLE,
+		uintptr(x), uintptr(y), 380, 170,
+		hwndMain, 0, hInstance, 0,
+	)
+
+	hwndLbl, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("STATIC"))),
+		uintptr(unsafe.Pointer(strPtr(promptText))),
+		WS_CHILD|WS_VISIBLE,
+		20, 15, 330, 20,
+		hwndRenameDlg, 0, hInstance, 0,
+	)
+	procSendMessageW.Call(hwndLbl, WM_SETFONT, hFontRegular, 1)
+
+	hwndRenameEdit, _, _ = procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("EDIT"))),
+		uintptr(unsafe.Pointer(strPtr(subName))),
+		WS_CHILD|WS_VISIBLE|WS_BORDER|ES_AUTOHSCROLL,
+		20, 42, 325, 26,
+		hwndRenameDlg, 0, hInstance, 0,
+	)
+	procSendMessageW.Call(hwndRenameEdit, WM_SETFONT, hFontRegular, 1)
+
+	hwndBtnSaveName, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr(btnSaveText))),
+		WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON,
+		45, 85, 130, 32,
+		hwndRenameDlg, uintptr(7001), hInstance, 0,
+	)
+	procSendMessageW.Call(hwndBtnSaveName, WM_SETFONT, hFontBold, 1)
+
+	hwndBtnCancel, _, _ := procCreateWindowExW.Call(
+		0, uintptr(unsafe.Pointer(strPtr("BUTTON"))),
+		uintptr(unsafe.Pointer(strPtr(btnCancelText))),
+		WS_CHILD|WS_VISIBLE,
+		190, 85, 130, 32,
+		hwndRenameDlg, uintptr(7002), hInstance, 0,
+	)
+	procSendMessageW.Call(hwndBtnCancel, WM_SETFONT, hFontRegular, 1)
+
+	procEnableWindow.Call(hwndMain, 0)
+	procShowWindow.Call(hwndRenameDlg, 5)
+	procSetForegroundWindow.Call(hwndRenameDlg)
+}
+
 func showListViewContextMenu(sel int) {
 	if sel < 0 || sel >= len(profiles) {
 		return
@@ -4265,10 +4468,13 @@ func showListViewContextMenu(sel int) {
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 6008, uintptr(unsafe.Pointer(strPtr("💾 Экспорт всех серверов в бэкап"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 6009, uintptr(unsafe.Pointer(strPtr("📥 Импорт серверов из бэкапа"))))
-		procAppendMenuW.Call(hMenu, MF_STRING, 6015, uintptr(unsafe.Pointer(strPtr("🔗 Добавить / обновить подписку (URL)"))))
+		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 115, uintptr(unsafe.Pointer(strPtr("⏱️ Проверить задержку (пинг) всех серверов"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 116, uintptr(unsafe.Pointer(strPtr("🔄 Обновить список серверов из подписки"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 114, uintptr(unsafe.Pointer(strPtr("➕ / ➖ Свернуть / Развернуть список"))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6016, uintptr(unsafe.Pointer(strPtr("✏️ Переименовать подписку..."))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6015, uintptr(unsafe.Pointer(strPtr("🔗 Добавить / обновить подписку (URL)"))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6017, uintptr(unsafe.Pointer(strPtr("🗑️ Удалить подписку полностью"))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 6012, uintptr(unsafe.Pointer(strPtr("🔄 Обновить GIN-VPN"))))
 	} else {
@@ -4298,10 +4504,13 @@ func showListViewContextMenu(sel int) {
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 6008, uintptr(unsafe.Pointer(strPtr("💾 Export All Profiles to Backup"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 6009, uintptr(unsafe.Pointer(strPtr("📥 Import Profiles from Backup"))))
-		procAppendMenuW.Call(hMenu, MF_STRING, 6015, uintptr(unsafe.Pointer(strPtr("🔗 Add / Update Subscription (URL)"))))
+		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 115, uintptr(unsafe.Pointer(strPtr("⏱️ Test Ping for All Subscription Servers"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 116, uintptr(unsafe.Pointer(strPtr("🔄 Refresh Servers List from Subscription"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 114, uintptr(unsafe.Pointer(strPtr("➕ / ➖ Collapse / Expand List"))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6016, uintptr(unsafe.Pointer(strPtr("✏️ Rename Subscription..."))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6015, uintptr(unsafe.Pointer(strPtr("🔗 Add / Update Subscription (URL)"))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6017, uintptr(unsafe.Pointer(strPtr("🗑️ Delete Subscription Completely"))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 6012, uintptr(unsafe.Pointer(strPtr("🔄 Update GIN-VPN"))))
 	}
@@ -4319,24 +4528,39 @@ func showSubscriptionContextMenu() {
 		return
 	}
 	subName := loadSubscriptionNameFromRegistry()
+	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
+		subName = "GIN-Proxy-HUB"
+	}
+	subCount := 0
+	for _, p := range profiles {
+		if p.Subscription != "" {
+			subCount++
+		}
+	}
 	if isRussianLang {
-		header := fmt.Sprintf("📁 Подписка: %s (%d серверов)", subName, len(profiles))
+		header := fmt.Sprintf("📁 Подписка: %s (%d серверов)", subName, subCount)
 		procAppendMenuW.Call(hMenu, MF_STRING|MF_GRAYED, 0, uintptr(unsafe.Pointer(strPtr(header))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 115, uintptr(unsafe.Pointer(strPtr("⏱️ Проверить задержку (пинг) всех серверов"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 116, uintptr(unsafe.Pointer(strPtr("🔄 Обновить список серверов из подписки"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 114, uintptr(unsafe.Pointer(strPtr("➕ / ➖ Свернуть / Развернуть список"))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+		procAppendMenuW.Call(hMenu, MF_STRING, 6016, uintptr(unsafe.Pointer(strPtr("✏️ Переименовать подписку..."))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 6015, uintptr(unsafe.Pointer(strPtr("🔗 Изменить ссылку на подписку..."))))
+		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+		procAppendMenuW.Call(hMenu, MF_STRING, 6017, uintptr(unsafe.Pointer(strPtr("🗑️ Удалить подписку полностью"))))
 	} else {
-		header := fmt.Sprintf("📁 Subscription: %s (%d servers)", subName, len(profiles))
+		header := fmt.Sprintf("📁 Subscription: %s (%d servers)", subName, subCount)
 		procAppendMenuW.Call(hMenu, MF_STRING|MF_GRAYED, 0, uintptr(unsafe.Pointer(strPtr(header))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 115, uintptr(unsafe.Pointer(strPtr("⏱️ Test Ping for All Subscription Servers"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 116, uintptr(unsafe.Pointer(strPtr("🔄 Refresh Servers List from Subscription"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 114, uintptr(unsafe.Pointer(strPtr("➕ / ➖ Collapse / Expand List"))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+		procAppendMenuW.Call(hMenu, MF_STRING, 6016, uintptr(unsafe.Pointer(strPtr("✏️ Rename Subscription..."))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 6015, uintptr(unsafe.Pointer(strPtr("🔗 Change Subscription URL..."))))
+		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+		procAppendMenuW.Call(hMenu, MF_STRING, 6017, uintptr(unsafe.Pointer(strPtr("🗑️ Delete Subscription Completely"))))
 	}
 	var pt POINT
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
@@ -5027,12 +5251,23 @@ func importNodesFromContent(rawText string, sourceTitle string) {
 			continue
 		}
 		name := cfg.Name
+		if unescaped, err := url.PathUnescape(name); err == nil && unescaped != "" {
+			name = unescaped
+		}
+		if unescaped, err := url.QueryUnescape(name); err == nil && unescaped != "" {
+			name = unescaped
+		}
 		if name == "" {
 			name = fmt.Sprintf("Custom-%s", cfg.Host)
 		}
 		country := "EU"
 		if len(name) >= 4 && name[0] == '[' && name[3] == ']' {
 			country = strings.ToUpper(name[1:3])
+		} else if strings.Contains(name, "GIN-") {
+			parts := strings.Split(name, "GIN-")
+			if len(parts) > 1 && len(parts[1]) >= 2 {
+				country = strings.ToUpper(parts[1][:2])
+			}
 		} else if cfg.Host == EndpointServerRU || strings.Contains(cfg.Host, "223.109") {
 			country = "RU"
 		}
@@ -6208,6 +6443,12 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(targetUrl))))
 			importSubscriptionFromUrl(targetUrl)
 
+		case 6016: // Context Menu: Rename Subscription
+			showRenameSubscriptionDialog()
+
+		case 6017: // Context Menu: Delete Subscription Completely
+			deleteSubscription()
+
 		case 114, 1016: // Subscription Toggle [+]/[-]
 			subscriptionExpanded = !subscriptionExpanded
 			saveSubscriptionExpanded(subscriptionExpanded)
@@ -7107,6 +7348,8 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V067",
+		"GIN_VPN_WINDOW_CLASS_V066",
 		"GIN_VPN_WINDOW_CLASS_V065",
 		"GIN_VPN_WINDOW_CLASS_V063",
 		"GIN_VPN_WINDOW_CLASS_V062",
