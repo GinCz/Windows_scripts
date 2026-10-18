@@ -71,8 +71,8 @@ rm -f GIN-VPN_v<OLD>.exe
   - `/root/Linux_Server_Public/Windows/GIN-VPN/`
 - Удалить устаревшие бинарники старых версий.
 
-### 5. Выгрузка в каталог программ VPN в Облако MEGA №1:
-*(ВНИМАНИЕ: На Рабочий стол `/MEGA/DOCS/desktop/` бинарники не выгружаются! Владимир обновляет программы встроенной системой автообновления).*
+### 5. Выгрузка в каталог программ VPN в Облако MEGA №1 (Desktop - NO, VPN Folder - OK):
+*(ВНИМАНИЕ: На Рабочий стол `D:\MEGA\DOCS\desktop - NO` бинарники-установщики НЕ выгружаются! Достаточно, если файл-установщик живет в целевой папке программ VPN в Облаке MEGA: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN - OK`).*
 ```bash
 mega-rm "/MEGA/WIN-FLASH/Util-WINDOWS/N E T/VPN/GIN-VPN_v<OLD>.exe" 2>/dev/null || true
 mega-put /root/Secret_Privat/Windows/GIN-VPN/GIN-VPN_v<NEW>.exe "/MEGA/WIN-FLASH/Util-WINDOWS/N E T/VPN/"

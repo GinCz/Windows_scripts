@@ -1,21 +1,21 @@
-# 🛡️ GIN-VPN by VladiMIR+AI (v066)
+# 🛡️ GIN-VPN by VladiMIR+AI (v067)
 ### Нативный высокоскоростной Xray клиент (VLESS + Reality + Vision) для Windows
 
 ---
 
 <div align="center">
 
-# 🚀 [СКАЧАТЬ ПОСЛЕДНЮЮ ВЕРСИЮ GIN-VPN (v066)](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe)
+# 🚀 [СКАЧАТЬ ПОСЛЕДНЮЮ ВЕРСИЮ GIN-VPN (v067)](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe)
 ### ⚡ Нажмите на зелёную кнопку для мгновенного скачивания готовой программы:
 
 <br/>
 
-[![Download GIN-VPN](https://img.shields.io/badge/📥_СКАЧАТЬ_GIN--VPN.exe_(v066)-ПРЯМАЯ_ЗАГРУЗКА_(16_МБ)-00C853?style=for-the-badge&logo=windows&logoColor=white)](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe)
+[![Download GIN-VPN](https://img.shields.io/badge/📥_СКАЧАТЬ_GIN--VPN.exe_(v067)-ПРЯМАЯ_ЗАГРУЗКА_(16_МБ)-00C853?style=for-the-badge&logo=windows&logoColor=white)](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe)
 
 <br/>
 
 [![Alternative Mirror](https://img.shields.io/badge/Зеркало_загрузки_(GitHub_Raw)-1E88E5?style=flat-square&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-VPN/GIN-VPN.exe)
-[![Version](https://img.shields.io/badge/Version-v066_(Latest_Release)-00E676.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts)
+[![Version](https://img.shields.io/badge/Version-v067_(Latest_Release)-00E676.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts)
 [![Platform](https://img.shields.io/badge/Платформа-Windows_7_/_8.1_/_10_/_11_/_Server-0288D1.svg?style=flat-square)](https://microsoft.com/windows)
 [![Engine](https://img.shields.io/badge/Движок-Xray_Core_VLESS--Reality-FF6D00.svg?style=flat-square)](https://github.com/XTLS/Xray-core)
 [![License](https://img.shields.io/badge/Лицензия-MIT_%7C_100%25_Free-76FF03.svg?style=flat-square)](https://opensource.org/licenses/MIT)
@@ -43,10 +43,15 @@
 - **Полноразмерные кнопки сортировки:** кнопки `[ ▲ Вверх ]` и `[ ▼ Вниз ]` над таблицей серверов позволяют мгновенно перемещать выбранный сервер в любую позицию списка с автоматическим выделением и сохранением порядка.
 - **Сортировка из контекстного меню:** при правом клике на любой сервер в списке пункты `▲ Переместить выше (Вверх)` и `▼ Переместить ниже (Вниз)` доступны в самом начале меню.
 
+### 📁 1. Полное удаление и переименование подписки по правому клику (Новинка v067)
+- **Удаление подписки целиком (`🗑️ Удалить подписку полностью`):** при клике правой кнопкой мыши по подписке в списке серверов теперь можно полностью удалить всю подписку вместе со всеми входящими в нее серверами в 1 клик с подтверждением. Ссылка на подписку и имя чисто сбрасываются в реестре Windows.
+- **Переименование подписки (`✏️ Переименовать подписку...`):** возможность легко изменить отображаемое имя подписки прямо из контекстного меню.
+- **Точный счетчик серверов:** в заголовке контекстного меню подписки выводится реальное количество серверов именно этой подписки.
+
 ### 🚀 1. Авто-обновление по правой кнопке мыши со строгой проверкой версии
 - **Правый клик по кнопке `[ 🔄 Обновить ]`:** мгновенно запускает загрузку и обновление без подтверждений ТОЛЬКО если на сервере действительно есть более новая версия. Если установлена последняя версия, программа сообщает об этом в логе и не выполняет лишних скачиваний и перезапусков.
 - **Чистое контекстное меню трея:** лаконичный пункт `[ 🔄 Обновить сейчас ]` без лишних скобок.
-- **Обязательная доставка установщиков:** каждый новый релиз автоматически развертывается на Рабочий стол (`/MEGA/DOCS/desktop/`, `/mega/docs/desktop/`) и в хранилище сетевых утилит VPN: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN\`.
+- **Регламент размещения релизов (Desktop — NO, Папка программ VPN — OK):** при создании очередной новой версии `.exe` файл-установщик НЕ помещается на рабочий стол (`D:\MEGA\DOCS\desktop - NO`). Достаточно, если он живет в целевой папке программ VPN в Облаке MEGA: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN - OK`.
 
 ### 🔄 2. Встроенное умное автообновление (In-App Auto-Updater)
 - При нажатии левой кнопки мыши на **`[ 🔄 Обновить ]`** программа проверяет наличие обновлений на GitHub.
