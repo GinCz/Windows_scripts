@@ -33,9 +33,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v065"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v065]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v065]"
+	AppVersion    = "v066"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v066]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v066]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2326,13 +2326,13 @@ func updateBannerAndInstallButton() {
 			procShowWindow.Call(hwndBtnInstall, 0 /* SW_HIDE */)
 		}
 		if hwndBtnVerify != 0 {
-			procMoveWindow.Call(hwndBtnVerify, 18, 562, 170, 26, 1)
+			procMoveWindow.Call(hwndBtnVerify, 18, 586, 170, 26, 1)
 		}
 		if hwndBtnCopyLog != 0 {
-			procMoveWindow.Call(hwndBtnCopyLog, 196, 562, 180, 26, 1)
+			procMoveWindow.Call(hwndBtnCopyLog, 196, 586, 180, 26, 1)
 		}
 		if hwndBtnClearLog != 0 {
-			procMoveWindow.Call(hwndBtnClearLog, 384, 562, 166, 26, 1)
+			procMoveWindow.Call(hwndBtnClearLog, 384, 586, 166, 26, 1)
 		}
 
 		if isRussianLang {
@@ -2343,16 +2343,16 @@ func updateBannerAndInstallButton() {
 	} else {
 		if hwndBtnInstall != 0 {
 			procShowWindow.Call(hwndBtnInstall, 5 /* SW_SHOW */)
-			procMoveWindow.Call(hwndBtnInstall, 18, 562, 120, 26, 1)
+			procMoveWindow.Call(hwndBtnInstall, 18, 586, 120, 26, 1)
 		}
 		if hwndBtnVerify != 0 {
-			procMoveWindow.Call(hwndBtnVerify, 144, 562, 134, 26, 1)
+			procMoveWindow.Call(hwndBtnVerify, 144, 586, 134, 26, 1)
 		}
 		if hwndBtnCopyLog != 0 {
-			procMoveWindow.Call(hwndBtnCopyLog, 284, 562, 136, 26, 1)
+			procMoveWindow.Call(hwndBtnCopyLog, 284, 586, 136, 26, 1)
 		}
 		if hwndBtnClearLog != 0 {
-			procMoveWindow.Call(hwndBtnClearLog, 426, 562, 124, 26, 1)
+			procMoveWindow.Call(hwndBtnClearLog, 426, 586, 124, 26, 1)
 		}
 
 		if isRussianLang {
@@ -6870,7 +6870,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		oldB, _, _ := procSelectObject.Call(hDC, cardBrush)
 		oldP, _, _ := procSelectObject.Call(hDC, cardPen)
 
-		procRectangle.Call(hDC, 18, 322, 550, 390)
+		procRectangle.Call(hDC, 18, 346, 550, 414)
 
 		procSelectObject.Call(hDC, oldB)
 		procSelectObject.Call(hDC, oldP)
@@ -7107,6 +7107,7 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V065",
 		"GIN_VPN_WINDOW_CLASS_V063",
 		"GIN_VPN_WINDOW_CLASS_V062",
 		"GIN_VPN_WINDOW_CLASS_V061",
@@ -7249,7 +7250,7 @@ func main() {
 		uintptr(unsafe.Pointer(className)),
 		uintptr(unsafe.Pointer(strPtr(initialTitle))),
 		WS_OVERLAPPEDWINDOW&^0x00040000&^0x00010000|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,
-		100, 40, 595, 665,
+		100, 40, 595, 689,
 		0, 0, hInstance, 0,
 	)
 
@@ -7295,8 +7296,8 @@ func main() {
 	hwndSubTitle = createStaticNotify("", 0, 0, 0, 0, 0, 1016)
 	procShowWindow.Call(hwndSubTitle, 0)
 
-	// SysListView32 (y: 126, h: 188 - 8 rows)
-	hwndListView, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("SysListView32"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|LVS_REPORT|LVS_SINGLESEL|LVS_SHOWSELALWAYS, 18, 126, 532, 188, hwndMain, 0, hInstance, 0)
+	// SysListView32 (y: 126, h: 212 - 9 rows)
+	hwndListView, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("SysListView32"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|LVS_REPORT|LVS_SINGLESEL|LVS_SHOWSELALWAYS, 18, 126, 532, 212, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndListView, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT|LVS_EX_GRIDLINES|LVS_EX_DOUBLEBUFFER|0x00000400)
 	procSendMessageW.Call(hwndListView, WM_SETFONT, hFontRegular, 1)
 
@@ -7341,36 +7342,36 @@ func main() {
 	subscriptionExpanded = loadSubscriptionExpandedFromRegistry()
 	refreshProfilesListView()
 
-	// 4. Diagnostics Panel (Rounded Card in WM_ERASEBKGND: y: 322..390)
-	hwndDiagHeader = createStaticNotify("⚡ Diagnostics & Routing", 28, 324, 430, 18, hFontBold, 1010)
-	hwndBtnDiagInfo = createOwnerButton(110, 465, 322, 75, 20)
-	hwndDiagOrig = createStaticNotify("ISP IP: Detecting...", 28, 344, 245, 18, hFontSmall, 1011)
-	hwndDiagProt = createStaticNotify("VPN IP: 🔴 Disconnected", 275, 344, 265, 18, hFontSmall, 1012)
-	hwndDiagLat = createStaticNotify("Ping: -- ms", 28, 364, 245, 18, hFontSmall, 1013)
-	hwndDiagUptime = createStaticNotify("Uptime: Disconnected", 275, 364, 265, 18, hFontSmall, 1014)
+	// 4. Diagnostics Panel (Rounded Card in WM_ERASEBKGND: y: 346..414)
+	hwndDiagHeader = createStaticNotify("⚡ Diagnostics & Routing", 28, 348, 430, 18, hFontBold, 1010)
+	hwndBtnDiagInfo = createOwnerButton(110, 465, 346, 75, 20)
+	hwndDiagOrig = createStaticNotify("ISP IP: Detecting...", 28, 368, 245, 18, hFontSmall, 1011)
+	hwndDiagProt = createStaticNotify("VPN IP: 🔴 Disconnected", 275, 368, 265, 18, hFontSmall, 1012)
+	hwndDiagLat = createStaticNotify("Ping: -- ms", 28, 388, 245, 18, hFontSmall, 1013)
+	hwndDiagUptime = createStaticNotify("Uptime: Disconnected", 275, 388, 265, 18, hFontSmall, 1014)
 
 	// 5. Active VLESS Key Header, Text Field (Left) & Two Stacked Buttons (Right)
-	hwndKeyLabel = createStatic("🔑 Active VLESS Key or Subscription URL:", 18, 398, 384, 16, hFontSection)
-	hwndKeyEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL, 18, 416, 384, 52, hwndMain, 0, hInstance, 0)
+	hwndKeyLabel = createStatic("🔑 Active VLESS Key or Subscription URL:", 18, 422, 384, 16, hFontSection)
+	hwndKeyEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL, 18, 440, 384, 52, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndKeyEdit, WM_SETFONT, hFontConsolas, 1)
 
-	hwndBtnPasteQr = createOwnerButton(102, 410, 416, 140, 24)
-	hwndBtnSave = createOwnerButton(103, 410, 444, 140, 24)
+	hwndBtnPasteQr = createOwnerButton(102, 410, 440, 140, 24)
+	hwndBtnSave = createOwnerButton(103, 410, 468, 140, 24)
 
 	// 6. Log Box (3 lines)
-	hwndLogLbl = createStatic("📊 Real-Time Event & Traffic Log:", 18, 476, 532, 16, hFontSection)
-	hwndLogEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL|ES_READONLY|WS_VSCROLL, 18, 494, 532, 58, hwndMain, 0, hInstance, 0)
+	hwndLogLbl = createStatic("📊 Real-Time Event & Traffic Log:", 18, 500, 532, 16, hFontSection)
+	hwndLogEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL|ES_READONLY|WS_VSCROLL, 18, 518, 532, 58, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndLogEdit, WM_SETFONT, hFontConsolasLog, 1)
 
-	// 7. Buttons under the Log Window (y: 562, h: 26)
-	hwndBtnInstall = createOwnerButton(106, 18, 562, 126, 26)
-	hwndBtnVerify = createOwnerButton(107, 18, 562, 170, 26)
-	hwndBtnCopyLog = createOwnerButton(108, 196, 562, 180, 26)
-	hwndBtnClearLog = createOwnerButton(109, 384, 562, 166, 26)
+	// 7. Buttons under the Log Window (y: 586, h: 26)
+	hwndBtnInstall = createOwnerButton(106, 18, 586, 126, 26)
+	hwndBtnVerify = createOwnerButton(107, 18, 586, 170, 26)
+	hwndBtnCopyLog = createOwnerButton(108, 196, 586, 180, 26)
+	hwndBtnClearLog = createOwnerButton(109, 384, 586, 166, 26)
 
-	// 8. Bottom Status Banner & Brand in ONE line (y: 594, h: 20)
-	hwndBannerLbl = createStaticNotify("Нажмите «Обновить» для проверки", 18, 594, 360, 20, hFontSmall, 1020)
-	hwndBrand = createStaticNotify(fmt.Sprintf("VladiMIR+AI ||| %s", AppVersion), 380, 594, 170, 20, hFontBold, 1004, 0x0002 /* SS_RIGHT */)
+	// 8. Bottom Status Banner & Brand in ONE line (y: 618, h: 20)
+	hwndBannerLbl = createStaticNotify("Нажмите «Обновить» для проверки", 18, 618, 360, 20, hFontSmall, 1020)
+	hwndBrand = createStaticNotify(fmt.Sprintf("VladiMIR+AI ||| %s", AppVersion), 380, 618, 170, 20, hFontBold, 1004, 0x0002 /* SS_RIGHT */)
 
 	loadCustomRulesFromStorage()
 	installedState = checkIsInstalled()
