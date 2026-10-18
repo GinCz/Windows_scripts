@@ -29,9 +29,9 @@ var embeddedXrayGz []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v058"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v058]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v058]"
+	AppVersion    = "v059"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v059]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v059]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -350,6 +350,12 @@ type LVITEMW struct {
 	CchTextMax int32
 	IImage     int32
 	LParam     uintptr
+}
+
+type NMLVKEYDOWN struct {
+	Hdr   NMHDR
+	WVKey uint16
+	Flags uint32
 }
 
 type NOTIFYICONDATAW struct {
@@ -3332,6 +3338,60 @@ func setDefaultProfile(actualIdx int) {
 	}
 }
 
+func triggerDeleteSelectedProfile() {
+	selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
+	sel := int(selRet)
+	actualIdx := getActualProfileIndex(sel)
+	if actualIdx < 0 && selectedProfileIdx >= 0 && selectedProfileIdx < len(profiles) {
+		actualIdx = selectedProfileIdx
+	}
+	if actualIdx < 0 || actualIdx >= len(profiles) {
+		return
+	}
+	deleteProfileWithConfirmation(actualIdx)
+}
+
+func deleteProfileWithConfirmation(actualIdx int) {
+	if actualIdx < 0 || actualIdx >= len(profiles) {
+		return
+	}
+	p := profiles[actualIdx]
+	confirmMsg := fmt.Sprintf("Are you sure you want to delete profile:\n\n\"%s\" (%s:%d)?", p.Name, p.Host, p.Port)
+	confirmTitle := "Delete Profile — GIN-VPN"
+	if isRussianLang {
+		confirmMsg = fmt.Sprintf("Вы уверены, что хотите удалить профиль:\n\n\"%s\" (%s:%d)?", p.Name, p.Host, p.Port)
+		confirmTitle = "Удаление профиля — GIN-VPN"
+	}
+	// MB_YESNO (0x04) | MB_ICONQUESTION (0x20) | MB_DEFBUTTON1 (0x00) -> Enter immediately confirms!
+	ret, _, _ := procMessageBoxW.Call(
+		hwndMain,
+		uintptr(unsafe.Pointer(strPtr(confirmMsg))),
+		uintptr(unsafe.Pointer(strPtr(confirmTitle))),
+		0x00000004|0x00000020,
+	)
+	if ret == 6 { // IDYES (Yes or Enter)
+		delName := p.Name
+		profiles = append(profiles[:actualIdx], profiles[actualIdx+1:]...)
+		saveProfilesToStorage()
+		updateSubscriptionBar()
+		refreshProfilesListView()
+		if len(visibleProfileIndices) > 0 {
+			nextSel := actualIdx
+			if nextSel >= len(visibleProfileIndices) {
+				nextSel = len(visibleProfileIndices) - 1
+			}
+			if nextSel >= 0 {
+				selectListViewItem(nextSel)
+			}
+		}
+		if isRussianLang {
+			writeLog("PROFILE", fmt.Sprintf("🗑️ Сервер '%s' удален из списка.", delName))
+		} else {
+			writeLog("PROFILE", fmt.Sprintf("🗑️ Profile '%s' deleted and updated in registry.", delName))
+		}
+	}
+}
+
 func updateLanguageUI() {
 	if hwndMain == 0 {
 		return
@@ -3841,7 +3901,7 @@ func showListViewContextMenu(sel int) {
 		procAppendMenuW.Call(hMenu, autoFlags, 6002, uintptr(unsafe.Pointer(strPtr(autoText))))
 
 		procAppendMenuW.Call(hMenu, MF_STRING, 6003, uintptr(unsafe.Pointer(strPtr("✏️ Переименовать сервер"))))
-		procAppendMenuW.Call(hMenu, MF_STRING, 6004, uintptr(unsafe.Pointer(strPtr("🗑️ Удалить сервер из списка"))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6004, uintptr(unsafe.Pointer(strPtr("🗑️ Удалить сервер из списка\tShift+Del"))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 6005, uintptr(unsafe.Pointer(strPtr("📋 Скопировать VLESS ключ"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 6006, uintptr(unsafe.Pointer(strPtr("🔍 Проверить маршрут (EU-222 / RU-109)"))))
@@ -3874,7 +3934,7 @@ func showListViewContextMenu(sel int) {
 		procAppendMenuW.Call(hMenu, autoFlags, 6002, uintptr(unsafe.Pointer(strPtr(autoText))))
 
 		procAppendMenuW.Call(hMenu, MF_STRING, 6003, uintptr(unsafe.Pointer(strPtr("✏️ Rename Profile"))))
-		procAppendMenuW.Call(hMenu, MF_STRING, 6004, uintptr(unsafe.Pointer(strPtr("🗑️ Delete Profile"))))
+		procAppendMenuW.Call(hMenu, MF_STRING, 6004, uintptr(unsafe.Pointer(strPtr("🗑️ Delete Profile\tShift+Del"))))
 		procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
 		procAppendMenuW.Call(hMenu, MF_STRING, 6005, uintptr(unsafe.Pointer(strPtr("📋 Copy VLESS Key"))))
 		procAppendMenuW.Call(hMenu, MF_STRING, 6006, uintptr(unsafe.Pointer(strPtr("🔍 Verify Route (EU-222 / RU-109)"))))
@@ -5670,28 +5730,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			showRenameDialog(selectedProfileIdx)
 
 		case 6004: // Context Menu: Delete Profile
-			if selectedProfileIdx >= 0 && selectedProfileIdx < len(profiles) {
-				p := profiles[selectedProfileIdx]
-				confirmMsg := fmt.Sprintf("Are you sure you want to delete profile:\n\n\"%s\" (%s:%d)?", p.Name, p.Host, p.Port)
-				confirmTitle := "Delete Profile — GIN-VPN"
-				if isRussianLang {
-					confirmMsg = fmt.Sprintf("Вы уверены, что хотите удалить профиль:\n\n\"%s\" (%s:%d)?", p.Name, p.Host, p.Port)
-					confirmTitle = "Удаление профиля — GIN-VPN"
-				}
-				ret, _, _ := procMessageBoxW.Call(
-					hwndMain,
-					uintptr(unsafe.Pointer(strPtr(confirmMsg))),
-					uintptr(unsafe.Pointer(strPtr(confirmTitle))),
-					0x00000004|0x00000020,
-				)
-				if ret == 6 { // IDYES
-					delName := p.Name
-					profiles = append(profiles[:selectedProfileIdx], profiles[selectedProfileIdx+1:]...)
-					saveProfilesToStorage()
-					refreshProfilesListView()
-					writeLog("PROFILE", fmt.Sprintf("Profile '%s' deleted and updated in registry.", delName))
-				}
-			}
+			deleteProfileWithConfirmation(selectedProfileIdx)
 
 		case 6005: // Context Menu: Copy VLESS Reality Key
 			if selectedProfileIdx >= 0 && selectedProfileIdx < len(profiles) {
@@ -6049,6 +6088,19 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		}
 
 		if nmhdr.HwndFrom == hwndListView {
+			// Handle Shift + Delete shortcut directly from ListView
+			if nmhdr.Code == ^uint32(154) /* LVN_KEYDOWN (0xFFFFFF65) */ {
+				nmlv := (*NMLVKEYDOWN)(unsafe.Pointer(lParam))
+				if nmlv.WVKey == 0x2E { // VK_DELETE
+					asyncRet, _, _ := procGetAsyncKeyState.Call(0x10) // VK_SHIFT
+					if (asyncRet & 0x8000) != 0 {
+						triggerDeleteSelectedProfile()
+						return 1
+					}
+				}
+				return 0
+			}
+
 			// Connect on Double-Click
 			if nmhdr.Code == NM_DBLCLK {
 				if !subscriptionExpanded {
@@ -6445,6 +6497,7 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V059",
 		"GIN_VPN_WINDOW_CLASS_V058",
 		"GIN_VPN_WINDOW_CLASS_V057",
 		"GIN_VPN_WINDOW_CLASS_V056",
@@ -6769,6 +6822,16 @@ func main() {
 				focusHwnd, _, _ := procGetFocus.Call()
 				if focusHwnd == hwndLogEdit || focusHwnd == hwndKeyEdit {
 					procSendMessageW.Call(focusHwnd, 0x00B1, 0, ^uintptr(0)) // EM_SETSEL (0, -1)
+					continue
+				}
+			}
+		}
+		if msg.Message == 0x0100 && msg.WParam == 0x2E { // WM_KEYDOWN VK_DELETE (0x2E)
+			asyncRet, _, _ := procGetAsyncKeyState.Call(0x10) // VK_SHIFT (0x10)
+			if (asyncRet & 0x8000) != 0 {
+				focusHwnd, _, _ := procGetFocus.Call()
+				if focusHwnd != hwndLogEdit && focusHwnd != hwndKeyEdit {
+					triggerDeleteSelectedProfile()
 					continue
 				}
 			}
