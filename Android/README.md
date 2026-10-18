@@ -16,7 +16,6 @@
 | 🎬 **[GIN-Cinema ↗](GIN-Cinema/)** | [**`GIN-Cinema.apk`**](GIN-Cinema/GIN-Cinema.apk) | Онлайн-кинотеатр с поддержкой 4K HDR, аппаратным декодером ExoPlayer и адаптацией под пульты Android TV. | 🟢 `v114` (Active) |
 | 📺 **[GIN-TV ↗](GIN-TV/)** | [**`GIN-TV.apk`**](GIN-TV/GIN-TV.apk) | Высокоскоростной плеер онлайн-ТВ и IPTV с переключением каналов за 0.3с и встроенной телепрограммой (EPG). | 🟢 `v077` (Active) |
 | 🌐 **[GIN-IP ↗](GIN-IP/)** | [**`GIN-IP.apk`**](GIN-IP/GIN-IP.apk) | Диагностика сетевых подключений, определение внешнего IP, провайдера, ASN и тест задержки DNS в 1 касание. | 🟢 `v013` (Active) |
-| 🛡️ **[GIN-VPN ↗](GIN-VPN/)** | [**`GIN-VPN.apk`**](GIN-VPN/GIN-VPN.apk) | Высокоскоростной мобильный клиент Xray VLESS Reality для обхода DPI блокировок на LTE/5G сетях. | 🟢 `v014` (Active) |
 | 📦 **[GIN-APP ↗](GIN-APP/)** | [**`GIN-APP.apk`**](GIN-APP/GIN-APP.apk) | Единый хаб и портал приложений экосистемы GinCz с фоновым автообновлением установленных программ. | 🟢 `v006` (Active) |
 
 ---
