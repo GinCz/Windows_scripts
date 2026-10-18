@@ -33,9 +33,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v064"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v064]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v064]"
+	AppVersion    = "v065"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v065]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v065]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2343,13 +2343,13 @@ func updateBannerAndInstallButton() {
 	} else {
 		if hwndBtnInstall != 0 {
 			procShowWindow.Call(hwndBtnInstall, 5 /* SW_SHOW */)
-			procMoveWindow.Call(hwndBtnInstall, 18, 562, 126, 26, 1)
+			procMoveWindow.Call(hwndBtnInstall, 18, 562, 120, 26, 1)
 		}
 		if hwndBtnVerify != 0 {
-			procMoveWindow.Call(hwndBtnVerify, 150, 562, 120, 26, 1)
+			procMoveWindow.Call(hwndBtnVerify, 144, 562, 134, 26, 1)
 		}
 		if hwndBtnCopyLog != 0 {
-			procMoveWindow.Call(hwndBtnCopyLog, 276, 562, 144, 26, 1)
+			procMoveWindow.Call(hwndBtnCopyLog, 284, 562, 136, 26, 1)
 		}
 		if hwndBtnClearLog != 0 {
 			procMoveWindow.Call(hwndBtnClearLog, 426, 562, 124, 26, 1)
@@ -3421,9 +3421,9 @@ func addProfileRowToListView(rowIdx int, displayNum int, p Profile) {
 	subItem.ISubItem = 4
 	pingTxt := "-- ms"
 	if p.PingMs > 0 {
-		pingTxt = fmt.Sprintf("⚡ %d ms", p.PingMs)
+		pingTxt = fmt.Sprintf("%d ms", p.PingMs)
 	} else if p.PingMs < 0 {
-		pingTxt = "⏱️ Timeout"
+		pingTxt = "Timeout"
 	}
 	subItem.PszText = strPtr(pingTxt)
 	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
@@ -3463,9 +3463,12 @@ func refreshProfilesListView() {
 	}
 
 	rowIdx := 0
+	serverSeqNum := 1
 
-	// 1. Subscription above (if exists)
-	if len(subIndices) > 0 {
+	renderSubscriptionGroup := func() {
+		if len(subIndices) == 0 {
+			return
+		}
 		visibleProfileIndices = append(visibleProfileIndices, -1) // -1 marks Subscription Header
 
 		var item LVITEMW
@@ -3504,9 +3507,9 @@ func refreshProfilesListView() {
 
 		// Column 4: Ping
 		subItem.ISubItem = 4
-		subPingText := "⏱️"
+		subPingText := "--"
 		if isPingTesting {
-			subPingText = "⏳..."
+			subPingText = "..."
 		}
 		subItem.PszText = strPtr(subPingText)
 		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
@@ -3521,19 +3524,51 @@ func refreshProfilesListView() {
 		if subscriptionExpanded {
 			for num, actualIdx := range subIndices {
 				visibleProfileIndices = append(visibleProfileIndices, actualIdx)
-				addProfileRowToListView(rowIdx, num+1, profiles[actualIdx])
+				numToDisplay := num + 1
+				if sortByPing {
+					numToDisplay = serverSeqNum
+					serverSeqNum++
+				}
+				addProfileRowToListView(rowIdx, numToDisplay, profiles[actualIdx])
 				rowIdx++
 			}
 		}
 	}
 
-	// 2. Individual servers below
-	if len(indIndices) > 0 {
+	renderIndividualGroup := func() {
+		if len(indIndices) == 0 {
+			return
+		}
 		for num, actualIdx := range indIndices {
 			visibleProfileIndices = append(visibleProfileIndices, actualIdx)
-			addProfileRowToListView(rowIdx, num+1, profiles[actualIdx])
+			numToDisplay := num + 1
+			if sortByPing {
+				numToDisplay = serverSeqNum
+				serverSeqNum++
+			}
+			addProfileRowToListView(rowIdx, numToDisplay, profiles[actualIdx])
 			rowIdx++
 		}
+	}
+
+	renderIndFirst := false
+	if sortByPing && len(indIndices) > 0 {
+		bestIndPing := profiles[indIndices[0]].PingMs
+		bestSubPing := -1
+		if len(subIndices) > 0 {
+			bestSubPing = profiles[subIndices[0]].PingMs
+		}
+		if bestIndPing > 0 && (bestSubPing <= 0 || bestIndPing < bestSubPing) {
+			renderIndFirst = true
+		}
+	}
+
+	if renderIndFirst {
+		renderIndividualGroup()
+		renderSubscriptionGroup()
+	} else {
+		renderSubscriptionGroup()
+		renderIndividualGroup()
 	}
 }
 
@@ -4835,6 +4870,13 @@ func testSubscriptionPingAsync() {
 	if isPingTesting {
 		return
 	}
+
+	// 1. Immediately expand the subscription so the user sees the list of all servers
+	subscriptionExpanded = true
+	saveSubscriptionExpanded(true)
+	updateSubscriptionBar()
+	refreshProfilesListView()
+
 	isPingTesting = true
 	if hwndBtnSubPing != 0 {
 		procInvalidateRect.Call(hwndBtnSubPing, 0, 1)
@@ -4860,11 +4902,10 @@ func testSubscriptionPingAsync() {
 			return
 		}
 
-		subName := loadSubscriptionNameFromRegistry()
 		if isRussianLang {
-			writeLog("PING", fmt.Sprintf("⏱️ Запуск проверки задержки (пинг) серверов '%s'...", subName))
+			writeLog("PING", fmt.Sprintf("⏱️ Запуск проверки скорости (пинг) всех серверов (%d)...", len(profiles)))
 		} else {
-			writeLog("PING", fmt.Sprintf("⏱️ Starting ping test for servers '%s'...", subName))
+			writeLog("PING", fmt.Sprintf("⏱️ Starting speed (ping) test for all servers (%d)...", len(profiles)))
 		}
 
 		var wg sync.WaitGroup
@@ -5690,9 +5731,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 107: // Verify IP
-		btnText = "🔍 Refresh IP"
+		btnText = "🔍 Verify IP VPN"
 		if isRussianLang {
-			btnText = "🔍 Обновить IP"
+			btnText = "🔍 Проверить IP VPN"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -5965,6 +6006,20 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_APP_UPDATE_PING:
 		refreshProfilesListView()
+		fastestIdx := -1
+		minPing := 999999
+		for idx, p := range profiles {
+			if p.PingMs > 0 && p.PingMs < minPing {
+				minPing = p.PingMs
+				fastestIdx = idx
+			}
+		}
+		if fastestIdx >= 0 {
+			selectListViewItem(fastestIdx)
+		}
+		if hwndListView != 0 {
+			procSendMessageW.Call(hwndListView, LVM_ENSUREVISIBLE, 0, 0)
+		}
 		return 0
 
 	case WM_APP_UPDATE_STATUS:
@@ -7019,9 +7074,9 @@ func addProfileToListView(idx int, p Profile) {
 	subItem.ISubItem = 4
 	pingTxt := "-- ms"
 	if p.PingMs > 0 {
-		pingTxt = fmt.Sprintf("⚡ %d ms", p.PingMs)
+		pingTxt = fmt.Sprintf("%d ms", p.PingMs)
 	} else if p.PingMs < 0 {
-		pingTxt = "⏱️ Timeout"
+		pingTxt = "Timeout"
 	}
 	subItem.PszText = strPtr(pingTxt)
 	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(idx), uintptr(unsafe.Pointer(&subItem)))
@@ -7272,7 +7327,7 @@ func main() {
 
 	// Column 4: Ping
 	col.Fmt = 0x0002 // Center
-	col.Cx = 78
+	col.Cx = 62
 	col.PszText = strPtr("Ping")
 	procSendMessageW.Call(hwndListView, LVM_INSERTCOLUMNW, 4, uintptr(unsafe.Pointer(&col)))
 
