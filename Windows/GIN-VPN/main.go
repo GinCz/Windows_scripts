@@ -28,11 +28,14 @@ import (
 //go:embed xray.gz
 var embeddedXrayGz []byte
 
+//go:embed winxp_startup.wav
+var winxpStartupWav []byte
+
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v062"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v062]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v062]"
+	AppVersion    = "v063"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v063]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v063]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2327,9 +2330,9 @@ func updateBannerAndInstallButton() {
 		}
 
 		if isRussianLang {
-			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("✔️ GIN-VPN установлен (%s). Нажмите [ 🔄 Обновить ] для проверки новой версии.", AppVersion)))))
+			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr("Нажмите «Обновить» для проверки"))))
 		} else {
-			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("✔️ GIN-VPN is installed (%s). Click [ 🔄 Check Updates ] to verify latest release.", AppVersion)))))
+			procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr("Click [Check Updates] to verify"))))
 		}
 	} else {
 		if hwndBtnInstall != 0 {
@@ -2371,6 +2374,19 @@ func parseVersionNumber(v string) int {
 	return num
 }
 
+func playWinXPStartupSound() {
+	go func() {
+		if len(winxpStartupWav) > 0 && procPlaySoundW.Find() == nil {
+			// SND_MEMORY (0x0004) | SND_ASYNC (0x0001) | SND_NODEFAULT (0x0002) = 0x0007
+			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(&winxpStartupWav[0])), 0, 0x00000007)
+			if r != 0 {
+				return
+			}
+		}
+		playSuccessChime()
+	}()
+}
+
 func playSuccessChime() {
 	go func() {
 		// Play Windows system notification sound asynchronously
@@ -2399,9 +2415,9 @@ func triggerAppUpToDateFeedback() {
 		procInvalidateRect.Call(hwndBtnInstall, 0, 1)
 	}
 	if hwndBannerLbl != 0 {
-		msg := fmt.Sprintf("✔️ GIN-VPN: установлена последняя версия %s (Актуально)", AppVersion)
+		msg := "✔️ Установлена последняя версия (Актуально)"
 		if !isRussianLang {
-			msg = fmt.Sprintf("✔️ GIN-VPN: running latest version %s (Up to date)", AppVersion)
+			msg = "✔️ Running latest version (Up to date)"
 		}
 		procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr(msg))))
 		procInvalidateRect.Call(hwndBannerLbl, 0, 1)
@@ -3288,6 +3304,9 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 		// Set Green Tray Icon on Connect IMMEDIATELY
 		updateTrayIcon(true, activeNodeName, activeNodeIP)
 
+		// Play iconic Windows XP Startup sound on successful VPN connect
+		playWinXPStartupSound()
+
 		writeLog("OK", fmt.Sprintf("Tunnel active! Protected IP: %s (%s) | RTT: %d ms | EU-222: %d ms | RU-109: %d ms", verifiedExitIP, locStr, latencyMs, latencyDeMs, latencyRuMs))
 
 		if minimize && hwndMain != 0 {
@@ -3695,7 +3714,7 @@ func updateLanguageUI() {
 		procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr("⚡ Диагностика и маршрутизация"))))
 		procSetWindowTextW.Call(hwndLogLbl, uintptr(unsafe.Pointer(strPtr("📊 Лог сетевых событий и трафика в реальном времени:"))))
 		if hwndBrand != 0 {
-			procSetWindowTextW.Call(hwndBrand, uintptr(unsafe.Pointer(strPtr("VladiMIR+AI"))))
+			procSetWindowTextW.Call(hwndBrand, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("VladiMIR+AI ||| %s", AppVersion)))))
 		}
 
 		// Update column headers
@@ -3712,7 +3731,7 @@ func updateLanguageUI() {
 		procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr("⚡ Diagnostics & Routing"))))
 		procSetWindowTextW.Call(hwndLogLbl, uintptr(unsafe.Pointer(strPtr("📊 Real-Time Event & Traffic Log:"))))
 		if hwndBrand != 0 {
-			procSetWindowTextW.Call(hwndBrand, uintptr(unsafe.Pointer(strPtr("VladiMIR+AI"))))
+			procSetWindowTextW.Call(hwndBrand, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("VladiMIR+AI ||| %s", AppVersion)))))
 		}
 
 		// Update column headers
@@ -5833,12 +5852,16 @@ func createStatic(text string, x, y, w, h int32, font uintptr) uintptr {
 	return hwnd
 }
 
-func createStaticNotify(text string, x, y, w, h int32, font uintptr, id int) uintptr {
+func createStaticNotify(text string, x, y, w, h int32, font uintptr, id int, extraStyles ...uint32) uintptr {
+	style := uint32(WS_CHILD | WS_VISIBLE | SS_NOTIFY)
+	for _, s := range extraStyles {
+		style |= s
+	}
 	hwnd, _, _ := procCreateWindowExW.Call(
 		0,
 		uintptr(unsafe.Pointer(strPtr("STATIC"))),
 		uintptr(unsafe.Pointer(strPtr(text))),
-		WS_CHILD|WS_VISIBLE|SS_NOTIFY,
+		uintptr(style),
 		uintptr(x), uintptr(y), uintptr(w), uintptr(h),
 		hwndMain, uintptr(id), hInstance, 0,
 	)
@@ -7029,6 +7052,7 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V063",
 		"GIN_VPN_WINDOW_CLASS_V062",
 		"GIN_VPN_WINDOW_CLASS_V061",
 		"GIN_VPN_WINDOW_CLASS_V060",
@@ -7290,8 +7314,8 @@ func main() {
 	hwndBtnClearLog = createOwnerButton(109, 384, 582, 166, 26)
 
 	// 8. Bottom Status Banner & Brand in ONE line (y: 614, h: 20)
-	hwndBannerLbl = createStaticNotify("✔️ GIN-VPN is installed. Click to check updates.", 18, 614, 434, 20, hFontSmall, 1020)
-	hwndBrand = createStaticNotify("VladiMIR+AI", 456, 614, 94, 20, hFontBold, 1004)
+	hwndBannerLbl = createStaticNotify("Нажмите «Обновить» для проверки", 18, 614, 340, 20, hFontSmall, 1020)
+	hwndBrand = createStaticNotify(fmt.Sprintf("VladiMIR+AI ||| %s", AppVersion), 360, 614, 190, 20, hFontBold, 1004, 0x0002 /* SS_RIGHT */)
 
 	loadCustomRulesFromStorage()
 	installedState = checkIsInstalled()
