@@ -30,9 +30,9 @@ var embeddedXrayGz []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v061"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v061]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v061]"
+	AppVersion    = "v062"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v062]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v062]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -60,6 +60,10 @@ var (
 	wininet  = syscall.NewLazyDLL("wininet.dll")
 	uxtheme  = syscall.NewLazyDLL("uxtheme.dll")
 	advapi32 = syscall.NewLazyDLL("advapi32.dll")
+	winmm    = syscall.NewLazyDLL("winmm.dll")
+
+	procPlaySoundW           = winmm.NewProc("PlaySoundW")
+	procMessageBeep          = user32.NewProc("MessageBeep")
 
 	procRegisterClassExW     = user32.NewProc("RegisterClassExW")
 	procCreateWindowExW      = user32.NewProc("CreateWindowExW")
@@ -461,6 +465,8 @@ var (
 	visibleProfileIndices []int
 	isPingTesting         = false
 	isSubUpdating         = false
+	isSubRefreshDone      = false
+	isAppUpToDate         = false
 	sortByPing            = false
 
 	hwndListView      uintptr
@@ -2365,6 +2371,66 @@ func parseVersionNumber(v string) int {
 	return num
 }
 
+func playSuccessChime() {
+	go func() {
+		// Play Windows system notification sound asynchronously
+		// SND_ALIAS (0x00010000) | SND_ASYNC (0x00000001) | SND_NODEFAULT (0x00000002)
+		if procPlaySoundW.Find() == nil {
+			soundName := strPtr("SystemNotification")
+			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(soundName)), 0, 0x00010000|0x00000001|0x00000002)
+			if r != 0 {
+				return
+			}
+			soundName2 := strPtr("DeviceConnect")
+			r2, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(soundName2)), 0, 0x00010000|0x00000001|0x00000002)
+			if r2 != 0 {
+				return
+			}
+		}
+		// Fallback: Asterisk / Information chime in user32 (MB_ICONASTERISK = 0x40)
+		procMessageBeep.Call(0x00000040)
+	}()
+}
+
+func triggerAppUpToDateFeedback() {
+	playSuccessChime()
+	isAppUpToDate = true
+	if hwndBtnInstall != 0 {
+		procInvalidateRect.Call(hwndBtnInstall, 0, 1)
+	}
+	if hwndBannerLbl != 0 {
+		msg := fmt.Sprintf("✔️ GIN-VPN: установлена последняя версия %s (Актуально)", AppVersion)
+		if !isRussianLang {
+			msg = fmt.Sprintf("✔️ GIN-VPN: running latest version %s (Up to date)", AppVersion)
+		}
+		procSetWindowTextW.Call(hwndBannerLbl, uintptr(unsafe.Pointer(strPtr(msg))))
+		procInvalidateRect.Call(hwndBannerLbl, 0, 1)
+	}
+
+	time.AfterFunc(3*time.Second, func() {
+		isAppUpToDate = false
+		if hwndBtnInstall != 0 {
+			procInvalidateRect.Call(hwndBtnInstall, 0, 1)
+		}
+		updateBannerAndInstallButton()
+	})
+}
+
+func triggerSubRefreshDoneFeedback() {
+	playSuccessChime()
+	isSubRefreshDone = true
+	if hwndBtnSubRefresh != 0 {
+		procInvalidateRect.Call(hwndBtnSubRefresh, 0, 1)
+	}
+
+	time.AfterFunc(3*time.Second, func() {
+		isSubRefreshDone = false
+		if hwndBtnSubRefresh != 0 {
+			procInvalidateRect.Call(hwndBtnSubRefresh, 0, 1)
+		}
+	})
+}
+
 func checkForUpdates(manual bool, directNoPrompt ...bool) {
 	isDirect := len(directNoPrompt) > 0 && directNoPrompt[0]
 	go func() {
@@ -2532,22 +2598,10 @@ func checkForUpdates(manual bool, directNoPrompt ...bool) {
 		}
 
 		if remoteVer == "" {
-			if isDirect {
-				if isRussianLang {
-					writeLog("UPDATE", fmt.Sprintf("⚠️ Сервер обновлений недоступен: %v", fetchErr))
-				} else {
-					writeLog("UPDATE", fmt.Sprintf("⚠️ Update server unreachable: %v", fetchErr))
-				}
-				return
-			}
-			if manual {
-				msg := "Could not reach update server. Please check your internet connection."
-				title := "Update Check — GIN-VPN"
-				if isRussianLang {
-					msg = fmt.Sprintf("Не удалось подключиться к серверу обновлений.\nОшибка: %v", fetchErr)
-					title = "Проверка обновлений — GIN-VPN"
-				}
-				procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(msg))), uintptr(unsafe.Pointer(strPtr(title))), 0x00000030)
+			if isRussianLang {
+				writeLog("UPDATE", fmt.Sprintf("⚠️ Сервер обновлений временно недоступен: %v", fetchErr))
+			} else {
+				writeLog("UPDATE", fmt.Sprintf("⚠️ Update server unreachable: %v", fetchErr))
 			}
 			return
 		}
@@ -2586,23 +2640,12 @@ func checkForUpdates(manual bool, directNoPrompt ...bool) {
 				performAutoUpdate(remoteVer, latestCommitSha, false)
 			}
 		} else {
-			if isDirect {
-				if isRussianLang {
-					writeLog("UPDATE", fmt.Sprintf("✅ У вас уже установлена актуальная версия %s. Обновление не требуется.", AppVersion))
-				} else {
-					writeLog("UPDATE", fmt.Sprintf("✅ You are already running the latest version %s. No update required.", AppVersion))
-				}
-				return
+			if isRussianLang {
+				writeLog("UPDATE", fmt.Sprintf("✔️ Версия GIN-VPN актуальна (%s). У вас установлена последняя официальная версия.", AppVersion))
+			} else {
+				writeLog("UPDATE", fmt.Sprintf("✔️ GIN-VPN is up to date (%s). You are running the latest official version.", AppVersion))
 			}
-			if manual {
-				upMsg := fmt.Sprintf("GIN-VPN актуален (%s).\n\nУ вас установлена последняя официальная версия.", AppVersion)
-				upTitle := "Проверка обновлений"
-				if !isRussianLang {
-					upMsg = fmt.Sprintf("GIN-VPN is up to date (%s).\n\nYou are running the latest official version.", AppVersion)
-					upTitle = "GIN-VPN Update Check"
-				}
-				procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(upMsg))), uintptr(unsafe.Pointer(strPtr(upTitle))), 0x00000040)
-			}
+			triggerAppUpToDateFeedback()
 		}
 	}()
 }
@@ -4973,11 +5016,7 @@ func importNodesFromContent(rawText string, sourceTitle string) {
 
 		writeLog("SUB", fmt.Sprintf("Processed nodes from %s: added %d subscription nodes. Total servers: %d", sourceTitle, importedCount, len(profiles)))
 
-		msgTxt := fmt.Sprintf("Подписка «%s» успешно обновлена!\n\nСерверов в подписке: %d\nИндивидуальных серверов: %d\nВсего серверов в списке: %d", subName, importedCount, len(indivProfiles), len(profiles))
-		if !isRussianLang {
-			msgTxt = fmt.Sprintf("Subscription '%s' successfully updated!\n\nSubscription servers: %d\nIndividual servers: %d\nTotal servers: %d", subName, importedCount, len(indivProfiles), len(profiles))
-		}
-		procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(msgTxt))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000040)
+		triggerSubRefreshDoneFeedback()
 	} else {
 		writeLog("WARN", "No valid VLESS nodes found in content.")
 		msgTxt := "В указанном источнике не найдено валидных VLESS серверов."
@@ -5530,15 +5569,12 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 116: // Sub Refresh (Update)
-		btnText = "🔄 Обновить"
-		if !isRussianLang {
-			btnText = "🔄 Refresh"
-		}
-		if isSubUpdating {
-			btnText = "⏳..."
-		}
-		font = hFontRegular
-		if isDarkMode {
+		if isSubRefreshDone {
+			btnText = "✔️ Обновлено"
+			if !isRussianLang {
+				btnText = "✔️ Updated"
+			}
+			font = hFontRegular
 			if isPressed {
 				baseColor = 0x144418
 				borderDark = 0x0E2E10
@@ -5546,22 +5582,65 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			} else {
 				baseColor = 0x1E5E24
 				borderDark = 0x144218
-				borderLight = 0x389E40
+				borderLight = 0x4CAF50
 			}
-		} else {
-			if isPressed {
-				baseColor = 0x1B5E20
-				borderDark = 0x124216
-				borderLight = 0x388E3C
+		} else if isSubUpdating {
+			btnText = "⏳..."
+			font = hFontRegular
+			if isDarkMode {
+				baseColor = 0x1E5E24
+				borderDark = 0x144218
+				borderLight = 0x389E40
 			} else {
 				baseColor = 0x2E7D32
 				borderDark = 0x1B5E20
 				borderLight = 0x4CAF50
 			}
+		} else {
+			btnText = "🔄 Обновить"
+			if !isRussianLang {
+				btnText = "🔄 Refresh"
+			}
+			font = hFontRegular
+			if isDarkMode {
+				if isPressed {
+					baseColor = 0x144418
+					borderDark = 0x0E2E10
+					borderLight = 0x2A7030
+				} else {
+					baseColor = 0x1E5E24
+					borderDark = 0x144218
+					borderLight = 0x389E40
+				}
+			} else {
+				if isPressed {
+					baseColor = 0x1B5E20
+					borderDark = 0x124216
+					borderLight = 0x388E3C
+				} else {
+					baseColor = 0x2E7D32
+					borderDark = 0x1B5E20
+					borderLight = 0x4CAF50
+				}
+			}
 		}
 
 	case 106: // Install / Update Button
-		if installedState {
+		if isAppUpToDate {
+			btnText = "✔️ Актуально"
+			if !isRussianLang {
+				btnText = "✔️ Up to date"
+			}
+			if isPressed {
+				baseColor = 0x144418
+				borderDark = 0x0E2E10
+				borderLight = 0x2A7030
+			} else {
+				baseColor = 0x1E5E24
+				borderDark = 0x144218
+				borderLight = 0x4CAF50
+			}
+		} else if installedState {
 			btnText = "🔄 Check Updates"
 			if isRussianLang {
 				btnText = "🔄 Обновить"
@@ -6950,6 +7029,7 @@ func checkSingleInstance() bool {
 	// 2. Window class check (Secondary fallback & UI activation)
 	windowClasses := []string{
 		"GIN_VPN_WINDOW_CLASS",
+		"GIN_VPN_WINDOW_CLASS_V062",
 		"GIN_VPN_WINDOW_CLASS_V061",
 		"GIN_VPN_WINDOW_CLASS_V060",
 		"GIN_VPN_WINDOW_CLASS_V059",
