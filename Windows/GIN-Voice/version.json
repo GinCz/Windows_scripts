@@ -1,8 +1,8 @@
 {
-  "version": "v037",
+  "version": "v038",
   "name": "GIN-Voice",
-  "engine": "Strict Verbatim Multilingual Speech-to-Text (CS/EN/RU Code-Switching) + Hybrid Push-To-Talk + Target Focus Memory",
-  "release_date": "2026-10-19",
+  "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Exact Project Dictionary + Zero-LLM Compression",
+  "release_date": "2026-10-20",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 }
