@@ -33,9 +33,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v070"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v070]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v070]"
+	AppVersion    = "v071"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v071]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v071]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -595,6 +595,45 @@ func getNodeLocationStr(host, countryCode string, russian bool) string {
 		return countryCode
 	}
 	return "EU"
+}
+
+func purgeDesktopInstallersAsync() {
+	go func() {
+		time.Sleep(1 * time.Second)
+		currExe, err := os.Executable()
+		if err != nil {
+			return
+		}
+		currNorm := strings.ToLower(filepath.Clean(currExe))
+
+		dirs := []string{
+			filepath.Join(os.Getenv("USERPROFILE"), "Desktop"),
+			`D:\MEGA\DOCS\desktop`,
+			`D:\mega\docs\desktop`,
+		}
+
+		for _, dir := range dirs {
+			if _, err := os.Stat(dir); err != nil {
+				continue
+			}
+			entries, err := os.ReadDir(dir)
+			if err != nil {
+				continue
+			}
+			for _, entry := range entries {
+				if entry.IsDir() {
+					continue
+				}
+				name := strings.ToLower(entry.Name())
+				if strings.HasPrefix(name, "gin-vpn_v") && strings.HasSuffix(name, ".exe") {
+					fullPath := filepath.Join(dir, entry.Name())
+					if strings.ToLower(filepath.Clean(fullPath)) != currNorm {
+						_ = os.Remove(fullPath)
+					}
+				}
+			}
+		}
+	}()
 }
 
 func detectOriginalISPAsync() {
@@ -2823,6 +2862,14 @@ if (Test-Path $progFilesDir) {
 
 # Clean up temp binary
 Remove-Item -Path $newExe -Force -ErrorAction SilentlyContinue
+
+# Clean up any leftover versioned installers on Desktop
+$desktopDir = [Environment]::GetFolderPath('Desktop')
+Get-ChildItem -Path $desktopDir -Filter "GIN-VPN_v*.exe" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+Get-ChildItem -Path "$env:USERPROFILE\Desktop" -Filter "GIN-VPN_v*.exe" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+if (Test-Path "D:\MEGA\DOCS\desktop") {
+    Get-ChildItem -Path "D:\MEGA\DOCS\desktop" -Filter "GIN-VPN_v*.exe" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+}
 
 # Launch updated application
 Start-Process -FilePath $targetExe
@@ -7611,6 +7658,9 @@ func main() {
 
 	// Detect ISP IP in background
 	detectOriginalISPAsync()
+
+	// Clean up any residual desktop installers from old versions
+	purgeDesktopInstallersAsync()
 
 	// Ensure embedded Xray Core payload is ready
 	_ = ensureXrayBinaryExists()

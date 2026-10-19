@@ -40,9 +40,15 @@ Get-Process -Name "xray" -ErrorAction SilentlyContinue | Stop-Process -Force -Er
 Start-Sleep -Milliseconds 500
 
 $desktopPath = [Environment]::GetFolderPath('Desktop')
-$targetExe = Join-Path $desktopPath "GIN-VPN.exe"
+$progFiles = $env:ProgramFiles
+if (-not $progFiles) { $progFiles = "C:\Program Files" }
+$targetDir = Join-Path $progFiles "GIN-VPN"
+if (-not (Test-Path $targetDir)) {
+    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+}
+$targetExe = Join-Path $targetDir "GIN-VPN.exe"
 
-Write-Host "[*] Target download path: $targetExe" -ForegroundColor Cyan
+Write-Host "[*] Target installation path: $targetExe" -ForegroundColor Cyan
 Write-Host ""
 
 $mirrors = @(
@@ -95,21 +101,44 @@ if (-not $downloadSuccess) {
     exit 1
 }
 
-# Move verified download to Desktop
+# Move verified download to Program Files
 Move-Item -Path $tempFile -Destination $targetExe -Force
+Copy-Item -Path $targetExe -Destination (Join-Path $targetDir "uninstall.exe") -Force -ErrorAction SilentlyContinue
 Unblock-File -LiteralPath $targetExe -ErrorAction SilentlyContinue
 
-# If installed in Program Files, update there as well
-$progFiles = Join-Path $env:ProgramFiles "GIN-VPN"
-if (Test-Path $progFiles) {
-    Copy-Item -Path $targetExe -Destination (Join-Path $progFiles "GIN-VPN.exe") -Force -ErrorAction SilentlyContinue
+# Create clean Desktop shortcut (GIN-VPN.lnk) - NEVER a raw binary on Desktop!
+$w = New-Object -ComObject WScript.Shell
+$desktopShortcut = $w.CreateShortcut((Join-Path $desktopPath "GIN-VPN.lnk"))
+$desktopShortcut.TargetPath = $targetExe
+$desktopShortcut.WorkingDirectory = $targetDir
+$desktopShortcut.IconLocation = "$targetExe,0"
+$desktopShortcut.Description = "GIN-VPN by VladiMIR+AI"
+$desktopShortcut.Save()
+
+# Create Start Menu shortcut
+$startMenu = [Environment]::GetFolderPath('Programs')
+if (Test-Path $startMenu) {
+    $smShortcut = $w.CreateShortcut((Join-Path $startMenu "GIN-VPN.lnk"))
+    $smShortcut.TargetPath = $targetExe
+    $smShortcut.WorkingDirectory = $targetDir
+    $smShortcut.IconLocation = "$targetExe,0"
+    $smShortcut.Description = "GIN-VPN by VladiMIR+AI"
+    $smShortcut.Save()
+}
+
+# Clean up any residual .exe or versioned installers on Desktop
+Remove-Item -Path (Join-Path $desktopPath "GIN-VPN.exe") -Force -ErrorAction SilentlyContinue
+Get-ChildItem -Path $desktopPath -Filter "GIN-VPN_v*.exe" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+if (Test-Path "D:\MEGA\DOCS\desktop") {
+    Get-ChildItem -Path "D:\MEGA\DOCS\desktop" -Filter "GIN-VPN_v*.exe" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""
-Write-Host "[+] GIN-VPN.exe successfully saved to Desktop: $targetExe" -ForegroundColor Green
+Write-Host "[+] GIN-VPN successfully installed to: $targetExe" -ForegroundColor Green
+Write-Host "[+] Desktop shortcut created: $(Join-Path $desktopPath 'GIN-VPN.lnk')" -ForegroundColor Green
 Write-Host "[*] Launching GIN-VPN client..." -ForegroundColor Cyan
 
-Start-Process -FilePath $targetExe -WorkingDirectory $desktopPath
+Start-Process -FilePath $targetExe -WorkingDirectory $targetDir
 
 Start-Sleep -Seconds 2
 $proc = Get-Process -Name "GIN-VPN" -ErrorAction SilentlyContinue
