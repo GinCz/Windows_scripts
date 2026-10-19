@@ -5,24 +5,24 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(64--bit)-0078D4?logo=windows&logoColor=white)
 ![Language](https://img.shields.io/badge/Language-Go%201.22+-00ADD8?logo=go&logoColor=white)
 ![Speech Engine](https://img.shields.io/badge/STT-Groq%20Whisper%20Large%20v3-F55036?logo=openai&logoColor=white)
-![AI Normalizer](https://img.shields.io/badge/AI%20Post--Processor-Qwen%2027B%20LPU-8A2BE2)
-![Version](https://img.shields.io/badge/Release-v035-brightgreen)
+![Engine](https://img.shields.io/badge/Mode-Pure%20Verbatim%20Dictation-success)
+![Version](https://img.shields.io/badge/Release-v036-brightgreen)
 ![License](https://img.shields.io/badge/License-Freeware%20%7C%20Free%20to%20Use-blue)
 ![CPU Overhead](https://img.shields.io/badge/Local%20CPU%20Load-0%25-success)
 
-**Lightning-fast, native Win32 voice dictation utility with dynamic multilingual code-switching (Czech, English, Russian + 15 languages), live on-screen HUD, customizable typography, and zero local CPU footprint.**
+**Lightning-fast, native Win32 voice dictation utility with pure verbatim speech-to-text, live on-screen HUD, customizable typography, and zero local CPU footprint.**
 
-[⬇️ Download v035](#-quick-download--latest-release-v035) • [Overview](#-overview) • [Key Features](#-key-features) • [Settings & Control Center](#-settings--control-center-deep-dive) • [Architecture](#-architecture--how-it-works) • [Installation](#-installation--quick-start) • [Configuration](#-configuration--groq-api-key) • [Changelog](CHANGELOG.md)
+[⬇️ Download v036](#-quick-download--latest-release-v036) • [Overview](#-overview) • [Key Features](#-key-features) • [Settings & Control Center](#-settings--control-center-deep-dive) • [Architecture](#-architecture--how-it-works) • [Installation](#-installation--quick-start) • [Configuration](#-configuration--groq-api-key) • [Changelog](CHANGELOG.md)
 
 </div>
 
 ---
 
-## 🚀 Quick Download & Latest Release (v035)
+## 🚀 Quick Download & Latest Release (v036)
 
 <div align="center">
 
-### 🎙️ [⬇️ Click Here to Download GIN-Voice.exe (v035)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe)
+### 🎙️ [⬇️ Click Here to Download GIN-Voice.exe (v036)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe)
 *Single standalone executable & auto-installer (8.4 MB) • Windows 10/11 64-bit*
 
 </div>

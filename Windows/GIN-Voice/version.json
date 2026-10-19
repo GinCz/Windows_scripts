@@ -1,7 +1,7 @@
 {
-  "version": "v035",
+  "version": "v036",
   "name": "GIN-Voice",
-  "engine": "Push-To-Talk + Toggle Hybrid Engine + Target Focus Memory & Restore + WS_EX_NOACTIVATE Chromium Guard + MapVirtualKey Scan Codes",
+  "engine": "Verbatim Whisper Speech-to-Text Engine + Pure Dictation (Zero LLM Interventions) + Hybrid Push-To-Talk + Focus Protection",
   "release_date": "2026-10-19",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
