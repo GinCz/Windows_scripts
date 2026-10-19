@@ -33,9 +33,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v068"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v068]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v068]"
+	AppVersion    = "v069"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v069]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v069]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2089,7 +2089,7 @@ var activeXrayExePath = `C:\Windows\Temp\xray.exe`
 
 func ensureXrayBinaryExists() error {
 	targetExe := `C:\Windows\Temp\xray.exe`
-	const expectedXraySize int64 = 36904960
+	const expectedXraySize int64 = 34375680
 	if fi, err := os.Stat(targetExe); err == nil && fi.Size() == expectedXraySize {
 		activeXrayExePath = targetExe
 		return nil
@@ -2099,7 +2099,7 @@ func ensureXrayBinaryExists() error {
 	_ = exec.Command("taskkill", "/F", "/IM", "xray.exe").Run()
 	time.Sleep(100 * time.Millisecond)
 
-	writeLog("CORE", "Unpacking verified Xray Core v26.7.28 payload...")
+	writeLog("CORE", "Unpacking verified Xray Core v26.10.17 payload...")
 	gzReader, err := gzip.NewReader(bytes.NewReader(embeddedXrayGz))
 	if err != nil {
 		return fmt.Errorf("failed to init gzip decompressor: %w", err)
@@ -2142,7 +2142,7 @@ func ensureXrayBinaryExists() error {
 	}
 
 	activeXrayExePath = targetExe
-	writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core v26.7.28 ready: %s", targetExe))
+	writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core v26.10.17 ready: %s", targetExe))
 	return nil
 }
 
