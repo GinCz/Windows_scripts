@@ -1,7 +1,7 @@
 {
-  "version": "v034",
+  "version": "v035",
   "name": "GIN-Voice",
-  "engine": "WaveIn Event AI Lock-Free Anti-Deadlock Engine + Smart Pause-Based Chunking + Recursive Project Scanner + Extended Channel Outro Guard",
+  "engine": "Push-To-Talk + Toggle Hybrid Engine + Target Focus Memory & Restore + WS_EX_NOACTIVATE Chromium Guard + MapVirtualKey Scan Codes",
   "release_date": "2026-10-19",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
