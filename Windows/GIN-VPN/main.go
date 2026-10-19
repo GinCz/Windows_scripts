@@ -33,9 +33,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v069"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v069]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v069]"
+	AppVersion    = "v070"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v070]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v070]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2801,7 +2801,6 @@ $targetExe = '%s'
 $newExe = '%s'
 $oldPid = %d
 $progFilesDir = '%s'
-$newVer = '%s'
 
 # Wait for old process to exit
 for ($i=0; $i -lt 40; $i++) {
@@ -2822,21 +2821,6 @@ if (Test-Path $progFilesDir) {
     Copy-Item -Path $newExe -Destination "$progFilesDir\uninstall.exe" -Force -ErrorAction SilentlyContinue
 }
 
-# Update versioned installer on Desktop and VPN network utilities folder
-$deliveryPaths = @(
-    "$env:USERPROFILE\Desktop",
-    [Environment]::GetFolderPath('Desktop'),
-    "D:\MEGA\DOCS\desktop",
-    "D:\mega\docs\desktop",
-    "D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN"
-)
-foreach ($dp in $deliveryPaths) {
-    if (Test-Path $dp) {
-        Get-ChildItem -Path $dp -Filter "GIN-VPN_v*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "GIN-VPN_$newVer.exe" } | Remove-Item -Force -ErrorAction SilentlyContinue
-        Copy-Item -Path $newExe -Destination "$dp\GIN-VPN_$newVer.exe" -Force -ErrorAction SilentlyContinue
-    }
-}
-
 # Clean up temp binary
 Remove-Item -Path $newExe -Force -ErrorAction SilentlyContinue
 
@@ -2845,7 +2829,7 @@ Start-Process -FilePath $targetExe
 
 # Self cleanup script
 Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue
-`, currExe, tempNewExe, currPid, installedDir, newVer)
+`, currExe, tempNewExe, currPid, installedDir)
 
 		_ = os.WriteFile(updaterPs, []byte(psContent), 0644)
 
