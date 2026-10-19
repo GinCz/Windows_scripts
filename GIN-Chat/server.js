@@ -2051,7 +2051,7 @@ io.on('connection', (socket) => {
                 tag: `chat_${chatId}`,
                 renotify: true,
                 data: {
-                  url: `/?chat=${chatId}`,
+                  url: `/#/c/${chatId}`,
                   chatId: chatId,
                   type: 'new_message'
                 }
@@ -2140,7 +2140,7 @@ io.on('connection', (socket) => {
                 tag: `chat_${targetChatId}`,
                 renotify: true,
                 data: {
-                  url: `/?chat=${targetChatId}`,
+                  url: `/#/c/${targetChatId}`,
                   chatId: targetChatId,
                   type: 'new_message'
                 }
@@ -2369,7 +2369,7 @@ io.on('connection', (socket) => {
       ttl: 45,
       renotify: true,
       data: {
-        url: `/?chat=${chatId}`,
+        url: `/#/c/${chatId}`,
         chatId: chatId,
         type: 'incoming_call',
         fromUserId: userId

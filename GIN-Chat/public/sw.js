@@ -1,9 +1,9 @@
 // ==============================================================================
 // GIN-Chat Service Worker (PWA & Web Push Notification Handler)
-// Version: v0.4.8
+// Version: v0.5.0
 // ==============================================================================
 
-const CACHE_NAME = "gin-chat-v048";
+const CACHE_NAME = "gin-chat-v050";
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
@@ -109,20 +109,27 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const notifData = event.notification.data || {};
-  const targetUrl = notifData.url || "/";
+  const chatId = notifData.chatId;
+  const targetUrl = notifData.url || (chatId ? `/#/c/${chatId}` : "/");
 
   event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      // Find open window of GIN-Chat
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(async (clientList) => {
+      // 1. If an open window of GIN-Chat exists, focus it and switch chat smoothly without reload
       for (const client of clientList) {
-        if (client.url && client.url.includes(self.location.origin) && "focus" in client) {
-          if ("navigate" in client && notifData.chatId) {
-            client.navigate(targetUrl);
+        if (client.url && client.url.includes(self.location.origin)) {
+          if ("focus" in client) {
+            await client.focus();
           }
-          return client.focus();
+          if (chatId) {
+            client.postMessage({
+              action: "open_chat",
+              chatId: Number(chatId)
+            });
+          }
+          return;
         }
       }
-      // If no open window, open a new one
+      // 2. If no open window, open a new one directly with targetUrl
       if (clients.openWindow) {
         return clients.openWindow(targetUrl);
       }

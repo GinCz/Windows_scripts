@@ -690,7 +690,7 @@ function showLocalSystemNotification(msg) {
       tag: 'chat_' + (msg.chat_id || 'direct'),
       renotify: true,
       vibrate: [300, 100, 300],
-      data: { url: '/?chat=' + (msg.chat_id || ''), chatId: msg.chat_id }
+      data: { url: '/#/c/' + (msg.chat_id || ''), chatId: msg.chat_id, type: 'new_message' }
     };
 
     getSwRegistration().then((reg) => {
@@ -4072,13 +4072,283 @@ function openAboutModal() {
   openModal('aboutAppModal');
 }
 
+// ====================================================
+// FULLSCREEN IMAGE & SCREENSHOT LIGHTBOX / VIEWER (v0.5.0)
+// ====================================================
+let lbScale = 1;
+let lbTranslateX = 0;
+let lbTranslateY = 0;
+let lbRotation = 0;
+let lbIsDragging = false;
+let lbDragStartX = 0;
+let lbDragStartY = 0;
+let lbCurrentUrl = '';
+let lbInitialTouchDist = 0;
+let lbInitialTouchScale = 1;
+let lbMouseDownPos = { x: 0, y: 0 };
+let lbListenersBound = false;
+
 function openLightbox(url) {
-  document.getElementById('lightboxImg').src = url;
-  document.getElementById('lightbox').classList.remove('hidden');
+  if (!url) return;
+  lbCurrentUrl = url;
+  const overlay = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImg');
+  if (!overlay || !img) return;
+
+  // Reset transform state
+  lbScale = 1;
+  lbTranslateX = 0;
+  lbTranslateY = 0;
+  lbRotation = 0;
+  lbIsDragging = false;
+
+  img.classList.add('no-transition');
+  img.src = url;
+  applyLightboxTransform(false);
+
+  // Remove no-transition after initial paint
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      img.classList.remove('no-transition');
+    });
+  });
+
+  overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  initLightboxInteractions();
 }
 
 function closeLightbox() {
-  document.getElementById('lightbox').classList.add('hidden');
+  const overlay = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImg');
+  if (!overlay) return;
+
+  overlay.classList.add('hidden');
+  if (img) {
+    img.src = '';
+  }
+  lbCurrentUrl = '';
+  lbIsDragging = false;
+  document.body.style.overflow = '';
+}
+
+function applyLightboxTransform(animate = true) {
+  const img = document.getElementById('lightboxImg');
+  const zoomVal = document.getElementById('lightboxZoomVal');
+  const viewport = document.getElementById('lightboxViewport');
+  if (!img) return;
+
+  if (!animate) {
+    img.classList.add('no-transition');
+  } else {
+    img.classList.remove('no-transition');
+  }
+
+  img.style.transform = `translate(${lbTranslateX}px, ${lbTranslateY}px) rotate(${lbRotation}deg) scale(${lbScale})`;
+
+  if (zoomVal) {
+    zoomVal.textContent = `${Math.round(lbScale * 100)}%`;
+  }
+
+  if (viewport) {
+    if (lbScale > 1 || Math.abs(lbTranslateX) > 5 || Math.abs(lbTranslateY) > 5) {
+      viewport.style.cursor = lbIsDragging ? 'grabbing' : 'grab';
+    } else {
+      viewport.style.cursor = 'default';
+    }
+  }
+}
+
+function zoomLightbox(direction) {
+  // direction > 0: zoom in, direction < 0: zoom out
+  const factor = direction > 0 ? 1.25 : 0.8;
+  let newScale = lbScale * factor;
+  newScale = Math.min(Math.max(newScale, 0.25), 8);
+  lbScale = Math.round(newScale * 100) / 100;
+
+  // If zoomed back to or below 1, re-center
+  if (lbScale <= 1) {
+    lbTranslateX = 0;
+    lbTranslateY = 0;
+  }
+  applyLightboxTransform(true);
+}
+
+function resetLightboxZoom() {
+  lbScale = 1;
+  lbTranslateX = 0;
+  lbTranslateY = 0;
+  lbRotation = 0;
+  applyLightboxTransform(true);
+}
+
+function rotateLightbox() {
+  lbRotation = (lbRotation + 90) % 360;
+  applyLightboxTransform(true);
+}
+
+function toggleLightboxFit() {
+  if (lbScale === 1) {
+    lbScale = 2;
+  } else {
+    lbScale = 1;
+    lbTranslateX = 0;
+    lbTranslateY = 0;
+  }
+  applyLightboxTransform(true);
+}
+
+function downloadLightboxImage() {
+  if (!lbCurrentUrl) return;
+  const a = document.createElement('a');
+  a.href = lbCurrentUrl;
+  let filename = lbCurrentUrl.split('/').pop().split('?')[0] || 'gin-chat-image.jpg';
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function initLightboxInteractions() {
+  if (lbListenersBound) return;
+  lbListenersBound = true;
+
+  const overlay = document.getElementById('lightbox');
+  const viewport = document.getElementById('lightboxViewport');
+  if (!viewport || !overlay) return;
+
+  // 1. Mouse wheel zoom
+  viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const delta = e.deltaY || e.detail || 0;
+    if (delta < 0) {
+      zoomLightbox(1);
+    } else {
+      zoomLightbox(-1);
+    }
+  }, { passive: false });
+
+  // 2. Mouse drag to pan
+  viewport.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    if (e.target.closest('.lightbox-toolbar') || e.target.closest('.lightbox-hint')) return;
+
+    lbMouseDownPos = { x: e.clientX, y: e.clientY };
+    lbIsDragging = true;
+    lbDragStartX = e.clientX - lbTranslateX;
+    lbDragStartY = e.clientY - lbTranslateY;
+    viewport.classList.add('is-dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!lbIsDragging) return;
+    if (overlay.classList.contains('hidden')) return;
+
+    lbTranslateX = e.clientX - lbDragStartX;
+    lbTranslateY = e.clientY - lbDragStartY;
+    applyLightboxTransform(false);
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!lbIsDragging) return;
+    lbIsDragging = false;
+    viewport.classList.remove('is-dragging');
+    applyLightboxTransform(true);
+  });
+
+  // 3. Double-click to zoom/reset
+  viewport.addEventListener('dblclick', (e) => {
+    if (e.target.closest('.lightbox-toolbar')) return;
+    toggleLightboxFit();
+  });
+
+  // 4. Click outside image to close (when not dragged)
+  viewport.addEventListener('click', (e) => {
+    if (e.target.closest('.lightbox-toolbar') || e.target.closest('.lightbox-hint')) return;
+    const dist = Math.hypot(e.clientX - lbMouseDownPos.x, e.clientY - lbMouseDownPos.y);
+    if (dist > 6) return;
+    if (e.target === viewport) {
+      closeLightbox();
+    }
+  });
+
+  // 5. Touch pinch-to-zoom & pan
+  viewport.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      lbMouseDownPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      lbIsDragging = true;
+      lbDragStartX = e.touches[0].clientX - lbTranslateX;
+      lbDragStartY = e.touches[0].clientY - lbTranslateY;
+    } else if (e.touches.length === 2) {
+      lbIsDragging = false;
+      lbInitialTouchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      lbInitialTouchScale = lbScale;
+    }
+  }, { passive: true });
+
+  viewport.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && lbIsDragging) {
+      lbTranslateX = e.touches[0].clientX - lbDragStartX;
+      lbTranslateY = e.touches[0].clientY - lbDragStartY;
+      applyLightboxTransform(false);
+    } else if (e.touches.length === 2 && lbInitialTouchDist > 0) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const newScale = Math.min(Math.max((dist / lbInitialTouchDist) * lbInitialTouchScale, 0.25), 8);
+      lbScale = Math.round(newScale * 100) / 100;
+      applyLightboxTransform(false);
+    }
+  }, { passive: true });
+
+  viewport.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      lbIsDragging = false;
+      lbInitialTouchDist = 0;
+      applyLightboxTransform(true);
+    }
+  });
+
+  // 6. Global keyboard shortcuts when lightbox is open
+  window.addEventListener('keydown', (e) => {
+    if (overlay.classList.contains('hidden')) return;
+
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeLightbox();
+      return;
+    }
+    if (e.key === '+' || e.key === '=' || e.key === 'Add') {
+      e.preventDefault();
+      zoomLightbox(1);
+      return;
+    }
+    if (e.key === '-' || e.key === '_' || e.key === 'Subtract') {
+      e.preventDefault();
+      zoomLightbox(-1);
+      return;
+    }
+    if (e.key === '0') {
+      e.preventDefault();
+      resetLightboxZoom();
+      return;
+    }
+    if (e.key === 'r' || e.key === 'R' || e.key === 'к' || e.key === 'К') {
+      e.preventDefault();
+      rotateLightbox();
+      return;
+    }
+    if (e.key === 'd' || e.key === 'D' || e.key === 'в' || e.key === 'В') {
+      e.preventDefault();
+      downloadLightboxImage();
+      return;
+    }
+  });
 }
 
 function escapeHtml(str) {
@@ -4132,6 +4402,29 @@ function copyCurrentChatLink() {
 }
 
 async function handleUrlRouting() {
+  // 1. Check Query Parameters (?chat=123 or ?chatId=123)
+  const searchParams = new URLSearchParams(window.location.search);
+  const queryChatId = searchParams.get('chat') || searchParams.get('chatId');
+  if (queryChatId && /^\d+$/.test(queryChatId)) {
+    const targetChatId = Number(queryChatId);
+    if (!token) {
+      sessionStorage.setItem('pending_chat_id', targetChatId);
+      return;
+    }
+    sessionStorage.removeItem('pending_chat_id');
+    history.replaceState({ view: 'chat', chatId: targetChatId }, '', `/#/c/${targetChatId}`);
+    selectChat(targetChatId);
+    return;
+  }
+
+  // 2. Check pending sessionStorage chat ID
+  const pendingId = sessionStorage.getItem('pending_chat_id');
+  if (pendingId && /^\d+$/.test(pendingId) && token) {
+    sessionStorage.removeItem('pending_chat_id');
+    selectChat(Number(pendingId));
+    return;
+  }
+
   const hash = window.location.hash || sessionStorage.getItem('pending_chat_hash') || '';
   if (!hash) return;
 
@@ -4148,26 +4441,7 @@ async function handleUrlRouting() {
 
     if (/^\d+$/.test(groupParam)) {
       const targetChatId = Number(groupParam);
-      const existingChat = allChats.find(c => c.id === targetChatId);
-      if (existingChat) {
-        selectChat(targetChatId);
-      } else {
-        try {
-          const joinRes = await fetch(`/api/chats/${targetChatId}/join`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (joinRes.ok) {
-            await loadChats();
-            selectChat(targetChatId);
-            showToast('Вы присоединились к группе!');
-          } else {
-            selectChat(targetChatId);
-          }
-        } catch (e) {
-          selectChat(targetChatId);
-        }
-      }
+      selectChat(targetChatId);
       return;
     } else {
       try {
@@ -4193,28 +4467,7 @@ async function handleUrlRouting() {
   if (chatMatch) {
     const targetChatId = Number(chatMatch[1]);
     sessionStorage.removeItem('pending_chat_hash');
-
-    const existingChat = allChats.find(c => c.id === targetChatId);
-    if (existingChat) {
-      selectChat(targetChatId);
-    } else {
-      try {
-        const joinRes = await fetch(`/api/chats/${targetChatId}/join`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (joinRes.ok) {
-          await loadChats();
-          selectChat(targetChatId);
-          showToast('Вы присоединились к диалогу!');
-        } else {
-          await loadChats();
-          selectChat(targetChatId);
-        }
-      } catch (e) {
-        selectChat(targetChatId);
-      }
-    }
+    selectChat(targetChatId);
     return;
   }
 }
@@ -4235,7 +4488,7 @@ window.addEventListener('popstate', (event) => {
   }
 
   // 2. If fullscreen media lightbox is open, close lightbox
-  const lightbox = document.getElementById('lightboxOverlay');
+  const lightbox = document.getElementById('lightbox') || document.getElementById('lightboxOverlay');
   if (lightbox && !lightbox.classList.contains('hidden')) {
     closeLightbox();
     return;
@@ -4253,14 +4506,20 @@ window.addEventListener('popstate', (event) => {
     return;
   }
 
-  // 4. If mobile chat view is open, return back to the contacts / chats list
+  // 4. Check if new hash navigates to a chat or group
+  const currentHash = window.location.hash || '';
+  const isNavigatingToChat = currentHash.startsWith('#/c/') || currentHash.startsWith('#/group/');
+
+  // 5. If mobile chat view is open and user pressed Back to return to contacts list
   if (document.body.classList.contains('mobile-chat-open')) {
-    backToChatsList(false);
-    return;
+    if (!isNavigatingToChat) {
+      backToChatsList(false);
+      return;
+    }
   }
 
-  // 5. If state contains specific navigation or hash changed
-  if (window.location.hash && window.location.hash !== '#/' && window.location.hash !== '') {
+  // 6. If navigating to a specific chat/group
+  if (isNavigatingToChat) {
     handleUrlRouting();
   }
 });
@@ -5526,6 +5785,23 @@ function urlBase64ToUint8Array(base64String) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+// Listen for Service Worker postMessage actions (e.g. notification click -> open_chat)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.action === 'open_chat' && event.data.chatId) {
+      const targetChatId = Number(event.data.chatId);
+      if (activeChat && activeChat.id === targetChatId && document.body.classList.contains('mobile-chat-open')) {
+        return;
+      }
+      if (token) {
+        selectChat(targetChatId);
+      } else {
+        sessionStorage.setItem('pending_chat_id', targetChatId);
+      }
+    }
+  });
 }
 
 async function getSwRegistration() {

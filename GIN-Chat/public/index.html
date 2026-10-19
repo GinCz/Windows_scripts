@@ -9,8 +9,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon-v30.svg">
   <link rel="alternate icon" type="image/svg+xml" href="/favicon-v30.svg">
   <link rel="stylesheet" href="/css/fontawesome.min.css">
-  <link rel="stylesheet" href="/css/style.css?v=20261019_v048">
-  <link rel="manifest" href="/manifest.json?v=20261019_v048">
+  <link rel="stylesheet" href="/css/style.css?v=20261020_v050">
+  <link rel="manifest" href="/manifest.json?v=20261020_v050">
   <meta name="theme-color" content="#180a2b">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -112,7 +112,7 @@
           <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener noreferrer" class="btn-docs-github" title="Подробное описание работы GIN-Chat на GitHub ↗">
             <i class="fa-brands fa-github"></i> Подробное описание работы чата ↗
           </a>
-          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v048 ↗</a>
+          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v050 ↗</a>
         </div>
       </div>
     </div>
@@ -154,7 +154,7 @@
           <button class="menu-item" onclick="toggleDisplayMode()"><i class="fa-solid fa-mobile-screen text-primary"></i> <span id="menuModeText">Режим: Мобильный / ПК</span></button>
           <button class="menu-item" onclick="openWallpaperModal()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
           <button class="menu-item" id="pwaMenuInstallBtn" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
-          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v048)</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v050)</button>
           <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -182,7 +182,7 @@
         <button id="pwaInstallBtn" class="btn-sidebar-pwa" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v048 ↗</a>
+        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v050 ↗</a>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -988,10 +988,46 @@
     </div>
     <input type="file" id="avatarCropFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelected(event)">
 
-    <!-- IMAGE LIGHTBOX -->
-    <div class="lightbox-overlay hidden" id="lightbox" onclick="closeLightbox()">
-      <button class="icon-btn lightbox-close"><i class="fa-solid fa-xmark"></i></button>
-      <img id="lightboxImg" src="" alt="Full view" onclick="event.stopPropagation()">
+    <!-- FULLSCREEN IMAGE & SCREENSHOT LIGHTBOX / VIEWER -->
+    <div class="lightbox-overlay hidden" id="lightbox" role="dialog" aria-modal="true" aria-label="Просмотр изображения">
+      <!-- Floating Top Control Bar -->
+      <div class="lightbox-toolbar" id="lightboxToolbar" onclick="event.stopPropagation()">
+        <button type="button" class="lightbox-btn" id="lightboxZoomOutBtn" title="Уменьшить (Zoom Out: - / Колесико вниз)" onclick="zoomLightbox(-1)">
+          <i class="fa-solid fa-magnifying-glass-minus"></i>
+        </button>
+        <button type="button" class="lightbox-btn lightbox-zoom-indicator" id="lightboxZoomResetBtn" title="Сбросить масштаб (100% / Esc)" onclick="resetLightboxZoom()">
+          <span id="lightboxZoomVal">100%</span>
+        </button>
+        <button type="button" class="lightbox-btn" id="lightboxZoomInBtn" title="Увеличить (Zoom In: + / Колесико вверх)" onclick="zoomLightbox(1)">
+          <i class="fa-solid fa-magnifying-glass-plus"></i>
+        </button>
+        <div class="lightbox-divider"></div>
+        <button type="button" class="lightbox-btn" id="lightboxRotateBtn" title="Повернуть на 90° (R)" onclick="rotateLightbox()">
+          <i class="fa-solid fa-rotate-right"></i>
+        </button>
+        <button type="button" class="lightbox-btn" id="lightboxFitBtn" title="По размеру экрана / 1:1" onclick="toggleLightboxFit()">
+          <i class="fa-solid fa-expand" id="lightboxFitIcon"></i>
+        </button>
+        <button type="button" class="lightbox-btn" id="lightboxDownloadBtn" title="Скачать оригинал" onclick="downloadLightboxImage()">
+          <i class="fa-solid fa-download"></i>
+        </button>
+        <div class="lightbox-divider"></div>
+        <button type="button" class="lightbox-btn lightbox-btn-close" id="lightboxCloseBtn" title="Закрыть (Esc)" onclick="closeLightbox()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Viewport & Image Canvas -->
+      <div class="lightbox-viewport" id="lightboxViewport">
+        <img id="lightboxImg" src="" alt="Просмотр скриншота" draggable="false">
+      </div>
+
+      <!-- Bottom Hint Bar -->
+      <div class="lightbox-hint">
+        <span><i class="fa-solid fa-computer-mouse"></i> Колесико: зум</span>
+        <span><i class="fa-solid fa-hand"></i> Перетаскивание</span>
+        <span><i class="fa-solid fa-keyboard"></i> Esc: закрыть</span>
+      </div>
     </div>
 
     <!-- MODAL: FORWARD MESSAGE (Vertical compact list with bright green glow) -->
@@ -1115,7 +1151,7 @@
             <img src="/favicon-v30.svg" alt="GIN-Chat Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5));">
           </div>
           <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
-          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v048 (0.4.8)</div>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v050 (0.5.0)</div>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
             Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong>, WebRTC и поддержкой Web Push.
           </p>
@@ -1126,7 +1162,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <span style="color: var(--text-muted);">Сборка:</span>
-              <span>Release v048 • 3D Volumetric Stickers & Enhanced Horizontal Scroll for GIF & Sticker Tabs (v0.4.8)</span>
+              <span>Release v050 • Instant Smooth Push Notification Navigation & Route Handling (v0.5.0)</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0;">
               <span style="color: var(--text-muted);">Шифрование:</span>
@@ -1230,7 +1266,7 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/app.js?v=20261019_v048"></script>
+  <script src="/js/app.js?v=20261020_v050"></script>
   <!-- PWA Service Worker & Install Handler -->
   <script>
     if ('serviceWorker' in navigator) {
