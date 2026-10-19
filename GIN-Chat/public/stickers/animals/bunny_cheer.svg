@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="100%" stop-color="#F59F00"/>
+    </linearGradient>
+    <linearGradient id="catGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFA94D"/>
+      <stop offset="100%" stop-color="#E8590C"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E9ECEF"/>
+    </linearGradient>
+    <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8787"/>
+      <stop offset="100%" stop-color="#E64980"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4DABF7"/>
+      <stop offset="100%" stop-color="#1971C2"/>
+    </linearGradient>
+    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#364FC7"/>
+      <stop offset="100%" stop-color="#182A88"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#FF922B"/>
+      <stop offset="100%" stop-color="#E03131"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69DB7C"/>
+      <stop offset="100%" stop-color="#2F9E44"/>
+    </linearGradient>
+  </defs>
+  
+      <g filter="url(#shadow)">
+        <!-- Tall Ears -->
+        <ellipse cx="70" cy="40" rx="16" ry="45" fill="url(#whiteGrad)"/>
+        <ellipse cx="70" cy="40" rx="9" ry="32" fill="#FFA8A8"/>
+        <ellipse cx="130" cy="40" rx="16" ry="45" fill="url(#whiteGrad)"/>
+        <ellipse cx="130" cy="40" rx="9" ry="32" fill="#FFA8A8"/>
+        <!-- Head -->
+        <ellipse cx="100" cy="115" rx="60" ry="50" fill="url(#whiteGrad)"/>
+        <!-- Pink cheeks -->
+        <circle cx="60" cy="125" r="12" fill="#FFA8A8" opacity="0.6"/>
+        <circle cx="140" cy="125" r="12" fill="#FFA8A8" opacity="0.6"/>
+        <!-- Cute face -->
+        <circle cx="75" cy="105" r="7" fill="#212529"/>
+        <circle cx="125" cy="105" r="7" fill="#212529"/>
+        <polygon points="100,118 95,112 105,112" fill="#FF8787"/>
+        <path d="M 95 120 Q 100 126 105 120" stroke="#212529" stroke-width="3" stroke-linecap="round" fill="none"/>
+      </g>
+    
+</svg>

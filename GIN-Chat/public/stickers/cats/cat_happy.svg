@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="100%" stop-color="#F59F00"/>
+    </linearGradient>
+    <linearGradient id="catGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFA94D"/>
+      <stop offset="100%" stop-color="#E8590C"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E9ECEF"/>
+    </linearGradient>
+    <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8787"/>
+      <stop offset="100%" stop-color="#E64980"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4DABF7"/>
+      <stop offset="100%" stop-color="#1971C2"/>
+    </linearGradient>
+    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#364FC7"/>
+      <stop offset="100%" stop-color="#182A88"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#FF922B"/>
+      <stop offset="100%" stop-color="#E03131"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69DB7C"/>
+      <stop offset="100%" stop-color="#2F9E44"/>
+    </linearGradient>
+  </defs>
+  
+      <g filter="url(#shadow)">
+        <!-- Ears -->
+        <polygon points="50,65 30,15 85,45" fill="#E8590C"/>
+        <polygon points="52,60 38,25 78,45" fill="#FFA8A8"/>
+        <polygon points="150,65 170,15 115,45" fill="#E8590C"/>
+        <polygon points="148,60 162,25 122,45" fill="#FFA8A8"/>
+        <!-- Head -->
+        <ellipse cx="100" cy="105" rx="70" ry="60" fill="url(#catGrad)"/>
+        <!-- Cheeks -->
+        <ellipse cx="60" cy="120" rx="14" ry="9" fill="#FFA8A8" opacity="0.6"/>
+        <ellipse cx="140" cy="120" rx="14" ry="9" fill="#FFA8A8" opacity="0.6"/>
+        <!-- Eyes Happy arcs -->
+        <path d="M 65 95 Q 80 80 90 95" stroke="#212529" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <path d="M 110 95 Q 120 80 135 95" stroke="#212529" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <!-- Nose -->
+        <polygon points="100,108 94,102 106,102" fill="#C92A2A"/>
+        <!-- Mouth Open Smiling -->
+        <path d="M 94 112 Q 100 120 106 112 Q 100 135 94 112 Z" fill="#C92A2A"/>
+        <path d="M 94 120 Q 100 130 106 120" fill="#FF8787"/>
+        <!-- Whiskers -->
+        <line x1="30" y1="105" x2="65" y2="110" stroke="#FFF" stroke-width="3" stroke-linecap="round"/>
+        <line x1="30" y1="120" x2="65" y2="118" stroke="#FFF" stroke-width="3" stroke-linecap="round"/>
+        <line x1="170" y1="105" x2="135" y2="110" stroke="#FFF" stroke-width="3" stroke-linecap="round"/>
+        <line x1="170" y1="120" x2="135" y2="118" stroke="#FFF" stroke-width="3" stroke-linecap="round"/>
+        <!-- Paws waving -->
+        <ellipse cx="50" cy="155" rx="18" ry="14" fill="#FFA94D"/>
+        <ellipse cx="150" cy="155" rx="18" ry="14" fill="#FFA94D"/>
+      </g>
+    
+</svg>

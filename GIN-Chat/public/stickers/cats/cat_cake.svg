@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="100%" stop-color="#F59F00"/>
+    </linearGradient>
+    <linearGradient id="catGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFA94D"/>
+      <stop offset="100%" stop-color="#E8590C"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E9ECEF"/>
+    </linearGradient>
+    <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8787"/>
+      <stop offset="100%" stop-color="#E64980"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4DABF7"/>
+      <stop offset="100%" stop-color="#1971C2"/>
+    </linearGradient>
+    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#364FC7"/>
+      <stop offset="100%" stop-color="#182A88"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#FF922B"/>
+      <stop offset="100%" stop-color="#E03131"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69DB7C"/>
+      <stop offset="100%" stop-color="#2F9E44"/>
+    </linearGradient>
+  </defs>
+  
+      <g filter="url(#shadow)">
+        <polygon points="50,65 30,15 85,45" fill="#E8590C"/>
+        <polygon points="150,65 170,15 115,45" fill="#E8590C"/>
+        <ellipse cx="100" cy="85" rx="65" ry="50" fill="url(#catGrad)"/>
+        <!-- Party Hat -->
+        <polygon points="100,5 82,45 118,45" fill="#FCC419"/>
+        <circle cx="100" cy="5" r="7" fill="#E03131"/>
+        <line x1="88" y1="20" x2="112" y2="20" stroke="#E03131" stroke-width="4"/>
+        <line x1="84" y1="35" x2="116" y2="35" stroke="#339AF0" stroke-width="4"/>
+        <!-- Happy eyes -->
+        <path d="M 68 80 Q 78 70 88 80" stroke="#212529" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <path d="M 112 80 Q 122 70 132 80" stroke="#212529" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <!-- Cake Slice -->
+        <path d="M 60 140 L 140 140 L 100 185 Z" fill="#FFD8A8"/>
+        <rect x="60" y="130" width="80" height="14" rx="5" fill="#FF6B6B"/>
+        <!-- Candle -->
+        <rect x="96" y="105" width="8" height="25" fill="#74C0FC"/>
+        <ellipse cx="100" cy="98" rx="5" ry="8" fill="#FF922B"/>
+      </g>
+    
+</svg>

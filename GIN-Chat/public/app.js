@@ -78,10 +78,14 @@ function toggleDisplayMode() {
 function initViewMode() {
   const isMobileDevice = window.innerWidth <= 840 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const saved = localStorage.getItem('gin_view_mode');
-  if (saved === 'desktop' && !isMobileDevice) {
-    setViewMode('desktop', false);
-  } else {
+  if (saved === 'mobile') {
     setViewMode('mobile', false);
+  } else if (saved === 'desktop') {
+    setViewMode('desktop', false);
+  } else if (isMobileDevice) {
+    setViewMode('mobile', false);
+  } else {
+    setViewMode('desktop', false);
   }
 }
 
@@ -89,13 +93,42 @@ try {
   initViewMode();
 } catch(e) {}
 
-document.addEventListener('DOMContentLoaded', () => {
+async function checkIpBinding(isManual = false) {
+  try {
+    const res = await fetch('/api/auth/check-ip');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.token && data.user) {
+        token = data.token;
+        currentUser = data.user;
+        localStorage.setItem('gin_chat_token', token);
+        initApp();
+        showToast(`Вход по доверенному IP выполнен (${data.bound_ip || 'IP'})`);
+        return true;
+      } else if (isManual) {
+        showToast('Ваш IP-адрес не найден в списке доверенных. Введите пароль.');
+      }
+    } else if (isManual) {
+      showToast('Ошибка проверки IP-адреса. Введите пароль.');
+    }
+  } catch (e) {
+    console.warn('IP binding check failed:', e);
+    if (isManual) showToast('Сетевая ошибка при проверке IP');
+  }
+  return false;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initViewMode();
+  initDragAndDrop();
   if (token) {
-    fetchMe();
+    await fetchMe();
   } else {
-    showAuthScreen();
+    const autoLoggedIn = await checkIpBinding();
+    if (!autoLoggedIn) {
+      showAuthScreen();
+    }
   }
   loadEmojiCategory('smileys');
 
@@ -108,6 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('voiceBtn').classList.toggle('hidden', hasText);
     if (activeChat) scrollToBottom();
   });
+
+  setupHorizontalScroll(document.getElementById('gifCategoriesChips'));
+  setupHorizontalScroll(document.getElementById('stickerPacksTabs'));
 });
 
 // ----------------------------------------------------
@@ -173,12 +209,14 @@ async function handleLogin(e) {
 
   const login = document.getElementById('loginInput').value.trim();
   const password = document.getElementById('loginPassword').value;
+  const durRadio = document.querySelector('input[name="chat_duration"]:checked');
+  const duration = durRadio ? durRadio.value : '30d';
 
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ login, password })
+      body: JSON.stringify({ login, password, bind_ip: true, duration })
     });
     const data = await res.json();
 
@@ -240,20 +278,32 @@ async function fetchMe() {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) {
-      logout();
+      console.warn('fetchMe 401, falling back to IP auto-login...');
+      const auto = await checkIpBinding();
+      if (!auto) logout();
       return;
     }
     const data = await res.json();
     currentUser = data.user;
     initApp();
   } catch (err) {
-    logout();
+    console.warn('fetchMe network error, checking IP binding...');
+    const auto = await checkIpBinding();
+    if (!auto) logout();
   }
 }
 
 function showAuthScreen() {
-  document.getElementById('authScreen').classList.remove('hidden');
-  document.getElementById('mainScreen').classList.add('hidden');
+  const authEl = document.getElementById('authScreen');
+  if (authEl) {
+    authEl.classList.remove('hidden');
+    authEl.style.removeProperty('display');
+  }
+  const mainEl = document.getElementById('mainScreen');
+  if (mainEl) {
+    mainEl.classList.add('hidden');
+    mainEl.style.setProperty('display', 'none', 'important');
+  }
 }
 
 function logout() {
@@ -299,8 +349,16 @@ function updateAvatarElement(elementId, avatarUrl, name, sizeClass = 'avatar-md'
 // ----------------------------------------------------
 
 function initApp() {
-  document.getElementById('authScreen').classList.add('hidden');
-  document.getElementById('mainScreen').classList.remove('hidden');
+  const authEl = document.getElementById('authScreen');
+  if (authEl) {
+    authEl.classList.add('hidden');
+    authEl.style.setProperty('display', 'none', 'important');
+  }
+  const mainEl = document.getElementById('mainScreen');
+  if (mainEl) {
+    mainEl.classList.remove('hidden');
+    mainEl.style.removeProperty('display');
+  }
 
   document.getElementById('menuUserName').innerText = currentUser.name;
   document.getElementById('menuUserHandle').innerText = '@' + currentUser.username;
@@ -621,6 +679,8 @@ function showLocalSystemNotification(msg) {
     let body = msg.text || '';
     if (msg.type === 'voice') body = '🎤 Голосовое сообщение';
     else if (msg.type === 'image') body = '📷 Фотография';
+    else if (msg.type === 'sticker') body = '🎭 Стикер';
+    else if (msg.type === 'gif') body = '🎬 GIF-анимация';
     else if (msg.type === 'file') body = `📎 Файл: ${msg.file_name || 'документ'}`;
 
     const options = {
@@ -657,7 +717,11 @@ async function loadChats() {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) {
-      if (res.status === 401) logout();
+      if (res.status === 401) {
+        const auto = await checkIpBinding();
+        if (auto) return loadChats();
+        logout();
+      }
       return;
     }
     const data = await res.json();
@@ -729,8 +793,19 @@ async function selectChat(chatId) {
     const res = await fetch(`/api/chats/${chatId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+    if (!res.ok) {
+      if (res.status === 401) {
+        console.warn('selectChat 401, re-authenticating via IP...');
+        const auto = await checkIpBinding();
+        if (auto) return selectChat(chatId);
+        logout();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Ошибка открытия чата');
+      }
+      return;
+    }
     const data = await res.json();
-    if (!res.ok) return;
 
     activeChat = { 
       ...data.chat, 
@@ -894,6 +969,12 @@ function appendMessageToView(msg) {
         <span class="gif-badge">GIF</span>
       </div>
     `;
+  } else if (msg.type === 'sticker') {
+    contentHtml += `
+      <div class="msg-sticker-wrapper" onclick="openLightbox('${escapeHtml(msg.file_url)}')">
+        <img src="${escapeHtml(msg.file_url)}" class="msg-media-sticker" alt="${escapeHtml(msg.file_name || 'Стикер')}" loading="lazy">
+      </div>
+    `;
   } else if (msg.type === 'voice' || (msg.type === 'file' && ['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac', 'opus', 'webm'].includes(((msg.file_name || '').split('.').pop() || '').toLowerCase()))) {
     const isVoice = msg.type === 'voice';
     const title = isVoice ? 'Голосовое сообщение' : escapeHtml(msg.file_name || 'Аудиозапись');
@@ -975,6 +1056,9 @@ function appendMessageToView(msg) {
 
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble';
+  if (msg.type === 'sticker') {
+    bubble.classList.add('is-sticker-bubble');
+  }
   bubble.innerHTML = contentHtml;
 
   // Selection Checkmark Element
@@ -1122,7 +1206,21 @@ function formatUserStatus(isOnline, lastSeenIso) {
 
 function scrollToBottom() {
   const el = document.getElementById('messagesContainer');
-  el.scrollTop = el.scrollHeight;
+  if (el) el.scrollTop = el.scrollHeight;
+  if (window.scrollX !== 0 || window.scrollLeft !== 0) {
+    window.scrollTo({ left: 0 });
+  }
+  const mainScreen = document.getElementById('mainScreen');
+  if (mainScreen && mainScreen.scrollLeft !== 0) {
+    mainScreen.scrollLeft = 0;
+  }
+  const app = document.getElementById('app');
+  if (app && app.scrollLeft !== 0) {
+    app.scrollLeft = 0;
+  }
+  if (document.body && document.body.scrollLeft !== 0) {
+    document.body.scrollLeft = 0;
+  }
 }
 
 function backToChatsList(triggerHistory = true) {
@@ -1255,7 +1353,14 @@ function setReplyMessage(msg) {
   document.getElementById('replyPreviewBar').classList.remove('hidden');
   document.getElementById('replyPreviewIcon').className = 'fa-solid fa-reply reply-icon';
   document.getElementById('replyToName').innerText = msg.sender.name;
-  document.getElementById('replyToText').innerText = msg.type === 'text' ? msg.text : `[${msg.type}]`;
+  let replySnippet = `[${msg.type}]`;
+  if (msg.type === 'text') replySnippet = msg.text;
+  else if (msg.type === 'sticker') replySnippet = '🎭 Стикер';
+  else if (msg.type === 'gif') replySnippet = '🎬 GIF-анимация';
+  else if (msg.type === 'voice') replySnippet = '🎤 Голосовое сообщение';
+  else if (msg.type === 'image') replySnippet = '📷 Фотография';
+  else if (msg.type === 'file') replySnippet = `📎 ${msg.file_name || 'Файл'}`;
+  document.getElementById('replyToText').innerText = replySnippet;
 }
 
 function setReplyMessageById(messageId) {
@@ -1275,7 +1380,16 @@ function cancelReplyOrEdit() {
 }
 
 function toggleAttachmentMenu() {
-  document.getElementById('attachmentMenu').classList.toggle('hidden');
+  const menu = document.getElementById('attachmentMenu');
+  if (!menu) return;
+  const isOpening = menu.classList.contains('hidden');
+  if (isOpening) {
+    if (typeof closeStickerPicker === 'function') closeStickerPicker();
+    if (typeof closeGifPicker === 'function') closeGifPicker();
+    const emojiPicker = document.getElementById('emojiPicker');
+    if (emojiPicker) emojiPicker.classList.add('hidden');
+  }
+  menu.classList.toggle('hidden');
 }
 
 function triggerFileInput(acceptType) {
@@ -1286,12 +1400,40 @@ function triggerFileInput(acceptType) {
 }
 
 // ----------------------------------------------------
-// FILE UPLOAD WITH PROGRESS BAR
+// FILE UPLOAD WITH PROGRESS BAR & DRAG-AND-DROP
 // ----------------------------------------------------
 
-async function handleFileSelected(e) {
-  const file = e.target.files[0];
-  if (!file || !activeChat) return;
+let uploadQueue = [];
+let isUploading = false;
+
+function uploadAndSendFile(file) {
+  if (!file) return;
+  if (!activeChat) {
+    showToast('Сначала откройте нужный чат для отправки файла');
+    return;
+  }
+
+  // 100MB client limit check
+  if (file.size > 100 * 1024 * 1024) {
+    showToast(`Файл "${file.name}" превышает максимальный размер 100 МБ`);
+    return;
+  }
+
+  uploadQueue.push({
+    file,
+    chatId: activeChat.id,
+    replyTo: replyMessage ? { ...replyMessage } : null
+  });
+  cancelReplyOrEdit();
+  processUploadQueue();
+}
+
+function processUploadQueue() {
+  if (isUploading || uploadQueue.length === 0) return;
+  isUploading = true;
+
+  const item = uploadQueue.shift();
+  const { file, chatId, replyTo } = item;
 
   const formData = new FormData();
   formData.append('file', file);
@@ -1300,48 +1442,75 @@ async function handleFileSelected(e) {
   const progressFill = document.getElementById('uploadProgressFill');
   const progressText = document.getElementById('uploadProgressText');
 
-  progressBar.classList.remove('hidden');
-  progressFill.style.width = '0%';
-  progressText.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Загрузка ${escapeHtml(file.name)}: 0%`;
+  if (progressBar) progressBar.classList.remove('hidden');
+  if (progressFill) progressFill.style.width = '0%';
+  if (progressText) {
+    const queueNotice = uploadQueue.length > 0 ? ` (в очереди: ${uploadQueue.length})` : '';
+    progressText.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Отправка ${escapeHtml(file.name)}: 0%${queueNotice}`;
+  }
 
   const xhr = new XMLHttpRequest();
   currentUploadXhr = xhr;
+  xhr.timeout = 300000; // 5 minutes timeout
 
   xhr.upload.onprogress = (event) => {
     if (event.lengthComputable) {
       const percent = Math.round((event.loaded / event.total) * 100);
-      progressFill.style.width = percent + '%';
-      progressText.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Загрузка ${escapeHtml(file.name)}: ${percent}% (${formatFileSize(event.loaded)} / ${formatFileSize(event.total)})`;
+      if (progressFill) progressFill.style.width = percent + '%';
+      if (progressText) {
+        const queueNotice = uploadQueue.length > 0 ? ` (в очереди: ${uploadQueue.length})` : '';
+        progressText.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-fade"></i> Отправка ${escapeHtml(file.name)}: ${percent}% (${formatFileSize(event.loaded)} / ${formatFileSize(event.total)})${queueNotice}`;
+      }
+    }
+  };
+
+  const finishUpload = () => {
+    isUploading = false;
+    currentUploadXhr = null;
+    if (uploadQueue.length === 0) {
+      if (progressBar) progressBar.classList.add('hidden');
+    } else {
+      processUploadQueue();
     }
   };
 
   xhr.onload = () => {
-    progressBar.classList.add('hidden');
-    currentUploadXhr = null;
     if (xhr.status >= 200 && xhr.status < 300) {
       try {
         const data = JSON.parse(xhr.responseText);
-        socket.emit('send_message', {
-          chatId: activeChat.id,
-          type: data.type,
-          fileUrl: data.url,
-          fileName: data.name,
-          fileSize: data.size,
-          replyToId: replyMessage ? replyMessage.id : null
-        });
-        cancelReplyOrEdit();
+        if (socket) {
+          socket.emit('send_message', {
+            chatId,
+            type: data.type,
+            fileUrl: data.url,
+            fileName: data.name,
+            fileSize: data.size,
+            replyToId: replyTo ? replyTo.id : null
+          });
+        }
+        showToast(`Файл "${file.name}" успешно отправлен`);
       } catch (e) {
-        alert('Ошибка обработки ответа сервера');
+        showToast('Ошибка обработки ответа сервера при загрузке');
       }
     } else {
-      alert('Ошибка загрузки файла на сервер');
+      let errMsg = 'Ошибка загрузки файла на сервер';
+      try {
+        const errObj = JSON.parse(xhr.responseText);
+        if (errObj && errObj.error) errMsg = errObj.error;
+      } catch (e) {}
+      showToast(errMsg);
     }
+    finishUpload();
   };
 
   xhr.onerror = () => {
-    progressBar.classList.add('hidden');
-    currentUploadXhr = null;
-    alert('Сетевая ошибка при передаче файла');
+    showToast('Сетевая ошибка при передаче файла. Проверьте соединение.');
+    finishUpload();
+  };
+
+  xhr.ontimeout = () => {
+    showToast(`Время загрузки файла "${file.name}" истекло (таймаут). Попробуйте снова.`);
+    finishUpload();
   };
 
   xhr.open('POST', '/api/upload');
@@ -1349,13 +1518,77 @@ async function handleFileSelected(e) {
   xhr.send(formData);
 }
 
+function handleFileSelected(e) {
+  const file = e.target.files && e.target.files[0];
+  if (file) {
+    uploadAndSendFile(file);
+  }
+  e.target.value = '';
+}
+
+let dragCounter = 0;
+function initDragAndDrop() {
+  // Prevent browser default open behavior on window
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+    window.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, false);
+  });
+
+  const dropOverlay = document.getElementById('chatDropOverlay');
+
+  window.addEventListener('dragenter', (e) => {
+    if (!activeChat) return;
+    if (e.dataTransfer && e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
+      dragCounter++;
+      if (dropOverlay) dropOverlay.classList.remove('hidden');
+    }
+  });
+
+  window.addEventListener('dragleave', (e) => {
+    if (!activeChat) return;
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      if (dropOverlay) dropOverlay.classList.add('hidden');
+    }
+  });
+
+  window.addEventListener('dragover', (e) => {
+    if (!activeChat) return;
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  });
+
+  window.addEventListener('drop', (e) => {
+    dragCounter = 0;
+    if (dropOverlay) dropOverlay.classList.add('hidden');
+    if (!activeChat) {
+      showToast('Сначала откройте нужный чат для отправки файла');
+      return;
+    }
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        uploadAndSendFile(files[i]);
+      }
+    }
+  });
+}
+
 function cancelCurrentUpload() {
   if (currentUploadXhr) {
     currentUploadXhr.abort();
     currentUploadXhr = null;
-    document.getElementById('uploadProgressBar').classList.add('hidden');
-    showToast('Загрузка отменена');
   }
+  uploadQueue = [];
+  isUploading = false;
+  const progressBar = document.getElementById('uploadProgressBar');
+  if (progressBar) progressBar.classList.add('hidden');
+  showToast('Загрузка отменена');
 }
 
 // ----------------------------------------------------
@@ -1668,7 +1901,20 @@ function togglePlayVoice(btn, url) {
 // ----------------------------------------------------
 
 function toggleEmojiPicker() {
-  document.getElementById('emojiPicker').classList.toggle('hidden');
+  const emojiPicker = document.getElementById('emojiPicker');
+  if (!emojiPicker) return;
+  const isOpening = emojiPicker.classList.contains('hidden');
+  if (isOpening) {
+    if (typeof closeStickerPicker === 'function') closeStickerPicker();
+    if (typeof closeGifPicker === 'function') closeGifPicker();
+    const attachMenu = document.getElementById('attachmentMenu');
+    if (attachMenu) attachMenu.classList.add('hidden');
+    const grid = document.getElementById('emojiGrid');
+    if (grid && !grid.children.length) {
+      loadEmojiCategory('smileys');
+    }
+  }
+  emojiPicker.classList.toggle('hidden');
 }
 
 function loadEmojiCategory(cat, btn) {
@@ -3558,19 +3804,45 @@ function closeAvatarCropper() {
 // UTILITIES & HELPERS
 // ----------------------------------------------------
 
-function toggleMainMenu() {
+function openMainMenu() {
   const m = document.getElementById('mainMenu');
-  if (m) {
-    m.classList.toggle('hidden');
-    if (!m.classList.contains('hidden')) {
-      checkPushStatus();
+  const backdrop = document.getElementById('mainMenuBackdrop');
+  if (!m) return;
+  m.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    m.classList.add('menu-open');
+    if (backdrop) {
+      backdrop.classList.remove('hidden');
+      requestAnimationFrame(() => backdrop.classList.add('visible'));
     }
-  }
+  });
+  checkPushStatus();
 }
 
 function closeMainMenu() {
   const m = document.getElementById('mainMenu');
-  if (m) m.classList.add('hidden');
+  const backdrop = document.getElementById('mainMenuBackdrop');
+  if (!m) return;
+  m.classList.remove('menu-open');
+  if (backdrop) backdrop.classList.remove('visible');
+  setTimeout(() => {
+    if (!m.classList.contains('menu-open')) {
+      m.classList.add('hidden');
+      if (backdrop) backdrop.classList.add('hidden');
+    }
+  }, 260);
+}
+
+function toggleMainMenu() {
+  const m = document.getElementById('mainMenu');
+  if (!m) return;
+  const isMobile = window.innerWidth <= 768 || document.body.classList.contains('mobile-mode');
+  const isOpen = isMobile ? m.classList.contains('menu-open') : !m.classList.contains('hidden');
+  if (isOpen) {
+    closeMainMenu();
+  } else {
+    openMainMenu();
+  }
 }
 
 function openModal(id) {
@@ -4081,7 +4353,10 @@ function toggleGifPicker() {
 function openGifPicker(query = '') {
   const picker = document.getElementById('gifPicker');
   const emojiPicker = document.getElementById('emojiPicker');
+  const attachMenu = document.getElementById('attachmentMenu');
   if (emojiPicker) emojiPicker.classList.add('hidden');
+  if (attachMenu) attachMenu.classList.add('hidden');
+  if (typeof closeStickerPicker === 'function') closeStickerPicker();
   if (!picker) return;
 
   picker.classList.remove('hidden');
@@ -4098,6 +4373,7 @@ function openGifPicker(query = '') {
   }
 
   renderGifGrid(query || currentGifCategory);
+  setupHorizontalScroll(document.getElementById('gifCategoriesChips'));
 }
 
 function closeGifPicker() {
@@ -4204,12 +4480,325 @@ function sendGif(gifUrl) {
   closeGifPicker();
 }
 
-// Global click to close GIF picker
+
+
+// ====================================================
+// HORIZONTAL CHIPS & TABS SCROLL HELPERS (DESKTOP + MOBILE)
+// ====================================================
+function scrollChipsLeft(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollBy({ left: -160, behavior: 'smooth' });
+}
+
+function scrollChipsRight(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollBy({ left: 160, behavior: 'smooth' });
+}
+
+function setupHorizontalScroll(el) {
+  if (!el || el._hasWheelScroll) return;
+  el._hasWheelScroll = true;
+
+  // Horizontal mouse wheel scrolling
+  el.addEventListener('wheel', (e) => {
+    if (e.deltaY !== 0) {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    }
+  }, { passive: false });
+
+  // Mouse drag to scroll (Grab & Drag for Desktop)
+  let isDown = false;
+  let startX = 0;
+  let scrollLeft = 0;
+  let hasMoved = false;
+
+  el.addEventListener('mousedown', (e) => {
+    isDown = true;
+    hasMoved = false;
+    startX = e.pageX - el.offsetLeft;
+    scrollLeft = el.scrollLeft;
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDown) {
+      isDown = false;
+      el.classList.remove('is-dragging');
+    }
+  });
+
+  el.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 4) {
+      hasMoved = true;
+      el.classList.add('is-dragging');
+      e.preventDefault();
+      el.scrollLeft = scrollLeft - walk;
+    }
+  });
+
+  // Prevent click on child items if we dragged
+  el.addEventListener('click', (e) => {
+    if (hasMoved) {
+      e.preventDefault();
+      e.stopPropagation();
+      hasMoved = false;
+    }
+  }, true);
+}
+
+// ====================================================
+// STICKERS SYSTEM (v0.4.8 - 3D VOLUMETRIC + CLASSIC)
+// ====================================================
+const STICKER_PACKS = {
+  '3d_emojis': [
+    { id: 'partying_face', title: 'Праздник 🎉', url: '/stickers/3d_emojis/partying_face.png' },
+    { id: 'cool_sunglasses', title: 'Крутой 😎', url: '/stickers/3d_emojis/cool_sunglasses.png' },
+    { id: 'heart_eyes', title: 'Влюблен 😍', url: '/stickers/3d_emojis/heart_eyes.png' },
+    { id: 'tears_of_joy', title: 'Смех до слез 😂', url: '/stickers/3d_emojis/tears_of_joy.png' },
+    { id: 'star_struck', title: 'В восторге 🤩', url: '/stickers/3d_emojis/star_struck.png' },
+    { id: 'exploding_head', title: 'Взрыв мозга 🤯', url: '/stickers/3d_emojis/exploding_head.png' },
+    { id: 'melting_face', title: 'Таю 🫠', url: '/stickers/3d_emojis/melting_face.png' },
+    { id: 'thinking_face', title: 'Думаю 🤔', url: '/stickers/3d_emojis/thinking_face.png' },
+    { id: 'zany_face', title: 'Дурачусь 🤪', url: '/stickers/3d_emojis/zany_face.png' },
+    { id: 'relieved_face', title: 'Кайф 😌', url: '/stickers/3d_emojis/relieved_face.png' },
+    { id: 'hot_face', title: 'Жара 🥵', url: '/stickers/3d_emojis/hot_face.png' },
+    { id: 'cold_face', title: 'Холод 🥶', url: '/stickers/3d_emojis/cold_face.png' },
+    { id: 'nerd_face', title: 'Умник 🤓', url: '/stickers/3d_emojis/nerd_face.png' },
+    { id: 'hugging_face', title: 'Обнимашки 🤗', url: '/stickers/3d_emojis/hugging_face.png' },
+    { id: 'shushing_face', title: 'Секрет 🤫', url: '/stickers/3d_emojis/shushing_face.png' },
+    { id: 'face_with_monocle', title: 'Изучаю 🧐', url: '/stickers/3d_emojis/face_with_monocle.png' }
+  ],
+  '3d_gestures': [
+    { id: 'thumbs_up', title: 'Класс 👍', url: '/stickers/3d_gestures/thumbs_up.png' },
+    { id: 'thumbs_down', title: 'Не то 👎', url: '/stickers/3d_gestures/thumbs_down.png' },
+    { id: 'victory_hand', title: 'Победа ✌️', url: '/stickers/3d_gestures/victory_hand.png' },
+    { id: 'heart_hands', title: 'Люблю 🫶', url: '/stickers/3d_gestures/heart_hands.png' },
+    { id: 'clapping_hands', title: 'Браво 👏', url: '/stickers/3d_gestures/clapping_hands.png' },
+    { id: 'ok_hand', title: 'Супер 👌', url: '/stickers/3d_gestures/ok_hand.png' },
+    { id: 'flexed_biceps', title: 'Мощь 💪', url: '/stickers/3d_gestures/flexed_biceps.png' },
+    { id: 'horns', title: 'Рок 🤘', url: '/stickers/3d_gestures/horns.png' },
+    { id: 'call_me', title: 'На связи 🤙', url: '/stickers/3d_gestures/call_me.png' },
+    { id: 'handshake', title: 'По рукам 🤝', url: '/stickers/3d_gestures/handshake.png' },
+    { id: 'folded_hands', title: 'Спасибо 🙏', url: '/stickers/3d_gestures/folded_hands.png' },
+    { id: 'raising_hands', title: 'Ура 🙌', url: '/stickers/3d_gestures/raising_hands.png' }
+  ],
+  '3d_vip': [
+    { id: 'fire', title: 'Огонь 🔥', url: '/stickers/3d_vip/fire.png' },
+    { id: 'rocket', title: 'Ракета 🚀', url: '/stickers/3d_vip/rocket.png' },
+    { id: 'crown', title: 'Корона 👑', url: '/stickers/3d_vip/crown.png' },
+    { id: 'gem_stone', title: 'Алмаз 💎', url: '/stickers/3d_vip/gem_stone.png' },
+    { id: 'money_bag', title: 'Мешок денег 💰', url: '/stickers/3d_vip/money_bag.png' },
+    { id: 'money_wings', title: 'Деньги летят 💸', url: '/stickers/3d_vip/money_wings.png' },
+    { id: 'hundred_points', title: '100% 💯', url: '/stickers/3d_vip/hundred_points.png' },
+    { id: 'party_popper', title: 'Салют 🎉', url: '/stickers/3d_vip/party_popper.png' },
+    { id: 'sparkles', title: 'Блеск ✨', url: '/stickers/3d_vip/sparkles.png' },
+    { id: 'collision', title: 'Бам! 💥', url: '/stickers/3d_vip/collision.png' },
+    { id: 'glowing_star', title: 'Звезда 🌟', url: '/stickers/3d_vip/glowing_star.png' },
+    { id: 'trophy', title: 'Кубок 🏆', url: '/stickers/3d_vip/trophy.png' }
+  ],
+  '3d_love': [
+    { id: 'heart_on_fire', title: 'В огне ❤️‍🔥', url: '/stickers/3d_love/heart_on_fire.png' },
+    { id: 'beating_heart', title: 'Сердцебиение 💓', url: '/stickers/3d_love/beating_heart.png' },
+    { id: 'red_heart', title: 'Сердце ❤️', url: '/stickers/3d_love/red_heart.png' },
+    { id: 'growing_heart', title: 'Любовь 💗', url: '/stickers/3d_love/growing_heart.png' },
+    { id: 'sparkling_heart', title: 'Сияние 💖', url: '/stickers/3d_love/sparkling_heart.png' },
+    { id: 'bouquet', title: 'Букет 💐', url: '/stickers/3d_love/bouquet.png' },
+    { id: 'rose', title: 'Роза 🌹', url: '/stickers/3d_love/rose.png' },
+    { id: 'gift', title: 'Подарок 🎁', url: '/stickers/3d_love/gift.png' },
+    { id: 'coffee', title: 'Кофе ☕', url: '/stickers/3d_love/coffee.png' },
+    { id: 'birthday_cake', title: 'Тортик 🎂', url: '/stickers/3d_love/birthday_cake.png' },
+    { id: 'sun', title: 'Солнышко ☀️', url: '/stickers/3d_love/sun.png' },
+    { id: 'rainbow', title: 'Радуга 🌈', url: '/stickers/3d_love/rainbow.png' }
+  ],
+  '3d_animals': [
+    { id: 'cat_face', title: 'Котик 🐱', url: '/stickers/3d_animals/cat_face.png' },
+    { id: 'cat_wry', title: 'Хитрый кот 😼', url: '/stickers/3d_animals/cat_wry.png' },
+    { id: 'cat_tears', title: 'Ржущий кот 😹', url: '/stickers/3d_animals/cat_tears.png' },
+    { id: 'dog_face', title: 'Песик 🐶', url: '/stickers/3d_animals/dog_face.png' },
+    { id: 'fox', title: 'Лисичка 🦊', url: '/stickers/3d_animals/fox.png' },
+    { id: 'bear', title: 'Мишка 🐻', url: '/stickers/3d_animals/bear.png' },
+    { id: 'panda', title: 'Панда 🐼', url: '/stickers/3d_animals/panda.png' },
+    { id: 'lion', title: 'Лев 🦁', url: '/stickers/3d_animals/lion.png' },
+    { id: 'tiger', title: 'Тигр 🐯', url: '/stickers/3d_animals/tiger.png' },
+    { id: 'monkey', title: 'Обезьянка 🐵', url: '/stickers/3d_animals/monkey.png' },
+    { id: 'penguin', title: 'Пингвин 🐧', url: '/stickers/3d_animals/penguin.png' },
+    { id: 'unicorn', title: 'Единорог 🦄', url: '/stickers/3d_animals/unicorn.png' }
+  ],
+  cats: [
+    { id: 'cat_happy', title: 'Счастливый', url: '/stickers/cats/cat_happy.svg' },
+    { id: 'cat_love', title: 'Любовь', url: '/stickers/cats/cat_love.svg' },
+    { id: 'cat_cool', title: 'Крутой', url: '/stickers/cats/cat_cool.svg' },
+    { id: 'cat_laugh', title: 'Смех', url: '/stickers/cats/cat_laugh.svg' },
+    { id: 'cat_hi', title: 'Привет!', url: '/stickers/cats/cat_hi.svg' },
+    { id: 'cat_coffee', title: 'Кофе / Чай', url: '/stickers/cats/cat_coffee.svg' },
+    { id: 'cat_cake', title: 'Праздник', url: '/stickers/cats/cat_cake.svg' },
+    { id: 'cat_paw', title: 'Лапка', url: '/stickers/cats/cat_paw.svg' },
+    { id: 'cat_sleep', title: 'Сплю', url: '/stickers/cats/cat_sleep.svg' },
+    { id: 'cat_shock', title: 'Шок', url: '/stickers/cats/cat_shock.svg' },
+    { id: 'cat_cry', title: 'Грустно', url: '/stickers/cats/cat_cry.svg' },
+    { id: 'cat_angry', title: 'Сержусь', url: '/stickers/cats/cat_angry.svg' }
+  ],
+  animals: [
+    { id: 'fox_hi', title: 'Привет', url: '/stickers/animals/fox_hi.svg' },
+    { id: 'fox_love', title: 'Лисичка', url: '/stickers/animals/fox_love.svg' },
+    { id: 'fox_tea', title: 'Уютный чай', url: '/stickers/animals/fox_tea.svg' },
+    { id: 'fox_gift', title: 'Подарок', url: '/stickers/animals/fox_gift.svg' },
+    { id: 'bear_hug', title: 'Объятия', url: '/stickers/animals/bear_hug.svg' },
+    { id: 'bear_honey', title: 'Медок', url: '/stickers/animals/bear_honey.svg' },
+    { id: 'panda_wave', title: 'Пандочка', url: '/stickers/animals/panda_wave.svg' },
+    { id: 'panda_sleep', title: 'Сплю', url: '/stickers/animals/panda_sleep.svg' },
+    { id: 'dog_goodboy', title: 'Хороший мальчик', url: '/stickers/animals/dog_goodboy.svg' },
+    { id: 'dog_wink', title: 'Подмигивает', url: '/stickers/animals/dog_wink.svg' },
+    { id: 'bunny_cheer', title: 'Радость', url: '/stickers/animals/bunny_cheer.svg' },
+    { id: 'bunny_love', title: 'Любовь', url: '/stickers/animals/bunny_love.svg' }
+  ],
+  family: [
+    { id: 'wish_goodmorning', title: 'Доброе утро!', url: '/stickers/family/wish_goodmorning.svg' },
+    { id: 'wish_goodnight', title: 'Спокойной ночи!', url: '/stickers/family/wish_goodnight.svg' },
+    { id: 'wish_love', title: 'Люблю ❤️', url: '/stickers/family/wish_love.svg' },
+    { id: 'wish_hug', title: 'Обнимаю 🫂', url: '/stickers/family/wish_hug.svg' },
+    { id: 'wish_thanks', title: 'Спасибо! 🙏', url: '/stickers/family/wish_thanks.svg' },
+    { id: 'wish_birthday', title: 'С Днем Рождения! 🎂', url: '/stickers/family/wish_birthday.svg' },
+    { id: 'wish_congrats', title: 'Поздравляю! 🎉', url: '/stickers/family/wish_congrats.svg' },
+    { id: 'wish_flowers', title: 'Цветы для тебя 💐', url: '/stickers/family/wish_flowers.svg' },
+    { id: 'wish_tea', title: 'Уютного чая ☕', url: '/stickers/family/wish_tea.svg' },
+    { id: 'wish_kiss', title: 'Целую 💋', url: '/stickers/family/wish_kiss.svg' },
+    { id: 'wish_smile', title: 'Улыбнись! 😊', url: '/stickers/family/wish_smile.svg' },
+    { id: 'wish_super', title: 'Ты супер! 👍', url: '/stickers/family/wish_super.svg' }
+  ],
+  memes: [
+    { id: 'meme_fire', title: 'Огонь! 🔥', url: '/stickers/memes/meme_fire.svg' },
+    { id: 'meme_rocket', title: 'Погнали! 🚀', url: '/stickers/memes/meme_rocket.svg' },
+    { id: 'meme_100', title: '100 💯', url: '/stickers/memes/meme_100.svg' },
+    { id: 'meme_diamond', title: 'Бриллиант 💎', url: '/stickers/memes/meme_diamond.svg' },
+    { id: 'meme_crown', title: 'Корона 👑', url: '/stickers/memes/meme_crown.svg' },
+    { id: 'meme_deal', title: 'По рукам! 🤝', url: '/stickers/memes/meme_deal.svg' },
+    { id: 'meme_party', title: 'Праздник 🥳', url: '/stickers/memes/meme_party.svg' },
+    { id: 'meme_popcorn', title: 'Попкорн 🍿', url: '/stickers/memes/meme_popcorn.svg' },
+    { id: 'meme_brain', title: 'Мозг 🧠', url: '/stickers/memes/meme_brain.svg' },
+    { id: 'meme_facepalm', title: 'Фейспалм 🤦', url: '/stickers/memes/meme_facepalm.svg' },
+    { id: 'meme_target', title: 'В цель 🎯', url: '/stickers/memes/meme_target.svg' },
+    { id: 'meme_ninja', title: 'Ниндзя 🥷', url: '/stickers/memes/meme_ninja.svg' }
+  ]
+};
+
+let currentStickerPack = '3d_emojis';
+
+function toggleStickerPicker() {
+  const picker = document.getElementById('stickerPicker');
+  if (!picker) return;
+  const isHidden = picker.classList.contains('hidden');
+  if (isHidden) {
+    openStickerPicker();
+  } else {
+    closeStickerPicker();
+  }
+}
+
+function openStickerPicker(pack = currentStickerPack) {
+  const picker = document.getElementById('stickerPicker');
+  const emojiPicker = document.getElementById('emojiPicker');
+  const gifPicker = document.getElementById('gifPicker');
+  const attachMenu = document.getElementById('attachmentMenu');
+  if (emojiPicker) emojiPicker.classList.add('hidden');
+  if (gifPicker) gifPicker.classList.add('hidden');
+  if (attachMenu) attachMenu.classList.add('hidden');
+  const gifBtn = document.getElementById('gifBtn');
+  if (gifBtn) gifBtn.classList.remove('active');
+
+  if (!picker) return;
+  picker.classList.remove('hidden');
+
+  const stickerBtn = document.getElementById('stickerBtn');
+  if (stickerBtn) stickerBtn.classList.add('active');
+
+  selectStickerPack(pack);
+  setupHorizontalScroll(document.getElementById('stickerPacksTabs'));
+}
+
+function closeStickerPicker() {
+  const picker = document.getElementById('stickerPicker');
+  if (picker) picker.classList.add('hidden');
+  const stickerBtn = document.getElementById('stickerBtn');
+  if (stickerBtn) stickerBtn.classList.remove('active');
+}
+
+function selectStickerPack(packKey, btn) {
+  if (!STICKER_PACKS[packKey]) packKey = '3d_emojis';
+  currentStickerPack = packKey;
+
+  document.querySelectorAll('.sticker-pack-tab').forEach(el => {
+    el.classList.toggle('active', !!(el.getAttribute('onclick') && el.getAttribute('onclick').includes(`'${packKey}'`)));
+  });
+
+  renderStickerGrid(packKey);
+}
+
+function renderStickerGrid(packKey) {
+  const grid = document.getElementById('stickerGrid');
+  if (!grid) return;
+
+  const pack = STICKER_PACKS[packKey] || STICKER_PACKS['3d_emojis'];
+  grid.innerHTML = pack.map(st => `
+    <div class="sticker-grid-item" onclick="sendSticker('${st.url}', '${escapeHtml(st.title)}')" title="${escapeHtml(st.title)}">
+      <img src="${st.url}" alt="${escapeHtml(st.title)}" loading="lazy">
+      <span class="sticker-label">${escapeHtml(st.title)}</span>
+    </div>
+  `).join('');
+}
+
+function sendSticker(stickerUrl, stickerTitle) {
+  if (!activeChat || !socket) {
+    showToast('Выберите чат для отправки стикера', 'info');
+    return;
+  }
+
+  socket.emit('send_message', {
+    chatId: activeChat.id,
+    type: 'sticker',
+    fileUrl: stickerUrl,
+    fileName: stickerTitle,
+    replyToId: replyMessage ? replyMessage.id : null
+  }, (res) => {
+    if (res && res.error) {
+      showToast(res.error, 'error');
+    }
+  });
+
+  cancelReply();
+  closeStickerPicker();
+}
+
+// Global click to close popovers when clicked outside
 document.addEventListener('click', (e) => {
-  const picker = document.getElementById('gifPicker');
-  if (picker && !picker.classList.contains('hidden')) {
-    if (!picker.contains(e.target) && !e.target.closest('#gifBtn')) {
+  const stickerPicker = document.getElementById('stickerPicker');
+  if (stickerPicker && !stickerPicker.classList.contains('hidden')) {
+    if (!stickerPicker.contains(e.target) && !e.target.closest('#stickerBtn')) {
+      closeStickerPicker();
+    }
+  }
+
+  const gifPicker = document.getElementById('gifPicker');
+  if (gifPicker && !gifPicker.classList.contains('hidden')) {
+    if (!gifPicker.contains(e.target) && !e.target.closest('#gifBtn')) {
       closeGifPicker();
+    }
+  }
+
+  const emojiPicker = document.getElementById('emojiPicker');
+  if (emojiPicker && !emojiPicker.classList.contains('hidden')) {
+    if (!emojiPicker.contains(e.target) && !e.target.closest('#emojiBtn')) {
+      emojiPicker.classList.add('hidden');
+    }
+  }
+
+  const attachmentMenu = document.getElementById('attachmentMenu');
+  if (attachmentMenu && !attachmentMenu.classList.contains('hidden')) {
+    if (!attachmentMenu.contains(e.target) && !e.target.closest('#attachBtn')) {
+      attachmentMenu.classList.add('hidden');
     }
   }
 });
@@ -5169,5 +5758,126 @@ async function sendTestPushNotification() {
   } catch (e) {
     alert('Сетевая ошибка при отправке теста');
   }
+}
+
+// Zero-scroll guard to prevent desktop viewport from shifting horizontally
+['scroll', 'resize'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    if (window.scrollX !== 0) window.scrollTo({ left: 0 });
+    const ms = document.getElementById('mainScreen');
+    if (ms && ms.scrollLeft !== 0) ms.scrollLeft = 0;
+    const ap = document.getElementById('app');
+    if (ap && ap.scrollLeft !== 0) ap.scrollLeft = 0;
+    if (document.body && document.body.scrollLeft !== 0) document.body.scrollLeft = 0;
+  }, { passive: true });
+});
+
+// ====================================================
+// TOUCH GESTURE SYSTEM: SWIPE-RIGHT DRAWER & SWIPE-LEFT CLOSE
+// ====================================================
+let touchGestureStartX = 0;
+let touchGestureStartY = 0;
+let touchGestureStartTime = 0;
+let isTouchGestureTracking = false;
+
+function initTouchGestures() {
+  window.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) {
+      isTouchGestureTracking = false;
+      return;
+    }
+
+    const target = e.target;
+    // Do not intercept interactive controls, inputs, audio scrubber, emoji picker, modals
+    if (target.closest('input, textarea, select, .audio-seek-track, .media-gallery-grid, .emoji-picker-popup, .gif-picker-popup, canvas')) {
+      isTouchGestureTracking = false;
+      return;
+    }
+
+    // Ignore if a dialog modal overlay is open (except mainMenu)
+    const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
+    if (activeModal) {
+      isTouchGestureTracking = false;
+      return;
+    }
+
+    touchGestureStartX = e.touches[0].clientX;
+    touchGestureStartY = e.touches[0].clientY;
+    touchGestureStartTime = Date.now();
+    isTouchGestureTracking = true;
+  }, { passive: true });
+
+  window.addEventListener('touchend', (e) => {
+    if (!isTouchGestureTracking || !e.changedTouches || e.changedTouches.length === 0) return;
+    isTouchGestureTracking = false;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchGestureStartX;
+    const deltaY = touchEndY - touchGestureStartY;
+    const elapsed = Date.now() - touchGestureStartTime;
+
+    // Ignore slow drags (> 650ms)
+    if (elapsed > 650) return;
+
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    // Require predominantly horizontal swipe (at least 45px, absX > absY * 1.3)
+    if (absX < 45 || absX < absY * 1.3) return;
+
+    const m = document.getElementById('mainMenu');
+    const isMenuOpen = m && (!m.classList.contains('hidden') && m.classList.contains('menu-open'));
+    const isChatOpen = document.body.classList.contains('mobile-chat-open');
+
+    if (deltaX > 0) {
+      // SWIPE RIGHT (-->)
+      if (isMenuOpen) return;
+
+      if (isChatOpen) {
+        // In mobile chat view: edge swipe right (left 70px) returns to chats list
+        if (touchGestureStartX <= 70) {
+          backToChatsList();
+        }
+      } else {
+        // In chats list view: swipe right anywhere from the left side pulls out the menu!
+        const maxThreshold = Math.max(window.innerWidth * 0.45, 170);
+        if (touchGestureStartX <= maxThreshold) {
+          openMainMenu();
+        }
+      }
+    } else {
+      // SWIPE LEFT (<--)
+      if (isMenuOpen) {
+        closeMainMenu();
+      }
+    }
+  }, { passive: true });
+
+  // Direct instant touch response for hamburger button on mobile devices
+  const menuBtn = document.getElementById('menuBtn');
+  if (menuBtn) {
+    menuBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMainMenu();
+    }, { passive: false });
+  }
+
+  // Outside click to close main menu
+  document.addEventListener('click', (e) => {
+    const m = document.getElementById('mainMenu');
+    const btn = document.getElementById('menuBtn');
+    if (!m || m.classList.contains('hidden')) return;
+    if (!m.contains(e.target) && !btn?.contains(e.target)) {
+      closeMainMenu();
+    }
+  });
+}
+
+try {
+  initTouchGestures();
+} catch (e) {
+  console.error('Touch gestures init failed:', e);
 }
 

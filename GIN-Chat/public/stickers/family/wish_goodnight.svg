@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="100%" stop-color="#F59F00"/>
+    </linearGradient>
+    <linearGradient id="catGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFA94D"/>
+      <stop offset="100%" stop-color="#E8590C"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E9ECEF"/>
+    </linearGradient>
+    <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8787"/>
+      <stop offset="100%" stop-color="#E64980"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4DABF7"/>
+      <stop offset="100%" stop-color="#1971C2"/>
+    </linearGradient>
+    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#364FC7"/>
+      <stop offset="100%" stop-color="#182A88"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#FF922B"/>
+      <stop offset="100%" stop-color="#E03131"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69DB7C"/>
+      <stop offset="100%" stop-color="#2F9E44"/>
+    </linearGradient>
+  </defs>
+  
+      <g filter="url(#shadow)">
+        <circle cx="100" cy="85" r="52" fill="url(#nightGrad)"/>
+        <!-- Crescent Moon -->
+        <path d="M 85 55 A 35 35 0 0 0 120 115 A 32 32 0 1 1 85 55 Z" fill="#FFE066"/>
+        <!-- Stars -->
+        <polygon points="65,55 67,61 73,63 67,65 65,71 63,65 57,63 63,61" fill="#FFF"/>
+        <polygon points="140,75 142,80 147,82 142,84 140,89 138,84 133,82 138,80" fill="#FFF"/>
+        <rect x="15" y="145" width="170" height="42" rx="21" fill="#4263EB"/>
+        <text x="100" y="172" font-family="sans-serif" font-weight="900" font-size="16" fill="#FFF" text-anchor="middle">СПОКОЙНОЙ НОЧИ</text>
+      </g>
+    
+</svg>

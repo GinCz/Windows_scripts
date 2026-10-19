@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="100%" stop-color="#F59F00"/>
+    </linearGradient>
+    <linearGradient id="catGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFA94D"/>
+      <stop offset="100%" stop-color="#E8590C"/>
+    </linearGradient>
+    <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E9ECEF"/>
+    </linearGradient>
+    <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8787"/>
+      <stop offset="100%" stop-color="#E64980"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4DABF7"/>
+      <stop offset="100%" stop-color="#1971C2"/>
+    </linearGradient>
+    <linearGradient id="nightGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#364FC7"/>
+      <stop offset="100%" stop-color="#182A88"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066"/>
+      <stop offset="50%" stop-color="#FF922B"/>
+      <stop offset="100%" stop-color="#E03131"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#69DB7C"/>
+      <stop offset="100%" stop-color="#2F9E44"/>
+    </linearGradient>
+  </defs>
+  
+      <g filter="url(#shadow)">
+        <!-- Rocket Body -->
+        <path d="M 100 20 C 130 40 145 100 145 135 L 55 135 C 55 100 70 40 100 20 Z" fill="url(#whiteGrad)"/>
+        <!-- Rocket Nose Cone -->
+        <path d="M 100 20 C 115 35 125 60 128 75 L 72 75 C 75 60 85 35 100 20 Z" fill="#FA5252"/>
+        <!-- Window -->
+        <circle cx="100" cy="95" r="16" fill="#339AF0"/>
+        <circle cx="100" cy="95" r="12" fill="#D0EBFF"/>
+        <!-- Wings -->
+        <polygon points="55,115 25,145 55,140" fill="#E03131"/>
+        <polygon points="145,115 175,145 145,140" fill="#E03131"/>
+        <!-- Exhaust Flame -->
+        <polygon points="75,135 100,185 125,135" fill="url(#fireGrad)"/>
+      </g>
+    
+</svg>

@@ -8,9 +8,9 @@
   <link rel="icon" type="image/x-icon" href="/favicon-v30.ico">
   <link rel="icon" type="image/svg+xml" href="/favicon-v30.svg">
   <link rel="alternate icon" type="image/svg+xml" href="/favicon-v30.svg">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/style.css?v=20261015_v037">
-    <link rel="manifest" href="/manifest.json?v=20261015_v037">
+  <link rel="stylesheet" href="/css/fontawesome.min.css">
+  <link rel="stylesheet" href="/css/style.css?v=20261019_v048">
+  <link rel="manifest" href="/manifest.json?v=20261019_v048">
   <meta name="theme-color" content="#180a2b">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -49,7 +49,7 @@
         <form id="loginForm" class="auth-form" onsubmit="handleLogin(event)">
           <div class="form-group">
             <label><i class="fa-solid fa-user"></i> Логин или Email</label>
-            <input type="text" id="loginInput" placeholder="admin или your@email.com" required autocomplete="username">
+            <input type="text" id="loginInput" value="vlad" placeholder="admin или your@email.com" required autocomplete="username">
           </div>
           <div class="form-group">
             <label><i class="fa-solid fa-lock"></i> Пароль</label>
@@ -58,7 +58,20 @@
               <button type="button" class="toggle-password-btn" onclick="togglePasswordVisibility('loginPassword', this)" title="Показать / скрыть пароль"><i class="fa-solid fa-eye"></i></button>
             </div>
           </div>
+          <div class="form-group" style="display:flex;flex-direction:column;gap:8px;margin:10px 0 16px;">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-size:12.5px;color:#94a3b8;user-select:none;">
+              <input type="radio" name="chat_duration" id="chatDur1h" value="1h" style="width:16px;height:16px;accent-color:#10b981;cursor:pointer;">
+              <span>⏱ Вход на 1 час (привязка к IP)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-size:12.5px;color:#94a3b8;user-select:none;">
+              <input type="radio" name="chat_duration" id="chatDur1m" value="30d" checked style="width:16px;height:16px;accent-color:#10b981;cursor:pointer;">
+              <span>🗓 Вход на 1 месяц (привязка к IP)</span>
+            </label>
+          </div>
           <button type="submit" class="btn btn-primary btn-block">Войти в чат</button>
+          <button type="button" class="btn btn-secondary btn-block" style="margin-top: 10px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; font-weight: 600;" onclick="checkIpBinding(true)">
+            <i class="fa-solid fa-bolt"></i> Войти по доверенному IP (1 клик)
+          </button>
           <div id="loginAlert" class="alert-box"></div>
         </form>
 
@@ -99,7 +112,7 @@
           <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener noreferrer" class="btn-docs-github" title="Подробное описание работы GIN-Chat на GitHub ↗">
             <i class="fa-brands fa-github"></i> Подробное описание работы чата ↗
           </a>
-          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v037 ↗</a>
+          <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v048 ↗</a>
         </div>
       </div>
     </div>
@@ -119,7 +132,10 @@
           <button class="icon-btn" onclick="openNewDirectModal()" title="Все контакты / Написать"><i class="fa-solid fa-address-book"></i></button>
         </div>
 
-        <!-- Main Burger Menu Dropdown -->
+        <!-- Main Menu Backdrop Overlay -->
+        <div class="main-menu-backdrop hidden" id="mainMenuBackdrop" onclick="closeMainMenu()"></div>
+
+        <!-- Main Burger Menu Drawer / Dropdown -->
         <div class="main-menu-dropdown hidden" id="mainMenu">
           <div class="menu-user-profile" onclick="openProfileModal()">
             <div class="avatar avatar-md" id="menuUserAvatar">ВБ</div>
@@ -138,7 +154,7 @@
           <button class="menu-item" onclick="toggleDisplayMode()"><i class="fa-solid fa-mobile-screen text-primary"></i> <span id="menuModeText">Режим: Мобильный / ПК</span></button>
           <button class="menu-item" onclick="openWallpaperModal()"><i class="fa-solid fa-image text-primary"></i> Фон чата (Обои)</button>
           <button class="menu-item" id="pwaMenuInstallBtn" onclick="installPWA()"><i class="fa-solid fa-download text-primary"></i> Установить приложение</button>
-          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v036)</button>
+          <button class="menu-item" onclick="openAboutModal()"><i class="fa-solid fa-circle-info text-primary"></i> О приложении (v048)</button>
           <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="menu-item"><i class="fa-brands fa-github"></i> Описание функций ↗</a>
           <hr class="menu-divider">
           <button class="menu-item text-danger" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Выйти</button>
@@ -166,7 +182,7 @@
         <button id="pwaInstallBtn" class="btn-sidebar-pwa" onclick="installPWA()">
           <i class="fa-solid fa-download"></i> Установить приложение
         </button>
-        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v037 ↗</a>
+        <a href="https://github.com/GinCz/GIN-Chat" target="_blank" rel="noopener" class="brand-signature" title="GIN-Chat на GitHub (GinCz) ↗">VladiMIR+AI &nbsp;|||&nbsp; v048 ↗</a>
 
         <!-- Floating Action Button for New Chat -->
         <div class="fab-wrapper">
@@ -190,6 +206,15 @@
 
         <!-- ACTIVE CHAT CONTAINER -->
         <div class="active-chat-container hidden" id="activeChatContainer">
+          <!-- Drag & Drop Overlay for Files -->
+          <div class="chat-drop-overlay hidden" id="chatDropOverlay">
+            <div class="chat-drop-content">
+              <i class="fa-solid fa-cloud-arrow-up drop-icon"></i>
+              <div class="drop-title">Перетащите файл сюда</div>
+              <div class="drop-subtitle">Отпустите левую кнопку мыши для мгновенной отправки в чат</div>
+            </div>
+          </div>
+
           <!-- Chat Top Header -->
           <header class="chat-header">
             <button class="icon-btn mobile-back-btn" onclick="backToChatsList()"><i class="fa-solid fa-arrow-left"></i></button>
@@ -292,27 +317,55 @@
                 </div>
                 <button class="gif-close-btn" onclick="closeGifPicker()" title="Закрыть"><i class="fa-solid fa-xmark"></i></button>
               </div>
-              <div class="gif-categories-chips">
-                <button class="gif-chip active" onclick="selectGifCategory('trending', this)">🔥 Тренды</button>
-                <button class="gif-chip" onclick="selectGifCategory('money', this)">💰 Деньги / Crypto</button>
-                <button class="gif-chip" onclick="selectGifCategory('ninja', this)">🥷 Ниндзя</button>
-                <button class="gif-chip" onclick="selectGifCategory('win', this)">🎉 Победа / Win</button>
-                <button class="gif-chip" onclick="selectGifCategory('cats', this)">😹 Котики</button>
-                <button class="gif-chip" onclick="selectGifCategory('fire', this)">🔥 Огонь</button>
-                <button class="gif-chip" onclick="selectGifCategory('cool', this)">😎 Круто</button>
-                <button class="gif-chip" onclick="selectGifCategory('love', this)">❤️ Любовь</button>
-                <button class="gif-chip" onclick="selectGifCategory('laugh', this)">😂 Смех</button>
-                <button class="gif-chip" onclick="selectGifCategory('rocket', this)">🚀 Ракета</button>
-                <button class="gif-chip" onclick="selectGifCategory('coffee', this)">☕ Чай / Кофе</button>
+              <div class="chips-scroll-container">
+                <button class="chips-nav-arrow chips-nav-left" onclick="scrollChipsLeft('gifCategoriesChips')" aria-label="Назад"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="gif-categories-chips" id="gifCategoriesChips">
+                  <button class="gif-chip active" onclick="selectGifCategory('trending', this)">🔥 Тренды</button>
+                  <button class="gif-chip" onclick="selectGifCategory('money', this)">💰 Деньги</button>
+                  <button class="gif-chip" onclick="selectGifCategory('ninja', this)">🥷 Ниндзя</button>
+                  <button class="gif-chip" onclick="selectGifCategory('win', this)">🎉 Победа</button>
+                  <button class="gif-chip" onclick="selectGifCategory('cats', this)">😹 Котики</button>
+                  <button class="gif-chip" onclick="selectGifCategory('fire', this)">🔥 Огонь</button>
+                  <button class="gif-chip" onclick="selectGifCategory('cool', this)">😎 Круто</button>
+                  <button class="gif-chip" onclick="selectGifCategory('love', this)">❤️ Любовь</button>
+                  <button class="gif-chip" onclick="selectGifCategory('laugh', this)">😂 Смех</button>
+                  <button class="gif-chip" onclick="selectGifCategory('rocket', this)">🚀 Ракета</button>
+                  <button class="gif-chip" onclick="selectGifCategory('coffee', this)">☕ Кофе</button>
+                </div>
+                <button class="chips-nav-arrow chips-nav-right" onclick="scrollChipsRight('gifCategoriesChips')" aria-label="Вперед"><i class="fa-solid fa-chevron-right"></i></button>
               </div>
               <div class="gif-grid" id="gifGrid"></div>
             </div>
 
-            <!-- Action buttons toolbar row (😊, GIF, 📎, ⏰ on left ... 🎤 / ✈️ on right) -->
+            <!-- Sticker Picker Popover -->
+            <div class="sticker-picker-popup hidden" id="stickerPicker">
+              <div class="sticker-picker-header">
+                <div class="chips-scroll-container sticker-tabs-scroll-container">
+                  <button class="chips-nav-arrow chips-nav-left" onclick="scrollChipsLeft('stickerPacksTabs')" aria-label="Назад"><i class="fa-solid fa-chevron-left"></i></button>
+                  <div class="sticker-packs-tabs" id="stickerPacksTabs">
+                    <button class="sticker-pack-tab active" onclick="selectStickerPack('3d_emojis', this)" title="3D Эмоции">🌟 3D Эмоции</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('3d_gestures', this)" title="3D Жесты">💎 3D Жесты</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('3d_vip', this)" title="3D VIP">🔥 3D VIP</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('3d_love', this)" title="3D Любовь">💖 3D Любовь</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('3d_animals', this)" title="3D Зверята">🐾 3D Зверята</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('cats', this)" title="Котики (2D)">🐱 Котики</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('animals', this)" title="Зверята (2D)">🦊 Зверята</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('family', this)" title="Семья и Тепло">💖 Семья</button>
+                    <button class="sticker-pack-tab" onclick="selectStickerPack('memes', this)" title="Мемы и Реакции">🔥 Мемы</button>
+                  </div>
+                  <button class="chips-nav-arrow chips-nav-right" onclick="scrollChipsRight('stickerPacksTabs')" aria-label="Вперед"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <button class="sticker-close-btn" onclick="closeStickerPicker()" title="Закрыть"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="sticker-grid" id="stickerGrid"></div>
+            </div>
+
+            <!-- Action buttons toolbar row (😊, 🎭, GIF, 📎, ⏰ on left ... 🎤 / ✈️ on right) -->
             <div class="chat-input-tools-row" id="chatInputToolsRow">
               <div class="tools-left-group">
                 <button class="icon-btn tool-btn" id="emojiBtn" onclick="toggleEmojiPicker()" title="Смайлики"><i class="fa-regular fa-face-smile"></i></button>
-                <button class="icon-btn tool-btn gif-btn" id="gifBtn" onclick="toggleGifPicker()" title="GIF-анимации и стикеры (/gif)">GIF</button>
+                <button class="icon-btn tool-btn sticker-btn" id="stickerBtn" onclick="toggleStickerPicker()" title="Стикеры"><i class="fa-solid fa-note-sticky"></i></button>
+                <button class="icon-btn tool-btn gif-btn" id="gifBtn" onclick="toggleGifPicker()" title="GIF-анимации (/gif)">GIF</button>
                 <button class="icon-btn tool-btn" id="attachBtn" onclick="toggleAttachmentMenu()" title="Прикрепить файл"><i class="fa-solid fa-paperclip"></i></button>
                 <button class="icon-btn tool-btn schedule-btn" id="scheduleBtn" onclick="openScheduleModal()" title="Отправить позже (по времени)"><i class="fa-regular fa-clock"></i></button>
               </div>
@@ -1062,7 +1115,7 @@
             <img src="/favicon-v30.svg" alt="GIN-Chat Logo" style="width: 72px; height: 72px; filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.5));">
           </div>
           <h2 style="font-weight: 800; font-size: 22px; margin-bottom: 4px;">GIN-Chat</h2>
-          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v037 (0.3.7)</div>
+          <div class="badge badge-primary" style="display: inline-block; margin-bottom: 16px; padding: 4px 12px; font-size: 13px; font-weight: 700; border-radius: 20px;">Версия: v048 (0.4.8)</div>
           <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">
             Автономный защищенный мессенджер со сквозным шифрованием <strong>AES-256-GCM</strong>, WebRTC и поддержкой Web Push.
           </p>
@@ -1073,7 +1126,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
               <span style="color: var(--text-muted);">Сборка:</span>
-              <span>Release v037 • Simplified Registration & Mobile Scroll Fix (v0.3.7)</span>
+              <span>Release v048 • 3D Volumetric Stickers & Enhanced Horizontal Scroll for GIF & Sticker Tabs (v0.4.8)</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding: 6px 0;">
               <span style="color: var(--text-muted);">Шифрование:</span>
@@ -1176,8 +1229,8 @@
     <div id="toastNotification" class="toast-notification hidden"></div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
-  <script src="/js/app.js?v=20261015_v037"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/app.js?v=20261019_v048"></script>
   <!-- PWA Service Worker & Install Handler -->
   <script>
     if ('serviceWorker' in navigator) {
