@@ -1,0 +1,8 @@
+{
+  "version": "v034",
+  "name": "GIN-Voice",
+  "engine": "WaveIn Event AI Lock-Free Anti-Deadlock Engine + Smart Pause-Based Chunking + Recursive Project Scanner + Extended Channel Outro Guard",
+  "release_date": "2026-10-19",
+  "author": "VladiMIR+AI",
+  "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
+}
