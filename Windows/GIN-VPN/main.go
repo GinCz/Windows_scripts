@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/tls"
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
@@ -33,9 +34,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v071"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v071]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v071]"
+	AppVersion    = "v072"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v072]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v072]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -405,6 +406,12 @@ type INITCOMMONCONTROLSEX struct {
 	DwICC  uint32
 }
 
+type SubscriptionItem struct {
+	Name     string `json:"name"`
+	URL      string `json:"url"`
+	Expanded bool   `json:"expanded"`
+}
+
 type Profile struct {
 	Default      string `json:"Default"`
 	Name         string `json:"Name"`
@@ -471,6 +478,11 @@ var (
 	isSubRefreshDone      = false
 	isAppUpToDate         = false
 	sortByPing            = false
+
+	activeSubscriptions []SubscriptionItem
+	renderedSubNames    []string
+	contextMenuSubName  string
+	renameTargetSubName string
 
 	hwndListView      uintptr
 
@@ -1503,19 +1515,8 @@ func loadProfilesFromStorage() {
 		profiles = []Profile{}
 	}
 
-	// Ensure subscription profiles retain their subscription tag
-	for i := range profiles {
-		if profiles[i].Subscription != "" {
-			p := &profiles[i]
-			isSubNode := strings.Contains(p.Name, "GIN-") ||
-				p.Subscription == "GIN-Proxy-HUB" ||
-				strings.Contains(strings.ToLower(p.Subscription), "hub") ||
-				strings.Contains(strings.ToLower(p.Subscription), "proxy")
-			if !isSubNode {
-				p.Subscription = ""
-			}
-		}
-	}
+	// Load active multi-subscriptions
+	loadSubscriptionsFromStorage()
 }
 
 type AppSettings struct {
@@ -3473,43 +3474,54 @@ func refreshProfilesListView() {
 	}
 	procSendMessageW.Call(hwndListView, LVM_DELETEALLITEMS, 0, 0)
 	visibleProfileIndices = nil
+	renderedSubNames = nil
 
-	subName := loadSubscriptionNameFromRegistry()
-	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
-		subName = "GIN-Proxy-HUB"
-	}
-
-	var subIndices []int
+	// Collect subscriptions in order of appearance
+	subGroups := make(map[string][]int)
 	var indIndices []int
 
 	for i, p := range profiles {
 		if p.Subscription != "" {
-			subIndices = append(subIndices, i)
+			if _, exists := subGroups[p.Subscription]; !exists {
+				renderedSubNames = append(renderedSubNames, p.Subscription)
+			}
+			subGroups[p.Subscription] = append(subGroups[p.Subscription], i)
 		} else {
 			indIndices = append(indIndices, i)
 		}
 	}
 
+	// Ensure any active subscription from storage is known
+	for _, as := range activeSubscriptions {
+		if as.Name != "" {
+			if _, exists := subGroups[as.Name]; !exists {
+				renderedSubNames = append(renderedSubNames, as.Name)
+				subGroups[as.Name] = []int{}
+			}
+		}
+	}
+
 	if sortByPing {
-		sortIndicesByPing(subIndices)
+		for _, name := range renderedSubNames {
+			sortIndicesByPing(subGroups[name])
+		}
 		sortIndicesByPing(indIndices)
 	}
 
 	rowIdx := 0
 	serverSeqNum := 1
 
-	renderSubscriptionGroup := func() {
-		if len(subIndices) == 0 {
-			return
-		}
-		visibleProfileIndices = append(visibleProfileIndices, -1) // -1 marks Subscription Header
+	renderSubscriptionGroup := func(subIdx int, sName string) {
+		subIndices := subGroups[sName]
+		visibleProfileIndices = append(visibleProfileIndices, -1-subIdx) // -1 for sub 0, -2 for sub 1, etc.
 
 		var item LVITEMW
 		item.Mask = 0x0001
 		item.IItem = int32(rowIdx)
 		item.ISubItem = 0
+		isExp := getSubscriptionExpanded(sName)
 		subToggleIcon := "[+]"
-		if subscriptionExpanded {
+		if isExp {
 			subToggleIcon = "[-]"
 		}
 		item.PszText = strPtr(subToggleIcon)
@@ -3523,9 +3535,9 @@ func refreshProfilesListView() {
 		subItem.PszText = strPtr("📁")
 		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
 
-		// Column 2: Name (e.g. GIN-Proxy-HUB (10))
+		// Column 2: Name (e.g. GIN-ProxyHub-RU (7))
 		subItem.ISubItem = 2
-		titleText := fmt.Sprintf("%s (%d)", subName, len(subIndices))
+		titleText := fmt.Sprintf("%s (%d)", sName, len(subIndices))
 		subItem.PszText = strPtr(titleText)
 		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
 
@@ -3554,7 +3566,7 @@ func refreshProfilesListView() {
 
 		rowIdx++
 
-		if subscriptionExpanded {
+		if isExp {
 			for num, actualIdx := range subIndices {
 				visibleProfileIndices = append(visibleProfileIndices, actualIdx)
 				numToDisplay := num + 1
@@ -3584,25 +3596,10 @@ func refreshProfilesListView() {
 		}
 	}
 
-	renderIndFirst := false
-	if sortByPing && len(indIndices) > 0 {
-		bestIndPing := profiles[indIndices[0]].PingMs
-		bestSubPing := -1
-		if len(subIndices) > 0 {
-			bestSubPing = profiles[subIndices[0]].PingMs
-		}
-		if bestIndPing > 0 && (bestSubPing <= 0 || bestIndPing < bestSubPing) {
-			renderIndFirst = true
-		}
+	for sIdx, sName := range renderedSubNames {
+		renderSubscriptionGroup(sIdx, sName)
 	}
-
-	if renderIndFirst {
-		renderIndividualGroup()
-		renderSubscriptionGroup()
-	} else {
-		renderSubscriptionGroup()
-		renderIndividualGroup()
-	}
+	renderIndividualGroup()
 }
 
 func selectListViewItem(actualIdx int) {
@@ -5106,6 +5103,301 @@ func loadSubscriptionNameFromRegistry() string {
 	return res
 }
 
+func saveSubscriptionsToRegistry(jsonStr string) {
+	var hKey uintptr
+	subKey := strPtr(`Software\VladiMIR\GIN-VPN`)
+	ret, _, _ := procRegCreateKeyExW.Call(
+		HKEY_CURRENT_USER,
+		uintptr(unsafe.Pointer(subKey)),
+		0, 0, 0, KEY_WRITE, 0,
+		uintptr(unsafe.Pointer(&hKey)),
+		0,
+	)
+	if ret != 0 {
+		return
+	}
+	defer procRegCloseKey.Call(hKey)
+
+	valName := strPtr("SubscriptionsJSON")
+	u16, err := syscall.UTF16FromString(jsonStr)
+	if err != nil {
+		return
+	}
+	procRegSetValueExW.Call(
+		hKey,
+		uintptr(unsafe.Pointer(valName)),
+		0,
+		REG_SZ,
+		uintptr(unsafe.Pointer(&u16[0])),
+		uintptr(len(u16)*2),
+	)
+}
+
+func loadSubscriptionsFromRegistry() string {
+	var hKey uintptr
+	subKey := strPtr(`Software\VladiMIR\GIN-VPN`)
+	ret, _, _ := procRegOpenKeyExW.Call(
+		HKEY_CURRENT_USER,
+		uintptr(unsafe.Pointer(subKey)),
+		0,
+		KEY_READ,
+		uintptr(unsafe.Pointer(&hKey)),
+	)
+	if ret != 0 {
+		return ""
+	}
+	defer procRegCloseKey.Call(hKey)
+
+	valName := strPtr("SubscriptionsJSON")
+	var valType uint32
+	var cbData uint32
+	ret, _, _ = procRegQueryValueExW.Call(
+		hKey,
+		uintptr(unsafe.Pointer(valName)),
+		0,
+		uintptr(unsafe.Pointer(&valType)),
+		0,
+		uintptr(unsafe.Pointer(&cbData)),
+	)
+	if ret != 0 || cbData == 0 {
+		return ""
+	}
+	buf := make([]uint16, (cbData/2)+1)
+	ret, _, _ = procRegQueryValueExW.Call(
+		hKey,
+		uintptr(unsafe.Pointer(valName)),
+		0,
+		uintptr(unsafe.Pointer(&valType)),
+		uintptr(unsafe.Pointer(&buf[0])),
+		uintptr(unsafe.Pointer(&cbData)),
+	)
+	if ret != 0 {
+		return ""
+	}
+	return syscall.UTF16ToString(buf)
+}
+
+func saveSubscriptionsToStorage() {
+	data, err := json.MarshalIndent(activeSubscriptions, "", "  ")
+	if err == nil {
+		saveSubscriptionsToRegistry(string(data))
+		exePath, err := os.Executable()
+		if err == nil {
+			_ = os.WriteFile(filepath.Join(filepath.Dir(exePath), "subscriptions.json"), data, 0644)
+		}
+	}
+}
+
+func loadSubscriptionsFromStorage() {
+	activeSubscriptions = nil
+	regData := loadSubscriptionsFromRegistry()
+	if strings.TrimSpace(regData) != "" {
+		_ = json.Unmarshal([]byte(regData), &activeSubscriptions)
+	}
+	if len(activeSubscriptions) == 0 {
+		exePath, err := os.Executable()
+		if err == nil {
+			fileData, err := os.ReadFile(filepath.Join(filepath.Dir(exePath), "subscriptions.json"))
+			if err == nil {
+				_ = json.Unmarshal(fileData, &activeSubscriptions)
+			}
+		}
+	}
+	// Discover from existing profiles
+	for _, p := range profiles {
+		if p.Subscription != "" {
+			exists := false
+			for _, s := range activeSubscriptions {
+				if s.Name == p.Subscription {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				activeSubscriptions = append(activeSubscriptions, SubscriptionItem{
+					Name:     p.Subscription,
+					URL:      "",
+					Expanded: true,
+				})
+			}
+		}
+	}
+}
+
+func getSubscriptionExpanded(subName string) bool {
+	for _, s := range activeSubscriptions {
+		if s.Name == subName {
+			return s.Expanded
+		}
+	}
+	return subscriptionExpanded
+}
+
+func setSubscriptionExpanded(subName string, exp bool) {
+	found := false
+	for i := range activeSubscriptions {
+		if activeSubscriptions[i].Name == subName {
+			activeSubscriptions[i].Expanded = exp
+			found = true
+			break
+		}
+	}
+	if !found {
+		activeSubscriptions = append(activeSubscriptions, SubscriptionItem{
+			Name:     subName,
+			Expanded: exp,
+		})
+	}
+	saveSubscriptionsToStorage()
+}
+
+func addOrUpdateSubscriptionItem(name string, urlStr string) {
+	found := false
+	for i := range activeSubscriptions {
+		if activeSubscriptions[i].Name == name || (urlStr != "" && activeSubscriptions[i].URL == urlStr) {
+			activeSubscriptions[i].Name = name
+			if urlStr != "" {
+				activeSubscriptions[i].URL = urlStr
+			}
+			activeSubscriptions[i].Expanded = true
+			found = true
+			break
+		}
+	}
+	if !found {
+		activeSubscriptions = append(activeSubscriptions, SubscriptionItem{
+			Name:     name,
+			URL:      urlStr,
+			Expanded: true,
+		})
+	}
+	saveSubscriptionsToStorage()
+	if urlStr != "" {
+		saveSubscriptionUrlToRegistry(urlStr)
+	}
+	saveSubscriptionNameToRegistry(name)
+}
+
+func getSubscriptionTitle(subUrl string) string {
+	subUrl = strings.TrimSpace(subUrl)
+	if idx := strings.Index(subUrl, "#"); idx != -1 && idx < len(subUrl)-1 {
+		frag := subUrl[idx+1:]
+		if unescaped, err := url.QueryUnescape(frag); err == nil && strings.TrimSpace(unescaped) != "" {
+			return strings.TrimSpace(unescaped)
+		}
+		if unescaped, err := url.PathUnescape(frag); err == nil && strings.TrimSpace(unescaped) != "" {
+			return strings.TrimSpace(unescaped)
+		}
+		return strings.TrimSpace(frag)
+	}
+
+	u, err := url.Parse(subUrl)
+	if err == nil {
+		path := strings.ToLower(u.Path)
+		if strings.Contains(path, "sub_ru") {
+			return "GIN-ProxyHub-RU"
+		}
+		if strings.Contains(path, "sub_eu") {
+			return "GIN-ProxyHub-EU"
+		}
+		if strings.Contains(path, "sub.txt") {
+			return "GIN-Proxy-HUB"
+		}
+		base := filepath.Base(u.Path)
+		base = strings.TrimSuffix(base, filepath.Ext(base))
+		if base != "" && base != "." && base != "/" {
+			return "GIN-" + base
+		}
+		if u.Host != "" {
+			return "GIN-Proxy-" + u.Host
+		}
+	}
+
+	return "GIN-Proxy-HUB"
+}
+
+func refreshAllSubscriptionsAsync() {
+	if isSubUpdating {
+		return
+	}
+	isSubUpdating = true
+	if hwndBtnSubRefresh != 0 {
+		procInvalidateRect.Call(hwndBtnSubRefresh, 0, 1)
+	}
+
+	go func() {
+		defer func() {
+			isSubUpdating = false
+			if hwndBtnSubRefresh != 0 {
+				procInvalidateRect.Call(hwndBtnSubRefresh, 0, 1)
+			}
+			updateSubscriptionBar()
+			triggerSubRefreshDoneFeedback()
+		}()
+
+		type targetSub struct {
+			Name string
+			URL  string
+		}
+		var targets []targetSub
+		for _, s := range activeSubscriptions {
+			if s.URL != "" {
+				targets = append(targets, targetSub{Name: s.Name, URL: s.URL})
+			}
+		}
+
+		if len(targets) == 0 {
+			regUrl := loadSubscriptionUrlFromRegistry()
+			if regUrl != "" {
+				targets = append(targets, targetSub{Name: getSubscriptionTitle(regUrl), URL: regUrl})
+			}
+		}
+
+		if len(targets) == 0 {
+			writeLog("WARN", "Не найдено URL активных подписок для обновления.")
+			return
+		}
+
+		client := &http.Client{
+			Timeout: 15 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
+		}
+
+		updatedCount := 0
+		for _, tgt := range targets {
+			writeLog("SUB", fmt.Sprintf("Обновление подписки '%s': %s", tgt.Name, tgt.URL))
+			req, err := http.NewRequest("GET", tgt.URL, nil)
+			if err != nil {
+				continue
+			}
+			req.Header.Set("User-Agent", "GIN-VPN/"+AppVersion+" (Windows; Xray)")
+			resp, err := client.Do(req)
+			if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
+				if resp != nil {
+					resp.Body.Close()
+				}
+				writeLog("ERROR", fmt.Sprintf("Ошибка загрузки '%s': HTTP %v", tgt.Name, err))
+				continue
+			}
+			bodyBytes, err := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if err != nil {
+				continue
+			}
+			importNodesFromContent(string(bodyBytes), tgt.Name, tgt.URL, tgt.Name)
+			updatedCount++
+		}
+
+		if isRussianLang {
+			writeLog("SUB", fmt.Sprintf("✅ Синхронизация завершена: обновлено %d подписок. Всего серверов: %d", updatedCount, len(profiles)))
+		} else {
+			writeLog("SUB", fmt.Sprintf("✅ Sync complete: updated %d subscriptions. Total profiles: %d", updatedCount, len(profiles)))
+		}
+	}()
+}
+
 func measurePingAccurate(host string, port int) int {
 	start := time.Now()
 	addr := fmt.Sprintf("%s:%d", host, port)
@@ -5251,26 +5543,15 @@ func isBase64Subscription(content string) bool {
 	return decoded != content && strings.Contains(decoded, "vless://")
 }
 
-func importNodesFromContent(rawText string, sourceTitle string) {
+func importNodesFromContent(rawText string, subName string, subUrl string, sourceTitle string) {
 	decodedText := tryDecodeBase64Subscription(rawText)
 	lines := strings.Split(decodedText, "\n")
 
-	importedCount := 0
-
-	subName := loadSubscriptionNameFromRegistry()
-	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
+	if subName == "" {
 		subName = "GIN-Proxy-HUB"
 	}
 
-	// 1. Keep existing individual profiles intact below
-	var indivProfiles []Profile
-	for _, ep := range profiles {
-		if ep.Subscription == "" {
-			indivProfiles = append(indivProfiles, ep)
-		}
-	}
-
-	// 2. Parse new subscription profiles to be placed above
+	importedCount := 0
 	var newSubProfiles []Profile
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -5317,30 +5598,46 @@ func importNodesFromContent(rawText string, sourceTitle string) {
 	}
 
 	if importedCount > 0 {
-		hasDefault := false
-		for _, p := range indivProfiles {
-			if p.Default != "" {
-				hasDefault = true
-				break
+		var otherSubProfiles []Profile
+		var indivProfiles []Profile
+
+		for _, p := range profiles {
+			if p.Subscription == "" {
+				indivProfiles = append(indivProfiles, p)
+			} else if p.Subscription != subName {
+				otherSubProfiles = append(otherSubProfiles, p)
 			}
-		}
-		for _, p := range newSubProfiles {
-			if p.Default != "" {
-				hasDefault = true
-				break
-			}
-		}
-		if !hasDefault && len(newSubProfiles) > 0 {
-			newSubProfiles[0].Default = "yes"
 		}
 
-		// Subscription placed ABOVE, individual profiles kept BELOW
-		profiles = append(newSubProfiles, indivProfiles...)
+		var updatedProfiles []Profile
+		updatedProfiles = append(updatedProfiles, otherSubProfiles...)
+		updatedProfiles = append(updatedProfiles, newSubProfiles...)
+		updatedProfiles = append(updatedProfiles, indivProfiles...)
+
+		hasDefault := false
+		for _, p := range updatedProfiles {
+			if p.Default != "" {
+				hasDefault = true
+				break
+			}
+		}
+		if !hasDefault && len(updatedProfiles) > 0 {
+			updatedProfiles[0].Default = "yes"
+		}
+
+		profiles = updatedProfiles
+
+		// Register in activeSubscriptions
+		addOrUpdateSubscriptionItem(subName, subUrl)
 
 		saveProfilesToStorage()
 		refreshProfilesListView()
 
-		writeLog("SUB", fmt.Sprintf("Processed nodes from %s: added %d subscription nodes. Total servers: %d", sourceTitle, importedCount, len(profiles)))
+		if isRussianLang {
+			writeLog("SUB", fmt.Sprintf("Подписка '%s' успешно обновлена: %d серверов. Всего серверов: %d", subName, importedCount, len(profiles)))
+		} else {
+			writeLog("SUB", fmt.Sprintf("Subscription '%s' updated: added %d nodes. Total servers: %d", subName, importedCount, len(profiles)))
+		}
 
 		triggerSubRefreshDoneFeedback()
 	} else {
@@ -5359,9 +5656,14 @@ func importSubscriptionFromUrl(subUrl string) {
 		return
 	}
 
-	saveSubscriptionUrlToRegistry(subUrl)
-	saveSubscriptionNameToRegistry("GIN-Proxy-HUB")
-	writeLog("SUB", fmt.Sprintf("Fetching subscription from: %s", subUrl))
+	subName := getSubscriptionTitle(subUrl)
+	addOrUpdateSubscriptionItem(subName, subUrl)
+
+	if isRussianLang {
+		writeLog("SUB", fmt.Sprintf("Загрузка подписки '%s' с адреса: %s", subName, subUrl))
+	} else {
+		writeLog("SUB", fmt.Sprintf("Fetching subscription '%s' from: %s", subName, subUrl))
+	}
 
 	isSubUpdating = true
 	if hwndBtnSubRefresh != 0 {
@@ -5379,6 +5681,9 @@ func importSubscriptionFromUrl(subUrl string) {
 
 		client := &http.Client{
 			Timeout: 15 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			},
 		}
 		req, err := http.NewRequest("GET", subUrl, nil)
 		if err != nil {
@@ -5408,7 +5713,7 @@ func importSubscriptionFromUrl(subUrl string) {
 			return
 		}
 
-		importNodesFromContent(string(bodyBytes), "GIN-Proxy-HUB ("+subUrl+")")
+		importNodesFromContent(string(bodyBytes), subName, subUrl, subName)
 	}()
 }
 
@@ -6481,8 +6786,12 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			deleteSubscription()
 
 		case 114, 1016: // Subscription Toggle [+]/[-]
-			subscriptionExpanded = !subscriptionExpanded
-			saveSubscriptionExpanded(subscriptionExpanded)
+			if contextMenuSubName != "" {
+				setSubscriptionExpanded(contextMenuSubName, !getSubscriptionExpanded(contextMenuSubName))
+			} else {
+				subscriptionExpanded = !subscriptionExpanded
+				saveSubscriptionExpanded(subscriptionExpanded)
+			}
 			updateSubscriptionBar()
 			refreshProfilesListView()
 
@@ -6490,20 +6799,16 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			testSubscriptionPingAsync()
 
 		case 116: // Subscription Refresh (Update server list)
-			savedSub := loadSubscriptionUrlFromRegistry()
-			targetUrl := savedSub
 			var bufSub [4096]uint16
 			procGetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(&bufSub[0])), 4096)
 			currText := strings.TrimSpace(syscall.UTF16ToString(bufSub[:]))
 			if strings.HasPrefix(currText, "http://") || strings.HasPrefix(currText, "https://") {
-				targetUrl = currText
+				writeLog("SUB", fmt.Sprintf("Обновление серверов подписки: %s", currText))
+				importSubscriptionFromUrl(currText)
+			} else {
+				writeLog("SUB", "Запуск полного обновления всех активных подписок...")
+				refreshAllSubscriptionsAsync()
 			}
-			if targetUrl == "" {
-				targetUrl = "http://63.178.216.88/sub.txt"
-			}
-			procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(targetUrl))))
-			writeLog("SUB", fmt.Sprintf("Обновление серверов подписки GIN-Proxy-HUB: %s", targetUrl))
-			importSubscriptionFromUrl(targetUrl)
 
 		case 6010: // Context Menu: Move Up
 			if selectedProfileIdx >= 0 && selectedProfileIdx < len(profiles) {
@@ -6618,10 +6923,10 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 						importSubscriptionFromUrl(trimmed)
 					} else if isBase64Subscription(trimmed) {
 						writeLog("CLIP", "Detected Base64 subscription in clipboard. Importing...")
-						importNodesFromContent(trimmed, "Clipboard (Base64)")
+						importNodesFromContent(trimmed, "GIN-Proxy-HUB", "", "Clipboard (Base64)")
 					} else if strings.Contains(trimmed, "\n") && strings.Contains(trimmed, "vless://") {
 						writeLog("CLIP", "Detected multi-line VLESS keys in clipboard. Importing...")
-						importNodesFromContent(trimmed, "Clipboard (Multi-Key)")
+						importNodesFromContent(trimmed, "GIN-Proxy-HUB", "", "Clipboard (Multi-Key)")
 					} else if strings.HasPrefix(trimmed, "vless://") {
 						writeLog("CLIP", "Pasted single VLESS key from clipboard.")
 					} else {
@@ -6640,10 +6945,10 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				importSubscriptionFromUrl(str)
 			} else if isBase64Subscription(str) {
 				writeLog("SUB", "Processing Base64 subscription from input field.")
-				importNodesFromContent(str, "Input Field (Base64)")
+				importNodesFromContent(str, "GIN-Proxy-HUB", "", "Input Field (Base64)")
 			} else if strings.Contains(str, "\n") && strings.Contains(str, "vless://") {
 				writeLog("SUB", "Processing multi-line VLESS keys from input field.")
-				importNodesFromContent(str, "Input Field (Multi-Key)")
+				importNodesFromContent(str, "GIN-Proxy-HUB", "", "Input Field (Multi-Key)")
 			} else if strings.HasPrefix(str, "vless://") {
 				cfg, err := parseVlessUri(str)
 				if err == nil {
@@ -6687,10 +6992,13 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
 			sel := int(selRet)
 			actualIdx := getActualProfileIndex(sel)
-			if actualIdx == -1 {
-				subscriptionExpanded = !subscriptionExpanded
-				saveSubscriptionExpanded(subscriptionExpanded)
-				refreshProfilesListView()
+			if actualIdx < 0 {
+				subIdx := (-actualIdx) - 1
+				if subIdx >= 0 && subIdx < len(renderedSubNames) {
+					subName := renderedSubNames[subIdx]
+					setSubscriptionExpanded(subName, !getSubscriptionExpanded(subName))
+					refreshProfilesListView()
+				}
 			} else if actualIdx >= 0 && actualIdx < len(profiles) {
 				p := profiles[actualIdx]
 				connectToNodeAsync(p.Name, p.Host, p.Port, p.Country, p.RawUri, true)
@@ -6840,11 +7148,17 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			if nmhdr.Code == ^uint32(1) /* NM_CLICK */ {
 				nmia := (*NMITEMACTIVATE)(unsafe.Pointer(lParam))
 				sel := int(nmia.IItem)
-				if sel >= 0 && getActualProfileIndex(sel) == -1 {
-					subscriptionExpanded = !subscriptionExpanded
-					saveSubscriptionExpanded(subscriptionExpanded)
-					refreshProfilesListView()
-					return 0
+				if sel >= 0 {
+					actualIdx := getActualProfileIndex(sel)
+					if actualIdx < 0 {
+						subIdx := (-actualIdx) - 1
+						if subIdx >= 0 && subIdx < len(renderedSubNames) {
+							subName := renderedSubNames[subIdx]
+							setSubscriptionExpanded(subName, !getSubscriptionExpanded(subName))
+							refreshProfilesListView()
+						}
+						return 0
+					}
 				}
 			}
 
@@ -6857,10 +7171,13 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					sel = int(selRet)
 				}
 				actualIdx := getActualProfileIndex(sel)
-				if actualIdx == -1 {
-					subscriptionExpanded = !subscriptionExpanded
-					saveSubscriptionExpanded(subscriptionExpanded)
-					refreshProfilesListView()
+				if actualIdx < 0 {
+					subIdx := (-actualIdx) - 1
+					if subIdx >= 0 && subIdx < len(renderedSubNames) {
+						subName := renderedSubNames[subIdx]
+						setSubscriptionExpanded(subName, !getSubscriptionExpanded(subName))
+						refreshProfilesListView()
+					}
 					return 0
 				}
 				if actualIdx >= 0 && actualIdx < len(profiles) {
@@ -6887,7 +7204,11 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					targetIdx = int(selRet)
 				}
 				actualIdx := getActualProfileIndex(targetIdx)
-				if actualIdx == -1 {
+				if actualIdx < 0 {
+					subIdx := (-actualIdx) - 1
+					if subIdx >= 0 && subIdx < len(renderedSubNames) {
+						contextMenuSubName = renderedSubNames[subIdx]
+					}
 					showSubscriptionContextMenu()
 					return 0
 				}
@@ -6927,7 +7248,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					actualIdx := getActualProfileIndex(itemIdx)
 
 					// Subscription Header Row Styling
-					if actualIdx == -1 {
+					if actualIdx < 0 {
 						if currentTheme == ThemeNight {
 							pcd.ClrTextBk = 0x002A1830 // Soft rich purple/slate background
 							switch subItemIdx {
