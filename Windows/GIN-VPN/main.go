@@ -34,9 +34,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v072"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v072]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v072]"
+	AppVersion    = "v073"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v073]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v073]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -194,8 +194,10 @@ const (
 	LVIS_FOCUSED                 = 0x0001
 
 	WM_DESTROY        = 0x0002
+	WM_SIZE           = 0x0005
 	WM_PAINT          = 0x000F
 	WM_CLOSE          = 0x0010
+	WM_GETMINMAXINFO  = 0x0024
 	WM_COMMAND        = 0x0111
 	WM_NOTIFY         = 0x004E
 	WM_DRAWITEM       = 0x002B
@@ -205,6 +207,7 @@ const (
 	WM_CTLCOLORSTATIC = 0x0138
 	WM_CTLCOLOREDIT   = 0x0133
 	WM_CONTEXTMENU    = 0x007B
+	WM_EXITSIZEMOVE   = 0x0232
 	WM_SETFONT        = 0x0030
 	WM_SETICON        = 0x0080
 	WM_SYSCOMMAND     = 0x0112
@@ -288,6 +291,14 @@ type RECT struct {
 
 type POINT struct {
 	X, Y int32
+}
+
+type MINMAXINFO struct {
+	PtReserved     POINT
+	PtMaxSize      POINT
+	PtMaxPosition  POINT
+	PtMinTrackSize POINT
+	PtMaxTrackSize POINT
 }
 
 type DRAWITEMSTRUCT struct {
@@ -450,6 +461,14 @@ var (
 	hwndBtnNight uintptr
 	hwndBtnLangEN uintptr
 	hwndBtnLangRU uintptr
+	hwndBtnSound  uintptr
+	isMuteSound   bool = false
+
+	currentWindowHeight int   = 689
+	savedWindowHeight   int   = 689
+	currentDeltaY       int32 = 0
+	baseClientH         int32 = 0
+	currentListViewH    int32 = 212
 
 	hwndBtnMainAction uintptr
 	hwndBtnDisconnect uintptr
@@ -1251,6 +1270,7 @@ func initTooltips() {
 	attachTooltipToControl(hwndBtnNight)
 	attachTooltipToControl(hwndBtnLangEN)
 	attachTooltipToControl(hwndBtnLangRU)
+	attachTooltipToControl(hwndBtnSound)
 	attachTooltipToControl(hwndBtnVerify)
 	attachTooltipToControl(hwndBtnCopyLog)
 	attachTooltipToControl(hwndBtnInstall)
@@ -1298,6 +1318,11 @@ func updateAllTooltips() {
 		updateControlTooltip(hwndBtnNight, "Тёмная OLED тема (🌙 Ночь)")
 		updateControlTooltip(hwndBtnLangEN, "Переключить язык интерфейса на английский (EN)")
 		updateControlTooltip(hwndBtnLangRU, "Переключить язык интерфейса на русский (RU)")
+		if isMuteSound {
+			updateControlTooltip(hwndBtnSound, "🔇 Звук выключен (нажмите, чтобы включить звук при подключении)")
+		} else {
+			updateControlTooltip(hwndBtnSound, "🔊 Звук включен (нажмите, чтобы выключить звук при подключении)")
+		}
 		updateControlTooltip(hwndBtnConnect, "Запустить подключение к выбранному серверу (Пуск)")
 		updateControlTooltip(hwndBtnSetDefault, "Установить сервер для авто-подключения при старте (Авто)")
 		updateControlTooltip(hwndBtnUp, "Переместить выбранный сервер выше (▲)")
@@ -1316,6 +1341,11 @@ func updateAllTooltips() {
 		updateControlTooltip(hwndBtnNight, "Dark OLED Theme (🌙 Night)")
 		updateControlTooltip(hwndBtnLangEN, "Switch interface language to English (EN)")
 		updateControlTooltip(hwndBtnLangRU, "Switch interface language to Russian (RU)")
+		if isMuteSound {
+			updateControlTooltip(hwndBtnSound, "🔇 Sound muted (click to unmute VPN connection sound)")
+		} else {
+			updateControlTooltip(hwndBtnSound, "🔊 Sound enabled (click to mute VPN connection sound)")
+		}
 		updateControlTooltip(hwndBtnConnect, "Connect to selected server (Start)")
 		updateControlTooltip(hwndBtnSetDefault, "Set profile as default (Auto-connect)")
 		updateControlTooltip(hwndBtnUp, "Move selected profile up (▲)")
@@ -1524,6 +1554,8 @@ type AppSettings struct {
 	DarkMode             bool   `json:"dark_mode"`
 	ThemeMode            int    `json:"theme_mode"` // 0: Day, 1: Gray, 2: Night
 	SubscriptionExpanded *bool  `json:"subscription_expanded,omitempty"`
+	MuteSound            bool   `json:"mute_sound,omitempty"`
+	WindowHeight         int    `json:"window_height,omitempty"`
 }
 
 func getSettingsFilePath() string {
@@ -1605,6 +1637,33 @@ func saveSettingsToRegistry(langStr string, dark bool, jsonStr string) {
 		uintptr(unsafe.Pointer(&themeVal)),
 		4,
 	)
+
+	// Save explicit MuteSound key
+	muteVal := uint32(0)
+	if isMuteSound {
+		muteVal = 1
+	}
+	procRegSetValueExW.Call(
+		hKey,
+		uintptr(unsafe.Pointer(strPtr("MuteSound"))),
+		0,
+		REG_DWORD,
+		uintptr(unsafe.Pointer(&muteVal)),
+		4,
+	)
+
+	// Save WindowHeight
+	if currentWindowHeight >= 689 {
+		hVal := uint32(currentWindowHeight)
+		procRegSetValueExW.Call(
+			hKey,
+			uintptr(unsafe.Pointer(strPtr("WindowHeight"))),
+			0,
+			REG_DWORD,
+			uintptr(unsafe.Pointer(&hVal)),
+			4,
+		)
+	}
 }
 
 func loadSettingsFromRegistry() (string, error) {
@@ -1696,6 +1755,8 @@ func saveSettingsToStorage() {
 		DarkMode:             isDarkMode,
 		ThemeMode:            currentTheme,
 		SubscriptionExpanded: &exp,
+		MuteSound:            isMuteSound,
+		WindowHeight:         currentWindowHeight,
 	}
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
@@ -1730,6 +1791,11 @@ func parseAppSettings(cfg AppSettings) {
 	isDarkMode = (currentTheme != ThemeDay)
 	if cfg.SubscriptionExpanded != nil {
 		subscriptionExpanded = *cfg.SubscriptionExpanded
+	}
+	isMuteSound = cfg.MuteSound
+	if cfg.WindowHeight >= 689 {
+		savedWindowHeight = cfg.WindowHeight
+		currentWindowHeight = cfg.WindowHeight
 	}
 }
 
@@ -2364,18 +2430,19 @@ func updateBannerAndInstallButton() {
 	if hwndBannerLbl == 0 {
 		return
 	}
+	yBtn := uintptr(586 + currentDeltaY)
 	if installedState {
 		if hwndBtnInstall != 0 {
 			procShowWindow.Call(hwndBtnInstall, 0 /* SW_HIDE */)
 		}
 		if hwndBtnVerify != 0 {
-			procMoveWindow.Call(hwndBtnVerify, 18, 586, 170, 26, 1)
+			procMoveWindow.Call(hwndBtnVerify, 18, yBtn, 170, 26, 1)
 		}
 		if hwndBtnCopyLog != 0 {
-			procMoveWindow.Call(hwndBtnCopyLog, 196, 586, 180, 26, 1)
+			procMoveWindow.Call(hwndBtnCopyLog, 196, yBtn, 180, 26, 1)
 		}
 		if hwndBtnClearLog != 0 {
-			procMoveWindow.Call(hwndBtnClearLog, 384, 586, 166, 26, 1)
+			procMoveWindow.Call(hwndBtnClearLog, 384, yBtn, 166, 26, 1)
 		}
 
 		if isRussianLang {
@@ -2386,16 +2453,16 @@ func updateBannerAndInstallButton() {
 	} else {
 		if hwndBtnInstall != 0 {
 			procShowWindow.Call(hwndBtnInstall, 5 /* SW_SHOW */)
-			procMoveWindow.Call(hwndBtnInstall, 18, 586, 120, 26, 1)
+			procMoveWindow.Call(hwndBtnInstall, 18, yBtn, 120, 26, 1)
 		}
 		if hwndBtnVerify != 0 {
-			procMoveWindow.Call(hwndBtnVerify, 144, 586, 134, 26, 1)
+			procMoveWindow.Call(hwndBtnVerify, 144, yBtn, 134, 26, 1)
 		}
 		if hwndBtnCopyLog != 0 {
-			procMoveWindow.Call(hwndBtnCopyLog, 284, 586, 136, 26, 1)
+			procMoveWindow.Call(hwndBtnCopyLog, 284, yBtn, 136, 26, 1)
 		}
 		if hwndBtnClearLog != 0 {
-			procMoveWindow.Call(hwndBtnClearLog, 426, 586, 124, 26, 1)
+			procMoveWindow.Call(hwndBtnClearLog, 426, yBtn, 124, 26, 1)
 		}
 
 		if isRussianLang {
@@ -2408,6 +2475,57 @@ func updateBannerAndInstallButton() {
 		procInvalidateRect.Call(hwndBtnInstall, 0, 1)
 	}
 	procInvalidateRect.Call(hwndBannerLbl, 0, 1)
+}
+
+func relayoutControls(clientW, clientH int32) {
+	if clientH <= 0 || hwndListView == 0 {
+		return
+	}
+	if baseClientH <= 0 {
+		baseClientH = 650
+	}
+	newDeltaY := clientH - baseClientH
+	if newDeltaY < 0 {
+		newDeltaY = 0
+	}
+	newListViewH := 212 + newDeltaY
+
+	if newDeltaY == currentDeltaY && newListViewH == currentListViewH {
+		return
+	}
+	currentDeltaY = newDeltaY
+	currentListViewH = newListViewH
+
+	// 1. SysListView32 (Stretches vertically with the window)
+	procMoveWindow.Call(hwndListView, 18, 126, 532, uintptr(newListViewH), 1)
+
+	// 2. Diagnostics Panel Controls
+	procMoveWindow.Call(hwndDiagHeader, 28, uintptr(348+currentDeltaY), 430, 18, 1)
+	procMoveWindow.Call(hwndBtnDiagInfo, 465, uintptr(346+currentDeltaY), 75, 20, 1)
+	procMoveWindow.Call(hwndDiagOrig, 28, uintptr(368+currentDeltaY), 245, 18, 1)
+	procMoveWindow.Call(hwndDiagProt, 275, uintptr(368+currentDeltaY), 265, 18, 1)
+	procMoveWindow.Call(hwndDiagLat, 28, uintptr(388+currentDeltaY), 245, 18, 1)
+	procMoveWindow.Call(hwndDiagUptime, 275, uintptr(388+currentDeltaY), 265, 18, 1)
+
+	// 3. Active VLESS Key & Buttons
+	procMoveWindow.Call(hwndKeyLabel, 18, uintptr(422+currentDeltaY), 384, 16, 1)
+	procMoveWindow.Call(hwndKeyEdit, 18, uintptr(440+currentDeltaY), 384, 52, 1)
+	procMoveWindow.Call(hwndBtnPasteQr, 410, uintptr(440+currentDeltaY), 140, 24, 1)
+	procMoveWindow.Call(hwndBtnSave, 410, uintptr(468+currentDeltaY), 140, 24, 1)
+
+	// 4. Log Box
+	procMoveWindow.Call(hwndLogLbl, 18, uintptr(500+currentDeltaY), 532, 16, 1)
+	procMoveWindow.Call(hwndLogEdit, 18, uintptr(518+currentDeltaY), 532, 58, 1)
+
+	// 5. Buttons under Log (Install, Verify, Copy, Clear)
+	updateBannerAndInstallButton()
+
+	// 6. Bottom Banner & Brand
+	procMoveWindow.Call(hwndBannerLbl, 18, uintptr(618+currentDeltaY), 360, 20, 1)
+	procMoveWindow.Call(hwndBrand, 380, uintptr(618+currentDeltaY), 170, 20, 1)
+
+	// 7. Repaint window (diagnostics card rounded background, etc.)
+	procInvalidateRect.Call(hwndMain, 0, 1)
 }
 
 func parseVersionNumber(v string) int {
@@ -2424,6 +2542,9 @@ func parseVersionNumber(v string) int {
 }
 
 func playWinXPStartupSound() {
+	if isMuteSound {
+		return
+	}
 	go func() {
 		if len(winxpStartupWav) > 0 && procPlaySoundW.Find() == nil {
 			// SND_MEMORY (0x0004) | SND_ASYNC (0x0001) | SND_NODEFAULT (0x0002) = 0x0007
@@ -2437,6 +2558,9 @@ func playWinXPStartupSound() {
 }
 
 func playSuccessChime() {
+	if isMuteSound {
+		return
+	}
 	go func() {
 		// Play Windows system notification sound asynchronously
 		// SND_ALIAS (0x00010000) | SND_ASYNC (0x00000001) | SND_NODEFAULT (0x00000002)
@@ -3943,7 +4067,7 @@ func applyTheme(themeMode int) {
 	procInvalidateRect.Call(hwndMain, 0, 1)
 
 	allControls := []uintptr{
-		hwndTitle, hwndBtnDay, hwndBtnGray, hwndBtnNight, hwndBtnLangEN, hwndBtnLangRU,
+		hwndTitle, hwndBtnDay, hwndBtnGray, hwndBtnNight, hwndBtnLangEN, hwndBtnLangRU, hwndBtnSound,
 		hwndBtnMainAction, hwndBtnDisconnect, hwndKeyLabel, hwndBtnPasteQr, hwndBtnSave, hwndKeyEdit,
 		hwndProfilesLbl, hwndBtnUp, hwndBtnDown, hwndBtnConnect, hwndBtnSetDefault,
 		hwndBtnSubToggle, hwndSubTitle, hwndBtnSubPing, hwndBtnSubRefresh, hwndListView,
@@ -6432,6 +6556,30 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			borderLight = 0x666666
 		}
 
+	case 206: // Sound Mute Toggle
+		font = hFontRegular
+		if isMuteSound {
+			btnText = "🔇"
+			baseColor = 0x4A3838
+			borderDark = 0x2A1C1C
+			borderLight = 0x725454
+		} else {
+			btnText = "🔊"
+			if currentTheme == ThemeGray {
+				baseColor = 0x4A6B82
+				borderDark = 0x2C4659
+				borderLight = 0x789EBA
+			} else if currentTheme == ThemeNight {
+				baseColor = 0x1E598A
+				borderDark = 0x143E60
+				borderLight = 0x5AA4DE
+			} else {
+				baseColor = 0x2B7DE9
+				borderDark = 0x1A5BB8
+				borderLight = 0x62A2F8
+			}
+		}
+
 	default:
 		return 0
 	}
@@ -6548,6 +6696,34 @@ func showTrayContextMenu() {
 
 func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case WM_GETMINMAXINFO:
+		mmi := (*MINMAXINFO)(unsafe.Pointer(lParam))
+		mmi.PtMinTrackSize.X = 595
+		mmi.PtMaxTrackSize.X = 595
+		mmi.PtMinTrackSize.Y = 689
+		return 0
+
+	case WM_SIZE:
+		if wParam == 1 /* SIZE_MINIMIZED */ {
+			return 0
+		}
+		clientW := int32(lParam & 0xFFFF)
+		clientH := int32((lParam >> 16) & 0xFFFF)
+		if clientH > 0 && hwndListView != 0 {
+			relayoutControls(clientW, clientH)
+		}
+		return 0
+
+	case WM_EXITSIZEMOVE:
+		var rc RECT
+		procGetWindowRect.Call(hwndMain, uintptr(unsafe.Pointer(&rc)))
+		h := int(rc.Bottom - rc.Top)
+		if h >= 689 && h != currentWindowHeight {
+			currentWindowHeight = h
+			saveSettingsToStorage()
+		}
+		return 0
+
 	case WM_TRAYICON:
 		switch lParam {
 		case WM_LBUTTONUP, WM_LBUTTONDBLCLK:
@@ -6863,6 +7039,25 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			saveSettingsToStorage()
 			updateLanguageUI()
 			writeLog("LANG", "Язык переключен на русский (RU). Настройки сохранены.")
+
+		case 206: // Toggle Sound Mute
+			isMuteSound = !isMuteSound
+			saveSettingsToStorage()
+			updateAllTooltips()
+			procInvalidateRect.Call(hwndBtnSound, 0, 1)
+			if isRussianLang {
+				if isMuteSound {
+					writeLog("AUDIO", "🔇 Звук подключения VPN выключен. Настройки сохранены.")
+				} else {
+					writeLog("AUDIO", "🔊 Звук подключения VPN включен. Настройки сохранены.")
+				}
+			} else {
+				if isMuteSound {
+					writeLog("AUDIO", "🔇 VPN connection sound muted. Settings saved.")
+				} else {
+					writeLog("AUDIO", "🔊 VPN connection sound enabled. Settings saved.")
+				}
+			}
 
 		case 101: // Main Action: Connect if Disconnected, or Cycle Animation if Connected
 			if isConnected {
@@ -7465,7 +7660,7 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 		oldB, _, _ := procSelectObject.Call(hDC, cardBrush)
 		oldP, _, _ := procSelectObject.Call(hDC, cardPen)
 
-		procRectangle.Call(hDC, 18, 346, 550, 414)
+		procRectangle.Call(hDC, 18, uintptr(346+currentDeltaY), 550, uintptr(414+currentDeltaY))
 
 		procSelectObject.Call(hDC, oldB)
 		procSelectObject.Call(hDC, oldP)
@@ -7618,12 +7813,19 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_SETCURSOR:
 		ctrlHwnd := uintptr(wParam)
-		if ctrlHwnd != 0 && (ctrlHwnd == hwndBtnDay || ctrlHwnd == hwndBtnGray || ctrlHwnd == hwndBtnNight || ctrlHwnd == hwndBtnLangEN || ctrlHwnd == hwndBtnLangRU || ctrlHwnd == hwndBtnMainAction || ctrlHwnd == hwndBtnPasteQr || ctrlHwnd == hwndBtnSave || ctrlHwnd == hwndBtnConnect || ctrlHwnd == hwndBtnSetDefault || ctrlHwnd == hwndBtnSubToggle || ctrlHwnd == hwndSubTitle || ctrlHwnd == hwndBtnSubPing || ctrlHwnd == hwndBtnSubRefresh || ctrlHwnd == hwndBtnInstall || ctrlHwnd == hwndBtnVerify || ctrlHwnd == hwndBtnCopyLog || ctrlHwnd == hwndBtnClearLog || ctrlHwnd == hwndBrand) {
+		if ctrlHwnd != 0 && (ctrlHwnd == hwndBtnDay || ctrlHwnd == hwndBtnGray || ctrlHwnd == hwndBtnNight || ctrlHwnd == hwndBtnLangEN || ctrlHwnd == hwndBtnLangRU || ctrlHwnd == hwndBtnSound || ctrlHwnd == hwndBtnMainAction || ctrlHwnd == hwndBtnPasteQr || ctrlHwnd == hwndBtnSave || ctrlHwnd == hwndBtnConnect || ctrlHwnd == hwndBtnSetDefault || ctrlHwnd == hwndBtnSubToggle || ctrlHwnd == hwndSubTitle || ctrlHwnd == hwndBtnSubPing || ctrlHwnd == hwndBtnSubRefresh || ctrlHwnd == hwndBtnInstall || ctrlHwnd == hwndBtnVerify || ctrlHwnd == hwndBtnCopyLog || ctrlHwnd == hwndBtnClearLog || ctrlHwnd == hwndBrand) {
 			procSetCursor.Call(hCursorHand)
 			return 1
 		}
 
 	case WM_DESTROY:
+		var rc RECT
+		procGetWindowRect.Call(hwndMain, uintptr(unsafe.Pointer(&rc)))
+		h := int(rc.Bottom - rc.Top)
+		if h >= 689 {
+			currentWindowHeight = h
+		}
+		saveSettingsToStorage()
 		removeTrayIcon()
 		disconnectVpnAsync()
 		procKillTimer.Call(hwnd, 1)
@@ -7842,12 +8044,17 @@ func main() {
 		initialTitle = AppTitleRU
 	}
 
+	winH := 689
+	if savedWindowHeight >= 689 {
+		winH = savedWindowHeight
+	}
+
 	hwndMain, _, _ = procCreateWindowExW.Call(
 		0,
 		uintptr(unsafe.Pointer(className)),
 		uintptr(unsafe.Pointer(strPtr(initialTitle))),
-		WS_OVERLAPPEDWINDOW&^0x00040000&^0x00010000|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,
-		100, 40, 595, 689,
+		WS_OVERLAPPEDWINDOW&^0x00010000|WS_CLIPCHILDREN|WS_CLIPSIBLINGS,
+		100, 40, 595, uintptr(winH),
 		0, 0, hInstance, 0,
 	)
 
@@ -7856,13 +8063,14 @@ func main() {
 		procSendMessageW.Call(hwndMain, WM_SETICON, 0, hIconApp)
 	}
 
-	// 1. Header Title & 3 Themes (Day ☀️ / Gray ⛅ / Night 🌙) & EN/RU Language Buttons
-	hwndTitle = createStatic("🛡️ GIN-VPN by VladiMIR+AI", 18, 12, 250, 26, hFontTitle)
-	hwndBtnDay = createOwnerButton(201, 274, 12, 38, 26)
-	hwndBtnGray = createOwnerButton(205, 316, 12, 38, 26)
-	hwndBtnNight = createOwnerButton(202, 358, 12, 38, 26)
-	hwndBtnLangEN = createOwnerButton(203, 420, 12, 50, 26)
-	hwndBtnLangRU = createOwnerButton(204, 474, 12, 50, 26)
+	// 1. Header Title & 3 Themes (Day ☀️ / Gray ⛅ / Night 🌙) & EN/RU Language Buttons & Sound Button
+	hwndTitle = createStatic("🛡️ GIN-VPN by VladiMIR+AI", 18, 12, 225, 26, hFontTitle)
+	hwndBtnDay = createOwnerButton(201, 248, 12, 36, 26)
+	hwndBtnGray = createOwnerButton(205, 287, 12, 36, 26)
+	hwndBtnNight = createOwnerButton(202, 326, 12, 36, 26)
+	hwndBtnLangEN = createOwnerButton(203, 376, 12, 44, 26)
+	hwndBtnLangRU = createOwnerButton(204, 424, 12, 44, 26)
+	hwndBtnSound = createOwnerButton(206, 486, 12, 46, 26)
 
 	// 2. Main Large Action Button & Split Disconnect Button
 	hwndBtnMainAction = createOwnerButton(101, 18, 44, 532, 44)
@@ -7975,6 +8183,19 @@ func main() {
 	updateLanguageUI()
 	applyTheme(currentTheme)
 	initTooltips()
+
+	// Initial Layout adjustment for saved or default window height
+	var initClientRc RECT
+	procGetClientRect.Call(hwndMain, uintptr(unsafe.Pointer(&initClientRc)))
+	initClientH := initClientRc.Bottom - initClientRc.Top
+	initClientW := initClientRc.Right - initClientRc.Left
+	if savedWindowHeight > 689 {
+		baseClientH = initClientH - int32(savedWindowHeight-689)
+	} else {
+		baseClientH = initClientH
+	}
+	currentWindowHeight = int(winH)
+	relayoutControls(initClientW, initClientH)
 
 	// Initial Tray
 	updateTrayIcon(false, "", "")
