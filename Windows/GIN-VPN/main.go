@@ -5280,40 +5280,42 @@ func addOrUpdateSubscriptionItem(name string, urlStr string) {
 
 func getSubscriptionTitle(subUrl string) string {
 	subUrl = strings.TrimSpace(subUrl)
+	var frag string
 	if idx := strings.Index(subUrl, "#"); idx != -1 && idx < len(subUrl)-1 {
-		frag := subUrl[idx+1:]
-		if unescaped, err := url.QueryUnescape(frag); err == nil && strings.TrimSpace(unescaped) != "" {
-			return strings.TrimSpace(unescaped)
+		rawFrag := subUrl[idx+1:]
+		if unescaped, err := url.QueryUnescape(rawFrag); err == nil && strings.TrimSpace(unescaped) != "" {
+			frag = strings.TrimSpace(unescaped)
+		} else if unescaped, err := url.PathUnescape(rawFrag); err == nil && strings.TrimSpace(unescaped) != "" {
+			frag = strings.TrimSpace(unescaped)
+		} else {
+			frag = strings.TrimSpace(rawFrag)
 		}
-		if unescaped, err := url.PathUnescape(frag); err == nil && strings.TrimSpace(unescaped) != "" {
-			return strings.TrimSpace(unescaped)
-		}
-		return strings.TrimSpace(frag)
+	}
+
+	fragLower := strings.ToLower(frag)
+	urlLower := strings.ToLower(subUrl)
+
+	// User standard: GIN_VPN_RU and GIN_VPN_EU
+	if strings.Contains(fragLower, "ru") || strings.Contains(urlLower, "sub_ru") || strings.Contains(urlLower, "_ru") {
+		return "GIN_VPN_RU"
+	}
+	if strings.Contains(fragLower, "eu") || strings.Contains(urlLower, "sub_eu") || strings.Contains(urlLower, "_eu") || strings.Contains(urlLower, "sub.txt") {
+		return "GIN_VPN_EU"
+	}
+	if frag != "" {
+		return frag
 	}
 
 	u, err := url.Parse(subUrl)
 	if err == nil {
-		path := strings.ToLower(u.Path)
-		if strings.Contains(path, "sub_ru") {
-			return "GIN-ProxyHub-RU"
-		}
-		if strings.Contains(path, "sub_eu") {
-			return "GIN-ProxyHub-EU"
-		}
-		if strings.Contains(path, "sub.txt") {
-			return "GIN-Proxy-HUB"
-		}
 		base := filepath.Base(u.Path)
 		base = strings.TrimSuffix(base, filepath.Ext(base))
 		if base != "" && base != "." && base != "/" {
-			return "GIN-" + base
-		}
-		if u.Host != "" {
-			return "GIN-Proxy-" + u.Host
+			return "GIN_VPN_" + strings.ToUpper(base)
 		}
 	}
 
-	return "GIN-Proxy-HUB"
+	return "GIN_VPN"
 }
 
 func refreshAllSubscriptionsAsync() {
