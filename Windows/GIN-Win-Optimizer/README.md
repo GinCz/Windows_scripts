@@ -1,12 +1,12 @@
-# 🚀 Windows 10/11 Ultimate Optimizer & Deep Cleaner Plus (`v013`)
+# 🚀 GIN-Win-Optimizer Plus (`v014`)
 
-[![Release](https://img.shields.io/badge/Release-v013-00b4d8?style=for-the-badge&logo=windows)](https://github.com/GinCz/Windows_scripts/releases)
+[![Release](https://img.shields.io/badge/Release-v014-00b4d8?style=for-the-badge&logo=windows)](https://github.com/GinCz/Windows_scripts/releases)
 [![Architecture](https://img.shields.io/badge/Architecture-Polyglot_CMD%2FPowerShell-1e3a5f?style=for-the-badge&logo=powershell)](https://github.com/GinCz/Windows_scripts)
 [![Platform](https://img.shields.io/badge/Platform-Windows_10_%2F_11_x64-25282e?style=for-the-badge&logo=windows11)](https://github.com/GinCz/Windows_scripts)
 [![Languages](https://img.shields.io/badge/Languages-EN_%7C_CS_%7C_RU-success?style=for-the-badge)](https://github.com/GinCz/Windows_scripts)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 
-> **Repository:** [Windows_scripts / Windows / WIN_Optimizator ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/WIN_Optimizator)  
+> **Repository:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Authors / Architects:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target Systems:** Windows 10 (1903–22H2), Windows 11 (21H2, 22H2, 23H2, 24H2), Windows Server 2019/2022/2025  
 
@@ -14,7 +14,7 @@
 
 ## 📖 Overview
 
-**WIN_Optimizator** is an enterprise-grade, standalone Windows optimization and deep system cleaning suite designed to eliminate telemetry, declutter the Windows shell, tune kernel responsiveness, strip pre-installed bloatware, and reclaim gigabytes of disk storage without breaking Windows updates or universal apps.
+**GIN-Win-Optimizer** is an enterprise-grade, standalone Windows optimization and deep system cleaning suite designed to eliminate telemetry, declutter the Windows shell, tune kernel responsiveness, strip pre-installed bloatware, and reclaim gigabytes of disk storage without breaking Windows updates or universal apps.
 
 Engineered as a single-file polyglot hybrid (`.cmd` wrapper + embedded PowerShell 5.1 / WPF runtime), it requires **zero installation**, zero external DLLs, and zero internet dependencies. You can double-click it directly from a USB flash drive or desktop, elevate with a single UAC click, and execute comprehensive system tuning via a modern, dark-themed graphical interface.
 
@@ -158,7 +158,7 @@ The interface provides 4 one-click configuration presets:
 
 ## 🚀 How to Run
 
-1. Download [`WIN_Optimizator_v013.cmd`](https://github.com/GinCz/Windows_scripts/raw/main/Windows/WIN_Optimizator/WIN_Optimizator_v013.cmd).
+1. Download [`GIN-Win-Optimizer_v014.cmd`](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v014.cmd).
 2. Right-click and choose **Run as administrator** (or simply double-click; the script will prompt for elevation automatically).
 3. Select your language preference in the top-right corner (**English**, **Čeština**, or **Русский**).
 4. Choose a Preset or toggle individual options.

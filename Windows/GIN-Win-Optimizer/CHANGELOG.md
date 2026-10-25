@@ -1,6 +1,14 @@
-# 📜 WIN_Optimizator — Release History & Changelog
+# 📜 GIN-Win-Optimizer — Release History & Changelog
 
-All notable changes to the **WIN_Optimizator** project are documented in this file.
+All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
+
+---
+
+## [v014] — 2026-10-25
+### Changed & Rebranded
+- **Official Rebranding**: Project officially renamed from `WIN_Optimizator` to **`GIN-Win-Optimizer`** across all public repositories, metadata, titles, and installers.
+- **Repository Standardization**: Reorganized under dedicated project directory `Windows/GIN-Win-Optimizer/`.
+- **Packaging**: Distributed as standalone executable hybrid script `GIN-Win-Optimizer_v014.cmd`.
 
 ---
 
