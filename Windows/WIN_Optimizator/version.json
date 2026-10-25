@@ -1,0 +1,10 @@
+{
+  "version": "v013",
+  "name": "WIN_Optimizator",
+  "description": "Windows 10/11 Ultimate Optimizer & Deep Cleaner Plus (Single-Window WPF Polyglot Hybrid CMD/PowerShell)",
+  "release_date": "2026-10-25",
+  "author": "Vladimir Bulantsev (GinCz) & Antigravity",
+  "license": "MIT",
+  "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/WIN_Optimizator",
+  "target_os": "Windows 10 / 11 (x86_64)"
+}
