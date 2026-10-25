@@ -34,9 +34,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v074"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v074]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v074]"
+	AppVersion    = "v075"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v075]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v075]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -3837,7 +3837,11 @@ func triggerDeleteSelectedProfile() {
 	selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
 	sel := int(selRet)
 	actualIdx := getActualProfileIndex(sel)
-	if actualIdx == -1 {
+	if actualIdx < 0 {
+		subIdx := (-actualIdx) - 1
+		if subIdx >= 0 && subIdx < len(renderedSubNames) {
+			contextMenuSubName = renderedSubNames[subIdx]
+		}
 		deleteSubscription()
 		return
 	}
@@ -3891,19 +3895,57 @@ func deleteProfileWithConfirmation(actualIdx int) {
 	}
 }
 
-func deleteSubscription() {
+func resolveTargetSubName() string {
+	if contextMenuSubName != "" {
+		return contextMenuSubName
+	}
+	selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
+	sel := int(selRet)
+	actualIdx := getActualProfileIndex(sel)
+	if actualIdx < 0 {
+		subIdx := (-actualIdx) - 1
+		if subIdx >= 0 && subIdx < len(renderedSubNames) {
+			return renderedSubNames[subIdx]
+		}
+	} else if actualIdx >= 0 && actualIdx < len(profiles) && profiles[actualIdx].Subscription != "" {
+		return profiles[actualIdx].Subscription
+	}
+	if len(renderedSubNames) > 0 {
+		return renderedSubNames[0]
+	}
+	if len(activeSubscriptions) > 0 {
+		return activeSubscriptions[0].Name
+	}
 	subName := loadSubscriptionNameFromRegistry()
-	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
+	if subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
 		subName = "GIN-Proxy-HUB"
 	}
+	return subName
+}
+
+func deleteSubscription() {
+	targetSub := resolveTargetSubName()
+
 	subCount := 0
+	totalSubProfiles := 0
 	for _, p := range profiles {
 		if p.Subscription != "" {
-			subCount++
+			totalSubProfiles++
+			if targetSub == "" || p.Subscription == targetSub {
+				subCount++
+			}
 		}
 	}
 
-	if subCount == 0 && loadSubscriptionUrlFromRegistry() == "" {
+	inActiveSubs := false
+	for _, s := range activeSubscriptions {
+		if targetSub != "" && s.Name == targetSub {
+			inActiveSubs = true
+			break
+		}
+	}
+
+	if targetSub == "" && totalSubProfiles == 0 && len(activeSubscriptions) == 0 && loadSubscriptionUrlFromRegistry() == "" {
 		warnMsg := "В списке нет активных подписок или серверов из подписки."
 		warnTitle := "Удаление подписки — GIN-VPN"
 		if !isRussianLang {
@@ -3914,28 +3956,52 @@ func deleteSubscription() {
 		return
 	}
 
-	confirmMsg := fmt.Sprintf("Вы уверены, что хотите полностью удалить подписку:\n\n\"%s\" (%d серверов)?\n\nВсе серверы этой подписки будут удалены из списка.", subName, subCount)
+	if !inActiveSubs && subCount == 0 && len(activeSubscriptions) == 0 && totalSubProfiles == 0 {
+		warnMsg := "В списке нет активных подписок или серверов из подписки."
+		warnTitle := "Удаление подписки — GIN-VPN"
+		if !isRussianLang {
+			warnMsg = "No active subscription or subscription servers found in the list."
+			warnTitle = "Delete Subscription — GIN-VPN"
+		}
+		procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(warnMsg))), uintptr(unsafe.Pointer(strPtr(warnTitle))), 0x00000030)
+		return
+	}
+
+	displaySub := targetSub
+	if displaySub == "" {
+		displaySub = "GIN-Proxy-HUB"
+	}
+
+	confirmMsg := fmt.Sprintf("Вы уверены, что хотите полностью удалить подписку:\n\n\"%s\" (%d серверов)?\n\nПапка подписки и ее серверы будут удалены из списка.", displaySub, subCount)
 	confirmTitle := "Удаление подписки — GIN-VPN"
 	if !isRussianLang {
-		confirmMsg = fmt.Sprintf("Are you sure you want to completely delete subscription:\n\n\"%s\" (%d servers)?\n\nAll servers from this subscription will be permanently removed.", subName, subCount)
+		confirmMsg = fmt.Sprintf("Are you sure you want to completely delete subscription:\n\n\"%s\" (%d servers)?\n\nThe subscription folder and its servers will be permanently removed.", displaySub, subCount)
 		confirmTitle = "Delete Subscription — GIN-VPN"
 	}
 
-	// MB_YESNO (0x04) | MB_ICONQUESTION (0x20)
-	ret, _, _ := procMessageBoxW.Call(
-		hwndMain,
-		uintptr(unsafe.Pointer(strPtr(confirmMsg))),
-		uintptr(unsafe.Pointer(strPtr(confirmTitle))),
-		0x00000004|0x00000020,
-	)
-	if ret != 6 { // IDYES
-		return
+	// If it's an empty (0) subscription, delete immediately or confirm
+	if subCount > 0 {
+		ret, _, _ := procMessageBoxW.Call(
+			hwndMain,
+			uintptr(unsafe.Pointer(strPtr(confirmMsg))),
+			uintptr(unsafe.Pointer(strPtr(confirmTitle))),
+			0x00000004|0x00000020,
+		)
+		if ret != 6 { // IDYES
+			return
+		}
 	}
 
 	hasActiveDeleted := false
 	var remaining []Profile
 	for _, p := range profiles {
-		if p.Subscription == "" {
+		shouldDelete := false
+		if targetSub != "" {
+			shouldDelete = (p.Subscription == targetSub)
+		} else {
+			shouldDelete = (p.Subscription != "")
+		}
+		if !shouldDelete {
 			remaining = append(remaining, p)
 		} else {
 			if isConnected && (p.Name == activeNodeName || p.Host == activeNodeIP || (verifiedExitIP != "" && p.Host == verifiedExitIP)) {
@@ -3945,6 +4011,29 @@ func deleteSubscription() {
 	}
 
 	profiles = remaining
+
+	// Remove from activeSubscriptions and also prune any remaining 0-server ghost subscriptions
+	var newActiveSubs []SubscriptionItem
+	for _, s := range activeSubscriptions {
+		if targetSub != "" && s.Name == targetSub {
+			continue
+		}
+		if targetSub == "" {
+			continue
+		}
+		// Keep other subscriptions only if they actually have servers in profiles
+		cnt := 0
+		for _, p := range profiles {
+			if p.Subscription == s.Name {
+				cnt++
+			}
+		}
+		if cnt > 0 {
+			newActiveSubs = append(newActiveSubs, s)
+		}
+	}
+	activeSubscriptions = newActiveSubs
+	saveSubscriptionsToStorage()
 
 	// Ensure there is a default server if remaining profiles exist
 	if len(profiles) > 0 {
@@ -3960,12 +4049,18 @@ func deleteSubscription() {
 		}
 	}
 
-	// Reset subscription in registry
-	saveSubscriptionUrlToRegistry("")
-	saveSubscriptionNameToRegistry("GIN-Proxy-HUB")
+	// Update or reset legacy registry subscription keys
+	if len(activeSubscriptions) > 0 {
+		saveSubscriptionUrlToRegistry(activeSubscriptions[0].URL)
+		saveSubscriptionNameToRegistry(activeSubscriptions[0].Name)
+	} else {
+		saveSubscriptionUrlToRegistry("")
+		saveSubscriptionNameToRegistry("")
+	}
 	if hwndKeyEdit != 0 {
 		procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(""))))
 	}
+	contextMenuSubName = ""
 
 	saveProfilesToStorage()
 	updateSubscriptionBar()
@@ -3976,9 +4071,9 @@ func deleteSubscription() {
 	}
 
 	if isRussianLang {
-		writeLog("SUB", fmt.Sprintf("🗑️ Подписка '%s' и все серверы (%d шт.) полностью удалены.", subName, subCount))
+		writeLog("SUB", fmt.Sprintf("🗑️ Подписка '%s' (%d серверов) полностью удалена.", displaySub, subCount))
 	} else {
-		writeLog("SUB", fmt.Sprintf("🗑️ Subscription '%s' and all servers (%d) completely deleted.", subName, subCount))
+		writeLog("SUB", fmt.Sprintf("🗑️ Subscription '%s' (%d servers) completely deleted.", displaySub, subCount))
 	}
 }
 
@@ -4093,10 +4188,19 @@ func renameWndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			newName := strings.TrimSpace(syscall.UTF16ToString(buf[:]))
 			if renameTargetIdx == -1 {
 				if newName != "" {
-					oldName := loadSubscriptionNameFromRegistry()
+					oldName := renameTargetSubName
+					if oldName == "" {
+						oldName = resolveTargetSubName()
+					}
 					saveSubscriptionNameToRegistry(newName)
+					for i := range activeSubscriptions {
+						if oldName == "" || activeSubscriptions[i].Name == oldName {
+							activeSubscriptions[i].Name = newName
+						}
+					}
+					saveSubscriptionsToStorage()
 					for i := range profiles {
-						if profiles[i].Subscription != "" {
+						if profiles[i].Subscription != "" && (oldName == "" || profiles[i].Subscription == oldName) {
 							profiles[i].Subscription = newName
 						}
 					}
@@ -4489,10 +4593,11 @@ func showRenameDialog(sel int) {
 
 func showRenameSubscriptionDialog() {
 	renameTargetIdx = -1
-	subName := loadSubscriptionNameFromRegistry()
+	subName := resolveTargetSubName()
 	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
 		subName = "GIN-Proxy-HUB"
 	}
+	renameTargetSubName = subName
 
 	className := strPtr("GIN_VPN_RENAME_CLASS")
 	var wc WNDCLASSEXW
@@ -4679,13 +4784,13 @@ func showSubscriptionContextMenu() {
 	if hMenu == 0 {
 		return
 	}
-	subName := loadSubscriptionNameFromRegistry()
+	subName := resolveTargetSubName()
 	if subName == "" || subName == "Djinn Proxy hub" || subName == "Jin Proxy hub" {
 		subName = "GIN-Proxy-HUB"
 	}
 	subCount := 0
 	for _, p := range profiles {
-		if p.Subscription != "" {
+		if p.Subscription != "" && (contextMenuSubName == "" || p.Subscription == subName) {
 			subCount++
 		}
 	}
@@ -5346,6 +5451,26 @@ func loadSubscriptionsFromStorage() {
 			}
 		}
 	}
+	// Automatically prune empty (0-server) ghost subscriptions on startup
+	var validSubs []SubscriptionItem
+	pruned := false
+	for _, s := range activeSubscriptions {
+		cnt := 0
+		for _, p := range profiles {
+			if p.Subscription == s.Name {
+				cnt++
+			}
+		}
+		if cnt > 0 {
+			validSubs = append(validSubs, s)
+		} else {
+			pruned = true
+		}
+	}
+	activeSubscriptions = validSubs
+	if pruned {
+		saveSubscriptionsToStorage()
+	}
 }
 
 func getSubscriptionExpanded(subName string) bool {
@@ -5870,10 +5995,6 @@ func importSubscriptionFromUrl(subUrl string) {
 			groupOrder = append(groupOrder, title)
 		}
 		groups[title] = append(groups[title], u)
-	}
-
-	for _, title := range groupOrder {
-		addOrUpdateSubscriptionItem(title, groups[title][0])
 	}
 
 	isSubUpdating = true

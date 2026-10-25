@@ -55,7 +55,7 @@ $mirrors = @(
     @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN.exe" },
     @{ Name = "Russian Server CloudCore-191 Direct IP (Moscow)"; Url = "http://31.59.126.191/download/GIN-VPN.exe" },
     @{ Name = "Russian Server CloudCore-191 HTTPS (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN.exe" },
-    @{ Name = "Global GitHub Raw Fallback"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v074.exe" }
+    @{ Name = "Global GitHub Raw Fallback"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v075.exe" }
 )
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
