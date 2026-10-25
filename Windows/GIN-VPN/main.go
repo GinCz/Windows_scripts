@@ -34,9 +34,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v073"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v073]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v073]"
+	AppVersion    = "v074"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v074]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v074]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -5485,7 +5485,7 @@ func refreshAllSubscriptionsAsync() {
 		}
 
 		client := &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: 8 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
@@ -5493,27 +5493,42 @@ func refreshAllSubscriptionsAsync() {
 
 		updatedCount := 0
 		for _, tgt := range targets {
-			writeLog("SUB", fmt.Sprintf("Обновление подписки '%s': %s", tgt.Name, tgt.URL))
-			req, err := http.NewRequest("GET", tgt.URL, nil)
-			if err != nil {
-				continue
-			}
-			req.Header.Set("User-Agent", "GIN-VPN/"+AppVersion+" (Windows; Xray)")
-			resp, err := client.Do(req)
-			if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
-				if resp != nil {
-					resp.Body.Close()
+			candidates := getMirrorCandidates([]string{tgt.URL}, tgt.Name)
+			success := false
+			for idx, candUrl := range candidates {
+				writeLog("SUB", fmt.Sprintf("Обновление подписки '%s' (зеркало %d/%d): %s", tgt.Name, idx+1, len(candidates), candUrl))
+				reqUrl := appendCacheBuster(candUrl)
+				req, err := http.NewRequest("GET", reqUrl, nil)
+				if err != nil {
+					continue
 				}
-				writeLog("ERROR", fmt.Sprintf("Ошибка загрузки '%s': HTTP %v", tgt.Name, err))
-				continue
+				req.Header.Set("User-Agent", "GIN-VPN/"+AppVersion+" (Windows; Xray)")
+				req.Header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+				resp, err := client.Do(req)
+				if err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300 {
+					if resp != nil {
+						resp.Body.Close()
+					}
+					writeLog("WARN", fmt.Sprintf("Зеркало %d недоступно для '%s': %v", idx+1, tgt.Name, err))
+					continue
+				}
+				bodyBytes, err := io.ReadAll(resp.Body)
+				resp.Body.Close()
+				if err != nil {
+					continue
+				}
+				bodyStr := strings.TrimSpace(string(bodyBytes))
+				if bodyStr == "" || (!strings.Contains(bodyStr, "vless://") && !isBase64Subscription(bodyStr)) {
+					continue
+				}
+				importNodesFromContent(bodyStr, tgt.Name, candUrl, tgt.Name)
+				updatedCount++
+				success = true
+				break
 			}
-			bodyBytes, err := io.ReadAll(resp.Body)
-			resp.Body.Close()
-			if err != nil {
-				continue
+			if !success {
+				writeLog("ERROR", fmt.Sprintf("Не удалось обновить подписку '%s' ни с одного из %d зеркал.", tgt.Name, len(candidates)))
 			}
-			importNodesFromContent(string(bodyBytes), tgt.Name, tgt.URL, tgt.Name)
-			updatedCount++
 		}
 
 		if isRussianLang {
@@ -5776,19 +5791,89 @@ func importNodesFromContent(rawText string, subName string, subUrl string, sourc
 	}
 }
 
+func extractHttpUrls(raw string) []string {
+	var urls []string
+	seen := make(map[string]bool)
+	fields := strings.FieldsFunc(raw, func(r rune) bool {
+		return r == '\n' || r == '\r' || r == ' ' || r == '\t' || r == ',' || r == ';'
+	})
+	for _, f := range fields {
+		u := strings.TrimSpace(f)
+		if strings.HasPrefix(u, "http://") || strings.HasPrefix(u, "https://") {
+			if !seen[u] {
+				seen[u] = true
+				urls = append(urls, u)
+			}
+		}
+	}
+	return urls
+}
+
+func appendCacheBuster(rawUrl string) string {
+	frag := ""
+	base := rawUrl
+	if idx := strings.Index(rawUrl, "#"); idx != -1 {
+		base = rawUrl[:idx]
+		frag = rawUrl[idx:]
+	}
+	sep := "?"
+	if strings.Contains(base, "?") {
+		sep = "&"
+	}
+	return fmt.Sprintf("%s%s_t=%d%s", base, sep, time.Now().Unix(), frag)
+}
+
+func getMirrorCandidates(userUrls []string, subName string) []string {
+	var result []string
+	seen := make(map[string]bool)
+	add := func(u string) {
+		u = strings.TrimSpace(u)
+		if u != "" && !seen[u] {
+			seen[u] = true
+			result = append(result, u)
+		}
+	}
+	for _, u := range userUrls {
+		add(u)
+	}
+	nameUpper := strings.ToUpper(subName)
+	if strings.Contains(nameUpper, "RU") {
+		add("https://gist.githubusercontent.com/GinCz/ac36401e7b7aec8f9bb8db638ed4c72d/raw/sub_RU.txt#GIN_VPN_RU")
+		add("https://raw.githubusercontent.com/GinCz/Windows_scripts/main/sub/sub_RU.txt#GIN_VPN_RU")
+		add("https://cdn.jsdelivr.net/gh/GinCz/Windows_scripts@main/sub/sub_RU.txt#GIN_VPN_RU")
+		add("http://195.158.255.208/sub_RU.txt#GIN_VPN_RU")
+		add("http://31.59.126.191/sub_RU.txt#GIN_VPN_RU")
+		add("https://63.178.216.88/sub_RU.txt#GIN_VPN_RU")
+	} else if strings.Contains(nameUpper, "EU") {
+		add("https://gist.githubusercontent.com/GinCz/ac36401e7b7aec8f9bb8db638ed4c72d/raw/sub_EU.txt#GIN_VPN_EU")
+		add("https://raw.githubusercontent.com/GinCz/Windows_scripts/main/sub/sub_EU.txt#GIN_VPN_EU")
+		add("https://cdn.jsdelivr.net/gh/GinCz/Windows_scripts@main/sub/sub_EU.txt#GIN_VPN_EU")
+		add("http://195.158.255.208/sub_EU.txt#GIN_VPN_EU")
+		add("http://31.59.126.191/sub_EU.txt#GIN_VPN_EU")
+		add("https://63.178.216.88/sub_EU.txt#GIN_VPN_EU")
+	}
+	return result
+}
+
 func importSubscriptionFromUrl(subUrl string) {
-	subUrl = strings.TrimSpace(subUrl)
-	if !strings.HasPrefix(subUrl, "http://") && !strings.HasPrefix(subUrl, "https://") {
+	parsedUrls := extractHttpUrls(subUrl)
+	if len(parsedUrls) == 0 {
 		return
 	}
 
-	subName := getSubscriptionTitle(subUrl)
-	addOrUpdateSubscriptionItem(subName, subUrl)
+	// Group pasted URLs by subscription title (e.g. GIN_VPN_EU, GIN_VPN_RU)
+	var groupOrder []string
+	groups := make(map[string][]string)
+	for _, u := range parsedUrls {
+		title := getSubscriptionTitle(u)
+		if _, exists := groups[title]; !exists {
+			groupOrder = append(groupOrder, title)
+		}
+		groups[title] = append(groups[title], u)
+	}
 
-	if isRussianLang {
-		writeLog("SUB", fmt.Sprintf("Загрузка подписки '%s' с адреса: %s", subName, subUrl))
-	} else {
-		writeLog("SUB", fmt.Sprintf("Fetching subscription '%s' from: %s", subName, subUrl))
+	for _, title := range groupOrder {
+		addOrUpdateSubscriptionItem(title, groups[title][0])
 	}
 
 	isSubUpdating = true
@@ -5806,40 +5891,69 @@ func importSubscriptionFromUrl(subUrl string) {
 		}()
 
 		client := &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: 8 * time.Second,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 		}
-		req, err := http.NewRequest("GET", subUrl, nil)
-		if err != nil {
-			writeLog("ERROR", fmt.Sprintf("Failed to create HTTP request: %v", err))
-			procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr("Ошибка создания запроса:\n"+err.Error()))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000010)
-			return
-		}
-		req.Header.Set("User-Agent", "GIN-VPN/"+AppVersion+" (Windows; Xray)")
 
-		resp, err := client.Do(req)
-		if err != nil {
-			writeLog("ERROR", fmt.Sprintf("Failed to connect to subscription server: %v", err))
-			procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr("Не удалось подключиться к серверу подписки:\n"+err.Error()))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000010)
-			return
-		}
-		defer resp.Body.Close()
+		anySuccess := false
+		var lastErr string
 
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			writeLog("ERROR", fmt.Sprintf("Subscription server returned HTTP %d", resp.StatusCode))
-			procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(fmt.Sprintf("Сервер подписки вернул ошибку HTTP %d", resp.StatusCode)))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000010)
-			return
+		for _, subName := range groupOrder {
+			candidates := getMirrorCandidates(groups[subName], subName)
+			groupSuccess := false
+			for idx, candUrl := range candidates {
+				if isRussianLang {
+					writeLog("SUB", fmt.Sprintf("Загрузка подписки '%s' (зеркало %d/%d): %s", subName, idx+1, len(candidates), candUrl))
+				} else {
+					writeLog("SUB", fmt.Sprintf("Fetching subscription '%s' (mirror %d/%d): %s", subName, idx+1, len(candidates), candUrl))
+				}
+
+				reqUrl := appendCacheBuster(candUrl)
+				req, err := http.NewRequest("GET", reqUrl, nil)
+				if err != nil {
+					lastErr = err.Error()
+					continue
+				}
+				req.Header.Set("User-Agent", "GIN-VPN/"+AppVersion+" (Windows; Xray)")
+				req.Header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+
+				resp, err := client.Do(req)
+				if err != nil {
+					lastErr = err.Error()
+					writeLog("WARN", fmt.Sprintf("Mirror %d/%d unreachable (%s): %v", idx+1, len(candidates), candUrl, err))
+					continue
+				}
+				bodyBytes, readErr := io.ReadAll(resp.Body)
+				resp.Body.Close()
+
+				if resp.StatusCode < 200 || resp.StatusCode >= 300 || readErr != nil {
+					lastErr = fmt.Sprintf("HTTP %d", resp.StatusCode)
+					writeLog("WARN", fmt.Sprintf("Mirror %d/%d returned HTTP %d", idx+1, len(candidates), resp.StatusCode))
+					continue
+				}
+
+				bodyStr := strings.TrimSpace(string(bodyBytes))
+				if bodyStr == "" || (!strings.Contains(bodyStr, "vless://") && !isBase64Subscription(bodyStr)) {
+					lastErr = "Empty or non-VLESS payload"
+					continue
+				}
+
+				procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(candUrl))))
+				importNodesFromContent(bodyStr, subName, candUrl, subName)
+				groupSuccess = true
+				anySuccess = true
+				break
+			}
+			if !groupSuccess {
+				writeLog("ERROR", fmt.Sprintf("All %d mirrors failed for subscription '%s'", len(candidates), subName))
+			}
 		}
 
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			writeLog("ERROR", fmt.Sprintf("Failed to read subscription body: %v", err))
-			return
+		if !anySuccess {
+			procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr("Не удалось подключиться ни к одному зеркалу подписки:\n"+lastErr))), uintptr(unsafe.Pointer(strPtr("GIN-VPN"))), 0x00000010)
 		}
-
-		importNodesFromContent(string(bodyBytes), subName, subUrl, subName)
 	}()
 }
 
@@ -7113,21 +7227,24 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 					text := syscall.UTF16ToString((*[1 << 20]uint16)(unsafe.Pointer(ptr))[:])
 					procGlobalUnlock.Call(hData)
 					trimmed := strings.TrimSpace(text)
-					procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(trimmed))))
-
-					if strings.HasPrefix(trimmed, "http://") || strings.HasPrefix(trimmed, "https://") {
-						writeLog("CLIP", fmt.Sprintf("Detected subscription link in clipboard (%s). Importing...", trimmed))
+					clipUrls := extractHttpUrls(trimmed)
+					if len(clipUrls) > 0 {
+						procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(strings.Join(clipUrls, " ")))))
+						writeLog("CLIP", fmt.Sprintf("Detected %d subscription link(s) in clipboard. Importing with failover...", len(clipUrls)))
 						importSubscriptionFromUrl(trimmed)
-					} else if isBase64Subscription(trimmed) {
-						writeLog("CLIP", "Detected Base64 subscription in clipboard. Importing...")
-						importNodesFromContent(trimmed, "GIN-Proxy-HUB", "", "Clipboard (Base64)")
-					} else if strings.Contains(trimmed, "\n") && strings.Contains(trimmed, "vless://") {
-						writeLog("CLIP", "Detected multi-line VLESS keys in clipboard. Importing...")
-						importNodesFromContent(trimmed, "GIN-Proxy-HUB", "", "Clipboard (Multi-Key)")
-					} else if strings.HasPrefix(trimmed, "vless://") {
-						writeLog("CLIP", "Pasted single VLESS key from clipboard.")
 					} else {
-						writeLog("CLIP", "Pasted text from clipboard.")
+						procSetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(strPtr(trimmed))))
+						if isBase64Subscription(trimmed) {
+							writeLog("CLIP", "Detected Base64 subscription in clipboard. Importing...")
+							importNodesFromContent(trimmed, "GIN-Proxy-HUB", "", "Clipboard (Base64)")
+						} else if strings.Contains(trimmed, "\n") && strings.Contains(trimmed, "vless://") {
+							writeLog("CLIP", "Detected multi-line VLESS keys in clipboard. Importing...")
+							importNodesFromContent(trimmed, "GIN-Proxy-HUB", "", "Clipboard (Multi-Key)")
+						} else if strings.HasPrefix(trimmed, "vless://") {
+							writeLog("CLIP", "Pasted single VLESS key from clipboard.")
+						} else {
+							writeLog("CLIP", "Pasted text from clipboard.")
+						}
 					}
 				}
 			}
@@ -7137,8 +7254,9 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			var buf [4096]uint16
 			procGetWindowTextW.Call(hwndKeyEdit, uintptr(unsafe.Pointer(&buf[0])), 4096)
 			str := strings.TrimSpace(syscall.UTF16ToString(buf[:]))
-			if strings.HasPrefix(str, "http://") || strings.HasPrefix(str, "https://") {
-				writeLog("SUB", fmt.Sprintf("Processing subscription URL from input field: %s", str))
+			inputUrls := extractHttpUrls(str)
+			if len(inputUrls) > 0 {
+				writeLog("SUB", fmt.Sprintf("Processing %d subscription URL(s) from input field.", len(inputUrls)))
 				importSubscriptionFromUrl(str)
 			} else if isBase64Subscription(str) {
 				writeLog("SUB", "Processing Base64 subscription from input field.")
