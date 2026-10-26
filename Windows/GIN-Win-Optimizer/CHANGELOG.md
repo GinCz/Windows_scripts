@@ -4,6 +4,16 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v018] — 2026-10-26
+### UI & Performance Refinement
+- **Highlight Longest Maintenance Operations in Bright Red**:
+  - The two slowest system maintenance tasks (`chk_deep_dism_repair` - DISM RestoreHealth and `chk_deep_dism_resetbase` - WinSxS ResetBase) are moved to the **very top** of the cleaning group (`grpClean`).
+  - Formatted with high-visibility bright red color (`#ff4d4f`) and bold font weight (`FontWeight="Bold"`).
+  - Explicitly marked with warning tag `(slow - медленно)` across all three supported languages (Russian, English, Czech).
+  - Set to **OFF by default** (`IsChecked = False`) and excluded from standard presets (`Select All`, `Office`, `Gaming`) to prevent accidental multi-hour maintenance runs unless explicitly checked by the user.
+
+---
+
 ## [v017] — 2026-10-26
 ### Critical Fixes & Taskbar Hardening
 - **Unpin Internet Explorer & Edge from Taskbar (`chk_edge_unpin`)**:
