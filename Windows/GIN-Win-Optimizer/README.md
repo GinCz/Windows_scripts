@@ -1,182 +1,68 @@
-# 🚀 GIN-Win-Optimizer Plus (`v015`)
+# 🔒 GIN-Win-Optimizer (Private Master Repository)
 
-[![Release](https://img.shields.io/badge/Release-v015-00b4d8?style=for-the-badge&logo=windows)](https://github.com/GinCz/Windows_scripts/releases)
-[![Architecture](https://img.shields.io/badge/Architecture-Polyglot_CMD%2FPowerShell-1e3a5f?style=for-the-badge&logo=powershell)](https://github.com/GinCz/Windows_scripts)
-[![Platform](https://img.shields.io/badge/Platform-Windows_10_%2F_11_x64-25282e?style=for-the-badge&logo=windows11)](https://github.com/GinCz/Windows_scripts)
-[![Languages](https://img.shields.io/badge/Languages-EN_%7C_CS_%7C_RU-success?style=for-the-badge)](https://github.com/GinCz/Windows_scripts)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-
-> **Repository:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
-> **Authors / Architects:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
-> **Target Systems:** Windows 10 (1903–22H2), Windows 11 (21H2, 22H2, 23H2, 24H2), Windows Server 2019/2022/2025  
+> **Private Repository:** [Secret_Privat / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer)  
+> **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
+> **Author / Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
+> **Target OS:** Windows 10 / 11 (x86_64, all editions: Home, Pro, Enterprise, LTSC)  
+> **Current Version:** `v016` (Active)
 
 ---
 
-## 📖 Overview
+## 🧭 Project Purpose & Dual-Repository Architecture
 
-**GIN-Win-Optimizer** is an enterprise-grade, standalone Windows optimization and deep system cleaning suite designed to eliminate telemetry, declutter the Windows shell, tune kernel responsiveness, strip pre-installed bloatware, and reclaim gigabytes of disk storage without breaking Windows updates or universal apps.
+**GIN-Win-Optimizer** is a standalone, single-file polyglot hybrid CMD/PowerShell WPF optimizer and deep cleaner for Windows 10 and 11.
 
-Engineered as a single-file polyglot hybrid (`.cmd` wrapper + embedded PowerShell 5.1 / WPF runtime), it requires **zero installation**, zero external DLLs, and zero internet dependencies. You can double-click it directly from a USB flash drive or desktop, elevate with a single UAC click, and execute comprehensive system tuning via a modern, dark-themed graphical interface.
-
----
-
-## ⚡ Key Highlights & Architecture
-
-- **Single-File Polyglot Hybrid (`.cmd` + WPF PowerShell):** Boots through a micro CMD launcher that verifies Administrator rights, auto-elevates via UAC if necessary, and compiles an embedded Base64-encoded XAML UI entirely in memory using .NET PresentationFramework.
-- **Single-Window Modern Dark GUI:** Pure Win32/WPF interface with a dark palette (`#131518`), customizable real-time terminal emulator, progress indicators, and instant trilingual localization (English, Czech, Russian).
-- **Thread-Safe Dispatcher Queue:** Prevents PowerShell 5.1 runspace deadlocks and multithreaded collision crashes (`PSInvalidOperationException`) during external operations like `cleanmgr`, `dism`, and `sfc` by using synchronous stream polling.
-- **Persistent Results Log:** The optimization window **never** closes automatically upon task completion. All execution logs, task statuses, warnings, and success messages remain fully visible in the terminal log for review, clipboard copying, or disk export.
-- **Hardware-Level Dual Audio Confirmation:** Fires two distinct, low-pitched confirmation tones (`320 Hz`, 180ms + 220ms) directly through `kernel32.dll!Beep`, guaranteeing audible confirmation on all sound devices and internal motherboard buzzers.
-- **Windows 11 Taskbar Decluttering with Live Reload:** Fully suppresses taskbar clutter (Search Box, Widgets, Task View, Chat, Copilot) across all user hives (`HKCU`, `HKLM`, `HKEY_USERS`), and automatically restarts `explorer.exe` safely so changes apply instantly without requiring a full machine reboot.
+- **Private Repository (`Secret_Privat`):** Contains the master source code, development scripts, internal deployment configurations, MEGA synchronization rules, and local caching protocols.
+- **Public Repository (`Windows_scripts`):** Contains clean production releases, comprehensive English-only user documentation, and public changelogs for the community. Internal deployment paths and personal cloud directories are strictly excluded from the public repository.
 
 ---
 
-## 🛠️ Complete Feature Breakdown (97 Modules)
+## 🖥️ Target Deployment & Cloud Storage Paths (Internal Only)
 
-### 1. 🔒 Privacy & Diagnostics Telemetry
-- Disables Connected User Experiences and Telemetry (`DiagTrack`).
-- Disables WAP Push Message Routing Service (`dmwappushservice`).
-- Disables Windows Error Reporting Service (`WerSvc`).
-- Restricts diagnostics data collection via Group Policy (`AllowTelemetry = 0`, `MaxTelemetryAllowed = 0`).
-- Disables user Advertising ID across all user profiles.
-- Disables inking and typing data collection / text harvest.
-- Disables Windows Activity History (Timeline) and cloud synchronization.
-- Disables Geolocation Sensor Service (`lfsvc`) and sensor permissions.
-- Disables Windows Customer Experience Improvement Program (CEIP) scheduled tasks.
-- Permanently blocks and disables Cortana assistant in the Windows Registry.
-
-### 2. 🛡️ Security, UAC & SmartScreen
-- **Silent UAC for Administrators:** Disables screen dimming and prompt popups for administrator accounts (`ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`) while keeping modern UWP/Store apps functioning properly.
-- Configures Admin Approval Mode for the built-in Administrator account.
-- Disables SmartScreen filter for downloaded applications and File Explorer.
-- Disables the annoying *"Open File - Security Warning"* dialog for trusted executable file types (`.exe`, `.bat`, `.cmd`, `.ps1`, `.msi`, `.zip`, `.rar`, `.7z`).
-
-### 3. ☁️ Cloud & Consumer Features
-- **OneDrive Uninstaller:** Completely uninstalls Microsoft OneDrive and blocks future reinstallations via policy (can be unchecked to preserve OneDrive).
-- Disables Windows Settings synchronization with Microsoft Cloud Accounts.
-- Disables Bing Web Search in the Start Menu (restores 100% local fast searching).
-- Disables Windows Spotlight lock screen ads, quizzes, and sponsored tips.
-- Blocks background silent installation of consumer bloatware and sponsored third-party store apps (`DisableWindowsConsumerFeatures = 1`).
-
-### 4. 🌐 Microsoft Edge Optimization
-- Disables Edge background execution after closing the browser window.
-- Disables Edge Startup Boost to free up RAM at boot.
-- Disables Edge telemetry reporting and shopping assistant / coupon scrapers.
-- Disables the Edge sidebar and built-in promotional panels.
-- Disables pre-launching Edge during Windows startup.
-- Disables the mandatory First Run Experience and welcome wizard.
-- Unpins Edge from the Taskbar and prevents automatic desktop shortcut creation.
-
-### 5. 🪟 Explorer, Desktop, Taskbar & Start Menu (Dism++ Tweaks)
-- **Windows 11 Taskbar Decluttering:**
-  - Completely hides the Taskbar Search Box and Search Icon (`SearchboxTaskbarMode = 0`).
-  - Disables Windows 11 Widgets and News Feed (`TaskbarDa = 0`, `Feeds = 2`).
-  - Removes the Microsoft Teams Chat icon (`TaskbarMn = 0`).
-  - Disables Windows Copilot AI button and sidebar integration.
-  - Disables Windows Recall AI background screenshot collection.
-  - Hides the Task View button (`ShowTaskViewButton = 0`).
-- **Start Menu Cleanup:** Cleans the Windows 11 Start Menu, hides the "Recommended" section, clears recent documents history, and enables the compact layout mode.
-- **Classic Context Menu:** Restores the Windows 10 classic context menu on Windows 11 (bypasses the cumbersome *"Show More Options"* extra click).
-- **Taskbar & Tray Settings:**
-  - Always displays all icons in the system tray (prevents hiding behind the chevron arrow).
-  - Uncombines taskbar buttons (`Never Combine` mode).
-  - Displays the classic "This PC" icon on the desktop.
-  - Configures 24-hour clock format with live seconds in the system tray.
-  - Locks the taskbar to prevent accidental layout shifts.
-- **File Explorer Tuning:**
-  - Opens File Explorer directly to "This PC" instead of "Quick Access".
-  - Hides 6 redundant user folders (3D Objects, Music, Videos, etc.) from the "This PC" folder tree.
-  - Disables the `"- Shortcut"` text suffix when generating new shortcuts.
-  - Displays full folder paths in File Explorer title bars.
-  - Launches folder windows in a separate memory process to prevent desktop crashes.
-
-### 6. 📋 Context Menu Cleanup
-- Removes redundant right-click clutter (Troubleshoot compatibility, Paint 3D, Disc Burn, Cast to Device).
-- Removes WinRAR *"Compress and email..."* clutter entries.
-
-### 7. 🔄 Windows Update, BSOD & System
-- Excludes hardware device drivers from Windows Update (prevents broken OEM driver overwrites).
-- Excludes Malicious Software Removal Tool (MSRT) downloads.
-- Disables automatic reboot on Blue Screen of Death (BSOD), giving you time to read stop codes.
-- Configures small kernel memory minidumps to save NVMe/SSD drive capacity.
-- Disables Fast Startup (prevents kernel corruption and sleep/wake driver lockups).
-- Disables Remote Assistance (`fAllowToGetHelp = 0`).
-- Restores the classic, ultra-fast Windows Photo Viewer.
-- Enables Word Wrap and Status Bar by default in classic Notepad.
-
-### 8. 📦 App Debloater & Provisioned Packages
-- Strips Xbox packages (Xbox App, GameBar, Gaming Services — uncheck for gaming rigs).
-- Strips pre-installed promo games (Candy Crush, Solitaire Collection, TikTok, Disney stubs).
-- Strips MSN News, Weather, Sports, and Money/Finance apps.
-- Strips the Microsoft 365 / GetOffice promotion stub.
-- Strips Clipchamp video editor.
-- Strips legacy People components and mail stubs.
-- Strips Feedback Hub and Get Help / Tips applications.
-- Strips Phone Link (uncheck if using Android/iOS pairing).
-
-### 9. ⚙️ System Performance & Services
-- Disables SysMain / Superfetch (prolongs SSD lifespan and eliminates random 100% disk usage spikes).
-- Disables Windows Search indexing service (WSearch) to reduce CPU and background I/O contention.
-- Disables Remote Registry service for system hardening.
-- Disables Delivery Optimization P2P bandwidth sharing.
-- Disables Windows Reserved Storage to instantly reclaim ~7 GB of SSD storage.
-- Disables Hibernation and deletes `hiberfil.sys` (frees gigabytes equal to physical RAM).
-- Activates the hidden Windows **Ultimate Performance** power plan (`e9a42b02-d5df-448d-aa00-03f14749eb61`).
-- Disables NTFS LastAccess updates and 8.3 short filename generation, then executes an SSD TRIM operation.
-- Disables network Task Offload and TCP Chimney to prevent sudden online gaming latency spikes.
-- Tunes visual effects for maximum responsiveness while strictly maintaining font smoothing (ClearType).
-- Disables Program Compatibility Assistant (`PcaSvc`).
-- Disables Distributed Link Tracking Client (`TrkWks`).
-
-### 10. 🧹 Cache, Temp & Deep Component Cleaning
-- Cleans user temporary folders (`%TEMP%` and `AppData\Local\Temp`).
-- Cleans system temporary directory (`C:\Windows\Temp`).
-- Cleans Windows Update download cache (`C:\Windows\SoftwareDistribution\Download`).
-- Cleans thumbnail database caches (`thumbcache_*.db`).
-- Flushes the local DNS client cache and clears DirectX shader cache (`D3DSCache`).
-- Purges all Windows Event Viewer logs (`wevtutil cl`).
-- Empties Recycle Bins on all mounted drives.
-- **Sequential Disk Cleanup:** Executes automated system disk cleanup (`cleanmgr.exe /sagerun:6553 /d C:`) with intelligent disk lock detection.
-- **Component Store Repair:** Runs DISM Component Store verification (`dism.exe /Online /Cleanup-Image /RestoreHealth`).
-- **WinSxS Deep Cleanup:** Runs DISM ResetBase (`dism.exe /Online /Cleanup-Image /StartComponentCleanup /ResetBase`) to permanently discard superseded update backups.
-- **System Integrity:** Runs SFC Scannow integrity verification (`sfc.exe /scannow`).
+| Environment / Target | Remote / Local Path | Purpose |
+| :--- | :--- | :--- |
+| 🪟 **Windows Desktop** | `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v016.cmd` | Vladimir's primary synchronized desktop workspace |
+| ☁️ **MEGA Cloud Desktop** | `/MEGA/DOCS/desktop/GIN-Win-Optimizer_v016.cmd` | Cloud source for real-time Windows desktop sync |
+| 💾 **MEGA Win-Flash Drive** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v016.cmd` | Portable sysadmin USB flash toolkit folder |
+| ☁️ **MEGA Cloud Win-Flash** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v016.cmd` | Master cloud repository for flash utilities |
+| 🗄️ **Server Permanent Cache** | `/root/AI_222/cache/win_opt/GIN-Win-Optimizer_v016.cmd` | Central DE-222 node permanent offline backup cache |
+| 📂 **Private Git Repository** | `/root/Secret_Privat/Windows/GIN-Win-Optimizer/` | Master development branch |
+| 🌐 **Public Git Repository** | `/root/Windows_scripts/Windows/GIN-Win-Optimizer/` | Production public mirror |
 
 ---
 
-## 🎛️ Presets
+## ⚡ Deployment Pipeline Automation Commands (DE-222 Node)
 
-The interface provides 4 one-click configuration presets:
+When releasing a new version (`vXXX`), run the following autonomous deployment commands:
 
-| Preset Button | Description |
-| :--- | :--- |
-| **✓ Select All (Max Clean)** | Enables all 97 optimization, telemetry, debloat, and cleaning modules for a pristine, bloat-free system. |
-| **🏢 Office (Keep OneDrive)** | Enables all optimizations while preserving Microsoft OneDrive, Microsoft 365, and Phone Link. |
-| **⚡ Gaming (Keep Xbox)** | Enables all optimizations while preserving Xbox services, GameBar, and gamepad dependencies. |
-| **✗ Deselect All** | Clears all checkboxes to allow granular custom selection. |
+```bash
+# 1. Update Server Permanent Cache
+cp "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/root/AI_222/cache/win_opt/GIN-Win-Optimizer_vXXX.cmd"
 
----
+# 2. Deploy to MEGA Flash Drive (Remove previous, upload current)
+mega-rm "/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v<OLD>.cmd" 2>/dev/null || true
+mega-put -c "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/MEGA/WIN-FLASH/Util-WINDOWS/"
 
-## 🚀 How to Run
+# 3. Deploy to MEGA Desktop (Strict Single-Version Policy)
+mega-rm "/MEGA/DOCS/desktop/GIN-Win-Optimizer_v<OLD>.cmd" 2>/dev/null || true
+mega-put -c "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/MEGA/DOCS/desktop/"
 
-1. Download [`GIN-Win-Optimizer_v015.cmd`](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v015.cmd).
-2. Right-click and choose **Run as administrator** (or simply double-click; the script will prompt for elevation automatically).
-3. Select your language preference in the top-right corner (**English**, **Čeština**, or **Русский**).
-4. Choose a Preset or toggle individual options.
-5. Click **🚀 START OPTIMIZATION**.
-6. Track live progress in the integrated terminal. When finished, you will hear two short low-pitched confirmation beeps (`320 Hz`), and the detailed log will remain open for your inspection.
-7. Reboot your PC to finalize all kernel and shell changes.
+# 4. Synchronize Public Repository (Windows_scripts)
+cp -r "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/root/Windows_scripts/Windows/GIN-Win-Optimizer/"
+cp "/root/Secret_Privat/Windows/GIN-Win-Optimizer/version.json" "/root/Windows_scripts/Windows/GIN-Win-Optimizer/"
+cp "/root/Secret_Privat/Windows/GIN-Win-Optimizer/CHANGELOG.md" "/root/Windows_scripts/Windows/GIN-Win-Optimizer/"
 
----
-
-## 📋 System Requirements
-
-- **Operating System:** Windows 10 (1903 or newer), Windows 11 (all versions), Windows Server 2019/2022/2025.
-- **Architecture:** x86_64 (64-bit) or x86 (32-bit).
-- **Runtime:** PowerShell 5.1 (pre-installed natively on all modern Windows versions) with .NET Framework 4.5+ (built-in).
-- **Privileges:** Administrator privileges (script auto-elevates via UAC).
+# 5. Commit and push both repositories
+cd /root/Secret_Privat && git add Windows/ && git commit -m "chore(GIN-Win-Optimizer): release vXXX" && git push origin main
+cd /root/Windows_scripts && git add Windows/GIN-Win-Optimizer/ && git commit -m "release(GIN-Win-Optimizer): vXXX" && git push origin main
+```
 
 ---
 
-## 📄 License
+## 🛡️ Architecture & Key Technical Specs
 
-This project is licensed under the [MIT License](LICENSE) — free for both personal and commercial use.
+- **Polyglot Hybrid Architecture:** Starts as a classic `.cmd` batch file with automatic Administrator UAC elevation, then immediately executes embedded PowerShell 5.1 code without creating temporary files on disk.
+- **Pure ASCII WPF GUI:** The modern dark graphical interface (XAML) is compressed in Base64 and rendered dynamically in memory via `[System.Windows.Markup.XamlReader]`.
+- **Dispatcher Single-Threaded Output:** Avoids multithreaded runspace race conditions in PowerShell 5.1 by polling output streams synchronously during DISM / Cleanmgr runs.
+- **Deep Windows 11 Taskbar Enforcement:** Clears Search, Feeds/Widgets, Chat, Copilot, and Task View across `HKCU`, `HKLM`, and `HKEY_USERS`, immediately validated via clean `explorer.exe` restart.
+- **Dual Low-Pitch Tone Audio Notification:** Win32 API `kernel32.dll!Beep(320, 180)` and `Beep(320, 220)`.
