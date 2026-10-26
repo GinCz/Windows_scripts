@@ -21,9 +21,8 @@
 
 | Environment / Target | Remote / Local Path | Purpose |
 | :--- | :--- | :--- |
-| 🪟 **Windows Desktop** | `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v018.cmd` | Vladimir's primary synchronized desktop workspace |
-| ☁️ **MEGA Cloud Desktop** | `/MEGA/DOCS/desktop/GIN-Win-Optimizer_v018.cmd` | Cloud source for real-time Windows desktop sync |
-| 💾 **MEGA Win-Flash Drive** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v018.cmd` | Portable sysadmin USB flash toolkit folder |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v018.cmd` | Portable physical sysadmin USB flash toolkit folder |
+| ☁️ **MEGA Win-Flash Drive** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v018.cmd` | Synchronized cloud flash toolkit folder |
 | ☁️ **MEGA Cloud Win-Flash** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v018.cmd` | Master cloud repository for flash utilities |
 | 🗄️ **Server Permanent Cache** | `/root/AI_222/cache/win_opt/GIN-Win-Optimizer_v018.cmd` | Central DE-222 node permanent offline backup cache |
 | 📂 **Private Git Repository** | `/root/Secret_Privat/Windows/GIN-Win-Optimizer/` | Master development branch |
