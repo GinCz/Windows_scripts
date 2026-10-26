@@ -4,6 +4,25 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v021] — 2026-10-26
+### Autonomous Reboot Elimination, Safe Folder Migration & People/IE Purge
+- **No Automatic Reboot & Dedicated Bright 'Reboot' Button**:
+  - Removed automatic reboot and modal Yes/No reboot prompt from optimization completion.
+  - Added a high-visibility, bright red `⚡ REBOOT` (`#dc2626` / `#ff4d4f`) button directly into the Top Header and Bottom Action Bar.
+  - User retains 100% control to inspect terminal logs indefinitely and reboot whenever ready via explicit confirmation dialog.
+- **Safe, Zero-Error Documents & Desktop Migration (D:\DOCS & D:\DOCS\desktop)**:
+  - Completely replaced Robocopy `/MOVE` on root user profile directories with safe PowerShell file enumeration and per-item migration.
+  - Prevents retry loops, access denied errors on hidden OS junctions, and directory lock conflicts.
+  - Safely creates `D:\DOCS` and `D:\DOCS\desktop`, updates registry (`User Shell Folders` and `Shell Folders`), removes stray `desktop.ini`, and notifies shell.
+- **Permanent People Button Purge on Windows 10 & 11**:
+  - Fully enforces `HidePeopleBar = 1` in both user and machine Policies (`HKCU` and `HKLM`).
+  - Pre-creates `Explorer\Advanced\People` key if absent and sets `PeopleBand = 0` and `ShowTaskbarPinPople = 0`.
+- **Complete Unpin & Removal of Internet Explorer**:
+  - Automatically purges all Internet Explorer `.lnk` shortcuts from User Pinned Taskbar, Start Menu, User Desktop, and Public Desktop.
+  - Sets policy `NotifyDisableIEOptions = 1` and hides legacy IE desktop namespace icons.
+
+---
+
 ## [v020] — 2026-10-26
 ### Yellow Highlighted Shell Folders Relocation & Immediate System Restart
 - **Yellow Highlighted Shell Folder Relocation Options (Top of Explorer/Desktop Section)**:
