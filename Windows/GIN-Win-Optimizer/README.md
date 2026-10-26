@@ -4,7 +4,7 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target OS:** Windows 10 / 11 (x86_64, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v016` (Active)
+> **Current Version:** `v017` (Active)
 
 ---
 
@@ -21,11 +21,11 @@
 
 | Environment / Target | Remote / Local Path | Purpose |
 | :--- | :--- | :--- |
-| 🪟 **Windows Desktop** | `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v016.cmd` | Vladimir's primary synchronized desktop workspace |
-| ☁️ **MEGA Cloud Desktop** | `/MEGA/DOCS/desktop/GIN-Win-Optimizer_v016.cmd` | Cloud source for real-time Windows desktop sync |
-| 💾 **MEGA Win-Flash Drive** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v016.cmd` | Portable sysadmin USB flash toolkit folder |
-| ☁️ **MEGA Cloud Win-Flash** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v016.cmd` | Master cloud repository for flash utilities |
-| 🗄️ **Server Permanent Cache** | `/root/AI_222/cache/win_opt/GIN-Win-Optimizer_v016.cmd` | Central DE-222 node permanent offline backup cache |
+| 🪟 **Windows Desktop** | `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v017.cmd` | Vladimir's primary synchronized desktop workspace |
+| ☁️ **MEGA Cloud Desktop** | `/MEGA/DOCS/desktop/GIN-Win-Optimizer_v017.cmd` | Cloud source for real-time Windows desktop sync |
+| 💾 **MEGA Win-Flash Drive** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v017.cmd` | Portable sysadmin USB flash toolkit folder |
+| ☁️ **MEGA Cloud Win-Flash** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v017.cmd` | Master cloud repository for flash utilities |
+| 🗄️ **Server Permanent Cache** | `/root/AI_222/cache/win_opt/GIN-Win-Optimizer_v017.cmd` | Central DE-222 node permanent offline backup cache |
 | 📂 **Private Git Repository** | `/root/Secret_Privat/Windows/GIN-Win-Optimizer/` | Master development branch |
 | 🌐 **Public Git Repository** | `/root/Windows_scripts/Windows/GIN-Win-Optimizer/` | Production public mirror |
 
