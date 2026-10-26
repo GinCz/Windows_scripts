@@ -2,7 +2,7 @@
 
 > **Author / Chief Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target Platforms:** Windows 10 & Windows 11 (64-bit, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v018` (Active)  
+> **Current Version:** `v019` (Active)  
 > **Architecture:** Polyglot Hybrid CMD / PowerShell 5.1 / WPF Dark-Themed GUI  
 > **License:** Proprietary / Private Source (Documentation & Metadata Public Mirror)
 
@@ -56,7 +56,7 @@ Per strict architectural standards, this project operates under a dual-repositor
 | :--- | :--- | :--- |
 | 🔒 **[Secret_Privat ↗](https://github.com/GinCz/Secret_Privat)** | Private Master Repository | **Full source code (`.cmd`), deployment manifests, and internal tools.** |
 | 🌐 **[Windows_scripts ↗](https://github.com/GinCz/Windows_scripts)** | Public Mirror | **English documentation (`README.md`), changelogs, and metadata only.** |
-| 💾 **`V:\WIN-FLASH\Util-WINDOWS\`** | Physical USB Flash (Ventoy) | Strictly **2 latest production versions** (`v018` and `v017`). |
+| 💾 **`V:\WIN-FLASH\Util-WINDOWS\`** | Physical USB Flash (Ventoy) | Strictly **2 latest production versions** (`v019` and `v017`). |
 | ☁️ **`D:\MEGA\WIN-FLASH\Util-WINDOWS\`** | Cloud Flash Mirror | Synchronized cloud backup of the 2 latest production versions. |
 | 🚫 **Desktop (`D:\MEGA\DOCS\desktop\`)** | Desktop Workspace | **Strictly excluded.** No optimizer files are placed on Desktop. |
 
@@ -64,7 +64,7 @@ Per strict architectural standards, this project operates under a dual-repositor
 
 ## 📋 Release History Highlights
 
-- **v018 (Current):** Highlighted the two longest DISM operations in bright red at the top of the cleaning group, marked `(slow - медленно)`, unchecked by default across all presets.
+- **v019 (Current):** Highlighted the two longest DISM operations in bright red at the top of the cleaning group, marked `(slow - медленно)`, unchecked by default across all presets.
 - **v017:** Added taskbar unpinning for Internet Explorer & Edge, enforced People band removal policies, permanent "This PC" desktop icon guarantee, and automated soft Explorer reload.
 - **v016:** Introduced global List folder view sorted by Type, sequential C: then D: cleanmgr execution, and readable dark-theme disabled button styling.
 - **v015:** Full Windows Update disabler and elimination of silent background downloads.

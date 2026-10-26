@@ -4,6 +4,19 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v019] — 2026-10-26
+### Smart Redundancy Elimination & Registry State Markers
+- **Smart CompactOS State Detection & Avoidance of Redundant Compression**:
+  - Dynamically evaluates system compression state via `compact.exe /CompactOS:query`. If Windows binaries are already in the compressed state (`Compact state: always`), the optimizer informs the user and skips redundant re-compression, protecting SSD lifespan and saving 5-15 minutes.
+  - Automatically records state flag and timestamps in `HKLM:\SOFTWARE\GIN-Win-Optimizer`.
+- **SFC Scannow Made Optional & Highlighted**:
+  - `chk_deep_sfc_compact` moved to the top alongside the 2 heavy DISM tasks (now forming a 3-item maintenance block).
+  - Highlighted in bright red (`#ff4d4f`) and Bold, marked `(slow - медленно)`.
+  - Set to **OFF by default** across all presets (`Select All`, `Office`, `Gaming`).
+  - Records verification timestamp (`LastSfcScan`) in `HKLM:\SOFTWARE\GIN-Win-Optimizer`.
+
+---
+
 ## [v018] — 2026-10-26
 ### UI & Performance Refinement
 - **Highlight Longest Maintenance Operations in Bright Red**:
