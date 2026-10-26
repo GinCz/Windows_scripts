@@ -4,6 +4,23 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v020] — 2026-10-26
+### Yellow Highlighted Shell Folders Relocation & Immediate System Restart
+- **Yellow Highlighted Shell Folder Relocation Options (Top of Explorer/Desktop Section)**:
+  - Added 2 prominent checkboxes styled in bright yellow (`#facc15`, bold, amber border `#eab308` with dark background `#231f08`):
+    - `chk_reloc_documents`: Relocates Documents folder to `D:\DOCS`.
+    - `chk_reloc_desktop`: Relocates Desktop folder to `D:\DOCS\desktop`.
+  - **OFF by default** and excluded from automatic presets (`Select All`, `Office`, `Gaming`) to ensure relocation only occurs when explicitly desired.
+  - Automatically verifies existence of drive `D:\` before execution to prevent data loss.
+  - Safely migrates existing files via robocopy, updates `User Shell Folders` and `Shell Folders` registry keys, purges stray `desktop.ini`, and triggers shell notification (`SHChangeNotify`).
+  - Records redirection paths and timestamps in `HKLM:\SOFTWARE\GIN-Win-Optimizer`.
+- **Integrated System Restart Button & Completion Prompt**:
+  - Added dedicated high-contrast `🔄 RESTART PC` buttons (`btnRestartTop` and `btnRestartBottom`) in the top header and bottom action bar.
+  - Buttons automatically reveal upon optimization completion so the user can inspect logs and reboot at will.
+  - Completion dialog converted to interactive `Yes/No` prompt offering immediate reboot to apply shell and registry redirections.
+
+---
+
 ## [v019] — 2026-10-26
 ### Smart Redundancy Elimination & Registry State Markers
 - **Smart CompactOS State Detection & Avoidance of Redundant Compression**:
