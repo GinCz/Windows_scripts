@@ -1,6 +1,6 @@
-# 🚀 GIN-Win-Optimizer Plus (`v014`)
+# 🚀 GIN-Win-Optimizer Plus (`v015`)
 
-[![Release](https://img.shields.io/badge/Release-v014-00b4d8?style=for-the-badge&logo=windows)](https://github.com/GinCz/Windows_scripts/releases)
+[![Release](https://img.shields.io/badge/Release-v015-00b4d8?style=for-the-badge&logo=windows)](https://github.com/GinCz/Windows_scripts/releases)
 [![Architecture](https://img.shields.io/badge/Architecture-Polyglot_CMD%2FPowerShell-1e3a5f?style=for-the-badge&logo=powershell)](https://github.com/GinCz/Windows_scripts)
 [![Platform](https://img.shields.io/badge/Platform-Windows_10_%2F_11_x64-25282e?style=for-the-badge&logo=windows11)](https://github.com/GinCz/Windows_scripts)
 [![Languages](https://img.shields.io/badge/Languages-EN_%7C_CS_%7C_RU-success?style=for-the-badge)](https://github.com/GinCz/Windows_scripts)
@@ -158,7 +158,7 @@ The interface provides 4 one-click configuration presets:
 
 ## 🚀 How to Run
 
-1. Download [`GIN-Win-Optimizer_v014.cmd`](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v014.cmd).
+1. Download [`GIN-Win-Optimizer_v015.cmd`](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v015.cmd).
 2. Right-click and choose **Run as administrator** (or simply double-click; the script will prompt for elevation automatically).
 3. Select your language preference in the top-right corner (**English**, **Čeština**, or **Русский**).
 4. Choose a Preset or toggle individual options.
