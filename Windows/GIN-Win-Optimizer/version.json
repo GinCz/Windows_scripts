@@ -4,8 +4,11 @@
   "description": "Windows 10/11 Ultimate Optimizer & Deep Cleaner Plus (Single-Window WPF Polyglot Hybrid CMD/PowerShell)",
   "release_date": "2026-10-26",
   "author": "Vladimir Bulantsev (GinCz) & Antigravity",
-  "repository_private": "https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer",
   "repository_public": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer",
-  "mega_flash_target": "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\GIN-Win-Optimizer_v018.cmd",
-  "usb_flash_target": "V:\\WIN-FLASH\\Util-WINDOWS\\GIN-Win-Optimizer_v018.cmd"
+  "repository_private": "https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer",
+  "source_distribution": "Private repository only (Secret_Privat)",
+  "flash_paths": [
+    "V:\\WIN-FLASH\\Util-WINDOWS\\GIN-Win-Optimizer_v018.cmd",
+    "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\GIN-Win-Optimizer_v018.cmd"
+  ]
 }

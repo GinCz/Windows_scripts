@@ -1,67 +1,80 @@
-# 🔒 GIN-Win-Optimizer (Private Master Repository)
+# 🚀 GIN-Win-Optimizer — Windows 10 & 11 Ultimate Performance Suite
 
-> **Private Repository:** [Secret_Privat / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer)  
-> **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
-> **Author / Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
-> **Target OS:** Windows 10 / 11 (x86_64, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v018` (Active)
-
----
-
-## 🧭 Project Purpose & Dual-Repository Architecture
-
-**GIN-Win-Optimizer** is a standalone, single-file polyglot hybrid CMD/PowerShell WPF optimizer and deep cleaner for Windows 10 and 11.
-
-- **Private Repository (`Secret_Privat`):** Contains the master source code, development scripts, internal deployment configurations, MEGA synchronization rules, and local caching protocols.
-- **Public Repository (`Windows_scripts`):** Contains clean production releases, comprehensive English-only user documentation, and public changelogs for the community. Internal deployment paths and personal cloud directories are strictly excluded from the public repository.
+> **Author / Chief Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
+> **Target Platforms:** Windows 10 & Windows 11 (64-bit, all editions: Home, Pro, Enterprise, LTSC)  
+> **Current Version:** `v018` (Active)  
+> **Architecture:** Polyglot Hybrid CMD / PowerShell 5.1 / WPF Dark-Themed GUI  
+> **License:** Proprietary / Private Source (Documentation & Metadata Public Mirror)
 
 ---
 
-## 🖥️ Target Deployment & Cloud Storage Paths (Internal Only)
+## 🧭 Overview & Philosophy
 
-| Environment / Target | Remote / Local Path | Purpose |
+**GIN-Win-Optimizer** is an enterprise-grade, single-window system optimizer and deep cleaner for Windows 10 and Windows 11 workstations and laptops. It unifies over 97 deep system tweaks, telemetry eliminators, privacy enforcers, and disk cleaning procedures into an intuitive, dark-themed graphical interface.
+
+Unlike generic cleanup utilities, GIN-Win-Optimizer is designed with DevOps-grade precision:
+* **Zero External Dependencies:** Built as a polyglot CMD/PowerShell hybrid that executes entirely in-memory using native Windows APIs (`PresentationFramework`, `kernel32.dll`, Win32 Shell COM).
+* **Single-Window Modern Dark WPF UI:** Pure ASCII Base64 XAML rendered dynamically without compiling or extracting temporary files.
+* **Safe, Non-Blocking Live Output:** Custom single-threaded Dispatcher output loop prevents PowerShell runspace pipeline collisions during long operations (DISM, SFC, Cleanmgr).
+* **Trilingual at Runtime:** Instant UI language switching between **English (EN)**, **Čeština (CZ)**, and **Русский (RU)** with crisp, high-contrast badges.
+
+---
+
+## 🛡️ Core Capabilities & Module Breakdown
+
+### 1. Privacy & Diagnostics Telemetry
+- Completely disables Connected User Experiences and Telemetry (`DiagTrack`, `dmwappushservice`).
+- Disables Windows Error Reporting (`WerSvc`) and telemetry scheduled tasks in Task Scheduler.
+- Blocks advertising ID tracking, inking/typing personalization, and location sensors.
+- Disables Cortana integration across system policies and registry.
+
+### 2. Windows Update & Maintenance Control
+- Complete manual update control: disables automatic background updates (`wuauserv`, `UsoSvc`, `dosvc`, `WaaSMedicSvc`).
+- Prevents silent background downloads (`MoUsoCoreWorker`, `UsoClient`) and driver overrides.
+- Excludes driver updates and Malicious Software Removal Tool (MSRT) bloat from Windows Update.
+
+### 3. Explorer, Desktop & Taskbar (Windows 10 / 11)
+- **Always Show All Tray Icons:** Automatically reveals all notification area icons next to the clock (disables auto-tray chevron overflow on Windows 10 and promotes all icons in Windows 11).
+- **Global Folder View Mode:** Sets default folder view template globally to **List** (`Mode = 3`, `LogicalViewMode = 4`) and default sorting to **Type** (`SortByList = prop:System.ItemTypeText;System.ItemNameDisplay`) across all standard folder types, removing annoying date groupings.
+- **Unpin Bloatware from Taskbar:** Unpins legacy Internet Explorer and Microsoft Edge from the taskbar, blocking auto-repinning policies.
+- **Hide People Band:** Permanently eliminates the People bar on Windows 10 via policy and registry.
+- **Desktop "This PC" Guarantee:** Enforces visible "This PC" / "Этот компьютер" icon across all user profiles and cloud desktops.
+- **Clean Taskbar (Windows 11):** Completely hides Search box, Widgets/Feeds, Chat/Teams, and Task View buttons.
+
+### 4. Sequential Disk Cleanup & Cache Evacuation
+- **Sequential Dual-Drive Cleanup:** Runs standard Windows Disk Cleanup (`cleanmgr.exe /autoclean /d C:`) first and waits for full exit; only then proceeds to Drive D:, preventing simultaneous dialog conflicts.
+- Empties temporary caches: `%TEMP%`, `Windows\Temp`, `SoftwareDistribution\Download`, DirectX shader cache, thumbnail databases (`thumbcache_*.db`), and Event Logs.
+- **High-Visibility Long-Running Operations:** The two slowest operations (**DISM RestoreHealth** and **WinSxS ResetBase**) are highlighted in bright red at the top of the group, tagged with `(slow - медленно)`, and unchecked by default to prevent unexpected multi-hour maintenance.
+
+---
+
+## 📦 Project Distribution & Storage Architecture
+
+Per strict architectural standards, this project operates under a dual-repository model:
+
+| Repository / Storage Location | Purpose | Content Policy |
 | :--- | :--- | :--- |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v018.cmd` | Portable physical sysadmin USB flash toolkit folder |
-| ☁️ **MEGA Win-Flash Drive** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v018.cmd` | Synchronized cloud flash toolkit folder |
-| ☁️ **MEGA Cloud Win-Flash** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v018.cmd` | Master cloud repository for flash utilities |
-| 🗄️ **Server Permanent Cache** | `/root/AI_222/cache/win_opt/GIN-Win-Optimizer_v018.cmd` | Central DE-222 node permanent offline backup cache |
-| 📂 **Private Git Repository** | `/root/Secret_Privat/Windows/GIN-Win-Optimizer/` | Master development branch |
-| 🌐 **Public Git Repository** | `/root/Windows_scripts/Windows/GIN-Win-Optimizer/` | Production public mirror |
+| 🔒 **[Secret_Privat ↗](https://github.com/GinCz/Secret_Privat)** | Private Master Repository | **Full source code (`.cmd`), deployment manifests, and internal tools.** |
+| 🌐 **[Windows_scripts ↗](https://github.com/GinCz/Windows_scripts)** | Public Mirror | **English documentation (`README.md`), changelogs, and metadata only.** |
+| 💾 **`V:\WIN-FLASH\Util-WINDOWS\`** | Physical USB Flash (Ventoy) | Strictly **2 latest production versions** (`v018` and `v017`). |
+| ☁️ **`D:\MEGA\WIN-FLASH\Util-WINDOWS\`** | Cloud Flash Mirror | Synchronized cloud backup of the 2 latest production versions. |
+| 🚫 **Desktop (`D:\MEGA\DOCS\desktop\`)** | Desktop Workspace | **Strictly excluded.** No optimizer files are placed on Desktop. |
 
 ---
 
-## ⚡ Deployment Pipeline Automation Commands (DE-222 Node)
+## 📋 Release History Highlights
 
-When releasing a new version (`vXXX`), run the following autonomous deployment commands:
+- **v018 (Current):** Highlighted the two longest DISM operations in bright red at the top of the cleaning group, marked `(slow - медленно)`, unchecked by default across all presets.
+- **v017:** Added taskbar unpinning for Internet Explorer & Edge, enforced People band removal policies, permanent "This PC" desktop icon guarantee, and automated soft Explorer reload.
+- **v016:** Introduced global List folder view sorted by Type, sequential C: then D: cleanmgr execution, and readable dark-theme disabled button styling.
+- **v015:** Full Windows Update disabler and elimination of silent background downloads.
 
-```bash
-# 1. Update Server Permanent Cache
-cp "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/root/AI_222/cache/win_opt/GIN-Win-Optimizer_vXXX.cmd"
-
-# 2. Deploy to MEGA Flash Drive (Remove previous, upload current)
-mega-rm "/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v<OLD>.cmd" 2>/dev/null || true
-mega-put -c "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/MEGA/WIN-FLASH/Util-WINDOWS/"
-
-# 3. Deploy to MEGA Desktop (Strict Single-Version Policy)
-mega-rm "/MEGA/DOCS/desktop/GIN-Win-Optimizer_v<OLD>.cmd" 2>/dev/null || true
-mega-put -c "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/MEGA/DOCS/desktop/"
-
-# 4. Synchronize Public Repository (Windows_scripts)
-cp -r "/root/Secret_Privat/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_vXXX.cmd" "/root/Windows_scripts/Windows/GIN-Win-Optimizer/"
-cp "/root/Secret_Privat/Windows/GIN-Win-Optimizer/version.json" "/root/Windows_scripts/Windows/GIN-Win-Optimizer/"
-cp "/root/Secret_Privat/Windows/GIN-Win-Optimizer/CHANGELOG.md" "/root/Windows_scripts/Windows/GIN-Win-Optimizer/"
-
-# 5. Commit and push both repositories
-cd /root/Secret_Privat && git add Windows/ && git commit -m "chore(GIN-Win-Optimizer): release vXXX" && git push origin main
-cd /root/Windows_scripts && git add Windows/GIN-Win-Optimizer/ && git commit -m "release(GIN-Win-Optimizer): vXXX" && git push origin main
-```
+*For complete version details, see [`CHANGELOG.md`](./CHANGELOG.md).*
 
 ---
 
-## 🛡️ Architecture & Key Technical Specs
+## 👤 Author & Maintainer
 
-- **Polyglot Hybrid Architecture:** Starts as a classic `.cmd` batch file with automatic Administrator UAC elevation, then immediately executes embedded PowerShell 5.1 code without creating temporary files on disk.
-- **Pure ASCII WPF GUI:** The modern dark graphical interface (XAML) is compressed in Base64 and rendered dynamically in memory via `[System.Windows.Markup.XamlReader]`.
-- **Dispatcher Single-Threaded Output:** Avoids multithreaded runspace race conditions in PowerShell 5.1 by polling output streams synchronously during DISM / Cleanmgr runs.
-- **Deep Windows 11 Taskbar Enforcement:** Clears Search, Feeds/Widgets, Chat, Copilot, and Task View across `HKCU`, `HKLM`, and `HKEY_USERS`, immediately validated via clean `explorer.exe` restart.
-- **Dual Low-Pitch Tone Audio Notification:** Win32 API `kernel32.dll!Beep(320, 180)` and `Beep(320, 220)`.
+* **Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz))
+* **Email:** `gin@volny.cz` | `gin.vladimir@gmail.com`
+* **Profile:** Senior DevOps & Cloud Infrastructure Engineer, PCI DSS Certified Analyst
