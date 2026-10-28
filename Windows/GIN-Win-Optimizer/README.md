@@ -1,8 +1,8 @@
-# 🚀 GIN-Win-Optimizer — Windows 10 & 11 Ultimate Performance Suite
+﻿# 🚀 GIN-Win-Optimizer — Windows 10 & 11 Ultimate Performance Suite
 
 > **Author / Chief Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target Platforms:** Windows 10 & Windows 11 (64-bit, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v021` (Active)  
+> **Current Version:** `v025` (Active)  
 > **Architecture:** Polyglot Hybrid CMD / PowerShell 5.1 / WPF Dark-Themed GUI  
 > **License:** Proprietary / Private Source (Documentation & Metadata Public Mirror)
 

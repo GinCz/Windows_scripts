@@ -1,9 +1,61 @@
-# 📜 GIN-Win-Optimizer — Release History & Changelog
+﻿# 📜 GIN-Win-Optimizer — Release History & Changelog
 
 All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
 
 ---
 
+## [v025] вЂ” 2026-10-29
+### Dism++ Exact Parity for Windows Update
+- **Windows Update 1-to-1 Dism++ Profile Alignment**:
+  - Windows Update policies and registry keys now strictly replicate Dism++'s default optimization configuration:
+    1. **Dropdown `*РќР°СЃС‚СЂРѕР№РєР° РїСЂРѕРІРµСЂРєРё РѕР±РЅРѕРІР»РµРЅРёР№ РІ Р¦РµРЅС‚СЂРµ РѕР±РЅРѕРІР»РµРЅРёР№` (`*Configure check for updates`)**:
+       - Set to **`РќРµ РїСЂРѕРІРµСЂСЏС‚СЊ (РЅРµ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ)`** (`Never check for updates`).
+       - Configured via Group Policy and CurrentVersion fallback: `AUOptions = 1`, `NoAutoUpdate = 1`, and `CachedAUOptions = 1` in `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` and `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update`.
+    2. **Toggle 1 `РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё СѓСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ РѕР±РЅРѕРІР»РµРЅРёСЏ Р±РµР· РїРµСЂРµР·Р°РіСЂСѓР·РєРё`**:
+       - Configured strictly to **OFF (`0`)** via `AutoInstallMinorUpdates = 0` (resolved previous singular key typo).
+    3. **Toggle 2 `РџСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РІС‹РІРѕРґРёС‚СЃСЏ СѓРІРµРґРѕРјР»РµРЅРёРµ Рѕ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РїРµСЂРµР·Р°РіСЂСѓР·РєРё`**:
+       - Configured strictly to **OFF (`0` / purged)** via removal of `NoAutoRebootWithLoggedOnUsers` (previously set to `1`).
+    4. **Toggle 3 `Windows Update РЅРµ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ РґСЂР°Р№РІРµСЂС‹`**:
+       - Configured to **ON (`1`)** via `ExcludeWUDriversInQualityUpdate = 1` under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`.
+    5. **Toggle 4 `РћР±РЅРѕРІР»РµРЅРёРµ Windows РЅРµ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ СЃСЂРµРґСЃС‚РІРѕ СѓРґР°Р»РµРЅРёСЏ РІСЂРµРґРѕРЅРѕСЃРЅС‹С… РїСЂРѕРіСЂР°РјРј`**:
+       - Configured to **ON (`1`)** via `DontOfferThroughWUAU = 1` under `HKLM:\SOFTWARE\Policies\Microsoft\MRT`.
+  - **Service State Preservation**: Update services (`wuauserv`, `dosvc`, `UsoSvc`) are set to **`Manual` (`Start = 3`)** rather than permanently disabled (`Start = 4`), ensuring Microsoft Store, AppX deployment, DISM operations, and manual check-for-updates remain fully functional without system-level breakage.
+  - Purged aggressive artificial block `DoNotConnectToWindowsUpdateInternetLocations`.
+
+---
+## [v024] вЂ” 2026-10-29
+### Dism++ Exact Parity for Windows Update
+- **Windows Update 1-to-1 Dism++ Profile Alignment**:
+  - Windows Update policies and registry keys now strictly replicate Dism++'s default optimization configuration:
+    1. **Dropdown `*РќР°СЃС‚СЂРѕР№РєР° РїСЂРѕРІРµСЂРєРё РѕР±РЅРѕРІР»РµРЅРёР№ РІ Р¦РµРЅС‚СЂРµ РѕР±РЅРѕРІР»РµРЅРёР№` (`*Configure check for updates`)**:
+       - Set to **`РќРµ РїСЂРѕРІРµСЂСЏС‚СЊ (РЅРµ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ)`** (`Never check for updates`).
+       - Configured via Group Policy and CurrentVersion fallback: `AUOptions = 1`, `NoAutoUpdate = 1`, and `CachedAUOptions = 1` in `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` and `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update`.
+    2. **Toggle 1 `РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё СѓСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ РѕР±РЅРѕРІР»РµРЅРёСЏ Р±РµР· РїРµСЂРµР·Р°РіСЂСѓР·РєРё`**:
+       - Configured strictly to **OFF (`0`)** via `AutoInstallMinorUpdates = 0` (resolved previous singular key typo).
+    3. **Toggle 2 `РџСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РІС‹РІРѕРґРёС‚СЃСЏ СѓРІРµРґРѕРјР»РµРЅРёРµ Рѕ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РїРµСЂРµР·Р°РіСЂСѓР·РєРё`**:
+       - Configured strictly to **OFF (`0` / purged)** via removal of `NoAutoRebootWithLoggedOnUsers` (previously set to `1`).
+    4. **Toggle 3 `Windows Update РЅРµ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ РґСЂР°Р№РІРµСЂС‹`**:
+       - Configured to **ON (`1`)** via `ExcludeWUDriversInQualityUpdate = 1` under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`.
+    5. **Toggle 4 `РћР±РЅРѕРІР»РµРЅРёРµ Windows РЅРµ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ СЃСЂРµРґСЃС‚РІРѕ СѓРґР°Р»РµРЅРёСЏ РІСЂРµРґРѕРЅРѕСЃРЅС‹С… РїСЂРѕРіСЂР°РјРј`**:
+       - Configured to **ON (`1`)** via `DontOfferThroughWUAU = 1` under `HKLM:\SOFTWARE\Policies\Microsoft\MRT`.
+  - **Service State Preservation**: Update services (`wuauserv`, `dosvc`, `UsoSvc`) are set to **`Manual` (`Start = 3`)** rather than permanently disabled (`Start = 4`), ensuring Microsoft Store, AppX deployment, DISM operations, and manual check-for-updates remain fully functional without system-level breakage.
+  - Purged aggressive artificial block `DoNotConnectToWindowsUpdateInternetLocations`.
+
+---
+
+## [v023] вЂ” 2026-10-26
+### Critical Fixes & Array Management
+- **Fixed Size Array Exception Resolution**: Resolved PowerShell runtime exception during Documents/Desktop relocation.
+- **Enhanced UI Stability**: Minor performance optimizations in WPF component binding.
+
+---
+
+## [v022] вЂ” 2026-10-26
+### Regional & Time Formatting
+- **Czech Localization Defaults**: Added regional time, date format, and timezone synchronization options.
+- **Clock 24-Hour & Seconds Option**: Enhanced taskbar clock customization.
+
+---
 ## [v021] — 2026-10-26
 ### Autonomous Reboot Elimination, Safe Folder Migration & People/IE Purge
 - **No Automatic Reboot & Dedicated Bright 'Reboot' Button**:
