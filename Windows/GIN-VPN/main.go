@@ -35,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v077"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v077]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v077]"
+	AppVersion    = "v078"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v078]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v078]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -1849,9 +1849,6 @@ var (
 )
 
 func initDiskLogger() {
-	diskLogMutex.Lock()
-	defer diskLogMutex.Unlock()
-
 	// 1. Primary path: folder containing the executable
 	exePath, err := os.Executable()
 	if err == nil {
