@@ -1,4 +1,4 @@
-# 🎙️ GIN-Voice: Автономный голосовой ввод и AI-распознавание речи (v038)
+# 🎙️ GIN-Voice: Автономный голосовой ввод и AI-распознавание речи (v039)
 
 > **Владелец:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz))  
 > **Репозиторий исходников (Приватный):** [Secret_Privat / Windows / GIN-Voice ↗](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Voice)  
