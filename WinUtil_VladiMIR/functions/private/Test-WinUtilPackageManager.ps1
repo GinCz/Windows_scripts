@@ -18,6 +18,13 @@ function Test-WinUtilPackageManager {
     )
 
     if ($winget) {
+        $localApps = "$env:LOCALAPPDATA\Microsoft\WindowsApps"
+        if (-not (Get-Command winget -ErrorAction SilentlyContinue) -and (Test-Path (Join-Path $localApps "winget.exe"))) {
+            if ($env:Path -notlike "*$localApps*") {
+                $env:Path = "$localApps;$env:Path"
+            }
+        }
+
         if (Get-Command winget -ErrorAction SilentlyContinue) {
             Write-Host "===========================================" -ForegroundColor Green
             Write-Host "---        WinGet is installed          ---" -ForegroundColor Green

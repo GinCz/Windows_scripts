@@ -182,10 +182,19 @@
     "chatgpt":  {
                     "category":  "AI",
                     "choco":  "chatgpt",
-                    "content":  "ChatGPT Desktop (Codex)",
-                    "description":  "OpenAI official ChatGPT and Codex desktop application.",
+                    "content":  "ChatGPT Desktop",
+                    "description":  "OpenAI official ChatGPT desktop application.",
                     "link":  "https://chatgpt.com/",
                     "winget":  "OpenAI.ChatGPT",
+                    "foss":  false
+                },
+    "chatgpt-codex":  {
+                    "category":  "AI",
+                    "choco":  "chatgpt-codex",
+                    "content":  "ChatGPT Codex",
+                    "description":  "OpenAI official Codex CLI and AI coding agent for terminal and developer workflows.",
+                    "link":  "https://chatgpt.com/codex",
+                    "winget":  "OpenAI.Codex",
                     "foss":  false
                 },
     "chatterino":  {
