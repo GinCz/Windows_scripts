@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strconv"
 	"sort"
 	"strings"
@@ -34,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v076"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v076]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v076]"
+	AppVersion    = "v077"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v077]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v077]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -1838,10 +1839,69 @@ func loadSettingsFromStorage() {
 }
 
 var (
-	logLines  []string
-	logMutex  sync.Mutex
-	connMutex sync.Mutex
+	logLines      []string
+	logMutex      sync.Mutex
+	connMutex     sync.Mutex
+	diskLogFile   *os.File
+	diskLogMutex  sync.Mutex
+	diskLogPath   string
+	mirrorLogPath string
 )
+
+func initDiskLogger() {
+	diskLogMutex.Lock()
+	defer diskLogMutex.Unlock()
+
+	// 1. Primary path: folder containing the executable
+	exePath, err := os.Executable()
+	if err == nil {
+		exeDir := filepath.Dir(exePath)
+		primaryPath := filepath.Join(exeDir, "gin_vpn.log")
+		f, err := os.OpenFile(primaryPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err == nil {
+			diskLogFile = f
+			diskLogPath = primaryPath
+		}
+	}
+
+	// 2. Secondary path: %LOCALAPPDATA%\GIN-VPN\gin_vpn.log (guaranteed user-writable)
+	appDir := getAppDir()
+	mirrorLogPath = filepath.Join(appDir, "gin_vpn.log")
+	if diskLogFile == nil {
+		f, err := os.OpenFile(mirrorLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err == nil {
+			diskLogFile = f
+			diskLogPath = mirrorLogPath
+		}
+	}
+
+	writeDiskLogRaw(fmt.Sprintf("\r\n================================================================================\r\nGIN-VPN by VladiMIR+AI [%s] - Startup Diagnostic Session\r\nStart Time: %s\r\nPrimary Log: %s | Mirror Log: %s\r\n================================================================================", AppVersion, time.Now().Format("2006-01-02 15:04:05.000"), diskLogPath, mirrorLogPath))
+}
+
+func writeDiskLog(tag, msg string) {
+	ts := time.Now().Format("15:04:05.000")
+	line := fmt.Sprintf("[%s] [%s] %s", ts, tag, msg)
+	writeDiskLogRaw(line)
+}
+
+func writeDiskLogRaw(text string) {
+	diskLogMutex.Lock()
+	defer diskLogMutex.Unlock()
+
+	line := text + "\r\n"
+	if diskLogFile != nil {
+		_, _ = diskLogFile.WriteString(line)
+		_ = diskLogFile.Sync()
+	}
+
+	// Also append to mirror log if primary is different and available
+	if mirrorLogPath != "" && mirrorLogPath != diskLogPath {
+		if f, err := os.OpenFile(mirrorLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666); err == nil {
+			_, _ = f.WriteString(line)
+			_ = f.Close()
+		}
+	}
+}
 
 func strPtr(s string) *uint16 {
 	p, _ := syscall.UTF16PtrFromString(s)
@@ -1849,6 +1909,8 @@ func strPtr(s string) *uint16 {
 }
 
 func writeLog(tag, msg string) {
+	writeDiskLog(tag, msg)
+
 	logMutex.Lock()
 	tStr := time.Now().Format("15:04:05")
 	line := fmt.Sprintf("[%s] [%s] %s", tStr, tag, msg)
@@ -3016,11 +3078,13 @@ Start-Sleep -Milliseconds 300
 
 # Overwrite target executable
 Copy-Item -Path $newExe -Destination $targetExe -Force -ErrorAction SilentlyContinue
+Unblock-File -LiteralPath $targetExe -ErrorAction SilentlyContinue
 
 # Overwrite Program Files installation if present
 if (Test-Path $progFilesDir) {
     Copy-Item -Path $newExe -Destination "$progFilesDir\GIN-VPN.exe" -Force -ErrorAction SilentlyContinue
     Copy-Item -Path $newExe -Destination "$progFilesDir\uninstall.exe" -Force -ErrorAction SilentlyContinue
+    Unblock-File -LiteralPath "$progFilesDir\GIN-VPN.exe" -ErrorAction SilentlyContinue
 }
 
 # Clean up temp binary
@@ -8162,6 +8226,7 @@ func addProfileToListView(idx int, p Profile) {
 }
 
 func checkSingleInstance() bool {
+	writeDiskLog("INIT", "Checking for existing instances (Single-Instance Guard)...")
 	// 1. Mutex-based check (Primary kernel-level enforcement)
 	mutexName := strPtr("Local\\GIN_VPN_SINGLE_INSTANCE_MUTEX")
 	hMutex, _, err := procCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(mutexName)))
@@ -8169,10 +8234,12 @@ func checkSingleInstance() bool {
 	isAlreadyRunning := false
 	if hMutex == 0 {
 		isAlreadyRunning = true
+		writeDiskLog("WARN", "CreateMutexW returned NULL handle.")
 	} else {
 		errno, isErrno := err.(syscall.Errno)
 		if isErrno && (errno == 183 /* ERROR_ALREADY_EXISTS */ || errno == 5 /* ERROR_ACCESS_DENIED */) {
 			isAlreadyRunning = true
+			writeDiskLog("WARN", fmt.Sprintf("CreateMutexW returned existing instance indication (errno: %d)", errno))
 		} else {
 			singleInstanceMutex = hMutex
 		}
@@ -8206,37 +8273,83 @@ func checkSingleInstance() bool {
 
 	if isAlreadyRunning {
 		if existingWnd != 0 {
+			writeDiskLog("INIT", fmt.Sprintf("Active GUI window found [HWND: 0x%X]. Bringing window to foreground.", existingWnd))
 			procShowWindow.Call(existingWnd, 9) // SW_RESTORE
 			procShowWindow.Call(existingWnd, 5) // SW_SHOW
 			procSetForegroundWindow.Call(existingWnd)
+			return false
 		}
-		return false
+
+		// Mutex is held, but NO GUI window exists.
+		// On Windows 11 after updates or crashes, a lingering headless zombie process can block new starts.
+		writeDiskLog("WARN", "Single instance mutex held, but no visible GUI window found. Terminating any stale headless background instances...")
+		currPid := os.Getpid()
+		_ = exec.Command("powershell", "-NoProfile", "-Command", fmt.Sprintf("Get-Process -Name 'GIN-VPN' -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne %d } | Stop-Process -Force -ErrorAction SilentlyContinue", currPid)).Run()
+		time.Sleep(250 * time.Millisecond)
+
+		// Re-attempt mutex acquisition after terminating zombies
+		hMutex2, _, _ := procCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(mutexName)))
+		if hMutex2 != 0 {
+			singleInstanceMutex = hMutex2
+		}
+		writeDiskLog("INIT", "Stale instances cleaned. Proceeding with clean application startup.")
+		return true
 	}
+
+	writeDiskLog("INIT", "Single instance check passed cleanly.")
 	return true
 }
 
 func main() {
+	initDiskLogger()
+	defer func() {
+		if r := recover(); r != nil {
+			stack := string(debug.Stack())
+			errMsg := fmt.Sprintf("FATAL UNHANDLED PANIC: %v\n\nStack Trace:\n%s", r, stack)
+			writeDiskLog("FATAL", errMsg)
+			procMessageBoxW.Call(
+				0,
+				uintptr(unsafe.Pointer(strPtr(errMsg))),
+				uintptr(unsafe.Pointer(strPtr("GIN-VPN Critical Error"))),
+				0x00000010, /* MB_ICONERROR */
+			)
+		}
+	}()
+
+	exePath, _ := os.Executable()
+	cwd, _ := os.Getwd()
+	writeDiskLog("BOOT", fmt.Sprintf("Executable: %s", exePath))
+	writeDiskLog("BOOT", fmt.Sprintf("Working Dir: %s", cwd))
+	writeDiskLog("BOOT", fmt.Sprintf("OS / Arch: %s/%s (PID: %d)", runtime.GOOS, runtime.GOARCH, os.Getpid()))
+	writeDiskLog("BOOT", fmt.Sprintf("Command Line: %v", os.Args))
+	writeDiskLog("BOOT", fmt.Sprintf("Admin Privileges: %v", isUserAdmin()))
+
 	exeBase := strings.ToLower(filepath.Base(os.Args[0]))
 	if exeBase == "uninstall.exe" || exeBase == "uninstall" || (len(os.Args) > 1 && (strings.ToLower(os.Args[1]) == "--uninstall" || strings.ToLower(os.Args[1]) == "/uninstall" || strings.ToLower(os.Args[1]) == "-uninstall" || strings.ToLower(os.Args[1]) == "uninstall")) {
+		writeDiskLog("BOOT", "Invoking uninstaller routine.")
 		performUninstall()
 		return
 	}
 
 	// Single-Instance Check (Prevent multiple running instances)
 	if !checkSingleInstance() {
+		writeDiskLog("INIT", "Single instance guard halted startup (existing window activated). Exiting.")
 		os.Exit(0)
 		return
 	}
 
 	runtime.LockOSThread()
+	writeDiskLog("INIT", "OS UI thread locked.")
 
 	// Load persistent settings (Language, Theme) before UI creation
 	loadSettingsFromStorage()
+	writeDiskLog("INIT", fmt.Sprintf("Settings loaded (Theme=%d, LangRU=%v, WindowH=%d)", currentTheme, isRussianLang, savedWindowHeight))
 
 	var icex INITCOMMONCONTROLSEX
 	icex.DwSize = uint32(unsafe.Sizeof(icex))
 	icex.DwICC = 0x0000FFFF // Enable all common control classes including Tooltips
-	procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icex)))
+	retICC, _, _ := procInitCommonControlsEx.Call(uintptr(unsafe.Pointer(&icex)))
+	writeDiskLog("INIT", fmt.Sprintf("InitCommonControlsEx initialized [ret: %d]", retICC))
 
 	hInstanceRet, _, _ := procGetModuleHandleW.Call(0)
 	hInstance = hInstanceRet
@@ -8334,6 +8447,15 @@ func main() {
 		100, 40, 595, uintptr(winH),
 		0, 0, hInstance, 0,
 	)
+
+	if hwndMain == 0 {
+		errno, _, _ := procGetLastError.Call()
+		errMsg := fmt.Sprintf("CreateWindowExW failed with error code %d", errno)
+		writeDiskLog("FATAL", errMsg)
+		procMessageBoxW.Call(0, uintptr(unsafe.Pointer(strPtr(errMsg))), uintptr(unsafe.Pointer(strPtr("GIN-VPN Window Creation Error"))), 0x00000010)
+		return
+	}
+	writeDiskLog("UI", fmt.Sprintf("Main window successfully created [HWND: 0x%X, Height: %d]", hwndMain, winH))
 
 	if hIconApp != 0 {
 		procSendMessageW.Call(hwndMain, WM_SETICON, 1, hIconApp)
@@ -8525,6 +8647,7 @@ func main() {
 		if p.Default != "" {
 			hasAutoConnect = true
 			writeLog("AUTO", fmt.Sprintf("Auto-connect triggered on launch for '%s'...", p.Name))
+			writeDiskLog("UI", fmt.Sprintf("Auto-connect active for '%s': window starting minimized in Windows System Tray.", p.Name))
 			connectToNodeAsync(p.Name, p.Host, p.Port, p.Country, p.RawUri, true)
 			procShowWindow.Call(hwndMain, 0) // Start directly minimized in system tray
 			break
@@ -8533,6 +8656,7 @@ func main() {
 
 	if !hasAutoConnect {
 		// Show window initially on start in clean Standby mode
+		writeDiskLog("UI", "Displaying main GUI window (SW_SHOW)...")
 		procShowWindow.Call(hwndMain, 5)
 		procUpdateWindow.Call(hwndMain)
 	}
@@ -8546,9 +8670,11 @@ func main() {
 		Pt      struct{ X, Y int32 }
 	}
 
+	writeDiskLog("UI", "Win32 message loop running.")
 	for {
 		ret, _, _ := procGetMessageW.Call(uintptr(unsafe.Pointer(&msg)), 0, 0, 0)
 		if ret == 0 || int32(ret) == -1 {
+			writeDiskLog("UI", fmt.Sprintf("Message loop terminated (GetMessage returned %d).", ret))
 			break
 		}
 		if msg.Message == 0x0100 && msg.WParam == 'A' { // WM_KEYDOWN 'A'
