@@ -34,9 +34,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v075"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v075]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v075]"
+	AppVersion    = "v076"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v076]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v076]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -914,7 +914,7 @@ func formatXrayDomain(d string) string {
 	return "domain:" + d
 }
 
-func getCustomRulesFilePath() string {
+func getAppDir() string {
 	dir := os.Getenv("LOCALAPPDATA")
 	if dir == "" {
 		dir = os.Getenv("APPDATA")
@@ -924,7 +924,11 @@ func getCustomRulesFilePath() string {
 	}
 	appDir := filepath.Join(dir, "GIN-VPN")
 	_ = os.MkdirAll(appDir, 0755)
-	return filepath.Join(appDir, "custom_rules.json")
+	return appDir
+}
+
+func getCustomRulesFilePath() string {
+	return filepath.Join(getAppDir(), "custom_rules.json")
 }
 
 func loadCustomRulesFromStorage() {
@@ -1399,16 +1403,7 @@ func copyStringToUtf16Buf(s string, dst *uint16, maxLen int) {
 }
 
 func getStorageFilePath() string {
-	dir := os.Getenv("LOCALAPPDATA")
-	if dir == "" {
-		dir = os.Getenv("APPDATA")
-	}
-	if dir == "" {
-		dir = os.TempDir()
-	}
-	appDir := filepath.Join(dir, "GIN-VPN")
-	_ = os.MkdirAll(appDir, 0755)
-	return filepath.Join(appDir, "profiles.json")
+	return filepath.Join(getAppDir(), "profiles.json")
 }
 
 func saveProfilesToRegistry(jsonStr string) {
@@ -1559,16 +1554,7 @@ type AppSettings struct {
 }
 
 func getSettingsFilePath() string {
-	dir := os.Getenv("LOCALAPPDATA")
-	if dir == "" {
-		dir = os.Getenv("APPDATA")
-	}
-	if dir == "" {
-		dir = os.TempDir()
-	}
-	appDir := filepath.Join(dir, "GIN-VPN")
-	_ = os.MkdirAll(appDir, 0755)
-	return filepath.Join(appDir, "settings.json")
+	return filepath.Join(getAppDir(), "settings.json")
 }
 
 func saveSettingsToRegistry(langStr string, dark bool, jsonStr string) {
@@ -2191,14 +2177,27 @@ func stopXrayCore() {
 	writeLog("CORE", "Xray Core process stopped.")
 }
 
-var activeXrayExePath = `C:\Windows\Temp\xray.exe`
+var activeXrayExePath = ""
+
+func getXrayExeCandidates() []string {
+	return []string{
+		filepath.Join(getAppDir(), "xray.exe"),
+		filepath.Join(os.TempDir(), "GIN-VPN", "xray.exe"),
+		filepath.Join(os.TempDir(), "xray.exe"),
+		`C:\Windows\Temp\xray.exe`,
+	}
+}
 
 func ensureXrayBinaryExists() error {
-	targetExe := `C:\Windows\Temp\xray.exe`
 	const expectedXraySize int64 = 34375680
-	if fi, err := os.Stat(targetExe); err == nil && fi.Size() == expectedXraySize {
-		activeXrayExePath = targetExe
-		return nil
+	candidates := getXrayExeCandidates()
+
+	// 1. Fast path: check if any candidate already has the exact verified binary
+	for _, targetExe := range candidates {
+		if fi, err := os.Stat(targetExe); err == nil && fi.Size() == expectedXraySize {
+			activeXrayExePath = targetExe
+			return nil
+		}
 	}
 
 	// Terminate any stale xray.exe before replacing binary
@@ -2206,50 +2205,69 @@ func ensureXrayBinaryExists() error {
 	time.Sleep(100 * time.Millisecond)
 
 	writeLog("CORE", "Unpacking verified Xray Core v26.10.17 payload...")
-	gzReader, err := gzip.NewReader(bytes.NewReader(embeddedXrayGz))
-	if err != nil {
-		return fmt.Errorf("failed to init gzip decompressor: %w", err)
-	}
-	defer gzReader.Close()
 
-	// Try C:\Windows\Temp first
-	tmpFile := `C:\Windows\Temp\xray_unpack.tmp`
-	out, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-	if err != nil {
-		// Fallback to user TEMP directory if C:\Windows\Temp is restricted
-		userTemp := os.Getenv("TEMP")
-		if userTemp == "" {
-			userTemp = os.Getenv("TMP")
+	var lastErr error
+	for _, targetExe := range candidates {
+		targetDir := filepath.Dir(targetExe)
+		if err := os.MkdirAll(targetDir, 0755); err != nil {
+			lastErr = err
+			continue
 		}
-		if userTemp == "" {
-			userTemp = "."
-		}
-		targetExe = filepath.Join(userTemp, "xray.exe")
-		tmpFile = filepath.Join(userTemp, "xray_unpack.tmp")
-		out, err = os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+
+		tmpFile := filepath.Join(targetDir, fmt.Sprintf("xray_unpack_%d.tmp", time.Now().UnixNano()))
+		out, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
 		if err != nil {
-			return fmt.Errorf("failed to create temp file: %w", err)
+			lastErr = err
+			continue
 		}
-	}
 
-	if _, err := io.Copy(out, gzReader); err != nil {
+		gzReader, err := gzip.NewReader(bytes.NewReader(embeddedXrayGz))
+		if err != nil {
+			out.Close()
+			_ = os.Remove(tmpFile)
+			return fmt.Errorf("failed to init gzip decompressor: %w", err)
+		}
+
+		_, copyErr := io.Copy(out, gzReader)
+		gzReader.Close()
 		out.Close()
-		_ = os.Remove(tmpFile)
-		return fmt.Errorf("failed to decompress xray payload: %w", err)
-	}
-	out.Close()
 
-	_ = os.Remove(targetExe)
-	if err := os.Rename(tmpFile, targetExe); err != nil {
-		if data, readErr := os.ReadFile(tmpFile); readErr == nil {
-			_ = os.WriteFile(targetExe, data, 0755)
+		if copyErr != nil {
+			_ = os.Remove(tmpFile)
+			lastErr = copyErr
+			continue
 		}
-		_ = os.Remove(tmpFile)
+
+		// Try removing existing destination if any (in case of read-only/lock)
+		_ = os.Remove(targetExe)
+		if renameErr := os.Rename(tmpFile, targetExe); renameErr != nil {
+			// On Windows, if rename fails, try direct copy
+			if data, readErr := os.ReadFile(tmpFile); readErr == nil {
+				if writeErr := os.WriteFile(targetExe, data, 0755); writeErr != nil {
+					_ = os.Remove(tmpFile)
+					lastErr = writeErr
+					continue
+				}
+			} else {
+				_ = os.Remove(tmpFile)
+				lastErr = renameErr
+				continue
+			}
+			_ = os.Remove(tmpFile)
+		}
+
+		// Verify size of written file
+		if fi, statErr := os.Stat(targetExe); statErr == nil && fi.Size() == expectedXraySize {
+			activeXrayExePath = targetExe
+			writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core v26.10.17 ready: %s", targetExe))
+			return nil
+		}
 	}
 
-	activeXrayExePath = targetExe
-	writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core v26.10.17 ready: %s", targetExe))
-	return nil
+	if lastErr != nil {
+		return fmt.Errorf("failed to unpack xray payload: %w", lastErr)
+	}
+	return fmt.Errorf("failed to unpack verified xray binary")
 }
 
 func startXrayCore(cfg *VlessConfig) error {
@@ -2264,17 +2282,37 @@ func startXrayCore(cfg *VlessConfig) error {
 		return fmt.Errorf("failed to generate xray json: %w", err)
 	}
 
-	cfgPath := `C:\Windows\Temp\gin_xray_config.json`
-	if err := os.WriteFile(cfgPath, cfgBytes, 0644); err != nil {
-		// Fallback config path
-		cfgPath = filepath.Join(filepath.Dir(activeXrayExePath), "gin_xray_config.json")
-		if err := os.WriteFile(cfgPath, cfgBytes, 0644); err != nil {
-			return fmt.Errorf("failed to write config file: %w", err)
+	// Priority order: user AppData -> user Temp\GIN-VPN -> user Temp -> beside activeXray -> C:\Windows\Temp
+	configCandidates := []string{
+		filepath.Join(getAppDir(), "gin_xray_config.json"),
+		filepath.Join(os.TempDir(), "GIN-VPN", "gin_xray_config.json"),
+		filepath.Join(os.TempDir(), "gin_xray_config.json"),
+	}
+	if activeXrayExePath != "" {
+		configCandidates = append(configCandidates, filepath.Join(filepath.Dir(activeXrayExePath), "gin_xray_config.json"))
+	}
+	configCandidates = append(configCandidates, `C:\Windows\Temp\gin_xray_config.json`)
+
+	var writtenCfgPath string
+	var lastWriteErr error
+
+	for _, cPath := range configCandidates {
+		_ = os.MkdirAll(filepath.Dir(cPath), 0755)
+		_ = os.Remove(cPath) // remove stale file to bypass read-only or DACL locking
+		if err := os.WriteFile(cPath, cfgBytes, 0644); err == nil {
+			writtenCfgPath = cPath
+			break
+		} else {
+			lastWriteErr = err
 		}
 	}
 
+	if writtenCfgPath == "" {
+		return fmt.Errorf("failed to write config file: %w", lastWriteErr)
+	}
+
 	xrayMutex.Lock()
-	cmd := exec.Command(activeXrayExePath, "run", "-config", cfgPath)
+	cmd := exec.Command(activeXrayExePath, "run", "-config", writtenCfgPath)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		HideWindow:    true,
 		CreationFlags: 0x08000000, // CREATE_NO_WINDOW
@@ -8468,6 +8506,9 @@ func main() {
 		writeLog("CONFIG", fmt.Sprintf("Settings loaded & persisted: Language = EN, Theme = %s.", themeName))
 	}
 	writeLog("SECURE", "Encrypted Registry & local storage active for VPN profiles & settings.")
+	if activeXrayExePath == "" {
+		activeXrayExePath = filepath.Join(getAppDir(), "xray.exe")
+	}
 	writeLog("CORE", fmt.Sprintf("Standalone Embedded Xray Core: %s", activeXrayExePath))
 	writeLog("TRAY", "System Tray notification icon registered.")
 	if isRussianLang {
