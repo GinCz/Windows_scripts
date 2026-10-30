@@ -5051,14 +5051,38 @@ func exportProfilesBackup() {
 	timeStr := time.Now().Format("2006-01-02__15-04")
 	backupFileName := fmt.Sprintf("GIN-VPN_BackUp__%s.txt", timeStr)
 
-	// Determine save directory (Desktop default, fallback to current dir)
-	desktop := os.Getenv("USERPROFILE")
-	if desktop != "" {
-		desktop = filepath.Join(desktop, "Desktop")
-	} else {
-		desktop = "."
+	saveTitle := "Сохранить файл бэкапа серверов GIN-VPN"
+	saveFilter := "Текстовые файлы (*.txt)|*.txt|Все файлы (*.*)|*.*"
+	if !isRussianLang {
+		saveTitle = "Save GIN-VPN Backup File"
+		saveFilter = "Text files (*.txt)|*.txt|All files (*.*)|*.*"
 	}
-	backupPath := filepath.Join(desktop, backupFileName)
+
+	psCmd := fmt.Sprintf(`
+Add-Type -AssemblyName System.Windows.Forms
+$d = New-Object System.Windows.Forms.SaveFileDialog
+$d.Title = '%s'
+$d.Filter = '%s'
+$d.FileName = '%s'
+$desk = [Environment]::GetFolderPath('Desktop')
+if (-not $desk) { $desk = [Environment]::GetFolderPath('MyDocuments') }
+$d.InitialDirectory = $desk
+if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $d.FileName }
+`, saveTitle, saveFilter, backupFileName)
+
+	var backupPath string
+	out, err := exec.Command("powershell", "-NoProfile", "-Command", psCmd).Output()
+	if err == nil {
+		chosen := strings.TrimSpace(string(out))
+		if chosen != "" {
+			backupPath = chosen
+		}
+	}
+
+	// User cancelled save dialog
+	if backupPath == "" {
+		return
+	}
 
 	var sb strings.Builder
 	sb.WriteString("# =============================================================================\r\n")
@@ -5091,17 +5115,21 @@ func exportProfilesBackup() {
 		sb.WriteString("\r\n")
 	}
 
-	err := os.WriteFile(backupPath, []byte(sb.String()), 0644)
-	if err != nil {
-		backupPath = backupFileName
-		err = os.WriteFile(backupPath, []byte(sb.String()), 0644)
+	writeErr := os.WriteFile(backupPath, []byte(sb.String()), 0644)
+	if writeErr != nil {
+		// Fallback to user AppData
+		altPath := filepath.Join(os.Getenv("LOCALAPPDATA"), "GIN-VPN", backupFileName)
+		writeErr = os.WriteFile(altPath, []byte(sb.String()), 0644)
+		if writeErr == nil {
+			backupPath = altPath
+		}
 	}
 
-	if err != nil {
-		errMsg := fmt.Sprintf("Не удалось записать файл бэкапа: %s", err.Error())
+	if writeErr != nil {
+		errMsg := fmt.Sprintf("Не удалось записать файл бэкапа: %s", writeErr.Error())
 		errTitle := "Ошибка бэкапа"
 		if !isRussianLang {
-			errMsg = fmt.Sprintf("Failed to write backup file: %s", err.Error())
+			errMsg = fmt.Sprintf("Failed to write backup file: %s", writeErr.Error())
 			errTitle = "Backup Error"
 		}
 		procMessageBoxW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(errMsg))), uintptr(unsafe.Pointer(strPtr(errTitle))), 0x00000010)
@@ -7678,28 +7706,24 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			return 0
 		}
 		if targetHwnd == hwndListView {
-			x := int32(int16(lParam & 0xFFFF))
-			y := int32(int16((lParam >> 16) & 0xFFFF))
-			var clientPt POINT
-			clientPt.X = x
-			clientPt.Y = y
-			procScreenToClient.Call(hwndListView, uintptr(unsafe.Pointer(&clientPt)))
-			var hti LVHITTESTINFO
-			hti.Pt = clientPt
-			procSendMessageW.Call(hwndListView, LVM_HITTEST, 0, uintptr(unsafe.Pointer(&hti)))
-			targetIdx := int(hti.IItem)
-			if targetIdx < 0 || targetIdx >= len(profiles) {
+			// If triggered by keyboard (Shift+F10 / Apps key), handle selection
+			if x == -1 && y == -1 {
 				selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
-				targetIdx = int(selRet)
-			}
-			if targetIdx >= 0 && targetIdx < len(profiles) {
-				var item LVITEMW
-				item.StateMask = LVIS_SELECTED | LVIS_FOCUSED
-				item.State = LVIS_SELECTED | LVIS_FOCUSED
-				procSendMessageW.Call(hwndListView, LVM_SETITEMSTATE, uintptr(targetIdx), uintptr(unsafe.Pointer(&item)))
-				showListViewContextMenu(targetIdx)
-			} else {
-				showListEmptyContextMenu()
+				targetIdx := int(selRet)
+				if targetIdx >= 0 && targetIdx < len(visibleProfileIndices) {
+					actualIdx := getActualProfileIndex(targetIdx)
+					if actualIdx < 0 {
+						subIdx := (-actualIdx) - 1
+						if subIdx >= 0 && subIdx < len(renderedSubNames) {
+							contextMenuSubName = renderedSubNames[subIdx]
+						}
+						showSubscriptionContextMenu()
+					} else if actualIdx >= 0 && actualIdx < len(profiles) {
+						showListViewContextMenu(actualIdx)
+					}
+				} else {
+					showListEmptyContextMenu()
+				}
 			}
 			return 0
 		}
@@ -7805,28 +7829,34 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 				targetIdx := int(hti.IItem)
 				if targetIdx < 0 || targetIdx >= len(visibleProfileIndices) {
-					selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
-					targetIdx = int(selRet)
+					// Empty space or unselected area -> Show List / General Menu
+					showListEmptyContextMenu()
+					return 1
 				}
+
 				actualIdx := getActualProfileIndex(targetIdx)
 				if actualIdx < 0 {
+					// Subscription header item -> Show Subscription Menu
 					subIdx := (-actualIdx) - 1
 					if subIdx >= 0 && subIdx < len(renderedSubNames) {
 						contextMenuSubName = renderedSubNames[subIdx]
 					}
 					showSubscriptionContextMenu()
-					return 0
+					return 1
 				}
+
 				if actualIdx >= 0 && actualIdx < len(profiles) {
+					// Actual server profile item -> Show Server Profile Menu
 					var item LVITEMW
 					item.StateMask = LVIS_SELECTED | LVIS_FOCUSED
 					item.State = LVIS_SELECTED | LVIS_FOCUSED
 					procSendMessageW.Call(hwndListView, LVM_SETITEMSTATE, uintptr(targetIdx), uintptr(unsafe.Pointer(&item)))
 					showListViewContextMenu(actualIdx)
-				} else {
-					showSubscriptionContextMenu()
+					return 1
 				}
-				return 0
+
+				showListEmptyContextMenu()
+				return 1
 			}
 
 			if nmhdr.Code == NM_CUSTOMDRAW {
