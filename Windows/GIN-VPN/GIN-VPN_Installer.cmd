@@ -52,11 +52,11 @@ Write-Host "[*] Target installation path: $targetExe" -ForegroundColor Cyan
 Write-Host ""
 
 $mirrors = @(
-    @{ Name = "Global GitHub Raw (Versioned v079)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v079.exe" },
+    @{ Name = "Global GitHub Raw (Versioned v080)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v080.exe" },
     @{ Name = "Global GitHub Raw (GIN-VPN.exe)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe" },
-    @{ Name = "Russian Server CloudCore-191 HTTPS (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN_v079.exe" },
-    @{ Name = "Russian Server CloudCore-191 Direct IP (Moscow)"; Url = "http://31.59.126.191/download/GIN-VPN_v079.exe" },
-    @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN_v079.exe" },
+    @{ Name = "Russian Server CloudCore-191 HTTPS (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN_v080.exe" },
+    @{ Name = "Russian Server CloudCore-191 Direct IP (Moscow)"; Url = "http://31.59.126.191/download/GIN-VPN_v080.exe" },
+    @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN_v080.exe" },
     @{ Name = "Russian Server CloudCore-191 Main (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN.exe" }
 )
 

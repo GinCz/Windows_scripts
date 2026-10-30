@@ -35,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v079"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v079]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v079]"
+	AppVersion    = "v080"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v080]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v080]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -113,6 +113,7 @@ var (
 	procGetAsyncKeyState      = user32.NewProc("GetAsyncKeyState")
 	procGetFocus             = user32.NewProc("GetFocus")
 	procShellExecuteW        = shell32.NewProc("ShellExecuteW")
+	procIsUserAnAdmin        = shell32.NewProc("IsUserAnAdmin")
 	procShell_NotifyIconW    = shell32.NewProc("Shell_NotifyIconW")
 	procBeginPaint           = user32.NewProc("BeginPaint")
 	procEndPaint             = user32.NewProc("EndPaint")
@@ -3328,11 +3329,11 @@ foreach ($reg in $regPaths) {
 }
 
 func isUserAdmin() bool {
-	out, err := exec.Command("powershell", "-NoProfile", "-Command", "([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)").Output()
-	if err != nil {
-		return false
+	if procIsUserAnAdmin.Find() == nil {
+		ret, _, _ := procIsUserAnAdmin.Call()
+		return ret != 0
 	}
-	return strings.TrimSpace(string(out)) == "True"
+	return false
 }
 
 func performUninstall() {
@@ -3344,11 +3345,20 @@ func performUninstall() {
 		}
 	}
 
-	// Elevate if not admin
+	// Elevate if not admin using native ShellExecuteW with runas (ZERO PowerShell windows)
 	if !isUserAdmin() {
 		exePath, _ := os.Executable()
-		elevCmd := fmt.Sprintf(`Start-Process -FilePath '%s' -ArgumentList '--uninstall' -Verb RunAs`, exePath)
-		_ = exec.Command("powershell", "-NoProfile", "-Command", elevCmd).Run()
+		verb := strPtr("runas")
+		file := strPtr(exePath)
+		args := strPtr("--uninstall")
+		procShellExecuteW.Call(
+			0,
+			uintptr(unsafe.Pointer(verb)),
+			uintptr(unsafe.Pointer(file)),
+			uintptr(unsafe.Pointer(args)),
+			0,
+			1, // SW_SHOWNORMAL
+		)
 		os.Exit(0)
 		return
 	}
@@ -3373,21 +3383,38 @@ func performUninstall() {
 	// 2. Stop Xray daemon if running
 	stopXrayCore()
 
-	// 3. Remove Desktop and Start Menu Shortcuts, remove registry keys
+	// 3. Remove Desktop and Start Menu Shortcuts directly (NO PowerShell)
 	exePath, _ := os.Executable()
 	appDir := filepath.Dir(exePath)
 
-	psScript := `
- = [Environment]::GetFolderPath('Desktop')
- = [Environment]::GetFolderPath('Programs')
-Remove-Item -Path "\GIN-VPN.lnk" -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "\GIN-VPN.lnk" -Force -ErrorAction SilentlyContinue
-Remove-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-VPN' -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-VPN' -Recurse -Force -ErrorAction SilentlyContinue
-`
-	_ = exec.Command("powershell", "-NoProfile", "-Command", psScript).Run()
+	desktopDirs := []string{
+		filepath.Join(os.Getenv("USERPROFILE"), "Desktop"),
+		`D:\MEGA\DOCS\desktop`,
+		`D:\mega\docs\desktop`,
+		filepath.Join(os.Getenv("PUBLIC"), "Desktop"),
+	}
+	for _, d := range desktopDirs {
+		_ = os.Remove(filepath.Join(d, "GIN-VPN.lnk"))
+	}
 
-	// 4. Create an external elevated cleanup batch script in %TEMP% to wipe the entire appDir after exit
+	programsDirs := []string{
+		filepath.Join(os.Getenv("APPDATA"), `Microsoft\Windows\Start Menu\Programs`),
+		filepath.Join(os.Getenv("ALLUSERSPROFILE"), `Microsoft\Windows\Start Menu\Programs`),
+	}
+	for _, p := range programsDirs {
+		_ = os.Remove(filepath.Join(p, "GIN-VPN.lnk"))
+	}
+
+	// 4. Remove Windows Registry Uninstall entries cleanly with CREATE_NO_WINDOW
+	cmdReg1 := exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-VPN`, "/f")
+	cmdReg1.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000}
+	_ = cmdReg1.Run()
+
+	cmdReg2 := exec.Command("reg", "delete", `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-VPN`, "/f")
+	cmdReg2.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000}
+	_ = cmdReg2.Run()
+
+	// 5. Create an external cleanup batch script executed with CREATE_NO_WINDOW
 	cleanupBat := filepath.Join(os.TempDir(), "gin_vpn_uninst_cleanup.cmd")
 	batContent := fmt.Sprintf(`@echo off
 ping 127.0.0.1 -n 3 >nul
@@ -3407,7 +3434,7 @@ del "%%%%~f0" >nul 2>&1
 	cmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000 | 0x00000200} // CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP
 	_ = cmd.Start()
 
-	// 5. Show success message
+	// 6. Show success message (native Windows GUI)
 	successMsg := "GIN-VPN был успешно удален с вашего компьютера."
 	successTitle := "Удаление завершено"
 	if !isRussianLang {
@@ -8381,7 +8408,9 @@ func checkSingleInstance() bool {
 		// On Windows 11 after updates or crashes, a lingering headless zombie process can block new starts.
 		writeDiskLog("WARN", "Single instance mutex held, but no visible GUI window found. Terminating any stale headless background instances...")
 		currPid := os.Getpid()
-		_ = exec.Command("powershell", "-NoProfile", "-Command", fmt.Sprintf("Get-Process -Name 'GIN-VPN' -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne %d } | Stop-Process -Force -ErrorAction SilentlyContinue", currPid)).Run()
+		killCmd := exec.Command("taskkill", "/F", "/FI", fmt.Sprintf("PID ne %d", currPid), "/IM", "GIN-VPN.exe")
+		killCmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000}
+		_ = killCmd.Run()
 		time.Sleep(250 * time.Millisecond)
 
 		// Re-attempt mutex acquisition after terminating zombies
