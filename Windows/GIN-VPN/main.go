@@ -38,9 +38,9 @@ var embeddedBcryptPrimitivesDll []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v088"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v088]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v088]"
+	AppVersion    = "v089"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v089]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v089]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2499,7 +2499,7 @@ func verifyTunnelRouting() (string, error) {
 			Proxy:             http.ProxyURL(proxyUrl),
 			DisableKeepAlives: true,
 		},
-		Timeout: 5500 * time.Millisecond,
+		Timeout: 3500 * time.Millisecond,
 	}
 
 	isTargetRU := isRussianTarget(activeCountry, activeNodeName, activeNodeIP)
@@ -2546,8 +2546,8 @@ func verifyTunnelRouting() (string, error) {
 		}
 
 		endpoints := []string{
+			"http://api.ipify.org",
 			"https://eco-seo.cz/ip",
-			"https://api.ipify.org",
 			"https://icanhazip.com",
 		}
 		for _, ep := range endpoints {
@@ -2563,7 +2563,7 @@ func verifyTunnelRouting() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("tunnel verification timed out")
+	return "", fmt.Errorf("all verification endpoints timed out (3.5s)")
 }
 
 func verifyDualServerRouting() (deLatency int, ruLatency int, err error) {
@@ -2814,36 +2814,42 @@ func playSuccessChime() {
 	}()
 }
 
+func playSingleFailSound() {
+	// 1. Direct WAV file: C:\Windows\Media\Windows Hardware Fail.wav (Option 1: DeviceFail)
+	winDir := os.Getenv("WINDIR")
+	if winDir == "" {
+		winDir = `C:\Windows`
+	}
+	wavPath := filepath.Join(winDir, "Media", "Windows Hardware Fail.wav")
+	if _, err := os.Stat(wavPath); err == nil && procPlaySoundW.Find() == nil {
+		// SND_FILENAME (0x00020000) | SND_ASYNC (0x00000001) | SND_NODEFAULT (0x00000002) = 0x00020003
+		r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(strPtr(wavPath))), 0, 0x00020000|0x00000001|0x00000002)
+		if r != 0 {
+			return
+		}
+	}
+
+	// 2. System Sound Alias fallback: "DeviceFail"
+	if procPlaySoundW.Find() == nil {
+		aliasName := strPtr("DeviceFail")
+		r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(aliasName)), 0, 0x00010000|0x00000001|0x00000002)
+		if r != 0 {
+			return
+		}
+	}
+
+	// 3. Fallback: Hand / Critical Stop / Error beep in user32 (MB_ICONHAND = 0x00000010)
+	procMessageBeep.Call(0x00000010)
+}
+
 func playConnectionFailSound() {
 	if isMuteSound {
 		return
 	}
 	go func() {
-		// 1. Direct WAV file: C:\Windows\Media\Windows Hardware Fail.wav (Option 1: DeviceFail)
-		winDir := os.Getenv("WINDIR")
-		if winDir == "" {
-			winDir = `C:\Windows`
-		}
-		wavPath := filepath.Join(winDir, "Media", "Windows Hardware Fail.wav")
-		if _, err := os.Stat(wavPath); err == nil && procPlaySoundW.Find() == nil {
-			// SND_FILENAME (0x00020000) | SND_ASYNC (0x00000001) | SND_NODEFAULT (0x00000002) = 0x00020003
-			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(strPtr(wavPath))), 0, 0x00020000|0x00000001|0x00000002)
-			if r != 0 {
-				return
-			}
-		}
-
-		// 2. System Sound Alias fallback: "DeviceFail"
-		if procPlaySoundW.Find() == nil {
-			aliasName := strPtr("DeviceFail")
-			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(aliasName)), 0, 0x00010000|0x00000001|0x00000002)
-			if r != 0 {
-				return
-			}
-		}
-
-		// 3. Fallback: Hand / Critical Stop / Error beep in user32 (MB_ICONHAND = 0x00000010)
-		procMessageBeep.Call(0x00000010)
+		playSingleFailSound()
+		time.Sleep(200 * time.Millisecond)
+		playSingleFailSound()
 	}()
 }
 
@@ -3828,11 +3834,141 @@ func setClipboardText(text string) {
 	procCloseClipboard.Call()
 }
 
-func connectToNodeAsync(nodeName, host string, port int, country string, rawUri string, minimize bool) {
+var (
+	autoFallbackActive   bool
+	autoFallbackCanceled bool
+	activeConnectingIdx  int
+)
+
+func getSelectedProfileIndex() int {
+	if hwndListView == 0 {
+		return -1
+	}
+	selRet, _, _ := procSendMessageW.Call(hwndListView, LVM_GETNEXTITEM, ^uintptr(0), LVNI_SELECTED)
+	sel := int(selRet)
+	if sel < 0 {
+		return -1
+	}
+	return getActualProfileIndex(sel)
+}
+
+func getNextProfileIndex(currentIdx int) int {
+	if len(profiles) <= 1 {
+		return -1
+	}
+
+	// 1. Try to find the next server in visible ListView order (sorted by ping)
+	if len(visibleProfileIndices) > 0 {
+		currRow := -1
+		for r, idx := range visibleProfileIndices {
+			if idx == currentIdx {
+				currRow = r
+				break
+			}
+		}
+		if currRow >= 0 {
+			for r := currRow + 1; r < len(visibleProfileIndices); r++ {
+				candIdx := visibleProfileIndices[r]
+				if candIdx >= 0 && candIdx < len(profiles) && candIdx != currentIdx {
+					return candIdx
+				}
+			}
+			// Wrap to beginning of visible list
+			for r := 0; r < currRow; r++ {
+				candIdx := visibleProfileIndices[r]
+				if candIdx >= 0 && candIdx < len(profiles) && candIdx != currentIdx {
+					return candIdx
+				}
+			}
+		}
+	}
+
+	// 2. Fallback to slice order
+	return (currentIdx + 1) % len(profiles)
+}
+
+func connectToNodeWithAutoFallback(startIdx int, minimize bool) {
+	if startIdx < 0 || startIdx >= len(profiles) {
+		return
+	}
+	autoFallbackActive = true
+	autoFallbackCanceled = false
+	activeConnectingIdx = startIdx
+
+	go executeConnectWithFallback(startIdx, minimize, 0)
+}
+
+func executeConnectWithFallback(profileIdx int, minimize bool, attemptCount int) {
+	if autoFallbackCanceled || profileIdx < 0 || profileIdx >= len(profiles) {
+		autoFallbackActive = false
+		return
+	}
+
+	p := profiles[profileIdx]
+	activeConnectingIdx = profileIdx
+
+	// Highlight current server in ListView
+	if hwndMain != 0 {
+		selectListViewItem(profileIdx)
+	}
+
+	success := connectToNodeSync(p.Name, p.Host, p.Port, p.Country, p.RawUri, minimize)
+	if success {
+		autoFallbackActive = false
+		return
+	}
+
+	// If user manually pressed Disconnect during connection, abort fallback immediately
+	if autoFallbackCanceled {
+		autoFallbackActive = false
+		return
+	}
+
+	// Double-beep fail sound ("бряк-бряк")
+	playConnectionFailSound()
+
+	// Check if all available servers have been tried
+	if attemptCount >= len(profiles)-1 {
+		autoFallbackActive = false
+		if isRussianLang {
+			writeLog("ERR", fmt.Sprintf("⚠️ Все доступные серверы (%d) опробованы, ни один не ответил. Проверьте интернет или обновите подписку.", len(profiles)))
+		} else {
+			writeLog("ERR", fmt.Sprintf("⚠️ All available servers (%d) were tried, but none responded.", len(profiles)))
+		}
+		if hwndMain != 0 {
+			procShowWindow.Call(hwndMain, 5) // SW_SHOW
+			procSetForegroundWindow.Call(hwndMain)
+		}
+		return
+	}
+
+	nextIdx := getNextProfileIndex(profileIdx)
+	if nextIdx < 0 || nextIdx == profileIdx {
+		autoFallbackActive = false
+		return
+	}
+
+	nextP := profiles[nextIdx]
+	if isRussianLang {
+		writeLog("WARN", fmt.Sprintf("🔄 Сервер '%s' не ответил (таймаут 3.5с). Авто-переход к следующему: '%s'...", cleanProfileName(p.Name), cleanProfileName(nextP.Name)))
+	} else {
+		writeLog("WARN", fmt.Sprintf("🔄 Server '%s' did not respond (3.5s timeout). Auto-fallback: trying next server '%s'...", cleanProfileName(p.Name), cleanProfileName(nextP.Name)))
+	}
+
+	time.Sleep(200 * time.Millisecond)
+	if autoFallbackCanceled {
+		autoFallbackActive = false
+		return
+	}
+
+	executeConnectWithFallback(nextIdx, minimize, attemptCount+1)
+}
+
+func connectToNodeSync(nodeName, host string, port int, country string, rawUri string, minimize bool) bool {
 	connMutex.Lock()
 	if isConnecting {
 		connMutex.Unlock()
-		return
+		return false
 	}
 	isConnecting = true
 	connMutex.Unlock()
@@ -3851,110 +3987,113 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 		procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
 	}
 
-	writeLog("ROUTE", fmt.Sprintf("Switching route to node: %s (%s:%d)...", activeNodeName, activeNodeIP, port))
+	writeLog("ROUTE", fmt.Sprintf("Switching route to node: %s (%s:%d)...", cleanProfileName(activeNodeName), activeNodeIP, port))
 
-	go func() {
-		defer func() {
-			connMutex.Lock()
-			isConnecting = false
-			connMutex.Unlock()
-			if hwndMain != 0 {
-				procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
-				procInvalidateRect.Call(hwndListView, 0, 1)
-			}
-		}()
-
-		// 0. Cleanly teardown previous tunnel if active
-		if isConnected {
-			writeLog("ROUTE", "Tearing down previous VPN tunnel before connecting to new node...")
-			setWindowsProxy(false, "")
-			stopXrayCore()
-			isConnected = false
-			updateTrayIcon(false, "", "")
-			time.Sleep(100 * time.Millisecond)
+	defer func() {
+		connMutex.Lock()
+		isConnecting = false
+		connMutex.Unlock()
+		if hwndMain != 0 {
+			procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
+			procInvalidateRect.Call(hwndListView, 0, 1)
 		}
+	}()
 
-		// 1. Parse VLESS config
-		cfg, err := parseVlessUri(rawUri)
-		if err != nil {
-			writeLog("ERR", fmt.Sprintf("Failed to parse VLESS URI: %v", err))
-			isConnected = false
-			updateTrayIcon(false, "", "")
-			playConnectionFailSound()
-			return
-		}
+	// 0. Cleanly teardown previous tunnel if active
+	if isConnected {
+		setWindowsProxy(false, "")
+		stopXrayCore()
+		isConnected = false
+		updateTrayIcon(false, "", "")
+		time.Sleep(50 * time.Millisecond)
+	}
 
-		// 2. Start Xray Core daemon
-		lastActiveVlessCfg = cfg
-		if err := startXrayCore(cfg); err != nil {
-			writeLog("ERR", fmt.Sprintf("Failed to launch Xray Core: %v", err))
-			isConnected = false
-			updateTrayIcon(false, "", "")
-			playConnectionFailSound()
-			return
-		}
+	// 1. Parse VLESS config
+	cfg, err := parseVlessUri(rawUri)
+	if err != nil {
+		writeLog("ERR", fmt.Sprintf("Failed to parse VLESS URI: %v", err))
+		return false
+	}
 
-		writeLog("TUNNEL", fmt.Sprintf("Initiating handshake with %s (%s:%d)...", activeNodeName, host, port))
+	// 2. Start Xray Core daemon
+	lastActiveVlessCfg = cfg
+	if err := startXrayCore(cfg); err != nil {
+		writeLog("ERR", fmt.Sprintf("Failed to launch Xray Core: %v", err))
+		return false
+	}
 
-		// 3. Verify actual live tunnel before activating system proxy!
-		exitIp, err := verifyTunnelRouting()
-		if err != nil {
-			writeLog("WARN", fmt.Sprintf("Initial tunnel verify: %v. Retrying handshake verification...", err))
-			time.Sleep(400 * time.Millisecond)
-			exitIp, err = verifyTunnelRouting()
-		}
-		if err != nil {
-			writeLog("FAIL", fmt.Sprintf("Handshake failed with %s: proxy tunnel not responding (%v).", activeNodeName, err))
-			writeLog("ERR", "Connection failed! Restoring direct ISP internet routing.")
-			stopXrayCore()
-			setWindowsProxy(false, "")
-			isConnected = false
-			updateTrayIcon(false, "", "")
-			playConnectionFailSound()
-			if hwndMain != 0 {
-				procShowWindow.Call(hwndMain, 5) // SW_SHOW
-				procSetForegroundWindow.Call(hwndMain)
-			}
-			return
-		}
+	writeLog("TUNNEL", fmt.Sprintf("Initiating handshake with %s (%s:%d)...", cleanProfileName(activeNodeName), host, port))
 
-		// 4. Dual IP Check on DE-222 (EU) and RU-109 (RU)
-		verifiedExitIP = exitIp
-		locStr := getNodeLocationStr(host, activeCountry, isRussianLang)
-		writeLog("VERIFY_OK", fmt.Sprintf("Real Exit IP verified: %s (%s)", verifiedExitIP, locStr))
+	// 3. Verify actual live tunnel before activating system proxy (fast 3.5s timeout)
+	exitIp, err := verifyTunnelRouting()
+	if err != nil {
+		writeLog("FAIL", fmt.Sprintf("Handshake failed with %s: proxy tunnel not responding (%v).", cleanProfileName(activeNodeName), err))
+		stopXrayCore()
+		setWindowsProxy(false, "")
+		isConnected = false
+		updateTrayIcon(false, "", "")
+		return false
+	}
+
+	// 4. Activate Windows System Proxy IMMEDIATELY
+	verifiedExitIP = exitIp
+	locStr := getNodeLocationStr(host, activeCountry, isRussianLang)
+	writeLog("VERIFY_OK", fmt.Sprintf("Real Exit IP verified: %s (%s)", verifiedExitIP, locStr))
+
+	setWindowsProxy(true, "127.0.0.1:10809")
+	writeLog("PROXY", "Windows System Proxy activated (127.0.0.1:10809).")
+
+	isConnected = true
+	sessionStart = time.Now()
+
+	// Set Green Tray Icon on Connect IMMEDIATELY
+	updateTrayIcon(true, activeNodeName, activeNodeIP)
+
+	// Play modern Message Nudge sound on successful VPN connect
+	playConnectionSuccessSound()
+
+	writeLog("OK", fmt.Sprintf("Tunnel active! Protected IP: %s (%s)", verifiedExitIP, locStr))
+
+	// 5. Asynchronously measure pings in background (non-blocking)
+	go func(targetHost string, targetPort int) {
+		rtt := measurePing(targetHost, targetPort)
+		latencyMs = rtt
 		deLat, ruLat, _ := verifyDualServerRouting()
 		latencyDeMs = deLat
 		latencyRuMs = ruLat
-
-		// 5. Activate Windows System Proxy
-		setWindowsProxy(true, "127.0.0.1:10809")
-		writeLog("PROXY", "Windows System Proxy activated (127.0.0.1:10809).")
-
-		// 6. Measure ping to active node
-		rtt := measurePing(host, port)
-		latencyMs = rtt
-
-		isConnected = true
-		sessionStart = time.Now()
-
-		// Set Green Tray Icon on Connect IMMEDIATELY
-		updateTrayIcon(true, activeNodeName, activeNodeIP)
-
-		// Play modern Message Nudge sound on successful VPN connect
-		playConnectionSuccessSound()
-
-		writeLog("OK", fmt.Sprintf("Tunnel active! Protected IP: %s (%s) | RTT: %d ms | EU-222: %d ms | RU-109: %d ms", verifiedExitIP, locStr, latencyMs, latencyDeMs, latencyRuMs))
-
-		if minimize && hwndMain != 0 {
-			time.Sleep(150 * time.Millisecond)
-			if isConnected {
-				procShowWindow.Call(hwndMain, 0) // SW_HIDE -> minimize to tray
-			}
+		writeLog("SPEED", fmt.Sprintf("Node Latency: %d ms | EU-222: %d ms | RU-109: %d ms", latencyMs, latencyDeMs, latencyRuMs))
+		if hwndMain != 0 {
+			procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
 		}
-	}()
+	}(host, port)
+
+	if minimize && hwndMain != 0 {
+		time.Sleep(150 * time.Millisecond)
+		if isConnected {
+			procShowWindow.Call(hwndMain, 0) // SW_HIDE -> minimize to tray
+		}
+	}
+
+	return true
+}
+
+func connectToNodeAsync(nodeName, host string, port int, country string, rawUri string, minimize bool) {
+	idx := -1
+	for i, p := range profiles {
+		if p.RawUri == rawUri || (p.Name == nodeName && p.Host == host) {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		idx = 0
+	}
+	connectToNodeWithAutoFallback(idx, minimize)
 }
 
 func disconnectVpnAsync() {
+	autoFallbackCanceled = true
+	autoFallbackActive = false
 	isConnected = false
 	activeNodeName = ""
 	setWindowsProxy(false, "")
@@ -3977,15 +4116,19 @@ func toggleVpn() {
 			playConnectionFailSound()
 			return
 		}
-		selIdx := 0
-		for i, p := range profiles {
-			if p.Default != "" {
-				selIdx = i
-				break
+		selIdx := getSelectedProfileIndex()
+		if selIdx < 0 || selIdx >= len(profiles) {
+			for i, p := range profiles {
+				if p.Default != "" {
+					selIdx = i
+					break
+				}
+			}
+			if selIdx < 0 {
+				selIdx = 0
 			}
 		}
-		p := profiles[selIdx]
-		connectToNodeAsync(p.Name, p.Host, p.Port, p.Country, p.RawUri, false)
+		connectToNodeWithAutoFallback(selIdx, false)
 	}
 }
 
@@ -6188,14 +6331,72 @@ func measurePingAccurate(host string, port int) int {
 	return ms
 }
 
+func sortProfilesByPingInPlace() {
+	if len(profiles) <= 1 {
+		return
+	}
+
+	var subOrder []string
+	subMap := make(map[string][]Profile)
+	var standalone []Profile
+
+	for _, p := range profiles {
+		if p.Subscription != "" {
+			if _, exists := subMap[p.Subscription]; !exists {
+				subOrder = append(subOrder, p.Subscription)
+			}
+			subMap[p.Subscription] = append(subMap[p.Subscription], p)
+		} else {
+			standalone = append(standalone, p)
+		}
+	}
+
+	sortSlice := func(items []Profile) {
+		sort.SliceStable(items, func(i, j int) bool {
+			lat1 := items[i].PingMs
+			lat2 := items[j].PingMs
+			if lat1 > 0 && lat2 > 0 {
+				return lat1 < lat2
+			}
+			if lat1 > 0 && lat2 <= 0 {
+				return true
+			}
+			if lat1 <= 0 && lat2 > 0 {
+				return false
+			}
+			return false
+		})
+	}
+
+	var sortedProfiles []Profile
+	for _, sName := range subOrder {
+		items := subMap[sName]
+		sortSlice(items)
+		sortedProfiles = append(sortedProfiles, items...)
+	}
+	sortSlice(standalone)
+	sortedProfiles = append(sortedProfiles, standalone...)
+
+	profiles = sortedProfiles
+	saveProfilesToStorage()
+}
+
 func testSubscriptionPingAsync() {
 	if isPingTesting {
 		return
 	}
 
-	// 1. Immediately expand the subscription so the user sees the list of all servers
+	// 1. Immediately expand all subscriptions so the user sees the list of all servers
 	subscriptionExpanded = true
 	saveSubscriptionExpanded(true)
+	for _, as := range activeSubscriptions {
+		setSubscriptionExpanded(as.Name, true)
+	}
+	for _, p := range profiles {
+		if p.Subscription != "" {
+			setSubscriptionExpanded(p.Subscription, true)
+		}
+	}
 	updateSubscriptionBar()
 	refreshProfilesListView()
 
@@ -6246,7 +6447,7 @@ func testSubscriptionPingAsync() {
 		}
 		wg.Wait()
 
-		saveProfilesToStorage()
+		sortProfilesByPingInPlace()
 		sortByPing = true
 		if hwndMain != 0 {
 			procPostMessageW.Call(hwndMain, WM_APP_UPDATE_PING, 0, 0)
