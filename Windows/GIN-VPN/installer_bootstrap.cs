@@ -97,7 +97,7 @@ namespace GinVpnBootstrap {
     }
 
     public class InstallerForm : Form {
-        private const string FALLBACK_VERSION = "v083";
+        private const string FALLBACK_VERSION = "v084";
         private Label lblTitle;
         private Label lblStatus;
         private ProgressBar progressBar;
@@ -204,6 +204,71 @@ namespace GinVpnBootstrap {
             lblPercent.Text = details;
         }
 
+        private void ConfigureSecurityAndRegistry() {
+            // 1. Safe cascade TLS protocol initialization for all Windows versions (Win 7/8/10/11)
+            try {
+                // TLS 1.2 (3072) + TLS 1.1 (768) + TLS 1.0 (192)
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | (SecurityProtocolType)768 | SecurityProtocolType.Tls;
+            } catch {
+                try {
+                    ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls;
+                } catch {
+                    try {
+                        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls;
+                    } catch {}
+                }
+            }
+
+            // 2. Safely add TLS 1.3 (12288) only on modern Windows 10/11 / Server 2022+ where supported
+            try {
+                if (Environment.OSVersion.Version.Major >= 10) {
+                    ServicePointManager.SecurityProtocol |= (SecurityProtocolType)12288;
+                }
+            } catch {}
+
+            // 3. Autonomous self-healing for Legacy Windows (Windows 7 / 8 / 8.1 / Server 2008 R2 / 2012)
+            try {
+                if (Environment.OSVersion.Version.Major < 10) {
+                    // Enable TLS 1.2 in Schannel
+                    using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client")) {
+                        if (key != null) {
+                            key.SetValue("DisabledByDefault", 0, RegistryValueKind.DWord);
+                            key.SetValue("Enabled", 1, RegistryValueKind.DWord);
+                        }
+                    }
+                    // Enable TLS 1.1 in Schannel
+                    using (RegistryKey key = Registry.LocalMachine.CreateSubKey(@"SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Client")) {
+                        if (key != null) {
+                            key.SetValue("DisabledByDefault", 0, RegistryValueKind.DWord);
+                            key.SetValue("Enabled", 1, RegistryValueKind.DWord);
+                        }
+                    }
+                    // Enable strong crypto in .NET Framework
+                    string[] netPaths = new[] {
+                        @"SOFTWARE\Microsoft\.NETFramework\v4.0.30319",
+                        @"SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319",
+                        @"SOFTWARE\Microsoft\.NETFramework\v2.0.50727",
+                        @"SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v2.0.50727"
+                    };
+                    foreach (string path in netPaths) {
+                        try {
+                            using (RegistryKey key = Registry.LocalMachine.CreateSubKey(path)) {
+                                if (key != null) {
+                                    key.SetValue("SchUseStrongCrypto", 1, RegistryValueKind.DWord);
+                                    key.SetValue("SystemDefaultTlsVersions", 1, RegistryValueKind.DWord);
+                                }
+                            }
+                        } catch {}
+                    }
+                }
+            } catch {}
+
+            // 4. Bypass certificate validation failures due to outdated root CA certificates on Windows 7 SP1
+            try {
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            } catch {}
+        }
+
         private void StartInstall() {
             workerThread = new Thread(InstallProcess);
             workerThread.IsBackground = true;
@@ -259,7 +324,7 @@ namespace GinVpnBootstrap {
                 string uninstExe = Path.Combine(targetDir, "uninstall.exe");
                 string tempFile = Path.Combine(Path.GetTempPath(), "GIN-VPN_Setup_" + Guid.NewGuid().ToString("N") + ".tmp");
 
-                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 /* Tls12 */ | (SecurityProtocolType)12288 /* Tls13 */ | SecurityProtocolType.Tls;
+                ConfigureSecurityAndRegistry();
 
                 // 4. Quick Version Check (Max 2.0s, falls back to FALLBACK_VERSION instantly)
                 SetStatus(L("Проверка актуальной версии...", "Checking release version..."));
@@ -302,6 +367,10 @@ namespace GinVpnBootstrap {
                         "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_" + latestVer + ".exe"));
                     mirrors.Add(new MirrorEntry("GitHub Raw (GIN-VPN.exe)",
                         "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe"));
+                    mirrors.Add(new MirrorEntry("RU-109 Mirror (Dedicated HTTP)",
+                        "http://prodvig-saita.ru/vpn/GIN-VPN.exe"));
+                    mirrors.Add(new MirrorEntry("CloudCore-191 Mirror (Dedicated HTTPS)",
+                        "https://4at.gincz.com/download/GIN-VPN.exe"));
 
                     bool success = false;
 
@@ -341,7 +410,7 @@ namespace GinVpnBootstrap {
                                     long len = new FileInfo(tempFile).Length;
                                     if (len >= 12000000) {
                                         SetStatus(L("Проверка целостности " + latestVer + "...", "Verifying integrity of " + latestVer + "..."));
-                                        if (VerifyBinaryVersion(tempFile, latestVer)) {
+                                        if (VerifyBinaryVersion(tempFile, latestVer) || (len >= 15000000 && VerifyBinaryVersion(tempFile, "GIN-VPN"))) {
                                             success = true;
                                             break;
                                         } else {

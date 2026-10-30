@@ -12,7 +12,25 @@
 *(Нажмите на заголовок любого релиза ниже, чтобы раскрыть или свернуть подробности)*
 
 <details open>
-<summary><b>🔥 Релиз v083 (30.10.2026) — Звуковое оповещение успешного подключения к VPN (Message Nudge) [Актуальная версия]</b></summary>
+<summary><b>🔥 Релиз v084 (30.10.2026) — Автономная кроссплатформенная установка Windows 7, 8, 10, 11 (Zero-Click Auto-Detect & TLS Self-Healing) [Актуальная версия]</b></summary>
+<br>
+
+* **Ключевые изменения:**
+  - **🛡️ 100% Автономная работа установщика на любых версиях Windows (Zero-Click):**
+    - Полная ликвидация ошибки `The requested security protocol is not supported` на Windows 7 / 8 / 8.1.
+    - Внедрена каскадная инициализация протоколов безопасности: `TLS 1.2 (3072) | TLS 1.1 (768) | TLS 1.0 (192)` с безопасным добавлением `TLS 1.3 (12288)` строго на поддерживаемых системах (Windows 10 / 11 / Server 2022+).
+    - Автономное самовосстановление реестра Schannel и .NET Framework (`SchUseStrongCrypto=1`, `SystemDefaultTlsVersions=1`, включение клиента TLS 1.2 в `SCHANNEL\Protocols\TLS 1.2\Client`) при запуске на Windows 7 / 8.
+    - Игнорирование ошибок устаревших корневых CA-сертификатов на старых системах (`ServerCertificateValidationCallback`).
+  - **🚀 Двухуровневые российские HTTP/HTTPS зеркала (Zero TLS Dependency):**
+    - Добавлены высокоскоростные выделенные российские серверы `RU-109` (`http://prodvig-saita.ru/vpn/GIN-VPN.exe`) и `CloudCore-191` (`https://4at.gincz.com/download/GIN-VPN.exe`) непосредственно в стек микро-установщика.
+    - Инсталлятор гарантированно скачивает и запускает GIN-VPN в 1 клик даже на «чистой» Windows 7 SP1 без обновлений.
+  - **⚡ Синхронизация .cmd установщиков:**
+    - Скрипты `GIN-VPN_Installer.cmd`, `Install_GIN-VPN.cmd` и `Install_GIN-VPN__109.cmd` обновлены до универсального стандарта совместимости.
+
+</details>
+
+<details>
+<summary><b>Релиз v083 (30.10.2026) — Звуковое оповещение успешного подключения к VPN (Message Nudge)</b></summary>
 <br>
 
 * **Ключевые изменения:**

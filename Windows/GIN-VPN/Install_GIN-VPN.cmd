@@ -52,14 +52,36 @@ Write-Host "[*] Target installation path: $targetExe" -ForegroundColor Cyan
 Write-Host ""
 
 $mirrors = @(
-    @{ Name = "Russian Server CloudCore-191 HTTPS (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN.exe" },
-    @{ Name = "Russian Server CloudCore-191 Direct IP (Moscow)"; Url = "http://31.59.126.191/download/GIN-VPN.exe" },
-    @{ Name = "Global GitHub Raw (Versioned v079)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v079.exe" },
-    @{ Name = "Global GitHub Raw (GIN-VPN.exe)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe" },
-    @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN.exe" }
+    @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow Dedicated)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN.exe" },
+    @{ Name = "Russian Server CloudCore-191 Main (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN.exe" },
+    @{ Name = "Global GitHub Raw (Versioned v084)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v084.exe" },
+    @{ Name = "Global GitHub Raw (GIN-VPN.exe)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe" }
 )
 
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
+# Autonomous Win7/8/10/11 TLS configuration and self-healing
+try {
+    if ([Environment]::OSVersion.Version.Major -lt 10) {
+        New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client" -Force -ErrorAction SilentlyContinue | Out-Null
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client" -Name "DisabledByDefault" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue | Out-Null
+        Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Client" -Name "Enabled" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue | Out-Null
+        @("HKLM:\SOFTWARE\Microsoft\.NETFramework\v4.0.30319", "HKLM:\SOFTWARE\Wow6432Node\Microsoft\.NETFramework\v4.0.30319") | ForEach-Object {
+            if (Test-Path $_) {
+                Set-ItemProperty -Path $_ -Name "SchUseStrongCrypto" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue | Out-Null
+                Set-ItemProperty -Path $_ -Name "SystemDefaultTlsVersions" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
+} catch {}
+
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls
+    if ([Environment]::OSVersion.Version.Major -ge 10) {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls13
+    }
+} catch {
+    try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch {}
+}
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 $wc = New-Object System.Net.WebClient
 $wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) GIN-VPN-Installer")
 
