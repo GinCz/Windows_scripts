@@ -35,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v080"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v080]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v080]"
+	AppVersion    = "v081"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v081]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v081]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -658,7 +658,7 @@ func purgeDesktopInstallersAsync() {
 					continue
 				}
 				name := strings.ToLower(entry.Name())
-				if strings.HasPrefix(name, "gin-vpn_v") && strings.HasSuffix(name, ".exe") {
+				if (strings.HasPrefix(name, "gin-vpn_v") || name == "gin-vpn.exe" || strings.HasPrefix(name, "gin-vpn_installer")) && strings.HasSuffix(name, ".exe") {
 					fullPath := filepath.Join(dir, entry.Name())
 					if strings.ToLower(filepath.Clean(fullPath)) != currNorm {
 						_ = os.Remove(fullPath)
@@ -1872,9 +1872,14 @@ var (
 )
 
 func initDiskLogger() {
-	// 1. Primary path: folder containing the executable
+	// Guaranteed user-writable %LOCALAPPDATA%\GIN-VPN\gin_vpn.log
+	appDir := getAppDir()
+	mirrorLogPath = filepath.Join(appDir, "gin_vpn.log")
+
+	// Only write to executable folder if running from an official installed location
+	// Never create gin_vpn.log on Desktop, Downloads, or temp folders!
 	exePath, err := os.Executable()
-	if err == nil {
+	if err == nil && checkIsInstalled() {
 		exeDir := filepath.Dir(exePath)
 		primaryPath := filepath.Join(exeDir, "gin_vpn.log")
 		f, err := os.OpenFile(primaryPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -1884,9 +1889,6 @@ func initDiskLogger() {
 		}
 	}
 
-	// 2. Secondary path: %LOCALAPPDATA%\GIN-VPN\gin_vpn.log (guaranteed user-writable)
-	appDir := getAppDir()
-	mirrorLogPath = filepath.Join(appDir, "gin_vpn.log")
 	if diskLogFile == nil {
 		f, err := os.OpenFile(mirrorLogPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err == nil {
@@ -2584,8 +2586,7 @@ func checkIsInstalled() bool {
 	exeLower := strings.ToLower(exe)
 	return strings.Contains(exeLower, "program files\\gin-vpn") ||
 		strings.Contains(exeLower, "program files (x86)\\gin-vpn") ||
-		strings.Contains(exeLower, "appdata\\local\\programs\\gin-vpn") ||
-		strings.Contains(exeLower, "appdata\\local\\gin-vpn")
+		strings.Contains(exeLower, "appdata\\local\\programs\\gin-vpn")
 }
 
 func updateBannerAndInstallButton() {
@@ -3192,6 +3193,175 @@ Remove-Item -Path $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyConti
 
 		os.Exit(0)
 	}()
+}
+
+func autoSelfInstall() {
+	exePath, err := os.Executable()
+	if err != nil {
+		return
+	}
+
+	// 1. If not running as admin, elevate via native ShellExecuteW (runas) - NO powershell windows
+	if !isUserAdmin() {
+		verb := strPtr("runas")
+		file := strPtr(exePath)
+		args := strPtr("--auto-install")
+		r, _, _ := procShellExecuteW.Call(
+			0,
+			uintptr(unsafe.Pointer(verb)),
+			uintptr(unsafe.Pointer(file)),
+			uintptr(unsafe.Pointer(args)),
+			0,
+			1, // SW_SHOWNORMAL
+		)
+		if r > 32 {
+			os.Exit(0)
+			return
+		}
+		// If user cancelled UAC elevation, continue unprivileged installation into %LOCALAPPDATA%\Programs\GIN-VPN
+	}
+
+	// 2. Determine target install directory
+	progFiles := os.Getenv("ProgramFiles")
+	if progFiles == "" {
+		progFiles = `C:\Program Files`
+	}
+	targetDir := filepath.Join(progFiles, "GIN-VPN")
+
+	if !isUserAdmin() {
+		localApp := os.Getenv("LOCALAPPDATA")
+		if localApp == "" {
+			localApp = filepath.Join(os.Getenv("USERPROFILE"), "AppData", "Local")
+		}
+		targetDir = filepath.Join(localApp, "Programs", "GIN-VPN")
+	}
+
+	_ = os.MkdirAll(targetDir, 0755)
+	targetExe := filepath.Join(targetDir, "GIN-VPN.exe")
+	uninstExe := filepath.Join(targetDir, "uninstall.exe")
+
+	// Terminate any previous instances before overwriting
+	currPid := os.Getpid()
+	killCmd := exec.Command("taskkill", "/F", "/FI", fmt.Sprintf("PID ne %d", currPid), "/IM", "GIN-VPN.exe")
+	killCmd.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000}
+	_ = killCmd.Run()
+	killXray := exec.Command("taskkill", "/F", "/IM", "xray.exe")
+	killXray.SysProcAttr = &syscall.SysProcAttr{CreationFlags: 0x08000000}
+	_ = killXray.Run()
+	time.Sleep(200 * time.Millisecond)
+
+	// Copy GIN-VPN.exe and uninstall.exe
+	copyBinaryFile := func(src, dst string) error {
+		in, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+		_, err = io.Copy(out, in)
+		return err
+	}
+
+	_ = copyBinaryFile(exePath, targetExe)
+	_ = copyBinaryFile(exePath, uninstExe)
+
+	// Copy existing config/rules files to targetDir if present
+	profSrc := getStorageFilePath()
+	if _, err := os.Stat(profSrc); err == nil {
+		_ = copyBinaryFile(profSrc, filepath.Join(targetDir, "profiles.json"))
+	}
+	rulesSrc := getCustomRulesFilePath()
+	if _, err := os.Stat(rulesSrc); err == nil {
+		_ = copyBinaryFile(rulesSrc, filepath.Join(targetDir, "custom_rules.json"))
+	}
+	settingsSrc := getSettingsFilePath()
+	if _, err := os.Stat(settingsSrc); err == nil {
+		_ = copyBinaryFile(settingsSrc, filepath.Join(targetDir, "settings.json"))
+	}
+
+	// Write version.json and version.txt in targetDir
+	vJson := fmt.Sprintf("{\n  \"version\": \"%s\",\n  \"version_number\": %d,\n  \"app_name\": \"GIN-VPN\",\n  \"title\": \"GIN-VPN by VladiMIR+AI\",\n  \"release_date\": \"%s\",\n  \"download_url\": \"https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/%s\"\n}\n", AppVersion, parseVersionNumber(AppVersion), time.Now().Format("2006-01-02"), filepath.Base(targetExe))
+	_ = os.WriteFile(filepath.Join(targetDir, "version.json"), []byte(vJson), 0644)
+	_ = os.WriteFile(filepath.Join(targetDir, "version.txt"), []byte(AppVersion), 0644)
+
+	// Create Desktop and Start Menu Shortcuts with zero window flashing
+	psShortcut := fmt.Sprintf(`
+$w = New-Object -ComObject WScript.Shell
+$deskDirs = @([Environment]::GetFolderPath('Desktop'), 'D:\MEGA\DOCS\desktop', 'D:\mega\docs\desktop')
+foreach ($d in $deskDirs) {
+    if (Test-Path $d) {
+        $s = $w.CreateShortcut("$d\GIN-VPN.lnk")
+        $s.TargetPath = '%s'
+        $s.WorkingDirectory = '%s'
+        $s.IconLocation = '%s,0'
+        $s.Description = 'GIN-VPN by VladiMIR+AI'
+        $s.Save()
+    }
+}
+$start = [Environment]::GetFolderPath('Programs')
+if (Test-Path $start) {
+    $s2 = $w.CreateShortcut("$start\GIN-VPN.lnk")
+    $s2.TargetPath = '%s'
+    $s2.WorkingDirectory = '%s'
+    $s2.IconLocation = '%s,0'
+    $s2.Description = 'GIN-VPN by VladiMIR+AI'
+    $s2.Save()
+}
+`, targetExe, targetDir, targetExe, targetExe, targetDir, targetExe)
+
+	scCmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", psShortcut)
+	scCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	_ = scCmd.Run()
+
+	// Register in Windows Uninstall (HKCU & HKLM)
+	psReg := fmt.Sprintf(`
+$regPaths = @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-VPN', 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-VPN')
+foreach ($reg in $regPaths) {
+    try {
+        if (-not (Test-Path $reg)) { New-Item -Path $reg -Force | Out-Null }
+        Set-ItemProperty -Path $reg -Name 'DisplayName' -Value 'GIN-VPN by VladiMIR+AI'
+        Set-ItemProperty -Path $reg -Name 'DisplayVersion' -Value '%s'
+        Set-ItemProperty -Path $reg -Name 'Publisher' -Value 'VladiMIR+AI (Vladimir Bulantsev)'
+        Set-ItemProperty -Path $reg -Name 'DisplayIcon' -Value '%s,0'
+        Set-ItemProperty -Path $reg -Name 'InstallLocation' -Value '%s'
+        $uninstQuoted = [char]34 + '%s' + [char]34
+        Set-ItemProperty -Path $reg -Name 'UninstallString' -Value $uninstQuoted
+        Set-ItemProperty -Path $reg -Name 'QuietUninstallString' -Value ($uninstQuoted + ' --uninstall')
+        Set-ItemProperty -Path $reg -Name 'NoModify' -Value 1 -Type DWord
+        Set-ItemProperty -Path $reg -Name 'NoRepair' -Value 1 -Type DWord
+    } catch {}
+}
+`, AppVersion, targetExe, targetDir, uninstExe)
+
+	regCmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", psReg)
+	regCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	_ = regCmd.Run()
+
+	// Launch installed GIN-VPN.exe detached
+	startCmd := exec.Command("cmd.exe", "/c", "start", "", targetExe)
+	startCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	_ = startCmd.Start()
+
+	// Clean up source executable from Desktop if started there
+	exeLower := strings.ToLower(exePath)
+	if strings.Contains(exeLower, "desktop") && !strings.Contains(exeLower, "program files") {
+		cleanupBatch := fmt.Sprintf(`@echo off
+ping 127.0.0.1 -n 2 >nul
+del /f /q "%s" >nul 2>&1
+del "%%~f0" >nul 2>&1
+`, exePath)
+		batPath := filepath.Join(os.TempDir(), fmt.Sprintf("gin_vpn_cleanup_%d.bat", os.Getpid()))
+		_ = os.WriteFile(batPath, []byte(cleanupBatch), 0644)
+		delCmd := exec.Command("cmd.exe", "/c", batPath)
+		delCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+		_ = delCmd.Start()
+	}
+
+	os.Exit(0)
 }
 
 func performInstall() {
@@ -8454,6 +8624,15 @@ func main() {
 	if exeBase == "uninstall.exe" || exeBase == "uninstall" || (len(os.Args) > 1 && (strings.ToLower(os.Args[1]) == "--uninstall" || strings.ToLower(os.Args[1]) == "/uninstall" || strings.ToLower(os.Args[1]) == "-uninstall" || strings.ToLower(os.Args[1]) == "uninstall")) {
 		writeDiskLog("BOOT", "Invoking uninstaller routine.")
 		performUninstall()
+		return
+	}
+
+	// Strict Auto-Install Guard:
+	// Running portably is permanently disabled. If started outside Program Files / Local Programs,
+	// automatically install silently, create desktop shortcut, launch installed binary, and exit.
+	if !checkIsInstalled() {
+		writeDiskLog("BOOT", "Running outside installation directory. Invoking autoSelfInstall()...")
+		autoSelfInstall()
 		return
 	}
 
