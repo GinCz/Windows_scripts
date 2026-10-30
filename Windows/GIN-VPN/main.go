@@ -35,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v078"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v078]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v078]"
+	AppVersion    = "v079"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v079]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v079]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -670,7 +670,7 @@ func purgeDesktopInstallersAsync() {
 
 func detectOriginalISPAsync() {
 	go func() {
-		client := &http.Client{Timeout: 3 * time.Second}
+		client := &http.Client{Timeout: 5 * time.Second}
 		resp, err := client.Get("http://ip-api.com/json")
 		if err == nil {
 			defer resp.Body.Close()
@@ -697,7 +697,7 @@ func detectOriginalISPAsync() {
 			}
 		}
 
-		endpoints := []string{"http://prodvig-saita.ru/ip", "https://eco-seo.cz/ip", "https://api.ipify.org", "https://icanhazip.com"}
+		endpoints := []string{"https://eco-seo.cz/ip", "http://prodvig-saita.ru/ip", "https://api.ipify.org", "https://icanhazip.com"}
 		for _, ep := range endpoints {
 			r, e := client.Get(ep)
 			if e == nil {
@@ -705,11 +705,6 @@ func detectOriginalISPAsync() {
 				b, _ := io.ReadAll(r.Body)
 				ip := strings.TrimSpace(string(b))
 				if ip != "" {
-					if strings.Contains(ep, "prodvig-saita.ru") {
-						originCountryCode = "RU"
-					} else {
-						originCountryCode = "CZ"
-					}
 					originalISPIP = ip
 					if hwndMain != 0 {
 						procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
@@ -721,8 +716,12 @@ func detectOriginalISPAsync() {
 				}
 			}
 		}
-		originCountryCode = "CZ"
-		originalISPIP = "185.100.197.0"
+		if originCountryCode == "" {
+			originCountryCode = "CZ"
+		}
+		if originalISPIP == "" || strings.Contains(originalISPIP, "Detecting") {
+			originalISPIP = "185.100.197.0"
+		}
 	}()
 }
 
@@ -779,28 +778,51 @@ func getRouteTooltipText(origin, target string, russian bool) string {
 		targ = "EU"
 	}
 
-	if orig == "RU" && targ != "RU" {
+	if targ == "RU" {
 		if russian {
-			return fmt.Sprintf("🌍 Маршрут: Россия => %s (Smart Geo-Split)\r\n• Напрямую (без расхода VPN): Госуслуги, mos.ru, VK, Яндекс, Банки РФ (.ru)\r\n• Через VPN: YouTube, Instagram, Facebook, Spotify, ChatGPT, зарубежные сайты", targ)
+			return fmt.Sprintf("🌍 Маршрут: %s => Россия (Smart Geo-Split)\r\n• Напрямую (без расхода VPN): YouTube, Google, Spotify, Instagram, Netflix, ChatGPT, зарубежные сайты\r\n• Через VPN РФ: Все домены .ru, .рф, .su, Госуслуги, mos.ru, Кинопоиск, Банки РФ", orig)
 		}
-		return fmt.Sprintf("🌍 Route: Russia => %s (Smart Geo-Split)\r\n• Direct ISP (Zero VPN Traffic): Gosuslugi, Mos.ru, VK, Yandex, RU Banking (.ru domains)\r\n• Proxied via VPN: YouTube, Instagram, Facebook, Spotify, ChatGPT, Global sites", targ)
-	} else if orig != "RU" && targ == "RU" {
-		if russian {
-			return fmt.Sprintf("🌍 Маршрут: %s => Россия (Smart Geo-Split)\r\n• Напрямую (без расхода VPN): YouTube, Spotify, Instagram, Netflix, Google, ChatGPT\r\n• Через VPN РФ: Госуслуги, mos.ru, Кинопоиск, Банки РФ (все сайты .ru)", orig)
-		}
-		return fmt.Sprintf("🌍 Route: %s => Russia (Smart Geo-Split)\r\n• Direct ISP (Zero VPN Traffic): YouTube, Spotify, Instagram, Netflix, Google, ChatGPT\r\n• Proxied via RU VPN: Gosuslugi, Mos.ru, Kinopoisk, RU Banking (.ru domains)", orig)
+		return fmt.Sprintf("🌍 Route: %s => Russia (Smart Geo-Split)\r\n• Direct ISP (Zero VPN Traffic): YouTube, Google, Spotify, Instagram, Netflix, ChatGPT, Global sites\r\n• Proxied via RU VPN: All .ru, .рф, .su domains, Gosuslugi, Mos.ru, Kinopoisk, RU Banking", orig)
 	}
 
 	if russian {
-		return fmt.Sprintf("🌍 Маршрут: %s => %s (Smart Split Shield)\r\n• Локальные адреса и LAN: Напрямую без VPN\r\n• Глобальный интернет: Защищенный VLESS Reality туннель", orig, targ)
+		return fmt.Sprintf("🌍 Маршрут: %s => %s (Smart Geo-Split)\r\n• Напрямую (без расхода VPN): Все домены .ru, .рф, .su, Госуслуги, mos.ru, VK, Яндекс, Банки РФ\r\n• Через VPN: YouTube, Instagram, Facebook, Spotify, ChatGPT, зарубежные сайты", orig, targ)
 	}
-	return fmt.Sprintf("🌍 Route: %s => %s (Smart Split Shield)\r\n• Local LAN & Private IP: Direct Bypass\r\n• Global Internet: Encrypted VLESS Reality Tunnel", orig, targ)
+	return fmt.Sprintf("🌍 Route: %s => %s (Smart Geo-Split)\r\n• Direct ISP (Zero VPN Traffic): All .ru, .рф, .su domains, Gosuslugi, Mos.ru, VK, Yandex, RU Banking\r\n• Proxied via VPN: YouTube, Instagram, Facebook, Spotify, ChatGPT, Global sites", orig, targ)
+}
+
+func isRussianTarget(country, nodeName, host string) bool {
+	c := strings.ToUpper(strings.TrimSpace(country))
+	if c == "RU" || c == "RUS" || c == "RUSSIA" {
+		return true
+	}
+	n := strings.ToUpper(nodeName)
+	if strings.Contains(n, "GIN-RU") || strings.Contains(n, "-RU-") || strings.Contains(n, "RU-") ||
+		strings.Contains(n, "[RU") || strings.Contains(n, "РОССИЯ") || strings.Contains(n, "RUSSIA") ||
+		strings.Contains(nodeName, "🇷🇺") {
+		return true
+	}
+	h := strings.ToLower(strings.TrimSpace(host))
+	if h == EndpointServerRU || strings.Contains(h, "223.109") || strings.Contains(h, "31.59.126.191") ||
+		strings.Contains(h, "prodvig-saita.ru") || strings.Contains(h, ".ru") {
+		return true
+	}
+	return false
 }
 
 var defaultDirectDomains = []string{
 	"*.ru",
 	"*.рф",
 	"*.su",
+	"*.xn--p1ai",
+	"domain:ru",
+	"domain:su",
+	"domain:рф",
+	"domain:xn--p1ai",
+	"regexp:.*\\.ru$",
+	"regexp:.*\\.su$",
+	"regexp:.*\\.рф$",
+	"regexp:.*\\.xn--p1ai$",
 	"gosuslugi.ru",
 	"mos.ru",
 	"pgu.mos.ru",
@@ -2090,43 +2112,41 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 		spiderX = "/"
 	}
 
-	xc.Outbounds = []Outbound{
-		{
-			Tag:      "proxy",
-			Protocol: "vless",
-			Settings: OutboundSettings{
-				Vnext: []Vnext{
-					{
-						Address: cfg.Host,
-						Port:    cfg.Port,
-						Users:   []User{user},
-					},
+	outboundProxy := Outbound{
+		Tag:      "proxy",
+		Protocol: "vless",
+		Settings: OutboundSettings{
+			Vnext: []Vnext{
+				{
+					Address: cfg.Host,
+					Port:    cfg.Port,
+					Users:   []User{user},
 				},
-			},
-			StreamSettings: &StreamSettings{
-				Network:  cfg.Network,
-				Security: cfg.Security,
-				RealitySettings: RealitySettings{
-					Show:        false,
-					Fingerprint: cfg.Fingerprint,
-					ServerName:  cfg.SNI,
-					PublicKey:   cfg.PublicKey,
-					ShortId:     cfg.ShortId,
-					SpiderX:     spiderX,
-				},
-				GrpcSettings: grpcCfg,
 			},
 		},
-		{
-			Tag:      "direct",
-			Protocol: "freedom",
-			Settings: OutboundSettings{},
+		StreamSettings: &StreamSettings{
+			Network:  cfg.Network,
+			Security: cfg.Security,
+			RealitySettings: RealitySettings{
+				Show:        false,
+				Fingerprint: cfg.Fingerprint,
+				ServerName:  cfg.SNI,
+				PublicKey:   cfg.PublicKey,
+				ShortId:     cfg.ShortId,
+				SpiderX:     spiderX,
+			},
+			GrpcSettings: grpcCfg,
 		},
 	}
 
+	outboundDirect := Outbound{
+		Tag:      "direct",
+		Protocol: "freedom",
+		Settings: OutboundSettings{},
+	}
+
 	// Smart Geo-Aware Routing Matrix
-	isOriginRU := (originCountryCode == "RU")
-	isTargetRU := (activeCountry == "RU" || strings.HasPrefix(strings.ToUpper(activeNodeName), "RU"))
+	isTargetRU := isRussianTarget(activeCountry, activeNodeName, cfg.Host)
 
 	rulesMutex.Lock()
 	directList := append(append([]string(nil), defaultDirectDomains...), userCustomDirectDomains...)
@@ -2137,6 +2157,24 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 	for _, d := range directList {
 		if fd := formatXrayDomain(d); fd != "" {
 			formattedDirect = append(formattedDirect, fd)
+		}
+	}
+
+	// Guarantee Russian TLDs & regexps
+	ruTlds := []string{
+		"domain:ru", "domain:su", "domain:рф", "domain:xn--p1ai",
+		"regexp:.*\\.ru$", "regexp:.*\\.su$", "regexp:.*\\.рф$", "regexp:.*\\.xn--p1ai$",
+	}
+	for _, rt := range ruTlds {
+		found := false
+		for _, fd := range formattedDirect {
+			if fd == rt {
+				found = true
+				break
+			}
+		}
+		if !found {
+			formattedDirect = append(formattedDirect, rt)
 		}
 	}
 
@@ -2159,24 +2197,14 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 		IP:          localIps,
 	})
 
-	if isOriginRU && !isTargetRU {
-		// Scenario RU => EU/US: Direct list (RU & Custom) goes Direct, Proxy list goes Proxy
-		if len(formattedDirect) > 0 {
-			rules = append(rules, RoutingRule{
-				Type:        "field",
-				OutboundTag: "direct",
-				Domain:      formattedDirect,
-			})
-		}
-		if len(formattedProxy) > 0 {
-			rules = append(rules, RoutingRule{
-				Type:        "field",
-				OutboundTag: "proxy",
-				Domain:      formattedProxy,
-			})
-		}
-	} else if !isOriginRU && isTargetRU {
-		// Scenario EU => RU: Russian sites & custom direct go via RU Proxy, Global sites go Direct
+	if isTargetRU {
+		// ==============================================================
+		// SCENARIO: CONNECTING TO RUSSIAN VPN (e.g. from Europe / abroad)
+		// ==============================================================
+		// Default outbound for all global traffic is DIRECT (zero VPN waste, no foreign sites in RU tunnel).
+		xc.Outbounds = []Outbound{outboundDirect, outboundProxy}
+
+		// 2. All Russian domains (.ru, .su, .рф, Gosuslugi, banks, Russian services) -> PROXY (RU VPN)
 		if len(formattedDirect) > 0 {
 			rules = append(rules, RoutingRule{
 				Type:        "field",
@@ -2184,6 +2212,7 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 				Domain:      formattedDirect,
 			})
 		}
+		// 3. Known global services (YouTube, Google, Spotify, Instagram, ChatGPT, etc.) -> DIRECT
 		if len(formattedProxy) > 0 {
 			rules = append(rules, RoutingRule{
 				Type:        "field",
@@ -2191,6 +2220,7 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 				Domain:      formattedProxy,
 			})
 		}
+		// 4. All other traffic -> DIRECT
 		rules = append(rules, RoutingRule{
 			Type:        "field",
 			OutboundTag: "direct",
@@ -2198,7 +2228,13 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 			Network:     "tcp,udp",
 		})
 	} else {
-		// General fallback
+		// ==============================================================
+		// SCENARIO: CONNECTING TO EUROPEAN / GLOBAL VPN (e.g. from Russia)
+		// ==============================================================
+		// Default outbound for all foreign/global traffic is PROXY (EU VPN).
+		xc.Outbounds = []Outbound{outboundProxy, outboundDirect}
+
+		// 2. All Russian domains (.ru, .su, .рф, Gosuslugi, banks, Russian services) -> DIRECT (without VPN)
 		if len(formattedDirect) > 0 {
 			rules = append(rules, RoutingRule{
 				Type:        "field",
@@ -2206,6 +2242,7 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 				Domain:      formattedDirect,
 			})
 		}
+		// 3. Known global services (YouTube, Instagram, ChatGPT, etc.) -> PROXY
 		if len(formattedProxy) > 0 {
 			rules = append(rules, RoutingRule{
 				Type:        "field",
@@ -2213,6 +2250,7 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 				Domain:      formattedProxy,
 			})
 		}
+		// 4. Everything else defaults to PROXY (outbound[0])
 	}
 
 	xc.Routing = &RoutingConfig{
@@ -2421,40 +2459,66 @@ func verifyTunnelRouting() (string, error) {
 			Proxy:             http.ProxyURL(proxyUrl),
 			DisableKeepAlives: true,
 		},
-		Timeout: 4500 * time.Millisecond,
+		Timeout: 5500 * time.Millisecond,
 	}
 
-	// 1. Try ip-api.com to get live verified IP + City + Country
-	resp, err := client.Get("http://ip-api.com/json")
-	if err == nil {
-		defer resp.Body.Close()
-		var data struct {
-			Query   string `json:"query"`
-			Country string `json:"country"`
-			City    string `json:"city"`
-		}
-		if err := json.NewDecoder(resp.Body).Decode(&data); err == nil && data.Query != "" {
-			activeCityEN = data.City
-			activeCountryEN = data.Country
-			activeCityRU = data.City
-			activeCountryRU = data.Country
-			return data.Query, nil
-		}
-	}
+	isTargetRU := isRussianTarget(activeCountry, activeNodeName, activeNodeIP)
 
-	// 2. Try fast reliable server endpoints
-	endpoints := []string{
-		"https://api.ipify.org",
-		"https://icanhazip.com",
-	}
-	for _, ep := range endpoints {
-		r, e := client.Get(ep)
-		if e == nil {
-			defer r.Body.Close()
-			b, _ := io.ReadAll(r.Body)
-			ip := strings.TrimSpace(string(b))
-			if ip != "" && !strings.Contains(ip, "<") && !strings.Contains(ip, " ") {
-				return ip, nil
+	if isTargetRU {
+		// Target is Russian VPN: Russian domains route through proxy, foreign domains route direct.
+		// Query Russian IP echo endpoints (which are routed via proxy):
+		ruEndpoints := []string{
+			"http://prodvig-saita.ru/ip",
+			"http://212.109.223.109/ip",
+		}
+		for _, ep := range ruEndpoints {
+			r, e := client.Get(ep)
+			if e == nil {
+				defer r.Body.Close()
+				b, _ := io.ReadAll(r.Body)
+				ip := strings.TrimSpace(string(b))
+				if ip != "" && !strings.Contains(ip, "<") && !strings.Contains(ip, " ") {
+					activeCityEN = "Moscow"
+					activeCountryEN = "Russia"
+					activeCityRU = "Москва"
+					activeCountryRU = "Россия"
+					return ip, nil
+				}
+			}
+		}
+	} else {
+		// Target is European / Global VPN: Foreign domains route through proxy.
+		resp, err := client.Get("http://ip-api.com/json")
+		if err == nil {
+			defer resp.Body.Close()
+			var data struct {
+				Query   string `json:"query"`
+				Country string `json:"country"`
+				City    string `json:"city"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&data); err == nil && data.Query != "" {
+				activeCityEN = data.City
+				activeCountryEN = data.Country
+				activeCityRU = data.City
+				activeCountryRU = data.Country
+				return data.Query, nil
+			}
+		}
+
+		endpoints := []string{
+			"https://eco-seo.cz/ip",
+			"https://api.ipify.org",
+			"https://icanhazip.com",
+		}
+		for _, ep := range endpoints {
+			r, e := client.Get(ep)
+			if e == nil {
+				defer r.Body.Close()
+				b, _ := io.ReadAll(r.Body)
+				ip := strings.TrimSpace(string(b))
+				if ip != "" && !strings.Contains(ip, "<") && !strings.Contains(ip, " ") {
+					return ip, nil
+				}
 			}
 		}
 	}
@@ -3475,7 +3539,13 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 
 	activeNodeName = nodeName
 	activeNodeIP = host
-	activeCountry = country
+	if isRussianTarget(country, nodeName, host) {
+		activeCountry = "RU"
+	} else if country != "" {
+		activeCountry = country
+	} else {
+		activeCountry = "EU"
+	}
 
 	if hwndMain != 0 {
 		procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
