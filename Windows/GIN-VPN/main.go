@@ -33,11 +33,14 @@ var embeddedXrayGz []byte
 //go:embed winxp_startup.wav
 var winxpStartupWav []byte
 
+//go:embed bcryptprimitives.dll
+var embeddedBcryptPrimitivesDll []byte
+
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v086"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v086]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v086]"
+	AppVersion    = "v087"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v087]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v087]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -1947,6 +1950,24 @@ func writeLog(tag, msg string) {
 	}
 }
 
+func cleanProfileName(rawName string) string {
+	var sb strings.Builder
+	for _, r := range rawName {
+		if (r >= 0x1F1E6 && r <= 0x1F1FF) || // Regional indicator flags
+			(r >= 0x1F300 && r <= 0x1FAFF) || // SMP emojis
+			(r >= 0xFE00 && r <= 0xFE0F) { // Variation selectors
+			continue
+		}
+		if r >= 0x2600 && r <= 0x27BF {
+			if r != '▶' && r != '▲' && r != '▼' && r != '★' && r != '✔' && r != '✕' && r != '☼' && r != '☁' && r != '☾' && r != '♪' && r != '•' && r != '■' && r != '●' {
+				continue
+			}
+		}
+		sb.WriteRune(r)
+	}
+	return strings.TrimSpace(sb.String())
+}
+
 func parseVlessUri(rawUri string) (*VlessConfig, error) {
 	rawUri = strings.TrimSpace(rawUri)
 	if !strings.HasPrefix(rawUri, "vless://") {
@@ -2264,6 +2285,12 @@ func generateXrayConfigJson(cfg *VlessConfig) ([]byte, error) {
 	return json.MarshalIndent(xc, "", "  ")
 }
 
+func killProcessSilently(name string) {
+	cmd := exec.Command("taskkill", "/F", "/IM", name)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	_ = cmd.Run()
+}
+
 func stopXrayCore() {
 	xrayMutex.Lock()
 	defer xrayMutex.Unlock()
@@ -2273,7 +2300,7 @@ func stopXrayCore() {
 		_ = xrayCmd.Wait()
 		xrayCmd = nil
 	}
-	_ = exec.Command("taskkill", "/F", "/IM", "xray.exe").Run()
+	killProcessSilently("xray.exe")
 	writeLog("CORE", "Xray Core process stopped.")
 }
 
@@ -2296,12 +2323,16 @@ func ensureXrayBinaryExists() error {
 	for _, targetExe := range candidates {
 		if fi, err := os.Stat(targetExe); err == nil && fi.Size() == expectedXraySize {
 			activeXrayExePath = targetExe
+			dllPath := filepath.Join(filepath.Dir(targetExe), "bcryptprimitives.dll")
+			if _, dErr := os.Stat(dllPath); dErr != nil && len(embeddedBcryptPrimitivesDll) > 0 {
+				_ = os.WriteFile(dllPath, embeddedBcryptPrimitivesDll, 0755)
+			}
 			return nil
 		}
 	}
 
 	// Terminate any stale xray.exe before replacing binary
-	_ = exec.Command("taskkill", "/F", "/IM", "xray.exe").Run()
+	killProcessSilently("xray.exe")
 	time.Sleep(100 * time.Millisecond)
 
 	writeLog("CORE", "Unpacking verified Xray Core v26.10.17 payload...")
@@ -2336,6 +2367,12 @@ func ensureXrayBinaryExists() error {
 			_ = os.Remove(tmpFile)
 			lastErr = copyErr
 			continue
+		}
+
+		// Ensure bcryptprimitives.dll is deployed alongside xray.exe for Windows 7 support
+		dllPath := filepath.Join(targetDir, "bcryptprimitives.dll")
+		if len(embeddedBcryptPrimitivesDll) > 0 {
+			_ = os.WriteFile(dllPath, embeddedBcryptPrimitivesDll, 0755)
 		}
 
 		// Try removing existing destination if any (in case of read-only/lock)
@@ -4000,14 +4037,14 @@ func addProfileRowToListView(rowIdx int, displayNum int, p Profile) {
 	subItem.ISubItem = 1
 	defText := ""
 	if p.Default != "" {
-		defText = "✅"
+		defText = "✔"
 	}
 	subItem.PszText = strPtr(defText)
 	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
 
 	// Column 2: Name
 	subItem.ISubItem = 2
-	subItem.PszText = strPtr(p.Name)
+	subItem.PszText = strPtr(cleanProfileName(p.Name))
 	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
 
 	// Column 3: Host
@@ -4096,7 +4133,11 @@ func refreshProfilesListView() {
 
 		// Column 1: Folder icon
 		subItem.ISubItem = 1
-		subItem.PszText = strPtr("📁")
+		subFolderIcon := "►"
+		if isExp {
+			subFolderIcon = "▼"
+		}
+		subItem.PszText = strPtr(subFolderIcon)
 		procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(rowIdx), uintptr(unsafe.Pointer(&subItem)))
 
 		// Column 2: Name (e.g. GIN-ProxyHub-RU (7))
@@ -4524,8 +4565,8 @@ func updateLanguageUI() {
 
 	if isRussianLang {
 		procSetWindowTextW.Call(hwndMain, uintptr(unsafe.Pointer(strPtr(AppTitleRU))))
-		procSetWindowTextW.Call(hwndTitle, uintptr(unsafe.Pointer(strPtr("🛡️ GIN-VPN от VladiMIR+AI"))))
-		procSetWindowTextW.Call(hwndKeyLabel, uintptr(unsafe.Pointer(strPtr("🔑 Активный VLESS ключ или ссылка на подписку:"))))
+		procSetWindowTextW.Call(hwndTitle, uintptr(unsafe.Pointer(strPtr("GIN-VPN от VladiMIR+AI"))))
+		procSetWindowTextW.Call(hwndKeyLabel, uintptr(unsafe.Pointer(strPtr("Активный VLESS ключ или ссылка на подписку:"))))
 		procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr("⚡ Диагностика и маршрутизация"))))
 		procSetWindowTextW.Call(hwndLogLbl, uintptr(unsafe.Pointer(strPtr("📊 Лог сетевых событий и трафика в реальном времени:"))))
 		if hwndBrand != 0 {
@@ -6320,7 +6361,7 @@ func importNodesFromContent(rawText string, subName string, subUrl string, sourc
 
 		p := Profile{
 			Default:      "",
-			Name:         name,
+			Name:         cleanProfileName(name),
 			Host:         cfg.Host,
 			Port:         cfg.Port,
 			Country:      country,
@@ -6804,9 +6845,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 	switch dis.CtlID {
 	case 101: // Main Big Action Button / Split Connected Status Card
 		if isConnecting {
-			btnText = "🟡 CONNECTING..."
+			btnText = "● CONNECTING..."
 			if isRussianLang {
-				btnText = "🟡 ПОДКЛЮЧЕНИЕ..."
+				btnText = "● ПОДКЛЮЧЕНИЕ..."
 			}
 			baseColor = 0x0677D9
 			borderDark = 0x034988
@@ -6830,7 +6871,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			oldFont, _, _ := procSelectObject.Call(hDC, hFontBold)
 
 			textRc1 := RECT{Left: rc.Left + 50, Top: rc.Top + 4, Right: rc.Right - 6, Bottom: rc.Top + 24}
-			titleTxt := fmt.Sprintf("🟢 ПОДКЛЮЧЕНО: %s", activeNodeName)
+			titleTxt := fmt.Sprintf("● ПОДКЛЮЧЕНО: %s", activeNodeName)
 			if !isRussianLang {
 				titleTxt = fmt.Sprintf("🟢 CONNECTED: %s", activeNodeName)
 			}
@@ -6865,9 +6906,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 111: // Right part: Disconnect Button
-		btnText = "⏹ DISCONNECT"
+		btnText = "■ DISCONNECT"
 		if isRussianLang {
-			btnText = "⏹ ОТКЛЮЧИТЬ"
+			btnText = "■ ОТКЛЮЧИТЬ"
 		}
 		if isPressed {
 			baseColor = rgb(180, 25, 25)
@@ -6880,9 +6921,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 102: // Paste Key / QR
-		btnText = "📋 Paste / QR"
+		btnText = "+ Paste / QR"
 		if isRussianLang {
-			btnText = "📋 Вставить / QR"
+			btnText = "+ Вставить / QR"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -6896,9 +6937,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 103: // Save Profile
-		btnText = "💾 Save"
+		btnText = "✔ Save"
 		if isRussianLang {
-			btnText = "💾 Сохранить"
+			btnText = "✔ Сохранить"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -6954,9 +6995,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 105: // Set Default
-		btnText = "⭐ Auto"
+		btnText = "★ Auto"
 		if isRussianLang {
-			btnText = "⭐ Авто"
+			btnText = "★ Авто"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -6998,9 +7039,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 115: // Sub Ping (Clock)
-		btnText = "⏱️ Пинг"
+		btnText = "~ Пинг"
 		if !isRussianLang {
-			btnText = "⏱️ Ping"
+			btnText = "~ Ping"
 		}
 		if isPingTesting {
 			btnText = "⏳..."
@@ -7030,9 +7071,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 
 	case 116: // Sub Refresh (Update)
 		if isSubRefreshDone {
-			btnText = "✔️ Обновлено"
+			btnText = "✔ Обновлено"
 			if !isRussianLang {
-				btnText = "✔️ Updated"
+				btnText = "✔ Updated"
 			}
 			font = hFontRegular
 			if isPressed {
@@ -7057,9 +7098,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 				borderLight = 0x4CAF50
 			}
 		} else {
-			btnText = "🔄 Обновить"
+			btnText = "» Обновить"
 			if !isRussianLang {
-				btnText = "🔄 Refresh"
+				btnText = "» Refresh"
 			}
 			font = hFontRegular
 			if isDarkMode {
@@ -7103,7 +7144,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		} else if installedState {
 			btnText = "🔄 Check Updates"
 			if isRussianLang {
-				btnText = "🔄 Обновить"
+				btnText = "» Обновить"
 			}
 			if isPressed {
 				baseColor = 0x1B5E20
@@ -7131,9 +7172,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 107: // Verify IP
-		btnText = "🔍 Verify IP VPN"
+		btnText = "Verify IP VPN"
 		if isRussianLang {
-			btnText = "🔍 Проверить IP VPN"
+			btnText = "Проверить IP VPN"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -7147,9 +7188,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 108: // Copy All
-		btnText = "📋 Copy All"
+		btnText = "Copy All"
 		if isRussianLang {
-			btnText = "📋 Скопировать всё"
+			btnText = "Скопировать всё"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -7163,9 +7204,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 109: // Clear Log
-		btnText = "🧹 Clear"
+		btnText = "Clear"
 		if isRussianLang {
-			btnText = "🧹 Очистить"
+			btnText = "Очистить"
 		}
 		font = hFontRegular
 		if isPressed {
@@ -7179,9 +7220,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 110: // Diagnostics Info Button
-		btnText = "ℹ️ Info"
+		btnText = "[i] Info"
 		if isRussianLang {
-			btnText = "ℹ️ Инфо"
+			btnText = "[i] Инфо"
 		}
 		font = hFontSmall
 		if isPressed {
@@ -7195,7 +7236,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 201: // Day Theme
-		btnText = "☀️"
+		btnText = "☼"
 		font = hFontRegular
 		if currentTheme == ThemeDay {
 			baseColor = 0x0677D9 // Sky Blue Active Glow
@@ -7208,7 +7249,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 205: // Gray / Cloud Theme
-		btnText = "⛅"
+		btnText = "☁"
 		font = hFontRegular
 		if currentTheme == ThemeGray {
 			baseColor = 0x4A6B82 // Slate Steel Cyan Active Glow
@@ -7221,7 +7262,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 	case 202: // Night Theme
-		btnText = "🌙"
+		btnText = "☾"
 		font = hFontRegular
 		if currentTheme == ThemeNight {
 			baseColor = 0xC1466B // Rose Purple Active Glow
@@ -7262,12 +7303,12 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 	case 206: // Sound Mute Toggle
 		font = hFontRegular
 		if isMuteSound {
-			btnText = "🔇"
+			btnText = "✕"
 			baseColor = 0x4A3838
 			borderDark = 0x2A1C1C
 			borderLight = 0x725454
 		} else {
-			btnText = "🔊"
+			btnText = "♪"
 			if currentTheme == ThemeGray {
 				baseColor = 0x4A6B82
 				borderDark = 0x2C4659
@@ -7480,15 +7521,15 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			if hwndBtnDisconnect != 0 {
 				procShowWindow.Call(hwndBtnDisconnect, 0 /* SW_HIDE */)
 			}
-			diagHeaderTxt := "⚡ Diagnostics & Routing — 🟡 CONNECTING..."
+			diagHeaderTxt := "■ Diagnostics & Routing — ● CONNECTING..."
 			if isRussianLang {
-				diagHeaderTxt = "⚡ Диагностика и маршрутизация — 🟡 ПОДКЛЮЧЕНИЕ..."
+				diagHeaderTxt = "■ Диагностика и маршрутизация — ● ПОДКЛЮЧЕНИЕ..."
 			}
 			procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr(diagHeaderTxt))))
 
-			protTxt := fmt.Sprintf("VPN IP: 🟡 Connecting to %s...", activeNodeName)
+			protTxt := fmt.Sprintf("VPN IP: ● Connecting to %s...", activeNodeName)
 			if isRussianLang {
-				protTxt = fmt.Sprintf("VPN IP: 🟡 Подключение к %s...", activeNodeName)
+				protTxt = fmt.Sprintf("VPN IP: ● Подключение к %s...", activeNodeName)
 			}
 			procSetWindowTextW.Call(hwndDiagProt, uintptr(unsafe.Pointer(strPtr(protTxt))))
 			procSendMessageW.Call(hwndDiagProt, WM_SETFONT, hFontBold, 1)
@@ -7502,9 +7543,9 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			}
 
 			routeScheme := getRouteScheme(originCountryCode, activeCountry)
-			diagHeaderTxt := fmt.Sprintf("⚡ Diagnostics & Routing — 🟢 CONNECTED [%s]", routeScheme)
+			diagHeaderTxt := fmt.Sprintf("■ Diagnostics & Routing — ● CONNECTED [%s]", routeScheme)
 			if isRussianLang {
-				diagHeaderTxt = fmt.Sprintf("⚡ Диагностика и маршрутизация — 🟢 ПОДКЛЮЧЕНО [%s]", routeScheme)
+				diagHeaderTxt = fmt.Sprintf("■ Диагностика и маршрутизация — ● ПОДКЛЮЧЕНО [%s]", routeScheme)
 			}
 			procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr(diagHeaderTxt))))
 
@@ -7512,9 +7553,9 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 			if displayIp == "" {
 				displayIp = activeNodeIP
 			}
-			protTxt := fmt.Sprintf("VPN IP: 🟢 %s (%s)", displayIp, activeCountry)
+			protTxt := fmt.Sprintf("VPN IP: ● %s (%s)", displayIp, activeCountry)
 			if isRussianLang {
-				protTxt = fmt.Sprintf("VPN IP: 🟢 %s (%s)", displayIp, activeCountry)
+				protTxt = fmt.Sprintf("VPN IP: ● %s (%s)", displayIp, activeCountry)
 			}
 			procSetWindowTextW.Call(hwndDiagProt, uintptr(unsafe.Pointer(strPtr(protTxt))))
 			procSendMessageW.Call(hwndDiagProt, WM_SETFONT, hFontBold, 1)
@@ -7538,18 +7579,18 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				procShowWindow.Call(hwndBtnDisconnect, 0 /* SW_HIDE */)
 			}
 
-			diagHeaderTxt := "⚡ Diagnostics & Routing — 🔴 DIRECT ISP"
+			diagHeaderTxt := "■ Diagnostics & Routing — ● DIRECT ISP"
 			if isRussianLang {
-				diagHeaderTxt = "⚡ Диагностика и маршрутизация — 🔴 ПРЯМОЙ ИНТЕРНЕТ"
+				diagHeaderTxt = "■ Диагностика и маршрутизация — ● ПРЯМОЙ ИНТЕРНЕТ"
 			}
 			procSetWindowTextW.Call(hwndDiagHeader, uintptr(unsafe.Pointer(strPtr(diagHeaderTxt))))
 
 			uptimeTxt := "Uptime: Disconnected"
-			protTxt := "VPN IP: 🔴 Disconnected"
+			protTxt := "VPN IP: ● Disconnected"
 			latTxt := "Ping: -- ms"
 			if isRussianLang {
 				uptimeTxt = "Время: Отключено"
-				protTxt = "VPN IP: 🔴 Отключено"
+				protTxt = "VPN IP: ● Отключено"
 				latTxt = "Пинг: -- мс"
 			}
 			procSetWindowTextW.Call(hwndDiagUptime, uintptr(unsafe.Pointer(strPtr(uptimeTxt))))
@@ -8561,14 +8602,14 @@ func addProfileToListView(idx int, p Profile) {
 	subItem.ISubItem = 1
 	defText := ""
 	if p.Default != "" {
-		defText = "✅"
+		defText = "✔"
 	}
 	subItem.PszText = strPtr(defText)
 	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(idx), uintptr(unsafe.Pointer(&subItem)))
 
 	// Column 2: Name
 	subItem.ISubItem = 2
-	subItem.PszText = strPtr(p.Name)
+	subItem.PszText = strPtr(cleanProfileName(p.Name))
 	procSendMessageW.Call(hwndListView, LVM_SETITEMTEXTW, uintptr(idx), uintptr(unsafe.Pointer(&subItem)))
 
 	// Column 3: Host
@@ -8842,7 +8883,7 @@ func main() {
 	}
 
 	// 1. Header Title & 3 Themes (Day ☀️ / Gray ⛅ / Night 🌙) & EN/RU Language Buttons & Sound Button
-	hwndTitle = createStatic("🛡️ GIN-VPN by VladiMIR+AI", 18, 12, 225, 26, hFontTitle)
+	hwndTitle = createStatic("GIN-VPN by VladiMIR+AI", 18, 12, 225, 26, hFontTitle)
 	hwndBtnDay = createOwnerButton(201, 248, 12, 36, 26)
 	hwndBtnGray = createOwnerButton(205, 287, 12, 36, 26)
 	hwndBtnNight = createOwnerButton(202, 326, 12, 36, 26)
@@ -8926,15 +8967,15 @@ func main() {
 	refreshProfilesListView()
 
 	// 4. Diagnostics Panel (Rounded Card in WM_ERASEBKGND: y: 346..414)
-	hwndDiagHeader = createStaticNotify("⚡ Diagnostics & Routing", 28, 348, 430, 18, hFontBold, 1010)
+	hwndDiagHeader = createStaticNotify("■ Diagnostics & Routing", 28, 348, 430, 18, hFontBold, 1010)
 	hwndBtnDiagInfo = createOwnerButton(110, 465, 346, 75, 20)
 	hwndDiagOrig = createStaticNotify("ISP IP: Detecting...", 28, 368, 245, 18, hFontSmall, 1011)
-	hwndDiagProt = createStaticNotify("VPN IP: 🔴 Disconnected", 275, 368, 265, 18, hFontSmall, 1012)
+	hwndDiagProt = createStaticNotify("VPN IP: ● Disconnected", 275, 368, 265, 18, hFontSmall, 1012)
 	hwndDiagLat = createStaticNotify("Ping: -- ms", 28, 388, 245, 18, hFontSmall, 1013)
 	hwndDiagUptime = createStaticNotify("Uptime: Disconnected", 275, 388, 265, 18, hFontSmall, 1014)
 
 	// 5. Active VLESS Key Header, Text Field (Left) & Two Stacked Buttons (Right)
-	hwndKeyLabel = createStatic("🔑 Active VLESS Key or Subscription URL:", 18, 422, 384, 16, hFontSection)
+	hwndKeyLabel = createStatic("Active VLESS Key or Subscription URL:", 18, 422, 384, 16, hFontSection)
 	hwndKeyEdit, _, _ = procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(strPtr("EDIT"))), 0, WS_CHILD|WS_VISIBLE|WS_BORDER|ES_MULTILINE|ES_AUTOVSCROLL, 18, 440, 384, 52, hwndMain, 0, hInstance, 0)
 	procSendMessageW.Call(hwndKeyEdit, WM_SETFONT, hFontConsolas, 1)
 
