@@ -10,7 +10,20 @@ using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using Microsoft.Win32;
+
+[assembly: AssemblyTitle("GIN-VPN Installer")]
+[assembly: AssemblyDescription("GIN-VPN by VladiMIR+AI Autonomous Installer")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("VladiMIR+AI (Vladimir Bulantsev)")]
+[assembly: AssemblyProduct("GIN-VPN")]
+[assembly: AssemblyCopyright("Copyright © 2026 Vladimir Bulantsev")]
+[assembly: AssemblyTrademark("GIN-VPN")]
+[assembly: AssemblyCulture("")]
+[assembly: AssemblyVersion("1.0.85.0")]
+[assembly: AssemblyFileVersion("1.0.85.0")]
+[assembly: AssemblyInformationalVersion("v085")]
 
 namespace GinVpnBootstrap {
     static class Program {
@@ -97,7 +110,7 @@ namespace GinVpnBootstrap {
     }
 
     public class InstallerForm : Form {
-        private const string FALLBACK_VERSION = "v084";
+        private const string FALLBACK_VERSION = "v085";
         private Label lblTitle;
         private Label lblStatus;
         private ProgressBar progressBar;
@@ -107,6 +120,7 @@ namespace GinVpnBootstrap {
         private bool isRussian;
 
         public InstallerForm() {
+            ConfigureSecurityAndRegistry();
             DetectLanguage();
             InitializeUI();
             this.Shown += (s, e) => StartInstall();
@@ -333,19 +347,29 @@ namespace GinVpnBootstrap {
 
                 // 5. Check if binary is ALREADY present locally on this PC (Instant local install!)
                 bool localFound = false;
-                string[] localCandidates = new[] {
+                List<string> localCandidates = new List<string> {
                     Path.Combine(Application.StartupPath, "GIN-VPN_" + latestVer + ".exe"),
                     Path.Combine(Application.StartupPath, "GIN-VPN.exe"),
-                    @"D:\AI\GitHub\Windows_scripts\Windows\GIN-VPN\GIN-VPN_" + latestVer + ".exe",
-                    @"D:\AI\GitHub\Windows_scripts\Windows\GIN-VPN\GIN-VPN.exe",
                     @"D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN\GIN-VPN_" + latestVer + ".exe",
-                    @"D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN\GIN-VPN.exe"
+                    @"D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\VPN\GIN-VPN.exe",
+                    @"D:\AI\GitHub\Windows_scripts\Windows\GIN-VPN\GIN-VPN_" + latestVer + ".exe",
+                    @"D:\AI\GitHub\Windows_scripts\Windows\GIN-VPN\GIN-VPN.exe"
                 };
+
+                try {
+                    foreach (string f in Directory.GetFiles(Application.StartupPath, "GIN-VPN*.exe")) {
+                        if (!string.Equals(f, Application.ExecutablePath, StringComparison.OrdinalIgnoreCase) &&
+                            !string.Equals(f, targetExe, StringComparison.OrdinalIgnoreCase) &&
+                            !localCandidates.Contains(f)) {
+                            localCandidates.Add(f);
+                        }
+                    }
+                } catch {}
 
                 foreach (string localPath in localCandidates) {
                     if (File.Exists(localPath) && !string.Equals(localPath, targetExe, StringComparison.OrdinalIgnoreCase)) {
                         try {
-                            if (VerifyBinaryVersion(localPath, latestVer)) {
+                            if (VerifyBinaryVersion(localPath, latestVer) || (new FileInfo(localPath).Length >= 15000000 && VerifyBinaryVersion(localPath, "GIN-VPN"))) {
                                 SetStatus(L("Копирование локального пакета...", "Copying local package..."));
                                 SetProgress(50, L("Копирование...", "Copying..."));
                                 File.Copy(localPath, tempFile, true);
