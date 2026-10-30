@@ -4,6 +4,20 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v026] — 2026-10-30
+### Bugfix: Purge Phantom Desktop Ghost Icon & Correct Explorer Libraries GUID
+- **Phantom Blank Icon Hotfix (Desktop NameSpace CLSID Purge)**:
+  - Resolved an issue where a ghost blank document icon without a name appeared on the Windows Desktop after running the optimization script and persistently returned upon system reboot.
+  - **Root Cause**: In `"Hide Libraries from Navigation Pane"`, an erroneous `New-Item` command mistakenly created an invalid/corrupted GUID `{031E4825-7B94-4dc3-B131-E946B7CD0BE5}` in `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace`. Because `Desktop\NameSpace` registers virtual shell items directly onto the desktop, and the corrupted GUID has no associated COM handler, icon, or label, Windows Explorer rendered it as a blank white sheet.
+  - **Fix & Permanent Removal**:
+    1. Fully purged the rogue registry key `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{031E4825-7B94-4dc3-B131-E946B7CD0BE5}` and corresponding user CLSID overrides.
+    2. Embedded an unconditional cleanup routine into the desktop finalization stage to automatically eliminate this phantom icon on any existing machine running the optimizer.
+    3. Corrected the Explorer Libraries navigation pane tweak to target the canonical GUID `{031E4825-7B94-4dc3-B131-E946B44C8DD5}` via `HKCU:\Software\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}` with `System.IsPinnedToNameSpaceTree = 0` (preventing any desktop namespace pollution).
+- **Standalone 1-Click Fix Utility**:
+  - Provided `Fix-Phantom-Desktop-Icon.cmd` in `Util-WINDOWS` for instant, non-invasive remediation without re-running the entire optimization suite.
+
+---
+
 ## [v025] вЂ” 2026-10-29
 ### Dism++ Exact Parity for Windows Update
 - **Windows Update 1-to-1 Dism++ Profile Alignment**:
