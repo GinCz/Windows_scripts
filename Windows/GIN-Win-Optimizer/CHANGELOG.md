@@ -4,17 +4,18 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
-## [v026] — 2026-10-30
-### Bugfix: Purge Phantom Desktop Ghost Icon & Correct Explorer Libraries GUID
-- **Phantom Blank Icon Hotfix (Desktop NameSpace CLSID Purge)**:
-  - Resolved an issue where a ghost blank document icon without a name appeared on the Windows Desktop after running the optimization script and persistently returned upon system reboot.
-  - **Root Cause**: In `"Hide Libraries from Navigation Pane"`, an erroneous `New-Item` command mistakenly created an invalid/corrupted GUID `{031E4825-7B94-4dc3-B131-E946B7CD0BE5}` in `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace`. Because `Desktop\NameSpace` registers virtual shell items directly onto the desktop, and the corrupted GUID has no associated COM handler, icon, or label, Windows Explorer rendered it as a blank white sheet.
-  - **Fix & Permanent Removal**:
-    1. Fully purged the rogue registry key `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{031E4825-7B94-4dc3-B131-E946B7CD0BE5}` and corresponding user CLSID overrides.
-    2. Embedded an unconditional cleanup routine into the desktop finalization stage to automatically eliminate this phantom icon on any existing machine running the optimizer.
-    3. Corrected the Explorer Libraries navigation pane tweak to target the canonical GUID `{031E4825-7B94-4dc3-B131-E946B44C8DD5}` via `HKCU:\Software\Classes\CLSID\{031E4825-7B94-4dc3-B131-E946B44C8DD5}` with `System.IsPinnedToNameSpaceTree = 0` (preventing any desktop namespace pollution).
-- **Standalone 1-Click Fix Utility**:
-  - Provided `Fix-Phantom-Desktop-Icon.cmd` in `Util-WINDOWS` for instant, non-invasive remediation without re-running the entire optimization suite.
+## [v027] — 2026-10-30
+### Polyglot Hybrid CRLF Encoding Fix & Built-In Self-Healing Cleanup
+- **CRLF Line Endings Enforcement for CMD Polyglot Execution**:
+  - Fixed a critical batch script parsing failure where Unix `LF` line endings caused `cmd.exe` to desynchronize file pointer seek offsets, bypass the batch elevation block, and execute PowerShell logic as batch commands (spawning stray redirection files such as `v026)` and failing to launch).
+  - Strictly normalized all line breaks throughout the script to standard Windows **CRLF (`\r\n`)** with UTF-8 BOM, ensuring clean, immediate CMD startup and background PowerShell GUI elevation.
+- **Automated Turnkey Self-Healing (No External Scripts Required)**:
+  - Embedded an autonomous environment cleanup block directly at script startup and within the Desktop finalization routine:
+    1. **Purges phantom Desktop\NameSpace CLSID**: automatically deletes `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{031E4825-7B94-4dc3-B131-E946B7CD0BE5}` and related user CLSIDs, permanently clearing the blank ghost icon on any computer (local or client/work workstations).
+    2. **Sweeps stray redirection artifacts**: automatically detects and deletes any lingering `v026)` or temporary files across the script directory and user Desktop.
+    3. **Eliminates external fix utilities**: all remediation logic is 100% self-contained inside `GIN-Win-Optimizer_v027.cmd`.
+- **Correct Explorer Libraries Navigation Pane Tweak**:
+  - Accurately targets canonical GUID `{031E4825-7B94-4dc3-B131-E946B44C8DD5}` under `HKCU:\Software\Classes\CLSID` with `System.IsPinnedToNameSpaceTree = 0`.
 
 ---
 
@@ -37,39 +38,49 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
   - Purged aggressive artificial block `DoNotConnectToWindowsUpdateInternetLocations`.
 
 ---
-## [v024] вЂ” 2026-10-29
-### Dism++ Exact Parity for Windows Update
-- **Windows Update 1-to-1 Dism++ Profile Alignment**:
-  - Windows Update policies and registry keys now strictly replicate Dism++'s default optimization configuration:
-    1. **Dropdown `*РќР°СЃС‚СЂРѕР№РєР° РїСЂРѕРІРµСЂРєРё РѕР±РЅРѕРІР»РµРЅРёР№ РІ Р¦РµРЅС‚СЂРµ РѕР±РЅРѕРІР»РµРЅРёР№` (`*Configure check for updates`)**:
-       - Set to **`РќРµ РїСЂРѕРІРµСЂСЏС‚СЊ (РЅРµ СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ)`** (`Never check for updates`).
-       - Configured via Group Policy and CurrentVersion fallback: `AUOptions = 1`, `NoAutoUpdate = 1`, and `CachedAUOptions = 1` in `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` and `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update`.
-    2. **Toggle 1 `РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё СѓСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ РѕР±РЅРѕРІР»РµРЅРёСЏ Р±РµР· РїРµСЂРµР·Р°РіСЂСѓР·РєРё`**:
-       - Configured strictly to **OFF (`0`)** via `AutoInstallMinorUpdates = 0` (resolved previous singular key typo).
-    3. **Toggle 2 `РџСЂРё РѕР±РЅРѕРІР»РµРЅРёРё РІС‹РІРѕРґРёС‚СЃСЏ СѓРІРµРґРѕРјР»РµРЅРёРµ Рѕ РЅРµРѕР±С…РѕРґРёРјРѕСЃС‚Рё РїРµСЂРµР·Р°РіСЂСѓР·РєРё`**:
-       - Configured strictly to **OFF (`0` / purged)** via removal of `NoAutoRebootWithLoggedOnUsers` (previously set to `1`).
-    4. **Toggle 3 `Windows Update РЅРµ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ РґСЂР°Р№РІРµСЂС‹`**:
-       - Configured to **ON (`1`)** via `ExcludeWUDriversInQualityUpdate = 1` under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`.
-    5. **Toggle 4 `РћР±РЅРѕРІР»РµРЅРёРµ Windows РЅРµ РІРєР»СЋС‡Р°РµС‚ РІ СЃРµР±СЏ СЃСЂРµРґСЃС‚РІРѕ СѓРґР°Р»РµРЅРёСЏ РІСЂРµРґРѕРЅРѕСЃРЅС‹С… РїСЂРѕРіСЂР°РјРј`**:
-       - Configured to **ON (`1`)** via `DontOfferThroughWUAU = 1` under `HKLM:\SOFTWARE\Policies\Microsoft\MRT`.
-  - **Service State Preservation**: Update services (`wuauserv`, `dosvc`, `UsoSvc`) are set to **`Manual` (`Start = 3`)** rather than permanently disabled (`Start = 4`), ensuring Microsoft Store, AppX deployment, DISM operations, and manual check-for-updates remain fully functional without system-level breakage.
-  - Purged aggressive artificial block `DoNotConnectToWindowsUpdateInternetLocations`.
+## [v024] — 2026-10-27
+### Smart Keyboard Hierarchy (EN > CS > RU), Regional Formats, Power/Sleep Timeouts & Wi-Fi Privacy
+- **Smart Multilingual Keyboard Priority Hierarchy**:
+  - Always enforces English (United States) `en-US` (`0409:00000409`) as #1 and the default system/user input language.
+  - Dynamically evaluates if Czech keyboard layout (`cs-CZ` / `0405:00000405`) is installed in the system:
+    - **If Czech is installed:** Sets English as #1, Czech as #2, and Russian (`ru-RU`) as #3.
+    - **If Czech is NOT installed:** Sets English as #1, and Russian as #2.
+  - Dual-layer enforcement: uses modern PowerShell `Set-WinUserLanguageList` and `Set-WinDefaultInputMethodOverride` with comprehensive registry fallbacks (`HKCU:\Keyboard Layout\Preload`, `HKCU:\Control Panel\International\User Profile\InputMethodOverride`, and `PreferredUILanguages`).
+- **Russian Regional Data Format (ru-RU) & Date/Time Standards**:
+  - Configures regional format to Russian (`ru-RU`) with Gregorian calendar.
+  - Sets Monday as the first day of the week (`iFirstDayOfWeek = 0`).
+  - Sets Short Date format to `dd.MM.yyyy` and Long Date to `d MMMM yyyy 'г.'`.
+  - Sets 24-hour time formats: Short Time `HH:mm` and Long Time `HH:mm:ss`.
+- **Power, Sleep & Screen Saver Timeouts**:
+  - Turn off screen: `Never` (0) on battery power and `Never` (0) when plugged in.
+  - Sleep timeout: `30 minutes` on battery power, `Never` (0) when plugged in.
+  - Screen Saver: `10 minutes` (600 seconds) timeout, lock on resume disabled (`ScreenSaverIsSecure = 0`).
+- **Wi-Fi Privacy & Hotspot 2.0 Hardening**:
+  - Disables Random Hardware Addresses (MAC Randomization) in `HKLM:\SOFTWARE\Microsoft\WlanSvc\Anonymization` and across all Wi-Fi interfaces.
+  - Disables Hotspot 2.0 (Passpoint) Online Sign-Up (OSU) registration in `HKLM:\SOFTWARE\Microsoft\WlanSvc\AnqpCache` (`OsuRegistrationStatus = 0`).
+  - Disables randomization parameter across all stored wireless network profiles.
+- **Xbox Game Bar & Controller Shortcut Deactivation**:
+  - Disables Xbox Game Bar recording / DVR (`AppCaptureEnabled = 0`, `GameDVR_Enabled = 0`, `AllowGameDVR = 0`).
+  - Disables opening Xbox Game Bar via controller Xbox button (`UseNexusForGameBarEnabled = 0`).
+- **106 Active Optimization Modules & Full Trilingual GUI**:
+  - Expands module count to 106 granular checkboxes with trilingual support (EN / CS / RU).
 
 ---
 
-## [v023] вЂ” 2026-10-26
-### Critical Fixes & Array Management
-- **Fixed Size Array Exception Resolution**: Resolved PowerShell runtime exception during Documents/Desktop relocation.
-- **Enhanced UI Stability**: Minor performance optimizations in WPF component binding.
+## [v023] — 2026-10-26
+### Array Boundary Hardening on Shell Folders
+- Resolved fixed-size array Add exception during Documents and Desktop relocation.
+- Version increment to v023.
 
 ---
 
-## [v022] вЂ” 2026-10-26
-### Regional & Time Formatting
-- **Czech Localization Defaults**: Added regional time, date format, and timezone synchronization options.
-- **Clock 24-Hour & Seconds Option**: Enhanced taskbar clock customization.
+## [v022] — 2026-10-26
+### Czech Region, Timezone & Auto-DST
+- Added Czech Republic region (GeoId 75), TimeZone (Prague, UTC+1, W. Europe Standard Time) with automatic daylight saving time (DST).
+- Version increment to v022.
 
 ---
+
 ## [v021] — 2026-10-26
 ### Autonomous Reboot Elimination, Safe Folder Migration & People/IE Purge
 - **No Automatic Reboot & Dedicated Bright 'Reboot' Button**:

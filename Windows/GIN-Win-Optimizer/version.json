@@ -1,5 +1,5 @@
 {
-  "version": "v026",
+  "version": "v027",
   "name": "GIN-Win-Optimizer",
   "description": "Windows 10/11 Ultimate Optimizer & Deep Cleaner Plus (Single-Window WPF Polyglot Hybrid CMD/PowerShell)",
   "release_date": "2026-10-30",
@@ -13,7 +13,7 @@
     "usb_flash_path": "V:\\WIN-FLASH\\Util-WINDOWS\\",
     "mega_flash_path": "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\",
     "active_versions": [
-      "GIN-Win-Optimizer_v026.cmd",
+      "GIN-Win-Optimizer_v027.cmd",
       "GIN-Win-Optimizer_v025.cmd"
     ]
   }
