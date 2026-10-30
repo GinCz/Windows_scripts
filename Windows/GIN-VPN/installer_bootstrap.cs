@@ -6,7 +6,9 @@ using System.Threading;
 using System.Diagnostics;
 using System.Windows.Forms;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace GinVpnBootstrap {
     static class Program {
@@ -69,8 +71,8 @@ namespace GinVpnBootstrap {
         }
 
         private void InitializeUI() {
-            this.Text = "GIN-VPN — Установка и запуск";
-            this.Size = new Size(480, 200);
+            this.Text = "GIN-VPN — Быстрая установка и запуск";
+            this.Size = new Size(500, 210);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -95,29 +97,29 @@ namespace GinVpnBootstrap {
             lblTitle.Text = "GIN-VPN by VladiMIR+AI";
             lblTitle.Font = new Font("Segoe UI", 13, FontStyle.Bold);
             lblTitle.Location = new Point(88, 22);
-            lblTitle.Size = new Size(365, 26);
+            lblTitle.Size = new Size(385, 26);
             lblTitle.ForeColor = Color.FromArgb(0, 230, 118);
             this.Controls.Add(lblTitle);
 
             lblStatus = new Label();
-            lblStatus.Text = "Поиск доступного сервера загрузки...";
+            lblStatus.Text = "Определение актуальной версии и зеркал...";
             lblStatus.Font = new Font("Segoe UI", 9, FontStyle.Regular);
             lblStatus.Location = new Point(88, 52);
-            lblStatus.Size = new Size(365, 20);
+            lblStatus.Size = new Size(385, 20);
             lblStatus.ForeColor = Color.FromArgb(200, 200, 200);
             this.Controls.Add(lblStatus);
 
             progressBar = new ProgressBar();
-            progressBar.Location = new Point(24, 100);
-            progressBar.Size = new Size(416, 24);
+            progressBar.Location = new Point(24, 105);
+            progressBar.Size = new Size(436, 24);
             progressBar.Style = ProgressBarStyle.Continuous;
             this.Controls.Add(progressBar);
 
             lblPercent = new Label();
             lblPercent.Text = "0%";
             lblPercent.Font = new Font("Segoe UI", 8, FontStyle.Regular);
-            lblPercent.Location = new Point(24, 130);
-            lblPercent.Size = new Size(416, 20);
+            lblPercent.Location = new Point(24, 135);
+            lblPercent.Size = new Size(436, 20);
             lblPercent.TextAlign = ContentAlignment.TopRight;
             lblPercent.ForeColor = Color.FromArgb(160, 160, 160);
             this.Controls.Add(lblPercent);
@@ -185,27 +187,47 @@ namespace GinVpnBootstrap {
                 string targetExe = Path.Combine(targetDir, "GIN-VPN.exe");
                 string tempFile = Path.Combine(Path.GetTempPath(), "GIN-VPN_Setup_" + Guid.NewGuid().ToString("N") + ".tmp");
 
-                // 4. Download mirrors
-                var mirrors = new[] {
-                    new { Name = "Сервер RU-109 (Москва / FastVDS)", Url = "http://prodvig-saita.ru/vpn/GIN-VPN.exe" },
-                    new { Name = "Сервер CloudCore-191 HTTPS", Url = "https://4at.gincz.com/download/GIN-VPN.exe" },
-                    new { Name = "Сервер CloudCore-191 Прямой IP", Url = "http://31.59.126.191/download/GIN-VPN.exe" },
-                    new { Name = "Глобальный GitHub Raw", Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe" },
-                    new { Name = "Версионный GitHub Raw (v079)", Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v079.exe" }
-                };
-
                 ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 /* Tls12 */ | (SecurityProtocolType)12288 /* Tls13 */ | SecurityProtocolType.Tls;
+
+                // 4. Discover Latest Version dynamically
+                SetStatus("Проверка актуальной версии на GitHub...");
+                string directUrl = null;
+                string latestVer = DetectLatestVersion(out directUrl);
+                SetStatus("Целевая версия: " + latestVer + ". Подбор оптимального сервера...");
+
+                // 5. Construct smart priority mirrors (version-explicit first to avoid stale cache)
+                List<MirrorEntry> mirrors = new List<MirrorEntry>();
+
+                if (!string.IsNullOrEmpty(directUrl)) {
+                    mirrors.Add(new MirrorEntry("Официальный релиз из манифеста", directUrl));
+                }
+
+                mirrors.Add(new MirrorEntry("Глобальный GitHub Raw (" + latestVer + ")",
+                    "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_" + latestVer + ".exe"));
+                mirrors.Add(new MirrorEntry("Глобальный GitHub Raw (Основной бинарник)",
+                    "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe"));
+                mirrors.Add(new MirrorEntry("Сервер CloudCore-191 HTTPS (" + latestVer + ")",
+                    "https://4at.gincz.com/download/GIN-VPN_" + latestVer + ".exe"));
+                mirrors.Add(new MirrorEntry("Сервер CloudCore-191 Прямой IP (" + latestVer + ")",
+                    "http://31.59.126.191/download/GIN-VPN_" + latestVer + ".exe"));
+                mirrors.Add(new MirrorEntry("Сервер CloudCore-191 HTTPS (Основной бинарник)",
+                    "https://4at.gincz.com/download/GIN-VPN.exe"));
+                mirrors.Add(new MirrorEntry("Сервер RU-109 Москва (" + latestVer + ")",
+                    "http://prodvig-saita.ru/vpn/GIN-VPN_" + latestVer + ".exe"));
+                mirrors.Add(new MirrorEntry("Сервер RU-109 Москва (Основной бинарник)",
+                    "http://prodvig-saita.ru/vpn/GIN-VPN.exe"));
+
                 bool success = false;
 
-                foreach (var m in mirrors) {
-                    SetStatus("Проверка: " + m.Name + "...");
+                foreach (MirrorEntry m in mirrors) {
+                    SetStatus("Проверка сервера: " + m.Name + "...");
                     try {
                         if (File.Exists(tempFile)) {
                             File.Delete(tempFile);
                         }
 
                         using (WebClient wc = new WebClient()) {
-                            wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) GIN-VPN-Bootstrap");
+                            wc.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) GIN-VPN-Installer");
                             
                             ManualResetEvent downloadDone = new ManualResetEvent(false);
                             Exception downloadErr = null;
@@ -222,15 +244,24 @@ namespace GinVpnBootstrap {
                                 downloadDone.Set();
                             };
 
-                            SetStatus("Загрузка: " + m.Name + "...");
+                            SetStatus("Загрузка " + latestVer + " c " + m.Name + "...");
                             wc.DownloadFileAsync(new Uri(m.Url), tempFile);
                             downloadDone.WaitOne();
 
                             if (downloadErr == null && File.Exists(tempFile)) {
                                 long len = new FileInfo(tempFile).Length;
                                 if (len >= 12000000) {
-                                    success = true;
-                                    break;
+                                    // Anti-stale verification: verify downloaded binary contains target version string
+                                    SetStatus("Проверка целостности и версии " + latestVer + "...");
+                                    if (VerifyBinaryVersion(tempFile, latestVer)) {
+                                        success = true;
+                                        break;
+                                    } else {
+                                        // Stale binary from old cache, discard and try next mirror
+                                        SetStatus("Сервер " + m.Name + " вернул устаревшую версию, переключение...");
+                                        try { File.Delete(tempFile); } catch {}
+                                        Thread.Sleep(500);
+                                    }
                                 }
                             }
                         }
@@ -239,7 +270,7 @@ namespace GinVpnBootstrap {
 
                 if (!success || !File.Exists(tempFile)) {
                     MessageBox.Show(
-                        "Не удалось загрузить GIN-VPN ни с одного из доступных серверов (RU-109, CloudCore-191, GitHub).\n\nПожалуйста, проверьте интернет-соединение или настройки брандмауэра.",
+                        "Не удалось загрузить актуальную версию " + latestVer + " GIN-VPN ни с одного из доступных серверов.\n\nПожалуйста, проверьте интернет-соединение или настройки брандмауэра.",
                         "Ошибка загрузки GIN-VPN",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Error
@@ -248,13 +279,13 @@ namespace GinVpnBootstrap {
                     return;
                 }
 
-                // 5. Install target
-                SetStatus("Установка в " + targetDir + "...");
+                // 6. Install target
+                SetStatus("Установка " + latestVer + " в " + targetDir + "...");
                 SetProgress(95, "Копирование файлов...");
                 File.Copy(tempFile, targetExe, true);
                 try { File.Delete(tempFile); } catch {}
 
-                // 6. Create clean Desktop and Start Menu Shortcuts (.lnk only, NO raw .exe!)
+                // 7. Create clean Desktop and Start Menu Shortcuts (.lnk only, NO raw .exe!)
                 SetStatus("Создание ярлыков...");
                 string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                 CreateShortcut(Path.Combine(desktop, "GIN-VPN.lnk"), targetExe, targetDir, "GIN-VPN by VladiMIR+AI");
@@ -275,8 +306,8 @@ namespace GinVpnBootstrap {
                     }
                 } catch {}
 
-                // 7. Launch application
-                SetStatus("Запуск GIN-VPN...");
+                // 8. Launch application
+                SetStatus("Запуск GIN-VPN " + latestVer + "...");
                 SetProgress(100, "Готово!");
                 Thread.Sleep(300);
 
@@ -292,6 +323,61 @@ namespace GinVpnBootstrap {
                 MessageBox.Show("Ошибка во время установки: " + ex.Message, "GIN-VPN", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.BeginInvoke(new Action(Close));
             }
+        }
+
+        private static string DetectLatestVersion(out string directDownloadUrl) {
+            directDownloadUrl = null;
+            string[] manifestMirrors = new[] {
+                "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/version.json?t=" + DateTime.UtcNow.Ticks,
+                "https://raw.githubusercontent.com/GinCz/Secret_Privat/main/Windows/GIN-VPN/version.json?t=" + DateTime.UtcNow.Ticks,
+                "https://4at.gincz.com/download/version.json?t=" + DateTime.UtcNow.Ticks,
+                "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/version.txt?t=" + DateTime.UtcNow.Ticks
+            };
+
+            foreach (string url in manifestMirrors) {
+                try {
+                    using (WebClient wc = new WebClient()) {
+                        wc.Headers.Add("User-Agent", "GIN-VPN-Installer");
+                        string content = wc.DownloadString(url).Trim();
+                        if (!string.IsNullOrEmpty(content)) {
+                            if (content.StartsWith("{")) {
+                                Match mv = Regex.Match(content, "\"version\"\\s*:\\s*\"([^\"]+)\"");
+                                Match mu = Regex.Match(content, "\"download_url\"\\s*:\\s*\"([^\"]+)\"");
+                                if (mu.Success) directDownloadUrl = mu.Groups[1].Value.Trim();
+                                if (mv.Success) return mv.Groups[1].Value.Trim();
+                            } else if (content.StartsWith("v", StringComparison.OrdinalIgnoreCase)) {
+                                return content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+                            }
+                        }
+                    }
+                } catch {}
+            }
+            return "v079"; // Fallback latest verified version
+        }
+
+        private static bool VerifyBinaryVersion(string filePath, string targetVer) {
+            try {
+                FileInfo fi = new FileInfo(filePath);
+                if (fi.Length < 12000000) return false;
+
+                byte[] pattern = System.Text.Encoding.ASCII.GetBytes(targetVer);
+                using (FileStream fs = File.OpenRead(filePath)) {
+                    byte[] buffer = new byte[65536];
+                    int bytesRead;
+                    int matched = 0;
+                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0) {
+                        for (int i = 0; i < bytesRead; i++) {
+                            if (buffer[i] == pattern[matched]) {
+                                matched++;
+                                if (matched == pattern.Length) return true;
+                            } else {
+                                matched = (buffer[i] == pattern[0]) ? 1 : 0;
+                            }
+                        }
+                    }
+                }
+            } catch {}
+            return false;
         }
 
         private static void KillProcess(string name) {
@@ -314,6 +400,15 @@ namespace GinVpnBootstrap {
                 shortcut.Description = description;
                 shortcut.Save();
             } catch {}
+        }
+
+        private class MirrorEntry {
+            public string Name { get; set; }
+            public string Url { get; set; }
+            public MirrorEntry(string name, string url) {
+                Name = name;
+                Url = url;
+            }
         }
     }
 }
