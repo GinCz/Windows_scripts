@@ -38,9 +38,9 @@ var embeddedBcryptPrimitivesDll []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v087"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v087]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v087]"
+	AppVersion    = "v088"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v088]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v088]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2316,7 +2316,7 @@ func getXrayExeCandidates() []string {
 }
 
 func ensureXrayBinaryExists() error {
-	const expectedXraySize int64 = 34375680
+	const expectedXraySize int64 = 34556928
 	candidates := getXrayExeCandidates()
 
 	// 1. Fast path: check if any candidate already has the exact verified binary
@@ -2335,7 +2335,7 @@ func ensureXrayBinaryExists() error {
 	killProcessSilently("xray.exe")
 	time.Sleep(100 * time.Millisecond)
 
-	writeLog("CORE", "Unpacking verified Xray Core v26.10.17 payload...")
+	writeLog("CORE", "Unpacking verified universal Xray Core v26.10.29 payload (Win7-Win11)...")
 
 	var lastErr error
 	for _, targetExe := range candidates {
@@ -2396,7 +2396,7 @@ func ensureXrayBinaryExists() error {
 		// Verify size of written file
 		if fi, statErr := os.Stat(targetExe); statErr == nil && fi.Size() == expectedXraySize {
 			activeXrayExePath = targetExe
-			writeLog("CORE_OK", fmt.Sprintf("Embedded Xray Core v26.10.17 ready: %s", targetExe))
+			writeLog("CORE_OK", fmt.Sprintf("Embedded universal Xray Core v26.10.29 ready: %s", targetExe))
 			return nil
 		}
 	}
