@@ -54,7 +54,7 @@ Write-Host ""
 $mirrors = @(
     @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow Dedicated)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN.exe" },
     @{ Name = "Russian Server CloudCore-191 Main (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN.exe" },
-    @{ Name = "Global GitHub Raw (Versioned v085)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v085.exe" },
+    @{ Name = "Global GitHub Raw (Versioned v086)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v086.exe" },
     @{ Name = "Global GitHub Raw (GIN-VPN.exe)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe" }
 )
 
