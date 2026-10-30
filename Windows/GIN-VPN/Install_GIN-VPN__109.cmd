@@ -32,7 +32,11 @@ Write-Host "====================================================================
 Write-Host ""
 
 Write-Host "[*] Checking network settings..." -ForegroundColor Cyan
-& netsh winhttp reset proxy | Out-Null
+& netsh winhttp reset proxy 2>$null | Out-Null
+& reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyEnable /t REG_DWORD /d 0 /f 2>$null | Out-Null
+& reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyServer /f 2>$null | Out-Null
+& reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v ProxyOverride /f 2>$null | Out-Null
+& reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings\Connections" /va /f 2>$null | Out-Null
 
 Write-Host "[*] Checking for running instances of GIN-VPN / Xray..." -ForegroundColor Cyan
 Get-Process -Name "GIN-VPN" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
@@ -48,7 +52,7 @@ Write-Host ""
 $mirrors = @(
     @{ Name = "Russian Server RU-109 (prodvig-saita.ru - Moscow Dedicated)"; Url = "http://prodvig-saita.ru/vpn/GIN-VPN.exe" },
     @{ Name = "Russian Server CloudCore-191 Main (4at.gincz.com)"; Url = "https://4at.gincz.com/download/GIN-VPN.exe" },
-    @{ Name = "Global GitHub Raw (Versioned v090)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v090.exe" },
+    @{ Name = "Global GitHub Raw (Versioned v091)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_v091.exe" },
     @{ Name = "Global GitHub Raw (GIN-VPN.exe)"; Url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe" }
 )
 

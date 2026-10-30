@@ -38,9 +38,9 @@ var embeddedBcryptPrimitivesDll []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v090"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v090]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v090]"
+	AppVersion    = "v091"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v091]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v091]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -603,9 +603,7 @@ var (
 		"82.223.116.38":   {"Spain", "Madrid", "Испания", "Мадрид"},
 		"152.53.182.222":  {"Germany", "Nuremberg", "Германия", "Нюрнберг"},
 		"212.109.223.109": {"Russia", "Moscow", "Россия", "Москва"},
-		"92.5.111.49":     {"Germany", "Frankfurt", "Германия", "Франкфурт"},
-		"130.61.212.1":    {"Germany", "Frankfurt", "Германия", "Франкфурт"},
-		"130.61.101.157":  {"Germany", "Frankfurt", "Германия", "Франкфурт"},
+		"92.5.111.49":  {"Germany", "Frankfurt", "Германия", "Франкфурт"},
 		"130.61.139.230":  {"Germany", "Frankfurt", "Германия", "Франкфурт"},
 		"212.34.148.51":   {"Russia", "Moscow", "Россия", "Москва"},
 		"144.124.239.24":  {"Finland", "Helsinki", "Финляндия", "Хельсинки"},
@@ -2610,8 +2608,14 @@ func setWindowsProxy(enabled bool, server string) {
 		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/t", "REG_SZ", "/d", server, "/f").Run()
 		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyOverride", "/t", "REG_SZ", "/d", "<local>;localhost;127.0.0.1", "/f").Run()
 		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "AutoConfigURL", "/f").Run()
+		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Connections", "/va", "/f").Run()
 	} else {
 		_ = exec.Command("reg", "add", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyEnable", "/t", "REG_DWORD", "/d", "0", "/f").Run()
+		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyServer", "/f").Run()
+		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "ProxyOverride", "/f").Run()
+		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings", "/v", "AutoConfigURL", "/f").Run()
+		_ = exec.Command("reg", "delete", "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Connections", "/va", "/f").Run()
+		_ = exec.Command("netsh", "winhttp", "reset", "proxy").Run()
 	}
 	procInternetSetOptionW.Call(0, INTERNET_OPTION_SETTINGS_CHANGED, 0, 0)
 	procInternetSetOptionW.Call(0, INTERNET_OPTION_REFRESH, 0, 0)
