@@ -97,7 +97,7 @@ namespace GinVpnBootstrap {
     }
 
     public class InstallerForm : Form {
-        private const string FALLBACK_VERSION = "v081";
+        private const string FALLBACK_VERSION = "v082";
         private Label lblTitle;
         private Label lblStatus;
         private ProgressBar progressBar;

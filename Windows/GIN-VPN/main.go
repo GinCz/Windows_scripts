@@ -35,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v081"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v081]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v081]"
+	AppVersion    = "v082"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v082]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v082]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2744,6 +2744,39 @@ func playSuccessChime() {
 	}()
 }
 
+func playConnectionFailSound() {
+	if isMuteSound {
+		return
+	}
+	go func() {
+		// 1. Direct WAV file: C:\Windows\Media\Windows Hardware Fail.wav (Option 1: DeviceFail)
+		winDir := os.Getenv("WINDIR")
+		if winDir == "" {
+			winDir = `C:\Windows`
+		}
+		wavPath := filepath.Join(winDir, "Media", "Windows Hardware Fail.wav")
+		if _, err := os.Stat(wavPath); err == nil && procPlaySoundW.Find() == nil {
+			// SND_FILENAME (0x00020000) | SND_ASYNC (0x00000001) | SND_NODEFAULT (0x00000002) = 0x00020003
+			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(strPtr(wavPath))), 0, 0x00020000|0x00000001|0x00000002)
+			if r != 0 {
+				return
+			}
+		}
+
+		// 2. System Sound Alias fallback: "DeviceFail"
+		if procPlaySoundW.Find() == nil {
+			aliasName := strPtr("DeviceFail")
+			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(aliasName)), 0, 0x00010000|0x00000001|0x00000002)
+			if r != 0 {
+				return
+			}
+		}
+
+		// 3. Fallback: Hand / Critical Stop / Error beep in user32 (MB_ICONHAND = 0x00000010)
+		procMessageBeep.Call(0x00000010)
+	}()
+}
+
 func triggerAppUpToDateFeedback() {
 	playSuccessChime()
 	isAppUpToDate = true
@@ -3777,6 +3810,7 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 			writeLog("ERR", fmt.Sprintf("Failed to parse VLESS URI: %v", err))
 			isConnected = false
 			updateTrayIcon(false, "", "")
+			playConnectionFailSound()
 			return
 		}
 
@@ -3786,6 +3820,7 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 			writeLog("ERR", fmt.Sprintf("Failed to launch Xray Core: %v", err))
 			isConnected = false
 			updateTrayIcon(false, "", "")
+			playConnectionFailSound()
 			return
 		}
 
@@ -3805,6 +3840,7 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 			setWindowsProxy(false, "")
 			isConnected = false
 			updateTrayIcon(false, "", "")
+			playConnectionFailSound()
 			if hwndMain != 0 {
 				procShowWindow.Call(hwndMain, 5) // SW_SHOW
 				procSetForegroundWindow.Call(hwndMain)
@@ -3866,6 +3902,11 @@ func toggleVpn() {
 	if isConnected {
 		disconnectVpnAsync()
 	} else {
+		if len(profiles) == 0 {
+			writeLog("ERR", "No VPN profiles configured to connect.")
+			playConnectionFailSound()
+			return
+		}
 		selIdx := 0
 		for i, p := range profiles {
 			if p.Default != "" {
