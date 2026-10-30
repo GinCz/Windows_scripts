@@ -35,9 +35,9 @@ var winxpStartupWav []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v082"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v082]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v082]"
+	AppVersion    = "v083"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v083]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v083]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -2704,6 +2704,39 @@ func parseVersionNumber(v string) int {
 	return num
 }
 
+func playConnectionSuccessSound() {
+	if isMuteSound {
+		return
+	}
+	go func() {
+		// 1. Direct WAV file: C:\Windows\Media\Windows Message Nudge.wav (Option 7: Message Nudge)
+		winDir := os.Getenv("WINDIR")
+		if winDir == "" {
+			winDir = `C:\Windows`
+		}
+		wavPath := filepath.Join(winDir, "Media", "Windows Message Nudge.wav")
+		if _, err := os.Stat(wavPath); err == nil && procPlaySoundW.Find() == nil {
+			// SND_FILENAME (0x00020000) | SND_ASYNC (0x00000001) | SND_NODEFAULT (0x00000002) = 0x00020003
+			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(strPtr(wavPath))), 0, 0x00020000|0x00000001|0x00000002)
+			if r != 0 {
+				return
+			}
+		}
+
+		// 2. System Sound Alias fallback: "DeviceConnect" or "SystemNotification"
+		if procPlaySoundW.Find() == nil {
+			soundName := strPtr("DeviceConnect")
+			r, _, _ := procPlaySoundW.Call(uintptr(unsafe.Pointer(soundName)), 0, 0x00010000|0x00000001|0x00000002)
+			if r != 0 {
+				return
+			}
+		}
+
+		// 3. Fallback: Asterisk / Information chime in user32 (MB_ICONASTERISK = 0x40)
+		procMessageBeep.Call(0x00000040)
+	}()
+}
+
 func playWinXPStartupSound() {
 	if isMuteSound {
 		return
@@ -3870,8 +3903,8 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 		// Set Green Tray Icon on Connect IMMEDIATELY
 		updateTrayIcon(true, activeNodeName, activeNodeIP)
 
-		// Play iconic Windows XP Startup sound on successful VPN connect
-		playWinXPStartupSound()
+		// Play modern Message Nudge sound on successful VPN connect
+		playConnectionSuccessSound()
 
 		writeLog("OK", fmt.Sprintf("Tunnel active! Protected IP: %s (%s) | RTT: %d ms | EU-222: %d ms | RU-109: %d ms", verifiedExitIP, locStr, latencyMs, latencyDeMs, latencyRuMs))
 
