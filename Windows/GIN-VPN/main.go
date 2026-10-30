@@ -38,9 +38,9 @@ var embeddedBcryptPrimitivesDll []byte
 
 const (
 	AppName       = "GIN-VPN"
-	AppVersion    = "v089"
-	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v089]"
-	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v089]"
+	AppVersion    = "v090"
+	AppTitleEN    = "GIN-VPN by VladiMIR+AI — High-Speed Native Xray Client [v090]"
+	AppTitleRU    = "GIN-VPN от VladiMIR+AI — Высокоскоростной Xray Клиент [v090]"
 	AppAuthor     = "VladiMIR+AI (Vladimir Bulantsev - GinCz)"
 	GitHubRepoURL = "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-VPN"
 
@@ -3852,39 +3852,27 @@ func getSelectedProfileIndex() int {
 	return getActualProfileIndex(sel)
 }
 
-func getNextProfileIndex(currentIdx int) int {
-	if len(profiles) <= 1 {
-		return -1
+func setAsDefaultProfile(actualIdx int) {
+	if actualIdx < 0 || actualIdx >= len(profiles) {
+		return
 	}
-
-	// 1. Try to find the next server in visible ListView order (sorted by ping)
-	if len(visibleProfileIndices) > 0 {
-		currRow := -1
-		for r, idx := range visibleProfileIndices {
-			if idx == currentIdx {
-				currRow = r
-				break
-			}
-		}
-		if currRow >= 0 {
-			for r := currRow + 1; r < len(visibleProfileIndices); r++ {
-				candIdx := visibleProfileIndices[r]
-				if candIdx >= 0 && candIdx < len(profiles) && candIdx != currentIdx {
-					return candIdx
-				}
-			}
-			// Wrap to beginning of visible list
-			for r := 0; r < currRow; r++ {
-				candIdx := visibleProfileIndices[r]
-				if candIdx >= 0 && candIdx < len(profiles) && candIdx != currentIdx {
-					return candIdx
-				}
-			}
+	for i := range profiles {
+		if i == actualIdx {
+			profiles[i].Default = "✔"
+		} else {
+			profiles[i].Default = ""
 		}
 	}
-
-	// 2. Fallback to slice order
-	return (currentIdx + 1) % len(profiles)
+	saveProfilesToStorage()
+	if hwndListView != 0 {
+		refreshProfilesListView()
+		selectListViewItem(actualIdx)
+	}
+	if isRussianLang {
+		writeLog("PROFILE", fmt.Sprintf("Сервер по умолчанию (Авто) установлен: %s", cleanProfileName(profiles[actualIdx].Name)))
+	} else {
+		writeLog("PROFILE", fmt.Sprintf("Default profile (Auto) set to: %s", cleanProfileName(profiles[actualIdx].Name)))
+	}
 }
 
 func connectToNodeWithAutoFallback(startIdx int, minimize bool) {
@@ -3895,11 +3883,39 @@ func connectToNodeWithAutoFallback(startIdx int, minimize bool) {
 	autoFallbackCanceled = false
 	activeConnectingIdx = startIdx
 
-	go executeConnectWithFallback(startIdx, minimize, 0)
+	targetSub := profiles[startIdx].Subscription
+
+	// Gather all profiles strictly belonging to the same subscription (or standalone if not in a subscription)
+	var subIndices []int
+	for i, p := range profiles {
+		if p.Subscription == targetSub {
+			subIndices = append(subIndices, i)
+		}
+	}
+	if len(subIndices) == 0 {
+		subIndices = []int{startIdx}
+	}
+
+	// Find starting position inside subIndices
+	startPos := 0
+	for pos, idx := range subIndices {
+		if idx == startIdx {
+			startPos = pos
+			break
+		}
+	}
+
+	go executeSubscriptionFallback(subIndices, startPos, minimize)
 }
 
-func executeConnectWithFallback(profileIdx int, minimize bool, attemptCount int) {
-	if autoFallbackCanceled || profileIdx < 0 || profileIdx >= len(profiles) {
+func executeSubscriptionFallback(subIndices []int, currentPos int, minimize bool) {
+	if autoFallbackCanceled || currentPos < 0 || currentPos >= len(subIndices) {
+		autoFallbackActive = false
+		return
+	}
+
+	profileIdx := subIndices[currentPos]
+	if profileIdx < 0 || profileIdx >= len(profiles) {
 		autoFallbackActive = false
 		return
 	}
@@ -3915,10 +3931,12 @@ func executeConnectWithFallback(profileIdx int, minimize bool, attemptCount int)
 	success := connectToNodeSync(p.Name, p.Host, p.Port, p.Country, p.RawUri, minimize)
 	if success {
 		autoFallbackActive = false
+		// Automatically set the successfully connected server as default profile
+		setAsDefaultProfile(profileIdx)
 		return
 	}
 
-	// If user manually pressed Disconnect during connection, abort fallback immediately
+	// If user manually pressed Disconnect / Cancel during connection, abort fallback immediately
 	if autoFallbackCanceled {
 		autoFallbackActive = false
 		return
@@ -3927,32 +3945,35 @@ func executeConnectWithFallback(profileIdx int, minimize bool, attemptCount int)
 	// Double-beep fail sound ("бряк-бряк")
 	playConnectionFailSound()
 
-	// Check if all available servers have been tried
-	if attemptCount >= len(profiles)-1 {
+	// Check if this was the last server in the subscription
+	if currentPos >= len(subIndices)-1 {
 		autoFallbackActive = false
+		subName := p.Subscription
+		if subName == "" {
+			subName = "Default"
+		}
 		if isRussianLang {
-			writeLog("ERR", fmt.Sprintf("⚠️ Все доступные серверы (%d) опробованы, ни один не ответил. Проверьте интернет или обновите подписку.", len(profiles)))
+			writeLog("ERR", fmt.Sprintf("⚠️ Все серверы подписки '%s' (%d) опробованы, ни один не ответил. Проверьте интернет или обновите подписку.", subName, len(subIndices)))
 		} else {
-			writeLog("ERR", fmt.Sprintf("⚠️ All available servers (%d) were tried, but none responded.", len(profiles)))
+			writeLog("ERR", fmt.Sprintf("⚠️ All servers in subscription '%s' (%d) were tried, but none responded.", subName, len(subIndices)))
 		}
 		if hwndMain != 0 {
 			procShowWindow.Call(hwndMain, 5) // SW_SHOW
 			procSetForegroundWindow.Call(hwndMain)
+			procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
+			procInvalidateRect.Call(hwndListView, 0, 1)
 		}
 		return
 	}
 
-	nextIdx := getNextProfileIndex(profileIdx)
-	if nextIdx < 0 || nextIdx == profileIdx {
-		autoFallbackActive = false
-		return
-	}
-
+	nextPos := currentPos + 1
+	nextIdx := subIndices[nextPos]
 	nextP := profiles[nextIdx]
+
 	if isRussianLang {
-		writeLog("WARN", fmt.Sprintf("🔄 Сервер '%s' не ответил (таймаут 3.5с). Авто-переход к следующему: '%s'...", cleanProfileName(p.Name), cleanProfileName(nextP.Name)))
+		writeLog("WARN", fmt.Sprintf("🔄 Сервер '%s' не ответил (таймаут 3.5с). Авто-переход к следующему серверу подписки: '%s'...", cleanProfileName(p.Name), cleanProfileName(nextP.Name)))
 	} else {
-		writeLog("WARN", fmt.Sprintf("🔄 Server '%s' did not respond (3.5s timeout). Auto-fallback: trying next server '%s'...", cleanProfileName(p.Name), cleanProfileName(nextP.Name)))
+		writeLog("WARN", fmt.Sprintf("🔄 Server '%s' did not respond (3.5s timeout). Auto-switching to next subscription server: '%s'...", cleanProfileName(p.Name), cleanProfileName(nextP.Name)))
 	}
 
 	time.Sleep(200 * time.Millisecond)
@@ -3961,7 +3982,7 @@ func executeConnectWithFallback(profileIdx int, minimize bool, attemptCount int)
 		return
 	}
 
-	executeConnectWithFallback(nextIdx, minimize, attemptCount+1)
+	executeSubscriptionFallback(subIndices, nextPos, minimize)
 }
 
 func connectToNodeSync(nodeName, host string, port int, country string, rawUri string, minimize bool) bool {
@@ -4094,6 +4115,9 @@ func connectToNodeAsync(nodeName, host string, port int, country string, rawUri 
 func disconnectVpnAsync() {
 	autoFallbackCanceled = true
 	autoFallbackActive = false
+	connMutex.Lock()
+	isConnecting = false
+	connMutex.Unlock()
 	isConnected = false
 	activeNodeName = ""
 	setWindowsProxy(false, "")
@@ -4104,7 +4128,11 @@ func disconnectVpnAsync() {
 		procPostMessageW.Call(hwndMain, WM_APP_UPDATE_STATUS, 0, 0)
 		procInvalidateRect.Call(hwndListView, 0, 1)
 	}
-	writeLog("DISCONNECT", "Tunnel closed. System proxy disabled. Restoring direct ISP routing.")
+	if isRussianLang {
+		writeLog("DISCONNECT", "Туннель закрыт / отменен. Системный прокси отключен. Прямое соединение восстановлено.")
+	} else {
+		writeLog("DISCONNECT", "Tunnel closed / canceled. System proxy disabled. Restoring direct ISP routing.")
+	}
 }
 
 func toggleVpn() {
@@ -7106,19 +7134,35 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			}
 		}
 
-	case 111: // Right part: Disconnect Button
-		btnText = "■ DISCONNECT"
-		if isRussianLang {
-			btnText = "■ ОТКЛЮЧИТЬ"
-		}
-		if isPressed {
-			baseColor = rgb(180, 25, 25)
-			borderDark = rgb(120, 15, 15)
-			borderLight = rgb(230, 80, 80)
+	case 111: // Right part: Disconnect / Cancel Button
+		if isConnecting {
+			btnText = "✕ CANCEL"
+			if isRussianLang {
+				btnText = "✕ ОТМЕНА"
+			}
+			if isPressed {
+				baseColor = rgb(190, 75, 20)
+				borderDark = rgb(130, 45, 10)
+				borderLight = rgb(240, 115, 35)
+			} else {
+				baseColor = rgb(215, 85, 25)
+				borderDark = rgb(150, 55, 15)
+				borderLight = rgb(255, 130, 45)
+			}
 		} else {
-			baseColor = rgb(215, 40, 40)
-			borderDark = rgb(140, 20, 20)
-			borderLight = rgb(255, 100, 100)
+			btnText = "■ DISCONNECT"
+			if isRussianLang {
+				btnText = "■ ОТКЛЮЧИТЬ"
+			}
+			if isPressed {
+				baseColor = rgb(180, 25, 25)
+				borderDark = rgb(120, 15, 15)
+				borderLight = rgb(230, 80, 80)
+			} else {
+				baseColor = rgb(215, 40, 40)
+				borderDark = rgb(140, 20, 20)
+				borderLight = rgb(255, 100, 100)
+			}
 		}
 
 	case 102: // Paste Key / QR
@@ -7718,10 +7762,13 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_APP_UPDATE_STATUS:
 		if isConnecting {
-			procMoveWindow.Call(hwndBtnMainAction, 18, 44, 532, 44, 1)
+			procMoveWindow.Call(hwndBtnMainAction, 18, 44, 360, 44, 1)
 			if hwndBtnDisconnect != 0 {
-				procShowWindow.Call(hwndBtnDisconnect, 0 /* SW_HIDE */)
+				procMoveWindow.Call(hwndBtnDisconnect, 382, 44, 168, 44, 1)
+				procShowWindow.Call(hwndBtnDisconnect, 5 /* SW_SHOW */)
+				procInvalidateRect.Call(hwndBtnDisconnect, 0, 1)
 			}
+			procInvalidateRect.Call(hwndBtnMainAction, 0, 1)
 			diagHeaderTxt := "■ Diagnostics & Routing — ● CONNECTING..."
 			if isRussianLang {
 				diagHeaderTxt = "■ Диагностика и маршрутизация — ● ПОДКЛЮЧЕНИЕ..."
@@ -8004,8 +8051,10 @@ func wndProc(hwnd uintptr, msg uint32, wParam, lParam uintptr) uintptr {
 				}
 			}
 
-		case 101: // Main Action: Connect if Disconnected, or Cycle Animation if Connected
-			if isConnected {
+		case 101: // Main Action: Connect if Disconnected, Cycle Animation if Connected, or Cancel if Connecting
+			if isConnecting {
+				disconnectVpnAsync()
+			} else if isConnected {
 				animVariant = (animVariant % 5) + 1
 				name := getAnimName(animVariant, isRussianLang)
 				if isRussianLang {
