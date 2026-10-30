@@ -4,6 +4,28 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v028] — 2026-10-31
+### UI Streamlining, Live System Specs Header & Bulletproof Dism++ Windows Update Lockdown
+- **UI Header Streamlining & Language Pill Cleanup**:
+  - Removed redundant "Language:" label next to language pills in the top bar.
+  - Retained "⏭ Пропустить шаг" (Skip Step) button on the action bar.
+  - Renamed primary action button to **«Оптимизировать»** (EN: **«Optimize»**, CS: **«Optimalizovat»**) across top and bottom controls for a cleaner, more concise UI.
+- **Top-Left System Specs Block («Данные о компьютере»)**:
+  - Replaced generic static title with a real-time computer hardware and network anchor:
+    - `Host: local | Устройство: <DeviceName> | Windows: <WindowsVersion> | IP: <IPAddress>`
+    - Dynamic automatic network adapter detection (extracts active IPv4 address, ignores virtual/VPN interfaces).
+- **Absolute Lockdown for Dism++ "Never check for updates (not recommended)" Parity**:
+  - **Eliminated Automatic Update Rollback Bug**: Fixed root-cause issue where Windows Update Medic Service (`WaaSMedicSvc`) and Update Orchestrator (`UsoSvc`) reverted `AUOptions` from `1` to `4` (Automatic) because `wuauserv` was previously left in `Manual` (`Start=3`).
+  - **Permanent Service Lockdown (`Start = 4`)**: Update services (`wuauserv`, `UsoSvc`, `WaaSMedicSvc`, `dosvc`) are now strictly set to **`Disabled` (`Start = 4`)** and stopped.
+  - **Dism++ Registry Parity**:
+    - `AUOptions = 1` and `NoAutoUpdate = 1` enforced in `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` and fallback `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update`.
+    - `DoNotConnectToWindowsUpdateInternetLocations = 1` and `DisableWindowsUpdateAccess = 1` enforced.
+    - Terminated all background updater worker processes (`MoUsoCoreWorker`, `UsoClient`, `wuauclt`, `WaaSMedic`, `SIHClient`).
+    - Disabled background scheduled tasks in `WindowsUpdate`, `UpdateOrchestrator`, and `WaaSMedic`.
+    - Integrated automatic check in startup self-healing and immediately following DISM operations so Dism++ always sees and stays on **«Не проверять (не рекомендуется)»**.
+
+---
+
 ## [v027] — 2026-10-30
 ### Polyglot Hybrid CRLF Encoding Fix & Built-In Self-Healing Cleanup
 - **CRLF Line Endings Enforcement for CMD Polyglot Execution**:

@@ -2,7 +2,7 @@
 
 > **Author / Chief Architect:** Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target Platforms:** Windows 10 & Windows 11 (64-bit, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v027` (Active)  
+> **Current Version:** `v028` (Active)  
 > **Architecture:** Polyglot Hybrid CMD / PowerShell 5.1 / WPF Dark-Themed GUI  
 > **License:** Proprietary / Private Source (Documentation & Metadata Public Mirror)
 
