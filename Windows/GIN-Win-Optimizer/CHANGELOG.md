@@ -1,8 +1,30 @@
-﻿# 📜 GIN-Win-Optimizer — Release History & Changelog
+# 📜 GIN-Win-Optimizer — Release History & Changelog
 
 All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
 
 ---
+## [v029] — 2026-10-31
+### Permanent Taskbar Edge & IE Eradication, Absolute Windows Update Lock (Dism++ Standard)
+- **Native Win32 Shell COM Taskbar Unpinning for Edge & IE**:
+  - **Root Cause of Reappearing Edge Ghost Icon**: In Windows 10/11, pinned apps are stored as binary shell item ID lists (PIDLs) inside `HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband` (`Favorites` and `FavoritesResolve`). Deleting `.lnk` files from `User Pinned\TaskBar` has zero effect on modern AppX/UWP packages (`Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge`), leaving a corrupted blank dark grey square tile on the taskbar.
+  - **Direct AppsFolder COM Unpin Engine**: Implemented native `Shell.Application` namespace interrogation (`shell:::{4234d49b-0245-4df3-b780-3893943456e1}`) to execute the genuine system verb (`Unpin from taskbar` / `Открепить от панели задач` / `Odepnout z hlavního panelu`) across all languages.
+  - **Tri-Layer Auto-Execution**:
+    1. **Startup Self-Healing**: Automatically scans and purges Edge & IE pins the instant `GIN-Win-Optimizer` launches.
+    2. **Optimization Module (`chk_edge_unpin`)**: Unpins Edge/IE, purges `.lnk` shortcuts from TaskBar, Start Menu, Quick Launch, User/Public Desktops, and applies registry blocks against shortcut re-creation (`DoNotCreateTaskbarShortcut = 1`, `DisableEdgeDesktopShortcutCreation = 1`).
+    3. **Pre- & Post-Explorer Restart Sweeps**: Executes both immediately before and after restarting `explorer.exe` to guarantee Windows never restores default OEM taskbar pins.
+- **Absolute Windows Update Lockdown (1-to-1 Dism++ Exact Parity)**:
+  - **Permanent 'Не проверять (не рекомендуется)' Policy**:
+    - Strictly configures `AUOptions = 1` and `NoAutoUpdate = 1` in `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` (matching Dism++ Data.xml definition exactly).
+    - Synchronously sets `AUOptions = 1` and `CachedAUOptions = 1` in `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update`.
+    - Enforces Dism++ quality update exclusions: `ExcludeWUDriversInQualityUpdate = 1` and MSRT block `DontOfferThroughWUAU = 1`.
+  - **Zero-Background-Scan Hardening**:
+    - Enforces `DoNotConnectToWindowsUpdateInternetLocations = 1`, `DisableWindowsUpdateAccess = 1`, and `SetDisableUXWUAccess = 1`.
+    - Forces all update services (`wuauserv`, `UsoSvc`, `WaaSMedicSvc`, `dosvc`) to **Disabled (`Start = 4`)** and stopped.
+    - Disables all scheduled scanner tasks in `\Microsoft\Windows\WindowsUpdate\*`, `\Microsoft\Windows\UpdateOrchestrator\*`, and `\Microsoft\Windows\WaaSMedic\*`.
+    - Clears lingering update payload cache in `SoftwareDistribution\Download`.
+
+---
+
 
 ## [v028] — 2026-10-31
 ### UI Streamlining, Live System Specs Header & Bulletproof Dism++ Windows Update Lockdown
