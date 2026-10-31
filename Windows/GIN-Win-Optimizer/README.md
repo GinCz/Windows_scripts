@@ -4,8 +4,8 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target OS:** Windows 10 / 11 (x86_64, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v029` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`v029` and `v028`).
+> **Current Version:** `v030` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`v030` and `v028`).
 
 ---
 

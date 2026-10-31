@@ -2,7 +2,26 @@
 
 All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
 
+---
+## [v030] в”Ђв”Ђ 2026-10-31
+### Native reg.exe Dism++ Lockdown & LayoutModification Empty PinList Protection
+- **Root-Cause Resolution for Windows Update Setting Dropdown**:
+  - In previous versions, PowerShell registry provider calls (`New-Item` / `Set-ItemProperty`) silently failed to create or persist subkeys under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` when parent keys were locked or redirected.
+  - Furthermore, `cleanmgr.exe /autoclean` (executed as final task 98) triggered background component cleanup which reverted policy keys if not re-asserted.
+  - **Quadruple Native `reg.exe` Lockdown**: Replaced PowerShell provider calls with direct Win32 `reg.exe` commands executing with explicit `/reg:64` and `/reg:32` architecture flags:
+    - `HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU` -> `AUOptions = 1`, `NoAutoUpdate = 1`, `AutoInstallMinorUpdates = 0`, `DetectionFrequencyEnabled = 0`
+    - `HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate` -> `DoNotConnectToWindowsUpdateInternetLocations = 1`, `DisableWindowsUpdateAccess = 1`, `SetDisableUXWUAccess = 1`, `ExcludeWUDriversInQualityUpdate = 1`
+    - `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update` -> `AUOptions = 1`, `CachedAUOptions = 1`, `EnableFeaturedSoftware = 0`
+    - `HKLM\SOFTWARE\Policies\Microsoft\MRT` -> `DontOfferThroughWUAU = 1`
+  - **4-Stage Redundancy Execution**: Applied at Startup Self-Healing, within Module execution, at Finalization (post-Cleanmgr), and during Post-Restart Explorer sweep.
+  - **Absolute Service & Task Neutralization**: Forces `wuauserv`, `UsoSvc`, `WaaSMedicSvc`, `dosvc` to Disabled (`Start = 4`) and stopped via `sc.exe config` and `sc.exe stop`.
+- **Permanent Taskbar Edge Spartan Elimination via `LayoutModification.xml`**:
+  - Discovered that Windows 10 automatically pins the legacy AppX stub `Microsoft.MicrosoftEdge_8wekyb3d8bbwe!MicrosoftEdge` as a blank grey square tile when `explorer.exe` restarts if Chromium Edge is missing.
+  - **`LayoutModification.xml` Defense**: Deployed customized `LayoutModification.xml` with `PinListPlacement="Replace"` and an empty `<taskbar:TaskbarPinList />` to both `$env:LOCALAPPDATA\Microsoft\Windows\Shell\` and `C:\Users\Default\AppData\Local\Microsoft\Windows\Shell\`. This permanently instructs Windows 10 never to inject default OEM or Edge pins into the Taskbar.
+  - Combined with Shell COM unpinning and shortcut blocking policies.
+
 ---
+
 ## [v029] — 2026-10-31
 ### Permanent Taskbar Edge & IE Eradication, Absolute Windows Update Lock (Dism++ Standard)
 - **Native Win32 Shell COM Taskbar Unpinning for Edge & IE**:
