@@ -2,7 +2,25 @@
 
 All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
 
----
+---
+
+---
+
+## [v031] — 2026-11-01
+### Native Performance Options "Adjust for Best Appearance" (Обеспечить наилучший вид) Default Preset
+- **Visual Effects Best Appearance Standard (`chk_srv_visual_appearance`)**:
+  - Replaced legacy basic font smoothing toggle with dedicated, full-spectrum **"Adjust for best appearance" (Обеспечить наилучший вид / Nastavit pro nejlepší vzhled)** preset matching native Windows System Properties Performance Options (`sysdm.cpl` -> `SystemPropertiesPerformance.exe`).
+  - **Selected by Default (`IsChecked = True`)**: Pre-selected out-of-the-box so optimized systems maintain maximum UI beauty, fluid animations, crisp font rendering, and modern visual aesthetics without looking stripped down or dated.
+  - **Direct System Registry Configuration**:
+    - `HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects` -> `VisualFXSetting = 1` (Native radio button "Adjust for best appearance" active in GUI).
+    - `HKCU:\Control Panel\Desktop` -> `UserPreferencesMask` set to full-fidelity bitmask (`0x9E, 0x3E, 0x07, 0x80, 0x12, 0x00, 0x00, 0x00`), `FontSmoothing = "2"`, `FontSmoothingType = 2` (ClearType), `DragFullWindows = "1"`, `CursorShadow = 1`.
+    - `HKCU:\Control Panel\Desktop\WindowMetrics` -> `MinAnimate = "1"`.
+    - `HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced` -> `TaskbarAnimations = 1`, `ListviewAlphaSelect = 1`, `ListviewShadow = 1`, `DropShadow = 1`, `IconsOnly = 0`.
+    - `HKCU:\Software\Microsoft\Windows\DWM` -> `Composition = 1`, `CompositionPolicy = 1`, `EnableAeroPeek = 1`, `AlwaysHibernateThumbnails = 1`.
+  - Immediate visual activation upon post-optimization Explorer restart.
+- **Documentation Localization & Public Mirror Sync**:
+  - Comprehensive English guide authored and synchronized in public GitHub repository (`Windows_scripts/Windows/GIN-Win-Optimizer/README.md`).
+
 ## [v030] в”Ђв”Ђ 2026-10-31
 ### Native reg.exe Dism++ Lockdown & LayoutModification Empty PinList Protection
 - **Root-Cause Resolution for Windows Update Setting Dropdown**:
