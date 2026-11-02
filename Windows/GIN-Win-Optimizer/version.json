@@ -1,9 +1,9 @@
-﻿{
-    "version":  "v032",
+{
+    "version":  "v033",
     "name":  "GIN-Win-Optimizer",
-    "description":  "Windows 10/11 Ultimate Optimizer \u0026 Deep Cleaner Plus (Single-Window WPF Polyglot Hybrid CMD/PowerShell, 110 Modules)",
+    "description":  "Windows 10/11 Ultimate Optimizer & Deep Cleaner Plus (Single-Window WPF Polyglot Hybrid CMD/PowerShell, 110 Modules + Legacy Applet Purge Engine)",
     "release_date":  "2026-11-02",
-    "author":  "Vladimir Bulantsev (GinCz) \u0026 Antigravity",
+    "author":  "Vladimir Bulantsev (GinCz) & Antigravity",
     "repository_private":  "https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer",
     "repository_public":  "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer",
     "source_distribution":  "Exclusively private (Secret_Privat)",
@@ -13,8 +13,8 @@
                           "usb_flash_path":  "V:\\WIN-FLASH\\Util-WINDOWS\\",
                           "mega_flash_path":  "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\",
                           "active_versions":  [
-                                                  "GIN-Win-Optimizer_v032.cmd",
-                                                  "GIN-Win-Optimizer_v031.cmd"
+                                                  "GIN-Win-Optimizer_v033.cmd",
+                                                  "GIN-Win-Optimizer_v032.cmd"
                                               ]
                       }
 }
