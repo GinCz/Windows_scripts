@@ -1,4 +1,4 @@
-# 📜 GIN-Win-Optimizer — Release History & Changelog
+﻿# 📜 GIN-Win-Optimizer — Release History & Changelog
 
 All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
 
@@ -8,6 +8,22 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ## [v031] — 2026-11-01
 ### Native Performance Options "Adjust for Best Appearance" (Обеспечить наилучший вид) Default Preset
+
+- **Smart Elastic Pagefile Optimizer Engine (`chk_srv_pagefile_auto` — Module #107)**:
+  - Automatically queries installed physical RAM and free space on system drive `C:\`.
+  - Implements multi-tier RAM baseline scaling:
+    - <= 4 GB RAM: 1536 MB Initial / 4096 MB Max
+    - <= 8 GB RAM: 2048 MB Initial / 4096 MB Max
+    - <= 16 GB RAM: 2048 MB Initial / 6144 MB Max
+    - >= 32 GB RAM: 2048 MB Initial / 4096 MB Max
+  - **Drive C: Free Space Protection Guard**:
+    - Automatically caps maximum pagefile size to <= 35% of free space on `C:\`.
+    - Guarantees at least 3 GB of free disk space remains under absolute peak allocation.
+    - Eliminates drive choking on SSDs with only 5–10 GB free space.
+  - **Elastic / Dynamic Range**: Starts compact (e.g. 2 GB) to minimize SSD space footprint, dynamically expanding under peak commit charge (e.g. up to 6 GB) to completely eliminate OOM crashes and BSODs.
+  - **Drive Centralization**: Centralizes pagefile strictly on `C:\` and clears rogue pagefiles on secondary drives (`D:\`, `G:\`).
+  - **Dual Engine Persistence**: Writes configuration via native Windows registry (`HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management`) and CIM/WMI `Win32_PageFileSetting`.
+  - **Trilingual GUI Localization**: Full support for English, Russian, and Czech in single-window WPF interface with total module counter bumped to 107.
 - **Visual Effects Best Appearance Standard (`chk_srv_visual_appearance`)**:
   - Replaced legacy basic font smoothing toggle with dedicated, full-spectrum **"Adjust for best appearance" (Обеспечить наилучший вид / Nastavit pro nejlepší vzhled)** preset matching native Windows System Properties Performance Options (`sysdm.cpl` -> `SystemPropertiesPerformance.exe`).
   - **Selected by Default (`IsChecked = True`)**: Pre-selected out-of-the-box so optimized systems maintain maximum UI beauty, fluid animations, crisp font rendering, and modern visual aesthetics without looking stripped down or dated.
