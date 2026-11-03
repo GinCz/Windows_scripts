@@ -1,11 +1,24 @@
 {
-  "name": "GIN-Win-Optimizer",
-  "executable": "GIN-Win-Optimizer.exe",
-  "version": "v035",
-  "description": "Windows 10/11 Ultimate Optimizer & Deep Cleaner (Standalone Native Win32 GUI Executable with Custom Multi-Resolution Icon, UAC Shield, Single-Instance Mutex, Telegram Support, Freeware Lifetime License)",
-  "release_date": "2026-11-03",
-  "author": "VladiMIR+AI",
-  "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer",
-  "license": "Freeware (Lifetime Free for Personal & Business Use)",
-  "support_telegram": "https://t.me/GinCz"
+    "version":  "v036",
+    "name":  "GIN-Win-Optimizer",
+    "executable": "GIN-Win-Optimizer.exe",
+    "description":  "Windows 10/11 Ultimate Optimizer & Deep Cleaner (Ultralightweight Standalone Native Win32 GUI Executable with Custom Multi-Resolution Icon, UAC Shield, Single-Instance Mutex, Telegram Support, Freeware Lifetime License)",
+    "release_date":  "2026-11-03",
+    "author":  "Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]",
+    "repository_private":  "https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer",
+    "repository_public":  "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer",
+    "source_distribution":  "Exclusively private (Secret_Privat)",
+    "license": "Freeware (Lifetime Free for Personal & Business Use)",
+    "support_telegram": "https://t.me/GinCz",
+    "storage_rules":  {
+                          "desktop_copy":  false,
+                          "max_versions_retained":  2,
+                          "usb_flash_path":  "V:\\WIN-FLASH\\Util-WINDOWS\\",
+                          "mega_flash_path":  "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\",
+                          "active_versions":  [
+                                                  "GIN-Win-Optimizer.exe",
+                                                  "GIN-Win-Optimizer_v036.cmd",
+                                                  "GIN-Win-Optimizer_v035.cmd"
+                                              ]
+                      }
 }
