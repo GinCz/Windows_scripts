@@ -1,8 +1,8 @@
 {
-  "version": "v039",
+  "version": "v040",
   "name": "GIN-Voice",
-  "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Enhanced Subtitle & Outro Defense + Zero Hallucinations",
-  "release_date": "2026-10-29",
+  "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Taskbar Explorer Auto-Heal + Strict Single Instance Guard",
+  "release_date": "2026-11-03",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
 }
