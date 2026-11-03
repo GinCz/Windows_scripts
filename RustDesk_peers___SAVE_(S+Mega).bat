@@ -1,6 +1,6 @@
 :: ==========================================================================================
 :: FILE    : RustDesk_peers___SAVE_(S+Mega).bat
-:: VERSION : v2026.11.03
+:: VERSION : v2026.11.03b
 :: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
 :: ==========================================================================================
 @echo off
@@ -10,44 +10,33 @@ cls
 :: Auto-Elevate to Administrator (Robust syntax for special characters like & and spaces)
 fltmc >nul 2>&1
 if errorlevel 1 (
-    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
 
 cd /d "%~dp0"
-title RustDesk Config Backup - SAVE (v2026.11.03)
+title RustDesk Config Backup - SAVE (v2026.11.03b)
 
-:: ANSI Colors (Windows 10/11 native, no powershell overhead)
-set "ESC="
-for /f %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
-set "RESET=%ESC%[0m"
-set "YELLOW=%ESC%[93m"
-set "GREEN=%ESC%[92m"
-set "RED=%ESC%[91m"
-set "GRAY=%ESC%[90m"
-set "WHITE=%ESC%[97m"
-set "CYAN=%ESC%[96m"
+:: Ensure Windows Workstation service (LanmanWorkstation) is running for SMB network access
+sc query LanmanWorkstation | findstr /i "RUNNING" >nul
+if errorlevel 1 (
+    echo [+] Starting Windows Workstation service (LanmanWorkstation)...
+    net start LanmanWorkstation >nul 2>&1
+    timeout /t 1 /nobreak >nul
+)
 
 :: Shift output down by 4 lines, output parking zone, and pad with 3 lines below
 for /L %%i in (1,1,4) do echo.
-echo %GRAY% ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  P O W E R S H E L L   P A R K I N G   Z O N E  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░%RESET%
+powershell -NoProfile -Command "Write-Host ' ░▒▓█░▒▓█░▒▓█░▒▓█░▒▓█  P O W E R S H E L L   P A R K I N G   Z O N E  █▓▒░█▓▒░█▓▒░█▓▒░█▓▒░' -ForegroundColor DarkGray"
 for /L %%i in (1,1,3) do echo.
 
 :: ------------------------------------------------------------------------------------------
 :: MAIN SCRIPT EXECUTION
 :: ------------------------------------------------------------------------------------------
-echo %YELLOW%==========================================================================================%RESET%
-echo %YELLOW% RustDesk Configuration Backup (Local + Network) — v2026.11.03%RESET%
-echo %YELLOW%==========================================================================================%RESET%
+powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
+powershell -NoProfile -Command "Write-Host ' RustDesk Configuration Backup (Local + Network) — v2026.11.03b' -ForegroundColor Yellow"
+powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
 echo.
-
-:: Ensure Windows Workstation service (LanmanWorkstation) is running for SMB network access
-sc query LanmanWorkstation | findstr /i "RUNNING" >nul
-if errorlevel 1 (
-    echo %CYAN%[+] Starting Windows Workstation service (LanmanWorkstation)...%RESET%
-    net start LanmanWorkstation >nul 2>&1
-    timeout /t 1 /nobreak >nul
-)
 
 set "SOURCE_DIR=%USERPROFILE%\AppData\Roaming\RustDesk\config\"
 set "LOCAL_ZIP=D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\TeamViewer_RadMin\RustDesk\RustDesk_config.zip"
@@ -71,9 +60,9 @@ echo.
 
 if not exist "%SOURCE_DIR%" (
     echo.
-    echo %RED%==========================================================================================%RESET%
-    echo %RED% ERROR: Source directory not found: %SOURCE_DIR%%RESET%
-    echo %RED%==========================================================================================%RESET%
+    powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host ' ERROR: Source directory not found: %SOURCE_DIR%' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
     pause
     exit /b 1
 )
@@ -83,18 +72,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference =
 
 if errorlevel 1 (
     echo.
-    echo %RED%==========================================================================================%RESET%
-    echo %RED% ERROR: Local archive creation failed.%RESET%
-    echo %RED%==========================================================================================%RESET%
+    powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host ' ERROR: Local archive creation failed.' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
     pause
     exit /b 1
 )
-echo %GREEN%[✓] Local archive created successfully.%RESET%
+powershell -NoProfile -Command "Write-Host '[✓] Local archive created successfully.' -ForegroundColor Green"
 
+echo.
 echo [+] Checking network connection to s.gincz.com...
 ping -n 1 -w 1500 s.gincz.com >nul 2>&1
 if errorlevel 1 (
-    echo %YELLOW%[!] Host s.gincz.com ping check failed, attempting SMB direct connect...%RESET%
+    powershell -NoProfile -Command "Write-Host '[!] Host s.gincz.com ping check failed, attempting direct SMB connect...' -ForegroundColor Yellow"
 )
 
 :: Ensure network destination directory exists
@@ -111,21 +101,22 @@ if errorlevel 1 (
 
 if errorlevel 1 (
     echo.
-    echo %RED%==========================================================================================%RESET%
-    echo %RED% ERROR: Copy to network share failed.%RESET%
-    echo %RED% Check network connectivity, credentials, and Samba share availability.%RESET%
-    echo %RED%==========================================================================================%RESET%
+    powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host ' ERROR: Copy to network share failed.' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host ' Check network connectivity, credentials, and Samba share availability.' -ForegroundColor Red"
+    powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Red"
     pause
     exit /b 1
 )
-echo %GREEN%[✓] Network backup synchronized successfully.%RESET%
+powershell -NoProfile -Command "Write-Host '[✓] Network backup synchronized successfully.' -ForegroundColor Green"
 
 echo.
-echo %YELLOW%==========================================================================================%RESET%
-echo %YELLOW% SUCCESS: Backup completed successfully to both local and network locations!%RESET%
-echo %YELLOW%==========================================================================================%RESET%
+powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
+powershell -NoProfile -Command "Write-Host ' SUCCESS: Backup completed successfully to both local and network locations!' -ForegroundColor Yellow"
+powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
 
-timeout /t 3 >nul
+echo.
+pause
 exit /b 0
 
-:: = Rooted by VladiMIR + AI | v.2026.11.03 | github.com/GinCz =
+REM = Rooted by VladiMIR + AI | v.2026.11.03b | github.com/GinCz =
