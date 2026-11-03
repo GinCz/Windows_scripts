@@ -1,6 +1,7 @@
 {
-  "version": "v040",
+  "version": "v041",
   "name": "GIN-Voice",
+  "installer": "GIN-Voice_Setup.exe",
   "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Taskbar Explorer Auto-Heal + Strict Single Instance Guard",
   "release_date": "2026-11-03",
   "author": "VladiMIR+AI",

@@ -1,4 +1,4 @@
-# 🎙️ GIN-Voice: Автономный голосовой ввод и AI-распознавание речи (v040)
+# 🎙️ GIN-Voice: Автономный голосовой ввод и AI-распознавание речи (v041)
 
 > **Владелец:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz))  
 > **Репозиторий исходников (Приватный):** [Secret_Privat / Windows / GIN-Voice ↗](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Voice)  
@@ -63,16 +63,16 @@ Secret_Privat/Windows/GIN-Voice/
 ├── config.json               # Шаблон конфигурации (хоткей F4, шрифты, языки)
 ├── dictionary.json           # Пользовательский словарь терминов
 ├── version.json              # Метаданные версии проекта для автообновления
-├── version.txt               # Номер текущей версии (v040)
+├── version.txt               # Номер текущей версии (v041)
 ├── setup_guide.html          # Встроенное иллюстрированное руководство пользователя
 ├── icons_showcase.html       # Витрина вариантов иконок
 ├── uninstall.bat             # Скрипт удаления CMD
 ├── uninstall.ps1             # Скрипт удаления PowerShell
 ├── Uninstall.exe             # Скомпилированный бинарник деинсталлятора
-├── CHANGELOG.md              # Полный журнал изменений всех версий (v001 - v040)
+├── CHANGELOG.md              # Полный журнал изменений всех версий (v001 - v041)
 ├── README.md                 # Документация проекта (этот файл)
 ├── GIN-Voice.exe             # Скомпилированный исполняемый файл последней версии
-└── GIN-Voice_Setup_v040.exe  # Именованный установщик последней версии
+└── GIN-Voice_Setup.exe       # Установщик программы (без версии в имени файла; версия в свойствах PE)
 ```
 
 ---
@@ -81,8 +81,11 @@ Secret_Privat/Windows/GIN-Voice/
 
 Сборка бинарников под Windows выполняется командой:
 ```bash
+./build.sh
+# Или вручную:
+x86_64-w64-mingw32-windres -O coff -o rsrc_windows_amd64.syso app.rc
 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -s -w" -o GIN-Voice.exe .
-cp GIN-Voice.exe GIN-Voice_Setup_v040.exe
+cp GIN-Voice.exe GIN-Voice_Setup.exe
 ```
 
 ---
@@ -95,4 +98,5 @@ cp GIN-Voice.exe GIN-Voice_Setup_v040.exe
   2. `CHANGELOG.md` — история изменений и релизов.
   3. `version.json` — метаданные версии для встроенного модуля автообновления.
   4. `GIN-Voice.exe` — готовый исполняемый файл последней версии.
-  5. `GIN-Voice_Setup_v040.exe` — установщик с номером версии.
+  5. `GIN-Voice_Setup.exe` — установщик программы без номера версии в имени файла.
+- На Рабочий стол Владимира (`D:\MEGA\DOCS\desktop` / `/MEGA/DOCS/desktop/`) автоматически выгружается актуальный `GIN-Voice_Setup.exe`.

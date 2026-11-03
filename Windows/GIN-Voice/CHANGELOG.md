@@ -12,7 +12,27 @@
 *(Нажмите на заголовок любого релиза ниже, чтобы раскрыть или свернуть подробности)*
 
 <details open>
-<summary><b>🔥 Релиз v040 (03.11.2026) — Защита иконки в системном трее при перезапуске Explorer (TaskbarCreated & Watchdog Auto-Heal) и Безусловная блокировка повторного запуска (Strict Single Instance Guard) [Актуальная версия]</b></summary>
+<summary><b>🔥 Релиз v041 (03.11.2026) — Безымянный установщик GIN-Voice_Setup.exe, полные свойства Windows PE (VERSIONINFO, FileVersion, Company) и автодоставка на Рабочий стол MEGA [Актуальная версия]</b></summary>
+<br>
+
+* **Изменения стандарта релизов:**
+  1. **Имя установщика без номера версии:** Установщик теперь компилируется и называется строго `GIN-Voice_Setup.exe` без суффикса версии в названии файла.
+  2. **Внедрение метаданных Windows PE (`VERSIONINFO`):**
+     - В ресурсный скрипт `app.rc` внедрен блок `VERSIONINFO` (`FILEVERSION 0,41,0,0`, `PRODUCTVERSION 0,41,0,0`).
+     - При подведении курсора мыши в Проводнике Windows и в свойствах файла (вкладка «Подробно») отображаются:
+       - `FileVersion`: `v041`
+       - `ProductVersion`: `v041`
+       - `FileDescription`: `GIN-Voice Setup & Speech Dictation`
+       - `CompanyName`: `VladiMIR+AI`
+       - `LegalCopyright`: `© 2026 VladiMIR+AI (Vladimir Bulantsev)`
+       - `ProductName`: `GIN-Voice by VladiMIR+AI`
+  3. **Автоматическая выгрузка на Рабочий стол (`D:\MEGA\DOCS\desktop`):**
+     - При компиляции скриптом `build.sh` свежий `GIN-Voice_Setup.exe` мгновенно выгружается в облако MEGA на Рабочий стол Владимира (`/MEGA/DOCS/desktop/`), а старые версионированные файлы удаляются.
+<br>
+</details>
+
+<details>
+<summary><b>🔥 Релиз v040 (03.11.2026) — Защита иконки в системном трее при перезапуске Explorer (TaskbarCreated & Watchdog Auto-Heal) и Безусловная блокировка повторного запуска (Strict Single Instance Guard)</b></summary>
 <br>
 
 * **Проблема (Пропадание иконки трея и дублирование процессов):**
