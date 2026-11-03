@@ -4,8 +4,8 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & Anti-Gravity AI  
 > **Target OS:** Windows 10 / 11 (x86_64, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v033` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`v033` and `v032`).
+> **Current Version:** `v035` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`v035` and `v034`).
 
 ---
 
@@ -25,8 +25,8 @@
      - **Серверный постоянный кэш DE-222:** `/root/AI_222/cache/win_opt/`
    - **Правило ротации (Strict 2 Latest Versions):**
      - Хранятся **строго 2 последние версии** скрипта:
-       1. Актуальная (Current): `GIN-Win-Optimizer_v031.cmd`
-       2. Предыдущая (Backup): `GIN-Win-Optimizer_v025.cmd`
+       1. Актуальная (Current): `GIN-Win-Optimizer_v035.cmd`
+       2. Предыдущая (Backup): `GIN-Win-Optimizer_v034.cmd`
      - Все более старые версии (`v016`, `v015` и т.д.) автоматически удаляются с носителей при релизе нового билда.
 
 3. **Категорический запрет на копирование на Рабочий стол:**
@@ -38,8 +38,8 @@
 
 | Среда / Носитель | Полный путь к файлу | Назначение | Политика хранения |
 | :--- | :--- | :--- | :---: |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v032.cmd`<br>`V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v031.cmd` | Физическая рабочая загрузочная флешка сисадмина | Ровно 2 последние версии |
-| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v032.cmd`<br>`D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v031.cmd` | Локальная папка облака MEGA для синхронизации | Ровно 2 последние версии |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v032.cmd`<br>`V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v035.cmd` | Физическая рабочая загрузочная флешка сисадмина | Ровно 2 последние версии |
+| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v032.cmd`<br>`D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v035.cmd` | Локальная папка облака MEGA для синхронизации | Ровно 2 последние версии |
 | ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v032.cmd` | Центральное облачное хранилище утилит | Ровно 2 последние версии |
 | 🗄️ **Server Permanent Cache** | `/root/AI_222/cache/win_opt/GIN-Win-Optimizer_v032.cmd` | Постоянный резервный кэш на ноде DE-222 | Долговременный архив |
 | 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | **Основное хранилище исходного кода проекта** | Полная история Git |

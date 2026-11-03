@@ -116,3 +116,22 @@ ules.ai, RULES.md, BASE/05_AI_RULES/)** как абсолютный запрет
 3. **Публичный релиз документации:**
    - В публичном репозитории `Windows_scripts/Windows/GIN-Win-Optimizer/README.md` составлена подробная документация на английском языке с полным описанием всех 106 модулей, архитектуры и двухрепозиторного регламента.
 
+
+---
+
+## 🚀 РЕЛИЗ v035: АВТОМАТИЧЕСКИЙ ЗАПУСК В РАЗВЕРНУТОМ НА ВЕСЬ ЭКРАН РЕЖИМЕ (FULLSCREEN MAXIMIZED WINDOW)
+
+> **ДАТА:** 03 ноября 2026  
+> **СУТЬ ЗАДАЧИ:** Реализация открытия программы `GIN-Win-Optimizer.exe` (`D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer.exe`) в развернутом на весь экран виде (Maximized) по умолчанию при каждом запуске.
+
+### 🔍 АНАЛИЗ И РЕАЛИЗАЦИЯ
+1. **Поведение окна WPF при запуске:**
+   - По умолчанию окно создавалось в фиксированном размере `1280x890` с центрированием `CenterScreen`.
+   - Для масштабных мониторов и удобного просмотра 110 оптимизационных модулей, прогресс-баров и живого лога требовалось вручную разворачивать окно кнопкой «Развернуть».
+2. **Внедренная архитектура развертывания (Dual-Lock Maximized State):**
+   - **XAML-уровень:** В корень декларации `<Window ...>` внедрен атрибут `WindowState="Maximized"`.
+   - **PowerShell-уровень:** Сразу после загрузки через `[System.Windows.Markup.XamlReader]::Load($reader)` принудительно устанавливается свойство `$window.WindowState = [System.Windows.WindowState]::Maximized`.
+   - Сохранены базовые размеры `Height="890" Width="1280"` и `MinHeight="750" MinWidth="1100"`, благодаря чему кнопка «Свернуть в окно / Восстановить» (Restore Down) в заголовке возвращает окно в аккуратный центрированный оконный режим.
+3. **Синхронизация PE Metadata и авто-инкремент (v034 -> v035):**
+   - Бинарная сборка `GIN-Win-Optimizer.exe` скомпилирована с метаданными: `LegalCopyright` = `VladiMIR+AI`, `CompanyName` = `VladiMIR+AI`, `FileDescription` = `GIN-Win-Optimizer_v035`, `ProductName` = `GIN-Win-Optimizer_v035`, `ProductVersion` = `v035`, `FileVersion` = `v035` (`0.35.0.0`).
+   - Развернуто в локальное облачное хранилище Samba (`/storage/soft/WIN-FLASH/Util-WINDOWS/`), облако MEGA (`/MEGA/WIN-FLASH/Util-WINDOWS/`), кэш ноды DE-222 и на Рабочий стол (`/MEGA/DOCS/desktop/`).
