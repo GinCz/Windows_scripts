@@ -1,28 +1,29 @@
 :: ==========================================================================================
 :: FILE    : RustDesk_peers___SAVE_(S+Mega).bat
-:: VERSION : v2026.11.03b
+:: VERSION : v2026.11.03c
 :: AUTHOR  : = Rooted by VladiMIR + AI | github.com/GinCz =
 :: ==========================================================================================
 @echo off
 chcp 65001 >nul
 cls
 
-:: Auto-Elevate to Administrator (Robust syntax for special characters like & and spaces)
+:: Auto-Elevate to Administrator (Bulletproof syntax for spaces, parentheses and special chars)
 fltmc >nul 2>&1
 if errorlevel 1 (
-    powershell -NoProfile -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%~f0\"\"' -Verb RunAs"
+    set "__SELF=%~f0"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList @('/k', '\"' + $env:__SELF + '\"') -Verb RunAs"
     exit /b
 )
 
 cd /d "%~dp0"
-title RustDesk Config Backup - SAVE (v2026.11.03b)
+title RustDesk Config Backup - SAVE (v2026.11.03c)
 
 :: Ensure Windows Workstation service (LanmanWorkstation) is running for SMB network access
 sc query LanmanWorkstation | findstr /i "RUNNING" >nul
 if errorlevel 1 (
     echo [+] Starting Windows Workstation service (LanmanWorkstation)...
-    net start LanmanWorkstation >nul 2>&1
-    timeout /t 1 /nobreak >nul
+    net start LanmanWorkstation
+    timeout /t 2 /nobreak >nul
 )
 
 :: Shift output down by 4 lines, output parking zone, and pad with 3 lines below
@@ -34,7 +35,7 @@ for /L %%i in (1,1,3) do echo.
 :: MAIN SCRIPT EXECUTION
 :: ------------------------------------------------------------------------------------------
 powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
-powershell -NoProfile -Command "Write-Host ' RustDesk Configuration Backup (Local + Network) — v2026.11.03b' -ForegroundColor Yellow"
+powershell -NoProfile -Command "Write-Host ' RustDesk Configuration Backup (Local + Network) — v2026.11.03c' -ForegroundColor Yellow"
 powershell -NoProfile -Command "Write-Host '==========================================================================================' -ForegroundColor Yellow"
 echo.
 
@@ -119,4 +120,4 @@ echo.
 pause
 exit /b 0
 
-REM = Rooted by VladiMIR + AI | v.2026.11.03b | github.com/GinCz =
+REM = Rooted by VladiMIR + AI | v.2026.11.03c | github.com/GinCz =
