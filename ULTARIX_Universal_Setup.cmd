@@ -9,8 +9,8 @@ echo.
 echo [*] Pripravuji spousteni konfigurace...
 echo.
 
-set "SCRIPT_URL=https://raw.githubusercontent.com/GinCz/Windows_scripts/main/ULTARIX_Setup.ps1"
-set "FALLBACK_URL=http://152.53.182.222/ULTARIX_Setup.ps1"
+set "SCRIPT_URL=https://raw.githubusercontent.com/GinCz/Windows_scripts/main/ULTARIX_Setup.ps1?v=%RANDOM%"
+set "FALLBACK_URL=http://152.53.182.222/ULTARIX_Setup.ps1?v=%RANDOM%"
 set "LOCAL_PS=%TEMP%\ULTARIX_Setup.ps1"
 
 :: Stazeni nejnovejsiho skriptu z GitHubu do docasne slozky TEMP
