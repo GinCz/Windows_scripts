@@ -1,17 +1,21 @@
 @echo off
 setlocal
 
-:: 1. If not running as administrator, elevate cleanly
+:: Enable UNC path support in CMD
+reg add "HKCU\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t REG_DWORD /d 1 /f >nul 2>&1
+
+:: Auto-Elevation to Administrator
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [*] Vyzaduji se administratorska prava...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k cd /d ""%~dp0"" && ""%~f0"" admin' -Verb RunAs"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k pushd \"\"%~dp0\"\" && \"\"%~f0\"\" admin' -Verb RunAs"
     exit /b
 )
 
 title ULTARIX - Universal Setup and Stabilizer [VladiMIR + Antigravity]
 
-:: Fix working directory for UNC network share
+:: Fix UNC working directory
 pushd "%~dp0" 2>nul
 
 echo ================================================================================
@@ -93,6 +97,8 @@ echo ===========================================================================
 echo       OPTIMALIZACE BYLA USPESNE DOKONCENA!
 echo ================================================================================
 echo.
+
+popd 2>nul
 
 if /i "%~1"=="/silent" goto :eof
 if /i "%~1"=="/quiet" goto :eof
