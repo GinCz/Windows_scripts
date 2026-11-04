@@ -11,7 +11,7 @@
     "license": "Freeware (Lifetime Free for Personal & Business Use)",
     "support_telegram": "https://t.me/GinCz",
     "storage_rules":  {
-                          "desktop_copy":  false,
+                          "desktop_copy":  true,
                           "max_versions_retained":  2,
                           "usb_flash_path":  "V:\\WIN-FLASH\\Util-WINDOWS\\",
                           "mega_flash_path":  "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\",
