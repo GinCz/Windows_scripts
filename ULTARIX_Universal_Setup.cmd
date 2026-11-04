@@ -1,17 +1,17 @@
 @echo off
 setlocal
 
-:: Auto-Elevation to Administrator with local TEMP copy
+:: 1. If not running as administrator, elevate cleanly
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Ziskavam administratorska prava (UAC)...
-    copy /y "%~f0" "%TEMP%\ULTARIX_Universal_Setup.cmd" >nul 2>&1
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%TEMP%\ULTARIX_Universal_Setup.cmd\"\"' -Verb RunAs"
+    echo [*] Vyzaduji se administratorska prava...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k cd /d ""%~dp0"" && ""%~f0"" admin' -Verb RunAs"
     exit /b
 )
 
 title ULTARIX - Universal Setup and Stabilizer [VladiMIR + Antigravity]
 
+:: Fix working directory for UNC network share
 pushd "%~dp0" 2>nul
 
 echo ================================================================================
