@@ -1,14 +1,16 @@
 @echo off
 setlocal
-title ULTARIX - Universal Setup and Stabilizer [VladiMIR + Antigravity]
 
-:: Auto-Elevation to Administrator
+:: Auto-Elevation to Administrator with local TEMP copy
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Vyzaduji se administratorska prava...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+    echo [*] Ziskavam administratorska prava (UAC)...
+    copy /y "%~f0" "%TEMP%\ULTARIX_Universal_Setup.cmd" >nul 2>&1
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%TEMP%\ULTARIX_Universal_Setup.cmd\"\"' -Verb RunAs"
     exit /b
 )
+
+title ULTARIX - Universal Setup and Stabilizer [VladiMIR + Antigravity]
 
 pushd "%~dp0" 2>nul
 
