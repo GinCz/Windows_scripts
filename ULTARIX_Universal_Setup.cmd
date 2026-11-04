@@ -1,49 +1,33 @@
-# =============================================================================
-# Execution Context : CMD / Batch (Run as Administrator)
-# Target Server     : ULTARIX Office Workstations (LAN 192.168.33.0/24 -> ULPS1)
-# Description       : All-in-One Setup, SMB Repair, Defender, Pagefile & GIN-Agent
-# =============================================================================
 @echo off
+:: ==============================================================================
+:: Execution Context : CMD / Batch (Run as Administrator)
+:: Target Server     : ULTARIX Office Workstations (LAN 192.168.33.0/24 -> ULPS1)
+:: Description       : All-in-One Setup, SMB Repair, Defender, Pagefile & GIN-Agent
+:: ==============================================================================
+chcp 65001 >nul
 cls
-title ULTARIX - All-in-One Office PC Setup and GIN-Agent [VladiMIR + Antigravity]
 
-:: 1. Copy script to local TEMP so UAC elevation works from network/virtual drives (G:\, E:\, UNC)
-set "LOCAL_SCRIPT=%TEMP%\ULTARIX_Universal_Setup.cmd"
-if /i not "%~f0"=="%LOCAL_SCRIPT%" (
-    copy /y "%~f0" "%LOCAL_SCRIPT%" >nul 2>&1
-)
-
-:: 2. Check Administrator Privileges and Auto-Elevate from local TEMP copy
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Requesting Administrator privileges ^(UAC^)...
-    if exist "%LOCAL_SCRIPT%" (
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%LOCAL_SCRIPT%\"\"' -Verb RunAs"
-    ) else (
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k \"\"%~f0\"\"' -Verb RunAs"
-    )
+    echo [*] Requesting Administrator privileges (UAC)...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k ""%~f0""' -Verb RunAs"
     exit /b
 )
 
-cd /d "%SystemRoot%\System32"
-chcp 65001 >nul 2>&1
-cls
+title ULTARIX - All-in-One Setup [VladiMIR + Antigravity]
 
 echo ================================================================================
 echo       ULTARIX s.r.o. - ALL-IN-ONE OFFICE PC SETUP, REPAIR AND GIN-AGENT
 echo ================================================================================
-echo   Host: %COMPUTERNAME% (%USERNAME%) ^| Main Server: ULPS1 (192.168.33.128)
-echo ================================================================================
+echo.
+echo [*] Initializing optimization and repair payload...
 echo.
 
-set "SELF_PATH=%~f0"
-if not exist "%SELF_PATH%" set "SELF_PATH=%LOCAL_SCRIPT%"
-
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText($args[0], [System.Text.Encoding]::UTF8); $tag = ':::POWERSHELL_PAYLOAD:::'; $pos = $raw.IndexOf($tag); if ($pos -ge 0) { & ([ScriptBlock]::Create($raw.Substring($pos + $tag.Length))) }" "%SELF_PATH%"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText($args[0], [System.Text.Encoding]::UTF8); $tag = ':::POWERSHELL_PAYLOAD:::'; $pos = $raw.LastIndexOf($tag); if ($pos -ge 0) { & ([ScriptBlock]::Create($raw.Substring($pos + $tag.Length))) }" "%~f0"
 
 echo.
 echo ================================================================================
-echo [*] Script execution finished. Window kept open for verification.
+echo [*] Script execution finished. Window kept open for inspection.
 echo ================================================================================
 pause
 exit /b
