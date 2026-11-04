@@ -1,9 +1,9 @@
 {
-    "version":  "v036",
+    "version":  "v037",
     "name":  "GIN-Win-Optimizer",
     "executable": "GIN-Win-Optimizer.exe",
-    "description":  "Windows 10/11 Ultimate Optimizer & Deep Cleaner (Ultralightweight Standalone Native Win32 GUI Executable with Custom Multi-Resolution Icon, UAC Shield, Single-Instance Mutex, Telegram Support, Freeware Lifetime License)",
-    "release_date":  "2026-11-03",
+    "description":  "Windows 10/11 Ultimate Optimizer & Deep Cleaner (Universal 32-bit/64-bit AnyCPU Native Win32 GUI Executable with Custom Multi-Resolution Icon, UAC Shield, Single-Instance Mutex, Telegram Support, Freeware Lifetime License)",
+    "release_date":  "2026-11-04",
     "author":  "Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]",
     "repository_private":  "https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer",
     "repository_public":  "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer",
