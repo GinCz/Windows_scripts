@@ -193,5 +193,10 @@ Write-Host ""
 Write-Host "Aktualni stav sitovych disku:" -ForegroundColor White
 net use
 Write-Host ""
-Write-Host "Stisknete klavesu Enter pro ukonceni..." -ForegroundColor Cyan
-[void][System.Console]::ReadLine()
+Write-Host "Stisknete libovolnou klavesu pro ukonceni..." -ForegroundColor Cyan
+try {
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+} catch {
+    [void][System.Console]::ReadLine()
+}
+[Environment]::Exit(0)

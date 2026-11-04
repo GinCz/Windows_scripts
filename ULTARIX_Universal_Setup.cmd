@@ -25,6 +25,6 @@ if not exist "%LOCAL_PS%" (
 )
 
 echo [*] Spoustim PowerShell jako Administrator...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -NoExit -File \"\"%LOCAL_PS%\"\"' -Verb RunAs"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File \"\"%LOCAL_PS%\"\"' -Verb RunAs"
 
-exit /b
+exit
