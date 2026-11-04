@@ -1,24 +1,28 @@
 {
-    "version":  "v038",
-    "name":  "GIN-Win-Optimizer",
-    "executable": "GIN-Win-Optimizer.exe",
-    "description":  "Windows 10/11 Ultimate Optimizer & Deep Cleaner (Universal 32-bit x86 / 64-bit Compatible Standalone Native Win32 GUI Executable with Custom Multi-Resolution Icon, UAC Shield, Single-Instance Mutex, Telegram Support, Freeware Lifetime License)",
-    "release_date":  "2026-11-04",
-    "author":  "Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]",
-    "repository_private":  "https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer",
-    "repository_public":  "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer",
-    "source_distribution":  "Exclusively private (Secret_Privat)",
-    "license": "Freeware (Lifetime Free for Personal & Business Use)",
-    "support_telegram": "https://t.me/GinCz",
-    "storage_rules":  {
-                          "desktop_copy":  true,
-                          "max_versions_retained":  2,
-                          "usb_flash_path":  "V:\\WIN-FLASH\\Util-WINDOWS\\",
-                          "mega_flash_path":  "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\",
-                          "active_versions":  [
-                                                  "GIN-Win-Optimizer.exe",
-                                                  "GIN-Win-Optimizer_v038.cmd",
-                                                  "GIN-Win-Optimizer_v037.cmd"
-                                              ]
-                      }
+  "project": "GIN-Win-Optimizer",
+  "current_version": "v039",
+  "updated_at": "2026-11-04",
+  "active_versions": [
+    "GIN-Win-Optimizer.exe",
+    "GIN-Win-Optimizer_v039.cmd",
+    "GIN-Win-Optimizer_v038.cmd"
+  ],
+  "sync_targets": {
+    "github_privat": "Windows/GIN-Win-Optimizer/",
+    "github_public": "Windows/GIN-Win-Optimizer/",
+    "mega_cloud": "WIN-FLASH/Util-WINDOWS/",
+    "desktop_copy": true
+  },
+  "changelog": [
+    {
+      "version": "v039",
+      "date": "2026-11-04",
+      "changes": "Critical Fix & Ultarix Accounting Hardening (14-PC Audit): Fixed syntax error ($actions += @{ Name = 'Ensure LAN Discovery...' }) at line 4150; hardened mandatory LAN & Accounting block (Private profile on active & registry network profiles, AllowInsecureGuestAuth=1, EnableLinkedConnections=1, DisableUNCCheck=1, auto-start FDResPub/fdPHost/LanmanWorkstation/LanmanServer/Spooler/lmhosts/Dnscache/NlaSvc/SSDPSRV/upnphost + accounting DB services FSServer412Service/MSSQL/Firebird, localized & resource-ID Firewall rules, taskoffload=enabled); disabled dangerous checkboxes by default and in presets (chk_srv_network_offload, chk_srv_pca, chk_srv_trkwks, chk_srv_iphlpsvc, chk_srv_indexing in Office); enforced disable8dot3=0 for 16/32-bit DOS/Win32 accounting apps (STEREO/Ekonom); fixed pagefile to 4096-8192 MB on 4GB RAM 32-bit PCs (preventing 0xe0000008 crashes); removed forced en-US UI language override; guarded 32-bit reg.exe calls; removed chcp 65001 from CMD header to prevent Win32 0x1F error; added local %TEMP% staging for UNC share execution (\\\\Ulps1\\util)."
+    },
+    {
+      "version": "v038",
+      "date": "2026-11-04",
+      "changes": "Added AllowInsecureGuestAuth, EnableLinkedConnections, DisableUNCCheck and pagefile/telemetry improvements."
+    }
+  ]
 }

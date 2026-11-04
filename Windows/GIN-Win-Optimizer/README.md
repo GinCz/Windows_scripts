@@ -4,14 +4,14 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
 > **Target OS:** Windows 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v038` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v038.cmd` and `GIN-Win-Optimizer_v037.cmd`).
+> **Current Version:** `v039` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v039.cmd` and `GIN-Win-Optimizer_v038.cmd`).
 
 ---
 
-## 🚀 GIN-Win-Optimizer v038: Ultralightweight, Safe & Antivirus-Immune Architecture
+## 🚀 GIN-Win-Optimizer v039: Ultralightweight, Safe & Antivirus-Immune Architecture
 
-Version `v038` represents a major architectural overhaul focusing on extreme lightness, rock-solid stability, and total antivirus transparency:
+Version `v039` represents a major architectural overhaul focusing on extreme lightness, rock-solid stability, and total antivirus transparency:
 - **Ultra-Compact Footprint (12.8 KB)**: Reduced from 244 KB down to less than 13 KB. No heavy embedded assemblies, no monolithic GUI overhead, no bloated payloads.
 - **100% Antivirus Immunity**: Completely transparent native Windows CMD batch script with CRLF line terminators. Zero obfuscation, zero Base64 payloads, zero suspicious downloader scripts. Trusted natively by Windows Defender and SmartScreen.
 - **Universal Architecture Compatibility**: Seamless native execution on both 32-bit (x86) and 64-bit (x64) platforms across Windows 10 Home/Pro/Enterprise/LTSC and Windows 11.
@@ -19,7 +19,7 @@ Version `v038` represents a major architectural overhaul focusing on extreme lig
 
 ---
 
-## 🛠️ Core Functional Modules (v038)
+## 🛠️ Core Functional Modules (v039)
 
 ### 1. Network & File / Printer Sharing Optimization (Ultarix Standard)
 - **Active Network Profile to Private**: Converts public connections to Private (`Doma/Kancelář`) via PowerShell and NetworkList registry, ensuring local firewall rules unblock LAN discovery and file/printer sharing.
@@ -51,8 +51,8 @@ Version `v038` represents a major architectural overhaul focusing on extreme lig
 
 | Environment / Medium | Path | Target Version | Retention Policy |
 | :--- | :--- | :---: | :---: |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v038.cmd` | v038 | Latest 2 versions |
-| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v038.cmd` | v038 | Latest 2 versions |
-| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v038.cmd` | v038 | Latest 2 versions |
-| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v038 | Full Git history |
-| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v038 | Full Git history |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v039.cmd` | v039 | Latest 2 versions |
+| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v039.cmd` | v039 | Latest 2 versions |
+| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v039.cmd` | v039 | Latest 2 versions |
+| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v039 | Full Git history |
+| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v039 | Full Git history |

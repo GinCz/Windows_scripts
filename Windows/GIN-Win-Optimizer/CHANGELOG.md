@@ -4,6 +4,17 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v039] - 2026-11-04
+- **Critical Fix**: Fixed missing `$actions` variable before `+=` at the LAN Discovery block (`engine.ps1` line 4150) that threw `The term '+=' is not recognized` on Optimize.
+- **Ultarix 14-PC Accounting & 32-bit Hardening**:
+  - Mandatory LAN & Accounting protection: switches active & registry network profiles to `Private` (`Category = 1`), sets `AllowInsecureGuestAuth = 1`, `EnableLinkedConnections = 1`, `DisableUNCCheck = 1`, guarantees startup of `FDResPub`, `fdPHost`, `LanmanWorkstation`, `LanmanServer`, `lmhosts`, `Dnscache`, `Spooler`, `NlaSvc`, `SSDPSRV`, `upnphost`, and accounting DB engines (`FSServer412Service` / NexusDB, `MSSQL*`, `Firebird*`), enables Firewall rules by resource IDs (`-28502`, `-28752`) and localized names, and enforces `taskoffload=enabled`.
+  - Unchecked dangerous service tweaks by default and excluded them from `SelectAll`/`Office`/`Gaming` presets (`chk_srv_network_offload`, `chk_srv_pca`, `chk_srv_trkwks`, `chk_srv_iphlpsvc`, plus `chk_srv_indexing` in `Office`).
+  - Enforced `fsutil behavior set disable8dot3 0` so 16/32-bit accounting apps (`STEREO`, `Ekonom`, `FORM studio`) never fail on paths with spaces or Czech diacritics.
+  - Fixed `chk_srv_pagefile_auto` to always allocate `4096-8192 MB` on `C:` (instead of `1536 MB` on 4 GB RAM PCs) to prevent `0xe0000008` Out-Of-Memory crashes.
+  - Removed `PreferredUILanguages = en-US` override from `chk_ui_lang_keyboards` so Czech/Russian Windows UI is never switched to English.
+  - Guarded all `/reg:64` calls with `[Environment]::Is64BitOperatingSystem` for 100% compatibility with Windows 10 32-bit (x86).
+  - Removed `chcp 65001` from CMD header (preventing Czech Win32 `0x1F` console error) and added `%TEMP%` staging when launched from UNC network paths (`\\Ulps1\util`).
+
 ## [v038] — 2026-11-04
 ### Ultralightweight (12.8 KB), Safe, Antivirus-Immune CMD Architecture & Comprehensive LAN/Memory Optimization
 
