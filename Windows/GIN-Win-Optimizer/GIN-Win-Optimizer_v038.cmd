@@ -4165,7 +4165,7 @@ $executeOptimization = {
     }
 
     # Ensure LAN Network Discovery, Printing, Accounting Database & SMB Services are always running
-     += @{ Name = "Ensure LAN Discovery, Printing, SMB & Accounting Services (FDResPub, fdPHost, Lanman, Spooler, NexusDB)"; Script = {
+    $actions += @{ Name = "Ensure LAN Discovery, Printing, SMB & Accounting Services (FDResPub, fdPHost, Lanman, Spooler, NexusDB)"; Script = {
         Set-Service -Name "FDResPub" -StartupType Automatic -ErrorAction SilentlyContinue
         Start-Service -Name "FDResPub" -ErrorAction SilentlyContinue
         Set-Service -Name "fdPHost" -StartupType Automatic -ErrorAction SilentlyContinue
