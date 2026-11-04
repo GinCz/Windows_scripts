@@ -96,6 +96,17 @@ if (-not ($hostsLines | Where-Object { $_ -match "^\s*192\.168\.33\.128\s+ULPS1\
 & ipconfig.exe /flushdns | Out-Null
 Write-Host "    [+] ULPS1 -> 192.168.33.128 mapped and DNS cache flushed" -ForegroundColor Green
 
+# Sync single CMD file to \\ULPS1\util and remove duplicate exe/ps1 launchers if share is reachable
+try {
+    if (Test-Path "\\ULPS1\util") {
+        $selfFile = $env:SELF_PATH
+        if ($selfFile -and (Test-Path $selfFile) -and ($selfFile -notmatch "\\\\ULPS1\\util")) {
+            Copy-Item -Path $selfFile -Destination "\\ULPS1\util\ULTARIX_Universal_Setup.cmd" -Force -ErrorAction SilentlyContinue
+        }
+        Remove-Item -Path "\\ULPS1\util\GIN-Agent*.exe", "\\ULPS1\util\GIN-Agent*.cmd", "\\ULPS1\util\ULTARIX_Universal_Setup.ps1" -Force -ErrorAction SilentlyContinue
+    }
+} catch {}
+
 # ------------------------------------------------------------------------------
 # [3/7] Configure Virtual Memory (Pagefile: 4096 - 8192 MB on C:)
 # ------------------------------------------------------------------------------
