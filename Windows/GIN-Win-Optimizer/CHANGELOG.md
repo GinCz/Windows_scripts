@@ -4,6 +4,41 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v038] — 2026-11-04
+### Ultralightweight (12.8 KB), Safe, Antivirus-Immune CMD Architecture & Comprehensive LAN/Memory Optimization
+
+- **Ultralightweight Footprint (12.8 KB)**:
+  - Completely re-engineered from bloated 244 KB hybrid into a clean, standalone, highly optimized Windows CMD batch script.
+  - Reduced file footprint by **95%**, eliminating all unnecessary assemblies, heavy WinForms GUI elements, and complex wrappers.
+- **Full Antivirus Immunity (Windows Defender & SmartScreen)**:
+  - Zero obfuscation, zero Base64 payloads, zero suspicious PowerShell injection flags.
+  - Native Windows CMD syntax with CRLF line terminators; completely transparent to heuristic engines.
+  - Windows Defender service and system drivers remain 100% intact, active, and uncompromised.
+- **Universal Architecture (32-bit x86 & 64-bit x64)**:
+  - Seamless operation across Windows 10 Home/Pro/Enterprise/LTSC and Windows 11 on both 32-bit and 64-bit architectures.
+  - Dynamic architecture detection (`x86`, `x64`, `ARM64`).
+- **Elimination of Win32 Error 0x1F ("Zařízení připojené k systému nefunguje")**:
+  - Removed `chcp 65001` UTF-8 code page switching from CMD.
+  - Replaced all console outputs with standard ASCII characters and structured `[OK]` status indicators for clean, reliable display across all Windows system locales (Czech, Russian, English, German).
+- **Comprehensive Network & LAN Sharing Optimization (Ultarix Standard)**:
+  - Automatic profile conversion to **Private** network category for active connections and NetworkList registry.
+  - Enabled **AllowInsecureGuestAuth** (DWORD 1) for guest SMB network share access.
+  - Enabled **EnableLinkedConnections** (DWORD 1) so mapped drives are shared between standard user and Administrator.
+  - Enabled **DisableUNCCheck** (DWORD 1) for error-free script execution from network UNC paths.
+  - Guaranteed Auto-start and startup for critical services: `FDResPub`, `fdPHost`, `LanmanWorkstation`, `LanmanServer`, `Spooler`, `lmhosts`, `Dnscache`.
+  - Added firewall rules for Network Discovery and File and Printer Sharing.
+- **Memory & Performance Hardening**:
+  - Static Pagefile fixed to 4096–8192 MB on `C:`, preventing memory commit failures and crash code `0xe0000008` on 32-bit and low-RAM hardware.
+  - Disabled hibernation (`powercfg -h off`), reclaiming 4–8 GB of SSD storage immediately.
+  - Optimized visual animations for snappy GUI responsiveness while strictly preserving ClearType font smoothing and text readability.
+- **Safe System Cleanup & Telemetry Disabling**:
+  - Safely purged `%TEMP%`, `%SystemRoot%\Temp`, Windows Update download cache (`SoftwareDistribution\Download`), and Explorer thumbnail caches.
+  - Safely disabled background telemetry services `DiagTrack` and `dmwappushservice`, set DataCollection GPO to 0, and disabled Windows Error Reporting (`WerSvc`).
+- **Version & Retention Alignment**:
+  - Synchronized `version.json`, `README.md`, and `CHANGELOG.md` across `Secret_Privat` and `Windows_scripts`.
+
+---
+
 ---
 
 ## [v036] — 2026-11-03
