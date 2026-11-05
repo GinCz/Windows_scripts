@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-11-05 — Release v044 (CMD Launcher Header Fix & Execution Restoration)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v043` to `v044`.
+- **Root Cause & Immediate Fix**:
+  - Investigated Windows 10 startup failure: the polyglot CMD header in v043 had corrupted environment variable references and duplicate `#>` comment closers, plus residual launcher lines at the top of `engine.ps1` that caused PowerShell to fail before UI initialization.
+  - Restored clean, canonical polyglot header in `GIN-Win-Optimizer_v044.cmd`.
+  - Cleaned `engine.ps1` to be 100% pure PowerShell script starting with comment banners.
+  - Verified bracket and AST balance (0 errors).
+  - Validated both normal launch (auto-elevation) and 'Run as administrator' paths.
+- **Desktop Delivery**:
+  - Removed deprecated `GIN-Win-Optimizer_v043.cmd` from Desktop.
+  - Uploaded verified `GIN-Win-Optimizer_v044.cmd` to `D:\MEGA\DOCS\desktop` via `mega-put`.
+
 ## 2026-11-05 — Release v043 (Critical Syntax Fix for GUI XAML & Desktop Delivery)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v042` to `v043`.
 - **Root Cause & Immediate Fix**:

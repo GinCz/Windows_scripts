@@ -4,6 +4,14 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v044] - 2026-11-05
+- **Critical CMD Launcher Header Restoration**:
+  - Restored clean, canonical CMD/PowerShell polyglot header without corrupted variable expansions or duplicate comment closers.
+  - Completely purged stray CMD execution directives (`::`, `exit /b`, `#>`) from the top of pure `engine.ps1`.
+  - Guaranteed seamless startup under Windows 10 via both unprivileged double-click (with automatic UAC elevation) and elevated right-click ('Run as administrator').
+  - Retention cleanup: preserved strictly 2 latest versions (`GIN-Win-Optimizer_v044.cmd` and `GIN-Win-Optimizer_v042.cmd`), removed deprecated files.
+  - Uploaded verified `GIN-Win-Optimizer_v044.cmd` to `D:\MEGA\DOCS\desktop`.
+
 ## [v043] - 2026-11-05
 - **Critical Syntax Bug Fix (ParseException Line 1419 Char 16)**:
   - Fixed fatal syntax error caused by extraneous closing parenthesis in XAML base64 join statement: `    ) -join ''))` -> `    ) -join '')`.
