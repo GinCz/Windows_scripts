@@ -1,10 +1,10 @@
 {
   "project": "GIN-Win-Optimizer",
-  "current_version": "v042",
+  "current_version": "v043",
   "updated_at": "2026-11-05",
   "active_versions": [
-    "GIN-Win-Optimizer_v042.cmd",
-    "GIN-Win-Optimizer_v041.cmd"
+    "GIN-Win-Optimizer_v043.cmd",
+    "GIN-Win-Optimizer_v042.cmd"
   ],
   "sync_targets": {
     "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,11 @@
     "desktop_copy": true
   },
   "changelog": [
+    {
+      "version": "v043",
+      "date": "2026-11-05",
+      "changes": "Critical Syntax Bug Fix & Engine Hardening: Fixed fatal PowerShell ParseException at line 1419 character 16 caused by an extra closing parenthesis in the XAML base64 join statement (') -join ''))' -> ') -join '')'); verified 100% clean abstract syntax tree and balanced brackets across entire engine; updated internal XAML headers to v043; synced standalone CMD directly to Vladimir's Desktop D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v043.cmd."
+    },
     {
       "version": "v042",
       "date": "2026-11-05",

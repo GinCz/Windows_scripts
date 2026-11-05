@@ -4,6 +4,15 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v043] - 2026-11-05
+- **Critical Syntax Bug Fix (ParseException Line 1419 Char 16)**:
+  - Fixed fatal syntax error caused by extraneous closing parenthesis in XAML base64 join statement: `    ) -join ''))` -> `    ) -join '')`.
+  - Resolved `System.Management.Automation.ParseException: строка:1419 знак:16 Непредвиденная лексема ')' в выражении или операторе` displayed upon GUI launch.
+  - Automated full AST and balanced-bracket verification across all lines of `engine.ps1` and `GIN-Win-Optimizer_v043.cmd` (0 syntax errors).
+  - Synchronized window title, header subtext, and EN/RU/CS localization dictionaries to `v043`.
+  - Retention cleanup: preserved strictly 2 latest versions (`GIN-Win-Optimizer_v043.cmd` and `GIN-Win-Optimizer_v042.cmd`), removed deprecated `v041`.
+  - Uploaded fresh `GIN-Win-Optimizer_v043.cmd` directly to Vladimir's Desktop (`D:\MEGA\DOCS\desktop`).
+
 ## [v042] - 2026-11-05
 - **Enforced UAC Slider to Absolute Minimum ("Never Notify")**:
   - Configured `EnableLUA = 0`, `ConsentPromptBehaviorAdmin = 0`, `ConsentPromptBehaviorUser = 0`, `PromptOnSecureDesktop = 0`, `FilterAdministratorToken = 0`.

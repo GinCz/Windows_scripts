@@ -3,7 +3,7 @@ start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden 
 exit /b
 #>
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v042
+#  GIN-WIN-OPTIMIZER PLUS                                          v043
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -160,9 +160,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v042
+#  GIN-WIN-OPTIMIZER PLUS                                          v043
 
-#  Rule: Strict Version Increment Mandate (v032 -> v042)
+#  Rule: Strict Version Increment Mandate (v032 -> v043)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -215,11 +215,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -492,11 +492,11 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HeaderTitle" = "Údaje o počítači"
 
-        "HeaderSub" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -769,11 +769,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1051,7 +1051,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDQyIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDQzIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -1144,7 +1144,7 @@ $xamlBase64 = (@(
         'ayBOYW1lPSJ0eHRIb3N0SW5mbyIgVGV4dD0iSG9zdDogbG9jYWwgfCDQo9GB0YLRgNC+0LnRgdGC0LLQvjogUEMgfCBXaW5kb3dz'
         'OiAxMCBQcm8gfCBJUDogMTI3LjAuMC4xIiBGb250U2l6ZT0iMTEiIEZvcmVncm91bmQ9IiNjYmQ1ZTEiIE1hcmdpbj0iMCwzLDAs'
         'MCIvPgogICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0idHh0SGVhZGVyU3ViIiBUZXh0PSJHSU4tV2luLU9wdGlt'
-        'aXplciB2MDM4IFtWbGFkaU1JUiArIEFJXSIgRm9udFNpemU9IjEwIiBGb3JlZ3JvdW5kPSIjNjQ3NDhiIiBNYXJnaW49IjAsMSww'
+        'aXplciB2MDQzIFtWbGFkaU1JUiArIEFJXSIgRm9udFNpemU9IjEwIiBGb3JlZ3JvdW5kPSIjNjQ3NDhiIiBNYXJnaW49IjAsMSww'
         'LDAiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3Jk'
         'ZXI+CgogICAgICAgIDwhLS0gUHJlc2V0cyBCYXIgLS0+CiAgICAgICAgPEJvcmRlciBHcmlkLlJvdz0iMSIgQmFja2dyb3VuZD0i'
         'IzFlMjAyNiIgQ29ybmVyUmFkaXVzPSI0IiBQYWRkaW5nPSIxMCw2IiBNYXJnaW49IjAsMCwwLDgiIEJvcmRlckJydXNoPSIjMjUy'
@@ -1391,7 +1391,7 @@ $xamlBase64 = (@(
         'dEJsb2NrIE5hbWU9InR4dFN0YXR1cyIgVGV4dD0iUmVhZHkuIDExMCBPcHRpbWl6YXRpb24gTW9kdWxlcyBBY3RpdmUuIiBGb3Jl'
         'Z3JvdW5kPSIjOTQ5YmE0IiBGb250U2l6ZT0iMTEiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAg'
         'PC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3JkZXI+CiAgICA8L0dyaWQ+CjwvV2luZG93Pg=='
-    ) -join ''))
+    ) -join '')
 $xamlBytes = [System.Convert]::FromBase64String($xamlBase64)
 
 $xamlString = [System.Text.Encoding]::UTF8.GetString($xamlBytes)
@@ -2126,7 +2126,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v042 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v043 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -4674,7 +4674,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v042. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v043. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -4930,7 +4930,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v042 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v043 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 

@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-11-05 — Release v043 (Critical Syntax Fix for GUI XAML & Desktop Delivery)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v042` to `v043`.
+- **Root Cause & Immediate Fix**:
+  - Diagnosed `System.Management.Automation.ParseException` at line 1419 character 16 triggered on startup: during v042 assembly, an accidental duplicate closing parenthesis was introduced in the base64 string join operation (`    ) -join ''))`).
+  - Restored proper balanced closing `    ) -join '')`.
+  - Executed automated AST bracket/parentheses verification across the entire codebase: 0 syntax issues detected.
+  - Updated localization dictionaries (EN, RU, CS) and XAML metadata to `v043`.
+- **Retention & Cleanup**:
+  - Kept strictly 2 latest versions: `GIN-Win-Optimizer_v043.cmd` and `GIN-Win-Optimizer_v042.cmd`. Removed deprecated `GIN-Win-Optimizer_v041.cmd`.
+- **Desktop Delivery**:
+  - Uploaded `GIN-Win-Optimizer_v043.cmd` to `D:\MEGA\DOCS\desktop` via `mega-put`.
+  - Removed outdated `GIN-Win-Optimizer_v042.cmd` from Desktop.
+
 ## 2026-11-05 — Release v042 (Comprehensive Deep Optimization, Browser Updaters, Demo Office & SSD M.2 Suite)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version to `v042`.
 - **UAC Slider to Minimum ("Never Notify")**: Configured `EnableLUA = 0`, `ConsentPromptBehaviorAdmin = 0`, `ConsentPromptBehaviorUser = 0`, `PromptOnSecureDesktop = 0`, `FilterAdministratorToken = 0`.

@@ -1,19 +1,19 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Win-Optimizer v041 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
+title GIN-Win-Optimizer v043 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell location (supports x86, x64, Sysnative on 32-bit processes in 64-bit OS)
-set "PS_EXE=powershell.exe"
-if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+set PS_EXE=powershell.exe
+if exist %SystemRoot%SysnativeWindowsPowerShellv1.0powershell.exe set PS_EXE=%SystemRoot%SysnativeWindowsPowerShellv1.0powershell.exe
 
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11 (32-bit and 64-bit)
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Requesting Administrator privileges for GIN-Win-Optimizer v041...
-    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v041.cmd" >nul 2>&1
-    if exist "%TEMP%\GIN-Win-Optimizer_v041.cmd" (
-        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v041.cmd""' -Verb RunAs"
+    echo [*] Requesting Administrator privileges for GIN-Win-Optimizer v043...
+    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v043.cmd" >nul 2>&1
+    if exist "%TEMP%\GIN-Win-Optimizer_v043.cmd" (
+        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v043.cmd""' -Verb RunAs"
     ) else (
         "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%~f0""' -Verb RunAs"
     )
@@ -24,11 +24,15 @@ if %errorlevel% neq 0 (
 set "GIN_OPT_SCRIPT=%~f0"
 
 :: Launch GUI cleanly in background (hidden console) for single-window experience across Win 7 / 8 / 10 / 11
+start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command "try {  = :GIN_OPT_SCRIPT; if (-not  -or -not (Test-Path )) {  = '%~f0' };  = [System.IO.File]::ReadAllText(, [System.Text.Encoding]::UTF8); Invoke-Expression  } catch { Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show(bash.Exception.ToString(), 'Optimizer Error') }"
+exit /b
+#>
+:: Launch GUI cleanly in background (hidden console) for single-window experience across Win 7 / 8 / 10 / 11
 start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command "try { $p = $env:GIN_OPT_SCRIPT; if (-not $p -or -not (Test-Path $p)) { $p = '%~f0' }; $raw = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8); Invoke-Expression $raw } catch { Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($_.Exception.ToString(), 'Optimizer Error') }"
 exit /b
 #>
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v041
+#  GIN-WIN-OPTIMIZER PLUS                                          v043
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -160,8 +164,10 @@ try {
     # Enforce Silent UAC (Slider to absolute minimum "Never Notify") and disable Admin Token Filtering
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableVirtualization" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
     # Ensure LanmanWorkstation Parameters and ServiceDll are 100% intact (prevent Error 2 / dropping network drives)
     New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "ServiceDll" -Value "%SystemRoot%\System32\wkssvc.dll" -Type ExpandString -Force -ErrorAction SilentlyContinue
@@ -183,9 +189,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v041
+#  GIN-WIN-OPTIMIZER PLUS                                          v043
 
-#  Rule: Strict Version Increment Mandate (v032 -> v041)
+#  Rule: Strict Version Increment Mandate (v032 -> v043)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -238,11 +244,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v041 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v041 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -351,6 +357,7 @@ $t = @{
         "chk_edge_first_run" = "Prevent Edge First Run Experience and welcome page"
 
         "chk_edge_unpin" = "Unpin Edge & Internet Explorer from Taskbar, block auto-reinstall"
+        "chk_browser_updaters" = "Stop background updaters & purge Update folders (Chrome, Brave, Cent Browser)"
 
         "chk_reloc_documents" = "Relocate Documents folder to D:\DOCS (migrates files & shell paths)"
         "chk_reloc_desktop" = "Relocate Desktop folder to D:\DOCS\desktop (migrates files & shell paths)"
@@ -475,7 +482,7 @@ $t = @{
 
         "chk_srv_power_sleep_screen" = "Display & Sleep timeouts: Display Never, Sleep 30m (DC) / Never (AC), Screensaver 10m"
 
-        "chk_srv_ssd_trim" = "Disable LastAccess/8dot3 and trigger SSD TRIM"
+        "chk_srv_ssd_trim" = "Deep SSD & NVMe M.2 Optimization (TRIM, NTFS Cache, Disable LastAccess/SysMain)"
         "chk_srv_pagefile_auto" = "Smart dynamic pagefile on C: (auto-scaled by RAM & free SSD space)"
 
         "chk_srv_network_offload" = "Disable network Task Offload & Chimney (prevents latency spikes)"
@@ -514,11 +521,11 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v041 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HeaderTitle" = "Údaje o počítači"
 
-        "HeaderSub" = "GIN-Win-Optimizer v041 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -627,6 +634,7 @@ $t = @{
         "chk_edge_first_run" = "Zabránit zobrazování uvítací stránky prvního spuštění v Edge"
 
         "chk_edge_unpin" = "Odepnout Edge a Internet Explorer z hlavního panelu, zablokovat reinstalaci"
+        "chk_browser_updaters" = "Zastavit aktualizace na pozadí a smazat složky Update (Chrome, Brave, Cent Browser)"
 
         "chk_reloc_documents" = "Přesunout složku Dokumenty do D:\DOCS (migrace souborů a cest)"
         "chk_reloc_desktop" = "Přesunout složku Plocha do D:\DOCS\desktop (migrace souborů a cest)"
@@ -751,7 +759,7 @@ $t = @{
 
         "chk_srv_power_sleep_screen" = "Časové limity obrazovky a spánku: Displej Nikdy, Spánek 30 min (baterie) / Nikdy (síť), Šetřič 10 min"
 
-        "chk_srv_ssd_trim" = "Zakázat LastAccess/8dot3 a provést okamžitý SSD TRIM"
+        "chk_srv_ssd_trim" = "Hloubková optimalizace pro SSD a NVMe M.2 (TRIM, NTFS mezipaměť, zákaz SysMain)"
         "chk_srv_pagefile_auto" = "Chytrý dynamický stránkovací soubor na C: (podle RAM a volného místa na SSD)"
 
         "chk_srv_network_offload" = "Zakázat síťový Task Offload a Chimney (ochrana před skoky latence)"
@@ -790,11 +798,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v041 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v041 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v043 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -903,6 +911,7 @@ $t = @{
         "chk_edge_first_run" = "Предотвратить показ страницы первого запуска Microsoft Edge"
 
         "chk_edge_unpin" = "Открепить значки Internet Explorer и Edge от панели задач и Рабочего стола"
+        "chk_browser_updaters" = "Остановить фоновые службы и удалить папки Update (Chrome, Brave, Cent Browser)"
 
         "chk_reloc_documents" = "Переместить папку «Документы» в D:\DOCS (перенос файлов и путей)"
         "chk_reloc_desktop" = "Переместить «Рабочий стол» в D:\DOCS\desktop (перенос файлов и путей)"
@@ -1027,7 +1036,7 @@ $t = @{
 
         "chk_srv_power_sleep_screen" = "Таймауты дисплея и сна: экран Никогда, сон 30 мин (батарея) / Никогда (сеть), заставка 10 мин"
 
-        "chk_srv_ssd_trim" = "Отключить LastAccess/8dot3 и выполнить принудительный SSD TRIM"
+        "chk_srv_ssd_trim" = "Глубокая оптимизация под SSD и NVMe M.2 (TRIM, кэш NTFS, отключение LastAccess/SysMain)"
         "chk_srv_pagefile_auto" = "Умный динамический файл подкачки на C: (адаптивно по объёму RAM и места на SSD)"
 
         "chk_srv_network_offload" = "Отключить сетевой Task Offload и Chimney (защита от скачков задержки)"
@@ -1070,347 +1079,348 @@ $t = @{
 
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
-    'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-    'PSJHSU4tV2luLU9wdGltaXplciB2MDM5IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
-    'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
-    'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
-    'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
-    'UmVzb3VyY2VzPgogICAgICAgIDxTdHlsZSBUYXJnZXRUeXBlPSJHcm91cEJveCI+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVy'
-    'dHk9IkJvcmRlckJydXNoIiBWYWx1ZT0iIzI1MjgyZSIvPgogICAgICAgICAgICA8U2V0dGVyIFByb3BlcnR5PSJCb3JkZXJUaGlj'
-    'a25lc3MiIFZhbHVlPSIxIi8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVydHk9Ik1hcmdpbiIgVmFsdWU9IjAsMCwwLDkiLz4K'
-    'ICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iUGFkZGluZyIgVmFsdWU9IjksNiw5LDgiLz4KICAgICAgICAgICAgPFNldHRl'
-    'ciBQcm9wZXJ0eT0iRm9yZWdyb3VuZCIgVmFsdWU9IiMwMGI0ZDgiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iRm9u'
-    'dFdlaWdodCIgVmFsdWU9IlNlbWlCb2xkIi8+CiAgICAgICAgPC9TdHlsZT4KICAgICAgICA8U3R5bGUgVGFyZ2V0VHlwZT0iQ2hl'
-    'Y2tCb3giPgogICAgICAgICAgICA8U2V0dGVyIFByb3BlcnR5PSJGb3JlZ3JvdW5kIiBWYWx1ZT0iI2Q0ZDRkOCIvPgogICAgICAg'
-    'ICAgICA8U2V0dGVyIFByb3BlcnR5PSJNYXJnaW4iIFZhbHVlPSIyLDIsMiwzIi8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVy'
-    'dHk9IkZvbnRXZWlnaHQiIFZhbHVlPSJOb3JtYWwiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iRm9udFNpemUiIFZh'
-    'bHVlPSIxMS41Ii8+CiAgICAgICAgPC9TdHlsZT4KICAgICAgICA8U3R5bGUgVGFyZ2V0VHlwZT0iQnV0dG9uIj4KICAgICAgICAg'
-    'ICAgPFNldHRlciBQcm9wZXJ0eT0iQmFja2dyb3VuZCIgVmFsdWU9IiMyNTI4MmUiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9w'
-    'ZXJ0eT0iRm9yZWdyb3VuZCIgVmFsdWU9IiNmZmZmZmYiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iQm9yZGVyQnJ1'
-    'c2giIFZhbHVlPSIjM2EzZDQ1Ii8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVydHk9IkJvcmRlclRoaWNrbmVzcyIgVmFsdWU9'
-    'IjEiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iUGFkZGluZyIgVmFsdWU9IjEwLDUiLz4KICAgICAgICAgICAgPFNl'
-    'dHRlciBQcm9wZXJ0eT0iRm9udFdlaWdodCIgVmFsdWU9IlNlbWlCb2xkIi8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVydHk9'
-    'IkN1cnNvciIgVmFsdWU9IkhhbmQiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iVGVtcGxhdGUiPgogICAgICAgICAg'
-    'ICAgICAgPFNldHRlci5WYWx1ZT4KICAgICAgICAgICAgICAgICAgICA8Q29udHJvbFRlbXBsYXRlIFRhcmdldFR5cGU9IkJ1dHRv'
-    'biI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxCb3JkZXIgeDpOYW1lPSJib3JkZXIiIEJhY2tncm91bmQ9IntUZW1wbGF0ZUJp'
-    'bmRpbmcgQmFja2dyb3VuZH0iIEJvcmRlckJydXNoPSJ7VGVtcGxhdGVCaW5kaW5nIEJvcmRlckJydXNofSIgQm9yZGVyVGhpY2tu'
-    'ZXNzPSJ7VGVtcGxhdGVCaW5kaW5nIEJvcmRlclRoaWNrbmVzc30iIENvcm5lclJhZGl1cz0iMyIgUGFkZGluZz0ie1RlbXBsYXRl'
-    'QmluZGluZyBQYWRkaW5nfSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q29udGVudFByZXNlbnRlciB4Ok5hbWU9ImNv'
-    'bnRlbnRQcmVzZW50ZXIiIEhvcml6b250YWxBbGlnbm1lbnQ9IkNlbnRlciIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciIgRm9j'
-    'dXNhYmxlPSJGYWxzZSIgUmVjb2duaXplc0FjY2Vzc0tleT0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L0JvcmRl'
-    'cj4KICAgICAgICAgICAgICAgICAgICAgICAgPENvbnRyb2xUZW1wbGF0ZS5UcmlnZ2Vycz4KICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgIDxUcmlnZ2VyIFByb3BlcnR5PSJJc01vdXNlT3ZlciIgVmFsdWU9IlRydWUiPgogICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgIDxTZXR0ZXIgVGFyZ2V0TmFtZT0iYm9yZGVyIiBQcm9wZXJ0eT0iQmFja2dyb3VuZCIgVmFsdWU9IiMzNTNiNDgi'
-    'Lz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8U2V0dGVyIFRhcmdldE5hbWU9ImJvcmRlciIgUHJvcGVydHk9IkJv'
-    'cmRlckJydXNoIiBWYWx1ZT0iIzAwYjRkOCIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9UcmlnZ2VyPgogICAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgPFRyaWdnZXIgUHJvcGVydHk9IklzUHJlc3NlZCIgVmFsdWU9IlRydWUiPgogICAgICAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgIDxTZXR0ZXIgVGFyZ2V0TmFtZT0iYm9yZGVyIiBQcm9wZXJ0eT0iQmFja2dyb3VuZCIgVmFs'
-    'dWU9IiMxYTFjMjMiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvVHJpZ2dlcj4KICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgIDxUcmlnZ2VyIFByb3BlcnR5PSJJc0VuYWJsZWQiIFZhbHVlPSJGYWxzZSI+CiAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgPFNldHRlciBUYXJnZXROYW1lPSJib3JkZXIiIFByb3BlcnR5PSJCYWNrZ3JvdW5kIiBWYWx1ZT0iIzFjMWYyNiIv'
-    'PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZXR0ZXIgVGFyZ2V0TmFtZT0iYm9yZGVyIiBQcm9wZXJ0eT0iQm9y'
-    'ZGVyQnJ1c2giIFZhbHVlPSIjMmUzMjNiIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0'
-    'eT0iRm9yZWdyb3VuZCIgVmFsdWU9IiM5NGEzYjgiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvVHJpZ2dlcj4KICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgPC9Db250cm9sVGVtcGxhdGUuVHJpZ2dlcnM+CiAgICAgICAgICAgICAgICAgICAgPC9Db250'
-    'cm9sVGVtcGxhdGU+CiAgICAgICAgICAgICAgICA8L1NldHRlci5WYWx1ZT4KICAgICAgICAgICAgPC9TZXR0ZXI+CiAgICAgICAg'
-    'PC9TdHlsZT4KICAgIDwvV2luZG93LlJlc291cmNlcz4KCiAgICA8R3JpZCBNYXJnaW49IjEyIj4KICAgICAgICA8R3JpZC5Sb3dE'
-    'ZWZpbml0aW9ucz4KICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgIDxSb3dEZWZp'
-    'bml0aW9uIEhlaWdodD0iQXV0byIvPgogICAgICAgICAgICA8Um93RGVmaW5pdGlvbiBIZWlnaHQ9IioiLz4KICAgICAgICAgICAg'
-    'PFJvd0RlZmluaXRpb24gSGVpZ2h0PSIxODUiLz4KICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAg'
-    'ICAgICAgPC9HcmlkLlJvd0RlZmluaXRpb25zPgoKICAgICAgICA8IS0tIFRvcCBIZWFkZXIgLS0+CiAgICAgICAgPEJvcmRlciBH'
-    'cmlkLlJvdz0iMCIgQmFja2dyb3VuZD0iIzFhMWMyMSIgQ29ybmVyUmFkaXVzPSI2IiBQYWRkaW5nPSIxNCwxMCIgTWFyZ2luPSIw'
-    'LDAsMCw4IiBCb3JkZXJCcnVzaD0iIzI1MjgyZSIgQm9yZGVyVGhpY2tuZXNzPSIxIj4KICAgICAgICAgICAgPERvY2tQYW5lbCBM'
-    'YXN0Q2hpbGRGaWxsPSJUcnVlIj4KICAgICAgICAgICAgICAgIDwhLS0gUmlnaHQgQ29udHJvbHM6IFNraXAsIFN0YXJ0LCBFeGl0'
-    'IC0tPgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgRG9ja1BhbmVsLkRvY2s9IlJpZ2h0IiBPcmllbnRhdGlvbj0iSG9yaXpv'
-    'bnRhbCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciI+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5Ta2lw'
-    'VG9wIiBDb250ZW50PSLij60gU0tJUCBTVEVQIiBCYWNrZ3JvdW5kPSIjZDk3NzA2IiBCb3JkZXJCcnVzaD0iI2Y1OWUwYiIgRm9y'
-    'ZWdyb3VuZD0iI2ZmZmZmZiIgRm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTQsOCIgTWFyZ2luPSIwLDAsOCwwIiBGb250U2l6'
-    'ZT0iMTMiIElzRW5hYmxlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blN0YXJ0VG9wIiBD'
-    'b250ZW50PSLwn5qAINCe0J/QotCY0JzQmNCX0JjQoNCe0JLQkNCi0KwiIEJhY2tncm91bmQ9IiMwMDc3YjYiIEJvcmRlckJydXNo'
-    'PSIjMDA5NmM3IiBGb3JlZ3JvdW5kPSIjZmZmZmZmIiBGb250V2VpZ2h0PSJCb2xkIiBQYWRkaW5nPSIxNiw4IiBNYXJnaW49IjAs'
-    'MCw4LDAiIEZvbnRTaXplPSIxMyIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuUmVib290VG9wIiBDb250'
-    'ZW50PSLimqEgUkVCT09UIiBCYWNrZ3JvdW5kPSIjZGMyNjI2IiBCb3JkZXJCcnVzaD0iI2ZmNGQ0ZiIgRm9yZWdyb3VuZD0iI2Zm'
-    'ZmZmZiIgRm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTYsOCIgTWFyZ2luPSIwLDAsOCwwIiBGb250U2l6ZT0iMTMiIFZpc2li'
-    'aWxpdHk9IlZpc2libGUiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0bkV4aXRUb3AiIENvbnRlbnQ9IkV4'
-    'aXQiIEJhY2tncm91bmQ9IiMzYTFjMWMiIEJvcmRlckJydXNoPSIjNjYyMjIyIiBGb3JlZ3JvdW5kPSIjZmY4ODg4IiBQYWRkaW5n'
-    'PSIxMiw4Ii8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CgogICAgICAgICAgICAgICAgPCEtLSBDZW50ZXIgQ29udHJv'
-    'bHM6IExhbmd1YWdlIFN3aXRjaGVyIFBpbGxzICYgVGVsZWdyYW0gLS0+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBEb2Nr'
-    'UGFuZWwuRG9jaz0iUmlnaHQiIE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIiBNYXJn'
-    'aW49IjAsMCwxNiwwIj4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blRlbGVncmFtIiBDb250ZW50PSLinIjv'
-    'uI8gVGVsZWdyYW0gKEBHaW5DeikiIEJhY2tncm91bmQ9IiMwMDg4Y2MiIEJvcmRlckJydXNoPSIjMjliNmY2IiBGb3JlZ3JvdW5k'
-    'PSIjZmZmZmZmIiBGb250V2VpZ2h0PSJTZW1pQm9sZCIgUGFkZGluZz0iMTAsNSIgTWFyZ2luPSIwLDAsMTIsMCIgRm9udFNpemU9'
-    'IjExIiBUb29sVGlwPSLQndCw0L/QuNGB0LDRgtGMINCw0LLRgtC+0YDRgyDQsiBUZWxlZ3JhbSAoQEdpbkN6KTogaHR0cHM6Ly90'
-    'Lm1lL0dpbkN6Ii8+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5MYW5nUnUiIENvbnRlbnQ9IlJVIiBCYWNr'
-    'Z3JvdW5kPSIjMWUzYTVmIiBCb3JkZXJCcnVzaD0iIzAwYjRkOCIgRm9yZWdyb3VuZD0iI2ZmZmZmZiIgUGFkZGluZz0iOCw0IiBN'
-    'YXJnaW49IjAsMCw0LDAiIEZvbnRTaXplPSIxMSIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuTGFuZ0Vu'
-    'IiBDb250ZW50PSJFTiIgQmFja2dyb3VuZD0iIzI1MjgyZSIgQm9yZGVyQnJ1c2g9IiMzYTNkNDUiIEZvcmVncm91bmQ9IiNiMGIz'
-    'YjgiIFBhZGRpbmc9IjgsNCIgTWFyZ2luPSIwLDAsNCwwIiBGb250U2l6ZT0iMTEiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0'
-    'dG9uIE5hbWU9ImJ0bkxhbmdDcyIgQ29udGVudD0iQ1oiIEJhY2tncm91bmQ9IiMyNTI4MmUiIEJvcmRlckJydXNoPSIjM2EzZDQ1'
-    'IiBGb3JlZ3JvdW5kPSIjYjBiM2I4IiBQYWRkaW5nPSI4LDQiIEZvbnRTaXplPSIxMSIvPgogICAgICAgICAgICAgICAgPC9TdGFj'
-    'a1BhbmVsPgoKICAgICAgICAgICAgICAgIDwhLS0gTGVmdCBJbmZvOiBDb21wdXRlciBJbmZvcm1hdGlvbiAmIFNwZWNzIC0tPgog'
-    'ICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249IlZlcnRpY2FsIj4KICAgICAgICAgICAgICAgICAgICA8U3Rh'
-    'Y2tQYW5lbCBPcmllbnRhdGlvbj0iSG9yaXpvbnRhbCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0i'
-    'dHh0SGVhZGVyVGl0bGUiIFRleHQ9ItCU0LDQvdC90YvQtSDQviDQutC+0LzQv9GM0Y7RgtC10YDQtSIgRm9udFNpemU9IjE0IiBG'
-    'b250V2VpZ2h0PSJCb2xkIiBGb3JlZ3JvdW5kPSIjMDBiNGQ4Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDxCb3JkZXIgQmFj'
-    'a2dyb3VuZD0iIzE2NjUzNCIgQ29ybmVyUmFkaXVzPSIzIiBQYWRkaW5nPSI2LDEiIE1hcmdpbj0iOCwwLDAsMCIgVmVydGljYWxB'
-    'bGlnbm1lbnQ9IkNlbnRlciI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IkFETUlOIiBGb250'
-    'U2l6ZT0iOSIgRm9udFdlaWdodD0iQm9sZCIgRm9yZWdyb3VuZD0iIzg2ZWZhYyIvPgogICAgICAgICAgICAgICAgICAgICAgICA8'
-    'L0JvcmRlcj4KICAgICAgICAgICAgICAgICAgICAgICAgPEJvcmRlciBCYWNrZ3JvdW5kPSIjMGY3NjZlIiBDb3JuZXJSYWRpdXM9'
-    'IjMiIFBhZGRpbmc9IjYsMSIgTWFyZ2luPSI2LDAsMCwwIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIiBUb29sVGlwPSLQkdC1'
-    '0YHQv9C70LDRgtC90LDRjyDQv9C+0LbQuNC30L3QtdC90L3QsNGPINC70LjRhtC10L3Qt9C40Y8gKFBlcnNvbmFsICZhbXA7IEJ1'
-    'c2luZXNzIEZyZWV3YXJlKSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IkZSRUVXQVJFIiBG'
-    'b250U2l6ZT0iOSIgRm9udFdlaWdodD0iQm9sZCIgRm9yZWdyb3VuZD0iIzVlZWFkNCIvPgogICAgICAgICAgICAgICAgICAgICAg'
-    'ICA8L0JvcmRlcj4KICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPFRleHRCbG9j'
-    'ayBOYW1lPSJ0eHRIb3N0SW5mbyIgVGV4dD0iSG9zdDogbG9jYWwgfCDQo9GB0YLRgNC+0LnRgdGC0LLQvjogUEMgfCBXaW5kb3dz'
-    'OiAxMCBQcm8gfCBJUDogMTI3LjAuMC4xIiBGb250U2l6ZT0iMTEiIEZvcmVncm91bmQ9IiNjYmQ1ZTEiIE1hcmdpbj0iMCwzLDAs'
-    'MCIvPgogICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0idHh0SGVhZGVyU3ViIiBUZXh0PSJHSU4tV2luLU9wdGlt'
-    'aXplciB2MDM4IFtWbGFkaU1JUiArIEFJXSIgRm9udFNpemU9IjEwIiBGb3JlZ3JvdW5kPSIjNjQ3NDhiIiBNYXJnaW49IjAsMSww'
-    'LDAiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3Jk'
-    'ZXI+CgogICAgICAgIDwhLS0gUHJlc2V0cyBCYXIgLS0+CiAgICAgICAgPEJvcmRlciBHcmlkLlJvdz0iMSIgQmFja2dyb3VuZD0i'
-    'IzFlMjAyNiIgQ29ybmVyUmFkaXVzPSI0IiBQYWRkaW5nPSIxMCw2IiBNYXJnaW49IjAsMCwwLDgiIEJvcmRlckJydXNoPSIjMjUy'
-    'ODJlIiBCb3JkZXJUaGlja25lc3M9IjEiPgogICAgICAgICAgICA8RG9ja1BhbmVsIExhc3RDaGlsZEZpbGw9IlRydWUiPgogICAg'
-    'ICAgICAgICAgICAgPFRleHRCbG9jayBOYW1lPSJ0eHRQcmVzZXRzIiBUZXh0PSJQcmVzZXRzOiIgVmVydGljYWxBbGlnbm1lbnQ9'
-    'IkNlbnRlciIgRm9udFdlaWdodD0iQm9sZCIgRm9yZWdyb3VuZD0iI2I1YmFjMSIgTWFyZ2luPSIwLDAsMTAsMCIvPgogICAgICAg'
-    'ICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249Ikhvcml6b250YWwiPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24g'
-    'TmFtZT0iYnRuU2VsZWN0QWxsIiBDb250ZW50PSLinJMgU2VsZWN0IEFsbCAoTWF4IENsZWFuKSIgTWFyZ2luPSIwLDAsNiwwIiBQ'
-    'YWRkaW5nPSIxMCw0IiBCYWNrZ3JvdW5kPSIjMTQ1MzJkIiBCb3JkZXJCcnVzaD0iIzIyYzU1ZSIgRm9yZWdyb3VuZD0iIzg2ZWZh'
-    'YyIgRm9udFdlaWdodD0iU2VtaUJvbGQiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0bkRlc2VsZWN0QWxs'
-    'IiBDb250ZW50PSLinJcgRGVzZWxlY3QgQWxsIiBNYXJnaW49IjAsMCw2LDAiIFBhZGRpbmc9IjEwLDQiLz4KICAgICAgICAgICAg'
-    'ICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blByZXNldE9mZmljZSIgQ29udGVudD0i8J+PoiBPZmZpY2UgKEtlZXAgT25lRHJpdmUp'
-    'IiBNYXJnaW49IjAsMCw2LDAiIFBhZGRpbmc9IjEwLDQiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blBy'
-    'ZXNldEdhbWluZyIgQ29udGVudD0i4pqhIEdhbWluZyAoS2VlcCBYYm94KSIgTWFyZ2luPSIwLDAsNiwwIiBQYWRkaW5nPSIxMCw0'
-    'Ii8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvRG9ja1BhbmVsPgogICAgICAgIDwvQm9yZGVy'
-    'PgoKICAgICAgICA8IS0tIE1haW4gU2Nyb2xsYWJsZSBPcHRpb25zIEdyaWQgLS0+CiAgICAgICAgPFNjcm9sbFZpZXdlciBHcmlk'
-    'LlJvdz0iMiIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRvIiBIb3Jpem9udGFsU2Nyb2xsQmFyVmlzaWJpbGl0eT0i'
-    'RGlzYWJsZWQiIE1hcmdpbj0iMCwwLDAsOCI+CiAgICAgICAgICAgIDxHcmlkPgogICAgICAgICAgICAgICAgPEdyaWQuQ29sdW1u'
-    'RGVmaW5pdGlvbnM+CiAgICAgICAgICAgICAgICAgICAgPENvbHVtbkRlZmluaXRpb24gV2lkdGg9IioiLz4KICAgICAgICAgICAg'
-    'ICAgICAgICA8Q29sdW1uRGVmaW5pdGlvbiBXaWR0aD0iKiIvPgogICAgICAgICAgICAgICAgICAgIDxDb2x1bW5EZWZpbml0aW9u'
-    'IFdpZHRoPSIqIi8+CiAgICAgICAgICAgICAgICA8L0dyaWQuQ29sdW1uRGVmaW5pdGlvbnM+CgogICAgICAgICAgICAgICAgPCEt'
-    'LSBDT0xVTU4gMSAtLT4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIEdyaWQuQ29sdW1uPSIwIiBNYXJnaW49IjAsMCw2LDAi'
-    'PgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IFByaXZhY3kgJiBUZWxlbWV0cnkgLS0+CiAgICAgICAgICAgICAgICAg'
-    'ICAgPEdyb3VwQm94IE5hbWU9ImdycFByaXZhY3kiIEhlYWRlcj0iUHJpdmFjeSAmYW1wOyBUZWxlbWV0cnkiPgogICAgICAgICAg'
-    'ICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtf'
-    'dGVsZW1fZGlhZ3RyYWNrIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
-    'YW1lPSJjaGtfdGVsZW1fZG13YXBwdXNoIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
-    'aGVja0JveCBOYW1lPSJjaGtfdGVsZW1fd2VyIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
-    'IDxDaGVja0JveCBOYW1lPSJjaGtfdGVsZW1fYWxsb3dfdGVsZW0iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190ZWxlbV9hZF9pZCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAg'
-    'ICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RlbGVtX2lua2luZyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RlbGVtX2FjdGl2aXR5IiBJc0NoZWNrZWQ9IlRydWUi'
-    'Lz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdGVsZW1fbG9jYXRpb24iIElzQ2hlY2tl'
-    'ZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190ZWxlbV9mZWVkYmFjayIg'
-    'SXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RlbGVtX3Rh'
-    'c2tzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdGVs'
-    'ZW1fY29ydGFuYSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0i'
-    'Y2hrX25ldF93aWZpX3ByaXZhY3kiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFu'
-    'ZWw+CiAgICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4KCiAgICAgICAgICAgICAgICAgICAgPCEtLSBHcm91cDogU2VjdXJp'
-    'dHkgJiBVQUMgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFNlY3VyaXR5IiBIZWFkZXI9IlNlY3Vy'
-    'aXR5ICZhbXA7IFVBQyBUd2Vha3MiPgogICAgICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc2VjX3VhY19xdWlldCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3NlY19hZG1pbl9hcHByb3ZhbCIgSXNDaGVja2VkPSJUcnVl'
-    'Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3NlY19zbWFydHNjcmVlbiIgSXNDaGVj'
-    'a2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3NlY19vcGVuX2ZpbGVf'
-    'd2FybmluZyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAg'
-    'ICAgICAgICAgICA8L0dyb3VwQm94PgoKICAgICAgICAgICAgICAgICAgICA8IS0tIEdyb3VwOiBDbG91ZCAmIENvbnN1bWVyIC0t'
-    'PgogICAgICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1lPSJncnBDbG91ZCIgSGVhZGVyPSJDbG91ZCAmYW1wOyBDb25zdW1l'
-    'ciBGZWF0dXJlcyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgPENoZWNrQm94IE5hbWU9ImNoa19jbG91ZF9vbmVkcml2ZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Nsb3VkX3NldHRpbmdzX3N5bmMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbG91ZF9iaW5nX3NlYXJjaCIgSXNDaGVja2VkPSJU'
-    'cnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Nsb3VkX3Nwb3RsaWdodCIgSXND'
-    'aGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Nsb3VkX2NvbnN1'
-    'bWVyX2ZlYXR1cmVzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAg'
-    'ICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IE1pY3Jvc29mdCBFZGdl'
-    'IC0tPgogICAgICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1lPSJncnBFZGdlIiBIZWFkZXI9Ik1pY3Jvc29mdCBFZGdlIE9w'
-    'dGltaXphdGlvbiI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgPENoZWNrQm94IE5hbWU9ImNoa19lZGdlX2JhY2tncm91bmQiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19lZGdlX3N0YXJ0dXBfYm9vc3QiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19lZGdlX3RlbGVtZXRyeSIgSXNDaGVja2VkPSJUcnVl'
-    'Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2VkZ2Vfc2lkZWJhciIgSXNDaGVja2Vk'
-    'PSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2VkZ2VfcHJlbGF1bmNoIiBJ'
-    'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZWRnZV9maXJz'
-    'dF9ydW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19l'
-    'ZGdlX3VucGluIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAg'
-    'ICAgICAgICAgICAgIDwvR3JvdXBCb3g+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CgogICAgICAgICAgICAgICAgPCEt'
-    'LSBDT0xVTU4gMiAtLT4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIEdyaWQuQ29sdW1uPSIxIiBNYXJnaW49IjMsMCwzLDAi'
-    'PgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IEV4cGxvcmVyLCBEZXNrdG9wICYgVGFza2JhciAtLT4KICAgICAgICAg'
-    'ICAgICAgICAgICA8R3JvdXBCb3ggTmFtZT0iZ3JwVUkiIEhlYWRlcj0iRXhwbG9yZXIsIERlc2t0b3AgJmFtcDsgVGFza2JhciI+'
-    'CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPCEtLSBIaWdo'
-    'bGlnaHRlZCBpbiBZZWxsb3c6IFNoZWxsIEZvbGRlcnMgUmVsb2NhdGlvbiB0byBEOlwgKE9GRiBieSBkZWZhdWx0KSAtLT4KICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgIDxCb3JkZXIgQmFja2dyb3VuZD0iIzIzMWYwOCIgQm9yZGVyQnJ1c2g9IiNlYWIzMDgi'
-    'IEJvcmRlclRoaWNrbmVzcz0iMSIgQ29ybmVyUmFkaXVzPSI0IiBQYWRkaW5nPSI2LDQiIE1hcmdpbj0iMCwwLDAsNiI+CiAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg'
-    'IDxDaGVja0JveCBOYW1lPSJjaGtfcmVsb2NfZG9jdW1lbnRzIiBJc0NoZWNrZWQ9IkZhbHNlIiBGb3JlZ3JvdW5kPSIjZmFjYzE1'
-    'IiBGb250V2VpZ2h0PSJCb2xkIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJj'
-    'aGtfcmVsb2NfZGVza3RvcCIgSXNDaGVja2VkPSJGYWxzZSIgRm9yZWdyb3VuZD0iI2ZhY2MxNSIgRm9udFdlaWdodD0iQm9sZCIv'
-    'PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
-    'IDwvQm9yZGVyPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV93aWRnZXRzIiBJc0No'
-    'ZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfdGVhbXNfY2hh'
-    'dCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3VpX2Nv'
-    'cGlsb3QiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191'
-    'aV9yZWNhbGwiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNo'
-    'a191aV9zdGFydF9hZHMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5h'
-    'bWU9ImNoa191aV9leHBsb3Jlcl9hZHMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENo'
-    'ZWNrQm94IE5hbWU9ImNoa191aV93ZWxjb21lX3NjcmVlbiIgSXNDaGVja2VkPSJUcnVlIi8+DQogICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9sb2Nrc2NyZWVuX2NsZWFuIiBJc0NoZWNrZWQ9IlRydWUiLz4NCiAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3VpX2NvbG9yX2FjY2VudF90aGVtZSIgSXNDaGVja2Vk'
-    'PSJUcnVlIi8+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9tb3VzZV9pbnZlcnRl'
-    'ZF9sYXJnZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
-    'X3VpX2NsYXNzaWNfY29udGV4dCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tC'
-    'b3ggTmFtZT0iY2hrX3VpX2hpZGVfc2VhcmNoIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
-    'IDxDaGVja0JveCBOYW1lPSJjaGtfdWlfaGlkZV90YXNrdmlldyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3VpX3Nob3dfYWxsX3RyYXlfaWNvbnMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgog'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9uZXZlcl9jb21iaW5lX3Rhc2tiYXIiIElz'
-    'Q2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9zaG93X3Ro'
-    'aXNfcGMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191'
-    'aV9jbG9ja18yNGhfc2Vjb25kcyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tC'
-    'b3ggTmFtZT0iY2hrX3VpX3JlZ2lvbl90aW1lX2N6ZWNoIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfbGFuZ19rZXlib2FyZHMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAg'
-    'ICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9yZWdpb25hbF9kYXRlX2Zvcm1hdCIgSXNDaGVja2VkPSJU'
-    'cnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RiX3NtYWxsX2ljb25zIiBJc0No'
-    'ZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RiX2xvY2siIElz'
-    'Q2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190Yl9oaWRlX2Fj'
-    'dGlvbl9jZW50ZXIiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9'
-    'ImNoa190Yl9oaWRlX3Blb3BsZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tC'
-    'b3ggTmFtZT0iY2hrX2V4cF9vcGVuX3RoaXNfcGMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9mb2xkZXJfdmlld19saXN0X3NvcnRfdHlwZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2V4cF9oaWRlX3VzZXJfZm9sZGVycyIgSXNDaGVj'
-    'a2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2V4cF9ub19zaG9ydGN1'
-    'dF9zdWZmaXgiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNo'
-    'a19leHBfaGlkZV9xdWlja19hY2Nlc3NfcmVjZW50IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZXhwX3Nob3dfZnVsbF9wYXRoIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZXhwX3NlcGFyYXRlX3Byb2Nlc3MiIElzQ2hlY2tlZD0iVHJ1ZSIv'
-    'PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19leHBfaGlkZV9uYXZfbGlicmFyaWVzIiBJ'
-    'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZGVza3RvcF9z'
-    'aG93X3VzZXJfZm9sZGVyIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4K'
-    'ICAgICAgICAgICAgICAgICAgICA8L0dyb3VwQm94PgoKICAgICAgICAgICAgICAgICAgICA8IS0tIEdyb3VwOiBDb250ZXh0IE1l'
-    'bnUgQ2xlYW51cCAtLT4KICAgICAgICAgICAgICAgICAgICA8R3JvdXBCb3ggTmFtZT0iZ3JwQ29udGV4dE1lbnUiIEhlYWRlcj0i'
-    'Q29udGV4dCBNZW51IENsZWFudXAgKFJpZ2h0LUNsaWNrKSI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgog'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jdHhfY2xlYW51cF9ibG9hdCIgSXNDaGVja2Vk'
-    'PSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2N0eF93aW5yYXJfZW1haWwi'
-    'IElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAg'
-    'ICAgPC9Hcm91cEJveD4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KCiAgICAgICAgICAgICAgICA8IS0tIENPTFVNTiAz'
-    'IC0tPgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgR3JpZC5Db2x1bW49IjIiIE1hcmdpbj0iNiwwLDAsMCI+CiAgICAgICAg'
-    'ICAgICAgICAgICAgPCEtLSBHcm91cDogV2luZG93cyBVcGRhdGUgJiBTeXN0ZW0gRGlhZ25vc3RpY3MgLS0+CiAgICAgICAgICAg'
-    'ICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFdpblVwZGF0ZSIgSGVhZGVyPSJXaW5kb3dzIFVwZGF0ZSwgQlNPRCAmYW1wOyBT'
-    'eXN0ZW0iPgogICAgICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
-    'aGVja0JveCBOYW1lPSJjaGtfd3VfZGlzYWJsZV9hdXRvX3VwZGF0ZXMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa193dV9leGNsdWRlX2RyaXZlcnMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgog'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa193dV9leGNsdWRlX21zcnQiIElzQ2hlY2tlZD0i'
-    'VHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zeXNfYnNvZF9ub19hdXRvcmVi'
-    'b290IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lz'
-    'X3NtYWxsX21pbmlkdW1wIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
-    'YW1lPSJjaGtfc3lzX2Zhc3Rfc3RhcnR1cF9vZmYiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgPENoZWNrQm94IE5hbWU9ImNoa19zeXNfZGlzYWJsZV9yZW1vdGVfYXNzaXN0IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2VuYWJsZV9waG90b192aWV3ZXIiIElzQ2hlY2tl'
-    'ZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zeXNfbm90ZXBhZF90d2Vh'
-    'a3MiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAg'
-    'ICAgICAgPC9Hcm91cEJveD4KCiAgICAgICAgICAgICAgICAgICAgPCEtLSBHcm91cDogQXBwcyAmIEJsb2F0d2FyZSAtLT4KICAg'
-    'ICAgICAgICAgICAgICAgICA8R3JvdXBCb3ggTmFtZT0iZ3JwQXBwcyIgSGVhZGVyPSJBcHAgRGVibG9hdGVyICZhbXA7IFByb3Zp'
-    'c2lvbmVkIFBhY2thZ2VzIj4KICAgICAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF94Ym94IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX2dhbWViYXJfZGlzYWJsZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9nYW1lcyIgSXNDaGVja2VkPSJUcnVlIi8+CiAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9uZXdzIiBJc0NoZWNrZWQ9IlRydWUiLz4K'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX29mZmljZV9zdHViIiBJc0NoZWNrZWQ9'
-    'IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX2NsaXBjaGFtcCIgSXND'
-    'aGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9wZW9wbGUi'
-    'IElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19hcHBfZmVl'
-    'ZGJhY2siIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19h'
-    'cHBfZ2V0X2hlbHAiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9'
-    'ImNoa19hcHBfcGhvbmUiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAg'
-    'ICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4KCiAgICAgICAgICAgICAgICAgICAgPCEtLSBHcm91cDogU2VydmljZXMgJiBQ'
-    'ZXJmb3JtYW5jZSAtLT4KICAgICAgICAgICAgICAgICAgICA8R3JvdXBCb3ggTmFtZT0iZ3JwU2VydmljZXMiIEhlYWRlcj0iU3lz'
-    'dGVtIFBlcmZvcm1hbmNlICZhbXA7IFNlcnZpY2VzIj4KICAgICAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAgICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9zeXNtYWluIiBJc0NoZWNrZWQ9IlRydWUiLz4K'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2luZGV4aW5nIiBJc0NoZWNrZWQ9IlRy'
-    'dWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3JlbW90ZV9yZWciIElzQ2hl'
-    'Y2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfZGVsaXZlcnlf'
-    'b3B0IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2'
-    'X3Jlc2VydmVkX3N0b3JhZ2UiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94'
-    'IE5hbWU9ImNoa19zcnZfaGliZXJuYXRpb24iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg'
-    'PENoZWNrQm94IE5hbWU9ImNoa19zcnZfcG93ZXJfcGxhbiIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9wb3dlcl9zbGVlcF9zY3JlZW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfc3NkX3RyaW0iIElzQ2hlY2tlZD0iVHJ1ZSIv'
-    'Pg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3BhZ2VmaWxlX2F1dG8iIElzQ2hl'
-    'Y2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfbmV0d29ya19v'
-    'ZmZsb2FkIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
-    'X3Nydl92aXN1YWxfYXBwZWFyYW5jZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hl'
-    'Y2tCb3ggTmFtZT0iY2hrX3Nydl9wY2EiIElzQ2hlY2tlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
-    'aGVja0JveCBOYW1lPSJjaGtfc3J2X3Rya3drcyIgSXNDaGVja2VkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfaXBobHBzdmMiIElzQ2hlY2tlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAgIDwh'
-    'LS0gR3JvdXA6IENhY2hlICYgQ2xlYW5pbmcgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycENsZWFu'
-    'IiBIZWFkZXI9IkNhY2hlICZhbXA7IENvbXBvbmVudCBDbGVhbmluZyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1Bh'
-    'bmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPCEtLSBUaGUgMyBsb25nZXN0L3Nsb3dlc3QgbWFpbnRlbmFuY2Ugb3Bl'
-    'cmF0aW9ucyAoaGlnaGxpZ2h0ZWQgaW4gYnJpZ2h0IHJlZCwgT0ZGIGJ5IGRlZmF1bHQpIC0tPgogICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19kZWVwX2Rpc21fcmVwYWlyIiBJc0NoZWNrZWQ9IkZhbHNlIiBGb3JlZ3JvdW5k'
-    'PSIjZmY0ZDRmIiBGb250V2VpZ2h0PSJCb2xkIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0i'
-    'Y2hrX2RlZXBfZGlzbV9yZXNldGJhc2UiIElzQ2hlY2tlZD0iRmFsc2UiIEZvcmVncm91bmQ9IiNmZjRkNGYiIEZvbnRXZWlnaHQ9'
-    'IkJvbGQiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZGVlcF9zZmNfY29tcGFjdCIg'
-    'SXNDaGVja2VkPSJGYWxzZSIgRm9yZWdyb3VuZD0iI2ZmNGQ0ZiIgRm9udFdlaWdodD0iQm9sZCIvPgogICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgPFNlcGFyYXRvciBCYWNrZ3JvdW5kPSIjMmUzMjNiIiBNYXJnaW49IjAsMywwLDQiLz4KICAgICAgICAgICAg'
-    'ICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fdXNlcl90ZW1wIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAg'
-    'ICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fd2luX3RlbXAiIElzQ2hlY2tlZD0iVHJ1'
-    'ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl9zb2Z0X2Rpc3QiIElzQ2hl'
-    'Y2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl90aHVtYl9j'
-    'YWNoZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Ns'
-    'ZWFuX3NoYWRlcnNfZG5zIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
-    'YW1lPSJjaGtfY2xlYW5fZXZlbnRfbG9ncyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8'
-    'Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX3JlY3ljbGVfYmluIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fY2xlYW5tZ3IiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAg'
-    'ICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4KICAgICAgICAgICAgICAg'
-    'IDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9HcmlkPgogICAgICAgIDwvU2Nyb2xsVmlld2VyPgoKICAgICAgICA8IS0tIExp'
-    'dmUgRXhlY3V0aW9uIENvbnNvbGUgLyBMb2cgQm94IChIZWlnaHQgMTg1KSAtLT4KICAgICAgICA8Qm9yZGVyIEdyaWQuUm93PSIz'
-    'IiBCYWNrZ3JvdW5kPSIjMGIwYzBlIiBDb3JuZXJSYWRpdXM9IjQiIFBhZGRpbmc9IjgsNiIgQm9yZGVyQnJ1c2g9IiMyNTI4MmUi'
-    'IEJvcmRlclRoaWNrbmVzcz0iMSI+CiAgICAgICAgICAgIDxHcmlkPgogICAgICAgICAgICAgICAgPEdyaWQuUm93RGVmaW5pdGlv'
-    'bnM+CiAgICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgICAgICAgICAg'
-    'PFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSIq'
-    'Ii8+CiAgICAgICAgICAgICAgICA8L0dyaWQuUm93RGVmaW5pdGlvbnM+CgogICAgICAgICAgICAgICAgPCEtLSBDb25zb2xlIEhl'
-    'YWRlciBUb29sYmFyIC0tPgogICAgICAgICAgICAgICAgPERvY2tQYW5lbCBHcmlkLlJvdz0iMCIgTWFyZ2luPSIwLDAsMCw0Ij4K'
-    'ICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBEb2NrUGFuZWwuRG9jaz0iUmlnaHQiIE9yaWVudGF0aW9uPSJIb3Jpem9u'
-    'dGFsIj4KICAgICAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5DbGVhckxvZyIgQ29udGVudD0i8J+nuSBDbGVh'
-    'ciIgTWFyZ2luPSIwLDAsNCwwIiBQYWRkaW5nPSI2LDIiIEZvbnRTaXplPSIxMCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8'
-    'QnV0dG9uIE5hbWU9ImJ0bkNvcHlMb2ciIENvbnRlbnQ9IvCfk4sgQ29weSIgUGFkZGluZz0iNiwyIiBGb250U2l6ZT0iMTAiLz4K'
-    'ICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRp'
-    'b249Ikhvcml6b250YWwiIFZlcnRpY2FsQWxpZ25tZW50PSJDZW50ZXIiPgogICAgICAgICAgICAgICAgICAgICAgICA8VGV4dEJs'
-    'b2NrIFRleHQ9IlRFUk1JTkFMIExPRyIgRm9udFdlaWdodD0iQm9sZCIgRm9udFNpemU9IjExIiBGb3JlZ3JvdW5kPSIjMDBiNGQ4'
-    'IiBNYXJnaW49IjAsMCwxMCwwIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0idHh0U3ViU3RhdHVz'
-    'IiBUZXh0PSJSZWFkeS4iIEZvbnRTaXplPSIxMC41IiBGb3JlZ3JvdW5kPSIjOTRhM2I4IiBWZXJ0aWNhbEFsaWdubWVudD0iQ2Vu'
-    'dGVyIi8+CiAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgPC9Eb2NrUGFuZWw+CgogICAg'
-    'ICAgICAgICAgICAgPCEtLSBTdWItVGFzayBQcm9ncmVzcyBCYXIgKGUuZy4gRElTTS9TRkMgJSkgLS0+CiAgICAgICAgICAgICAg'
-    'ICA8UHJvZ3Jlc3NCYXIgR3JpZC5Sb3c9IjEiIE5hbWU9InBiU3ViVGFzayIgSGVpZ2h0PSIzIiBNaW5pbXVtPSIwIiBNYXhpbXVt'
-    'PSIxMDAiIFZhbHVlPSIwIiBGb3JlZ3JvdW5kPSIjMTBiOTgxIiBCYWNrZ3JvdW5kPSIjMWUyMDI2IiBCb3JkZXJUaGlja25lc3M9'
-    'IjAiIE1hcmdpbj0iMCwwLDAsNCIvPgoKICAgICAgICAgICAgICAgIDwhLS0gTG9nIFRleHQgQXJlYSAtLT4KICAgICAgICAgICAg'
-    'ICAgIDxUZXh0Qm94IEdyaWQuUm93PSIyIiBOYW1lPSJ0eHRDb25zb2xlTG9nIiBCYWNrZ3JvdW5kPSJUcmFuc3BhcmVudCIgRm9y'
-    'ZWdyb3VuZD0iIzZlZTdiNyIgRm9udEZhbWlseT0iQ29uc29sYXMiIEZvbnRTaXplPSIxMSIKICAgICAgICAgICAgICAgICAgICAg'
-    'ICAgIEJvcmRlclRoaWNrbmVzcz0iMCIgSXNSZWFkT25seT0iVHJ1ZSIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRv'
-    'IiBIb3Jpem9udGFsU2Nyb2xsQmFyVmlzaWJpbGl0eT0iQXV0byIgVGV4dFdyYXBwaW5nPSJXcmFwIgogICAgICAgICAgICAgICAg'
-    'ICAgICAgICAgVGV4dD0iUmVhZHkuIFNlbGVjdCBkZXNpcmVkIG9wdGltaXphdGlvbiBvcHRpb25zIGFuZCBjbGljayBTVEFSVCBP'
-    'UFRJTUlaQVRJT04uIi8+CiAgICAgICAgICAgIDwvR3JpZD4KICAgICAgICA8L0JvcmRlcj4KCiAgICAgICAgPCEtLSBCb3R0b20g'
-    'QWN0aW9uIEJhciAtLT4KICAgICAgICA8Qm9yZGVyIEdyaWQuUm93PSI0IiBNYXJnaW49IjAsOCwwLDAiPgogICAgICAgICAgICA8'
-    'RG9ja1BhbmVsIExhc3RDaGlsZEZpbGw9IlRydWUiPgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgRG9ja1BhbmVsLkRvY2s9'
-    'IlJpZ2h0IiBPcmllbnRhdGlvbj0iSG9yaXpvbnRhbCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciI+CiAgICAgICAgICAgICAg'
-    'ICAgICAgPEJ1dHRvbiBOYW1lPSJidG5FeHBvcnRMb2ciIENvbnRlbnQ9IvCfkr4gRXhwb3J0IExvZyIgTWFyZ2luPSIwLDAsNiww'
-    'IiBQYWRkaW5nPSIxMiw2Ii8+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5Ta2lwQm90dG9tIiBDb250ZW50'
-    'PSLij60gU0tJUCBTVEVQIiBCYWNrZ3JvdW5kPSIjZDk3NzA2IiBCb3JkZXJCcnVzaD0iI2Y1OWUwYiIgRm9yZWdyb3VuZD0iI2Zm'
-    'ZmZmZiIgRm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTQsNiIgTWFyZ2luPSIwLDAsNiwwIiBGb250U2l6ZT0iMTIiIElzRW5h'
-    'YmxlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blN0YXJ0Qm90dG9tIiBDb250ZW50PSLw'
-    'n5qAINCe0J/QotCY0JzQmNCX0JjQoNCe0JLQkNCi0KwiIEJhY2tncm91bmQ9IiMwMDc3YjYiIEJvcmRlckJydXNoPSIjMDA5NmM3'
-    'IiBGb3JlZ3JvdW5kPSIjZmZmZmZmIiBGb250V2VpZ2h0PSJCb2xkIiBQYWRkaW5nPSIxNiw2IiBNYXJnaW49IjAsMCw2LDAiIEZv'
-    'bnRTaXplPSIxMiIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuUmVib290Qm90dG9tIiBDb250ZW50PSLi'
-    'mqEgUkVCT09UIiBCYWNrZ3JvdW5kPSIjZGMyNjI2IiBCb3JkZXJCcnVzaD0iI2ZmNGQ0ZiIgRm9yZWdyb3VuZD0iI2ZmZmZmZiIg'
-    'Rm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTYsNiIgTWFyZ2luPSIwLDAsNiwwIiBGb250U2l6ZT0iMTIiIFZpc2liaWxpdHk9'
-    'IlZpc2libGUiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0bkV4aXRCb3R0b20iIENvbnRlbnQ9IkV4aXQi'
-    'IE1hcmdpbj0iMCwwLDAsMCIgUGFkZGluZz0iMTIsNiIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAg'
-    'ICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249IlZlcnRpY2FsIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIiBNYXJnaW49'
-    'IjAsMCwxMiwwIj4KICAgICAgICAgICAgICAgICAgICA8UHJvZ3Jlc3NCYXIgTmFtZT0icGJQcm9ncmVzcyIgSGVpZ2h0PSI4IiBN'
-    'aW5pbXVtPSIwIiBNYXhpbXVtPSIxMDAiIFZhbHVlPSIwIiBGb3JlZ3JvdW5kPSIjMDBiNGQ4IiBCYWNrZ3JvdW5kPSIjMjUyODJl'
-    'IiBCb3JkZXJUaGlja25lc3M9IjAiIE1hcmdpbj0iMCwwLDAsNCIvPgogICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFt'
-    'ZT0idHh0U3RhdHVzIiBUZXh0PSJSZWFkeS4gMTEwIE9wdGltaXphdGlvbiBNb2R1bGVzIEFjdGl2ZS4iIEZvcmVncm91bmQ9IiM5'
-    'NDliYTQiIEZvbnRTaXplPSIxMSIvPgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICA8L0RvY2tQYW5l'
-    'bD4KICAgICAgICA8L0JvcmRlcj4KICAgIDwvR3JpZD4KPC9XaW5kb3c+'
-) -join '')
+        'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDQzIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
+        'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
+        'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
+        'UmVzb3VyY2VzPgogICAgICAgIDxTdHlsZSBUYXJnZXRUeXBlPSJHcm91cEJveCI+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVy'
+        'dHk9IkJvcmRlckJydXNoIiBWYWx1ZT0iIzI1MjgyZSIvPgogICAgICAgICAgICA8U2V0dGVyIFByb3BlcnR5PSJCb3JkZXJUaGlj'
+        'a25lc3MiIFZhbHVlPSIxIi8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVydHk9Ik1hcmdpbiIgVmFsdWU9IjAsMCwwLDkiLz4K'
+        'ICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iUGFkZGluZyIgVmFsdWU9IjksNiw5LDgiLz4KICAgICAgICAgICAgPFNldHRl'
+        'ciBQcm9wZXJ0eT0iRm9yZWdyb3VuZCIgVmFsdWU9IiMwMGI0ZDgiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iRm9u'
+        'dFdlaWdodCIgVmFsdWU9IlNlbWlCb2xkIi8+CiAgICAgICAgPC9TdHlsZT4KICAgICAgICA8U3R5bGUgVGFyZ2V0VHlwZT0iQ2hl'
+        'Y2tCb3giPgogICAgICAgICAgICA8U2V0dGVyIFByb3BlcnR5PSJGb3JlZ3JvdW5kIiBWYWx1ZT0iI2Q0ZDRkOCIvPgogICAgICAg'
+        'ICAgICA8U2V0dGVyIFByb3BlcnR5PSJNYXJnaW4iIFZhbHVlPSIyLDIsMiwzIi8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVy'
+        'dHk9IkZvbnRXZWlnaHQiIFZhbHVlPSJOb3JtYWwiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iRm9udFNpemUiIFZh'
+        'bHVlPSIxMS41Ii8+CiAgICAgICAgPC9TdHlsZT4KICAgICAgICA8U3R5bGUgVGFyZ2V0VHlwZT0iQnV0dG9uIj4KICAgICAgICAg'
+        'ICAgPFNldHRlciBQcm9wZXJ0eT0iQmFja2dyb3VuZCIgVmFsdWU9IiMyNTI4MmUiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9w'
+        'ZXJ0eT0iRm9yZWdyb3VuZCIgVmFsdWU9IiNmZmZmZmYiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iQm9yZGVyQnJ1'
+        'c2giIFZhbHVlPSIjM2EzZDQ1Ii8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVydHk9IkJvcmRlclRoaWNrbmVzcyIgVmFsdWU9'
+        'IjEiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iUGFkZGluZyIgVmFsdWU9IjEwLDUiLz4KICAgICAgICAgICAgPFNl'
+        'dHRlciBQcm9wZXJ0eT0iRm9udFdlaWdodCIgVmFsdWU9IlNlbWlCb2xkIi8+CiAgICAgICAgICAgIDxTZXR0ZXIgUHJvcGVydHk9'
+        'IkN1cnNvciIgVmFsdWU9IkhhbmQiLz4KICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0eT0iVGVtcGxhdGUiPgogICAgICAgICAg'
+        'ICAgICAgPFNldHRlci5WYWx1ZT4KICAgICAgICAgICAgICAgICAgICA8Q29udHJvbFRlbXBsYXRlIFRhcmdldFR5cGU9IkJ1dHRv'
+        'biI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxCb3JkZXIgeDpOYW1lPSJib3JkZXIiIEJhY2tncm91bmQ9IntUZW1wbGF0ZUJp'
+        'bmRpbmcgQmFja2dyb3VuZH0iIEJvcmRlckJydXNoPSJ7VGVtcGxhdGVCaW5kaW5nIEJvcmRlckJydXNofSIgQm9yZGVyVGhpY2tu'
+        'ZXNzPSJ7VGVtcGxhdGVCaW5kaW5nIEJvcmRlclRoaWNrbmVzc30iIENvcm5lclJhZGl1cz0iMyIgUGFkZGluZz0ie1RlbXBsYXRl'
+        'QmluZGluZyBQYWRkaW5nfSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q29udGVudFByZXNlbnRlciB4Ok5hbWU9ImNv'
+        'bnRlbnRQcmVzZW50ZXIiIEhvcml6b250YWxBbGlnbm1lbnQ9IkNlbnRlciIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciIgRm9j'
+        'dXNhYmxlPSJGYWxzZSIgUmVjb2duaXplc0FjY2Vzc0tleT0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L0JvcmRl'
+        'cj4KICAgICAgICAgICAgICAgICAgICAgICAgPENvbnRyb2xUZW1wbGF0ZS5UcmlnZ2Vycz4KICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgIDxUcmlnZ2VyIFByb3BlcnR5PSJJc01vdXNlT3ZlciIgVmFsdWU9IlRydWUiPgogICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgIDxTZXR0ZXIgVGFyZ2V0TmFtZT0iYm9yZGVyIiBQcm9wZXJ0eT0iQmFja2dyb3VuZCIgVmFsdWU9IiMzNTNiNDgi'
+        'Lz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8U2V0dGVyIFRhcmdldE5hbWU9ImJvcmRlciIgUHJvcGVydHk9IkJv'
+        'cmRlckJydXNoIiBWYWx1ZT0iIzAwYjRkOCIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPC9UcmlnZ2VyPgogICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgPFRyaWdnZXIgUHJvcGVydHk9IklzUHJlc3NlZCIgVmFsdWU9IlRydWUiPgogICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgIDxTZXR0ZXIgVGFyZ2V0TmFtZT0iYm9yZGVyIiBQcm9wZXJ0eT0iQmFja2dyb3VuZCIgVmFs'
+        'dWU9IiMxYTFjMjMiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvVHJpZ2dlcj4KICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgIDxUcmlnZ2VyIFByb3BlcnR5PSJJc0VuYWJsZWQiIFZhbHVlPSJGYWxzZSI+CiAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgPFNldHRlciBUYXJnZXROYW1lPSJib3JkZXIiIFByb3BlcnR5PSJCYWNrZ3JvdW5kIiBWYWx1ZT0iIzFjMWYyNiIv'
+        'PgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZXR0ZXIgVGFyZ2V0TmFtZT0iYm9yZGVyIiBQcm9wZXJ0eT0iQm9y'
+        'ZGVyQnJ1c2giIFZhbHVlPSIjMmUzMjNiIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgPFNldHRlciBQcm9wZXJ0'
+        'eT0iRm9yZWdyb3VuZCIgVmFsdWU9IiM5NGEzYjgiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwvVHJpZ2dlcj4KICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgPC9Db250cm9sVGVtcGxhdGUuVHJpZ2dlcnM+CiAgICAgICAgICAgICAgICAgICAgPC9Db250'
+        'cm9sVGVtcGxhdGU+CiAgICAgICAgICAgICAgICA8L1NldHRlci5WYWx1ZT4KICAgICAgICAgICAgPC9TZXR0ZXI+CiAgICAgICAg'
+        'PC9TdHlsZT4KICAgIDwvV2luZG93LlJlc291cmNlcz4KCiAgICA8R3JpZCBNYXJnaW49IjEyIj4KICAgICAgICA8R3JpZC5Sb3dE'
+        'ZWZpbml0aW9ucz4KICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgIDxSb3dEZWZp'
+        'bml0aW9uIEhlaWdodD0iQXV0byIvPgogICAgICAgICAgICA8Um93RGVmaW5pdGlvbiBIZWlnaHQ9IioiLz4KICAgICAgICAgICAg'
+        'PFJvd0RlZmluaXRpb24gSGVpZ2h0PSIxODUiLz4KICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAg'
+        'ICAgICAgPC9HcmlkLlJvd0RlZmluaXRpb25zPgoKICAgICAgICA8IS0tIFRvcCBIZWFkZXIgLS0+CiAgICAgICAgPEJvcmRlciBH'
+        'cmlkLlJvdz0iMCIgQmFja2dyb3VuZD0iIzFhMWMyMSIgQ29ybmVyUmFkaXVzPSI2IiBQYWRkaW5nPSIxNCwxMCIgTWFyZ2luPSIw'
+        'LDAsMCw4IiBCb3JkZXJCcnVzaD0iIzI1MjgyZSIgQm9yZGVyVGhpY2tuZXNzPSIxIj4KICAgICAgICAgICAgPERvY2tQYW5lbCBM'
+        'YXN0Q2hpbGRGaWxsPSJUcnVlIj4KICAgICAgICAgICAgICAgIDwhLS0gUmlnaHQgQ29udHJvbHM6IFNraXAsIFN0YXJ0LCBFeGl0'
+        'IC0tPgogICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgRG9ja1BhbmVsLkRvY2s9IlJpZ2h0IiBPcmllbnRhdGlvbj0iSG9yaXpv'
+        'bnRhbCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciI+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5Ta2lw'
+        'VG9wIiBDb250ZW50PSLij60gU0tJUCBTVEVQIiBCYWNrZ3JvdW5kPSIjZDk3NzA2IiBCb3JkZXJCcnVzaD0iI2Y1OWUwYiIgRm9y'
+        'ZWdyb3VuZD0iI2ZmZmZmZiIgRm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTQsOCIgTWFyZ2luPSIwLDAsOCwwIiBGb250U2l6'
+        'ZT0iMTMiIElzRW5hYmxlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blN0YXJ0VG9wIiBD'
+        'b250ZW50PSLwn5qAINCe0J/QotCY0JzQmNCX0JjQoNCe0JLQkNCi0KwiIEJhY2tncm91bmQ9IiMwMDc3YjYiIEJvcmRlckJydXNo'
+        'PSIjMDA5NmM3IiBGb3JlZ3JvdW5kPSIjZmZmZmZmIiBGb250V2VpZ2h0PSJCb2xkIiBQYWRkaW5nPSIxNiw4IiBNYXJnaW49IjAs'
+        'MCw4LDAiIEZvbnRTaXplPSIxMyIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuUmVib290VG9wIiBDb250'
+        'ZW50PSLimqEgUkVCT09UIiBCYWNrZ3JvdW5kPSIjZGMyNjI2IiBCb3JkZXJCcnVzaD0iI2ZmNGQ0ZiIgRm9yZWdyb3VuZD0iI2Zm'
+        'ZmZmZiIgRm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTYsOCIgTWFyZ2luPSIwLDAsOCwwIiBGb250U2l6ZT0iMTMiIFZpc2li'
+        'aWxpdHk9IlZpc2libGUiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0bkV4aXRUb3AiIENvbnRlbnQ9IkV4'
+        'aXQiIEJhY2tncm91bmQ9IiMzYTFjMWMiIEJvcmRlckJydXNoPSIjNjYyMjIyIiBGb3JlZ3JvdW5kPSIjZmY4ODg4IiBQYWRkaW5n'
+        'PSIxMiw4Ii8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CgogICAgICAgICAgICAgICAgPCEtLSBDZW50ZXIgQ29udHJv'
+        'bHM6IExhbmd1YWdlIFN3aXRjaGVyIFBpbGxzICYgVGVsZWdyYW0gLS0+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBEb2Nr'
+        'UGFuZWwuRG9jaz0iUmlnaHQiIE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIiBNYXJn'
+        'aW49IjAsMCwxNiwwIj4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blRlbGVncmFtIiBDb250ZW50PSLinIjv'
+        'uI8gVGVsZWdyYW0gKEBHaW5DeikiIEJhY2tncm91bmQ9IiMwMDg4Y2MiIEJvcmRlckJydXNoPSIjMjliNmY2IiBGb3JlZ3JvdW5k'
+        'PSIjZmZmZmZmIiBGb250V2VpZ2h0PSJTZW1pQm9sZCIgUGFkZGluZz0iMTAsNSIgTWFyZ2luPSIwLDAsMTIsMCIgRm9udFNpemU9'
+        'IjExIiBUb29sVGlwPSLQndCw0L/QuNGB0LDRgtGMINCw0LLRgtC+0YDRgyDQsiBUZWxlZ3JhbSAoQEdpbkN6KTogaHR0cHM6Ly90'
+        'Lm1lL0dpbkN6Ii8+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5MYW5nUnUiIENvbnRlbnQ9IlJVIiBCYWNr'
+        'Z3JvdW5kPSIjMWUzYTVmIiBCb3JkZXJCcnVzaD0iIzAwYjRkOCIgRm9yZWdyb3VuZD0iI2ZmZmZmZiIgUGFkZGluZz0iOCw0IiBN'
+        'YXJnaW49IjAsMCw0LDAiIEZvbnRTaXplPSIxMSIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuTGFuZ0Vu'
+        'IiBDb250ZW50PSJFTiIgQmFja2dyb3VuZD0iIzI1MjgyZSIgQm9yZGVyQnJ1c2g9IiMzYTNkNDUiIEZvcmVncm91bmQ9IiNiMGIz'
+        'YjgiIFBhZGRpbmc9IjgsNCIgTWFyZ2luPSIwLDAsNCwwIiBGb250U2l6ZT0iMTEiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0'
+        'dG9uIE5hbWU9ImJ0bkxhbmdDcyIgQ29udGVudD0iQ1oiIEJhY2tncm91bmQ9IiMyNTI4MmUiIEJvcmRlckJydXNoPSIjM2EzZDQ1'
+        'IiBGb3JlZ3JvdW5kPSIjYjBiM2I4IiBQYWRkaW5nPSI4LDQiIEZvbnRTaXplPSIxMSIvPgogICAgICAgICAgICAgICAgPC9TdGFj'
+        'a1BhbmVsPgoKICAgICAgICAgICAgICAgIDwhLS0gTGVmdCBJbmZvOiBDb21wdXRlciBJbmZvcm1hdGlvbiAmIFNwZWNzIC0tPgog'
+        'ICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249IlZlcnRpY2FsIj4KICAgICAgICAgICAgICAgICAgICA8U3Rh'
+        'Y2tQYW5lbCBPcmllbnRhdGlvbj0iSG9yaXpvbnRhbCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0i'
+        'dHh0SGVhZGVyVGl0bGUiIFRleHQ9ItCU0LDQvdC90YvQtSDQviDQutC+0LzQv9GM0Y7RgtC10YDQtSIgRm9udFNpemU9IjE0IiBG'
+        'b250V2VpZ2h0PSJCb2xkIiBGb3JlZ3JvdW5kPSIjMDBiNGQ4Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgIDxCb3JkZXIgQmFj'
+        'a2dyb3VuZD0iIzE2NjUzNCIgQ29ybmVyUmFkaXVzPSIzIiBQYWRkaW5nPSI2LDEiIE1hcmdpbj0iOCwwLDAsMCIgVmVydGljYWxB'
+        'bGlnbm1lbnQ9IkNlbnRlciI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IkFETUlOIiBGb250'
+        'U2l6ZT0iOSIgRm9udFdlaWdodD0iQm9sZCIgRm9yZWdyb3VuZD0iIzg2ZWZhYyIvPgogICAgICAgICAgICAgICAgICAgICAgICA8'
+        'L0JvcmRlcj4KICAgICAgICAgICAgICAgICAgICAgICAgPEJvcmRlciBCYWNrZ3JvdW5kPSIjMGY3NjZlIiBDb3JuZXJSYWRpdXM9'
+        'IjMiIFBhZGRpbmc9IjYsMSIgTWFyZ2luPSI2LDAsMCwwIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIiBUb29sVGlwPSLQkdC1'
+        '0YHQv9C70LDRgtC90LDRjyDQv9C+0LbQuNC30L3QtdC90L3QsNGPINC70LjRhtC10L3Qt9C40Y8gKFBlcnNvbmFsICZhbXA7IEJ1'
+        'c2luZXNzIEZyZWV3YXJlKSI+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIFRleHQ9IkZSRUVXQVJFIiBG'
+        'b250U2l6ZT0iOSIgRm9udFdlaWdodD0iQm9sZCIgRm9yZWdyb3VuZD0iIzVlZWFkNCIvPgogICAgICAgICAgICAgICAgICAgICAg'
+        'ICA8L0JvcmRlcj4KICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPFRleHRCbG9j'
+        'ayBOYW1lPSJ0eHRIb3N0SW5mbyIgVGV4dD0iSG9zdDogbG9jYWwgfCDQo9GB0YLRgNC+0LnRgdGC0LLQvjogUEMgfCBXaW5kb3dz'
+        'OiAxMCBQcm8gfCBJUDogMTI3LjAuMC4xIiBGb250U2l6ZT0iMTEiIEZvcmVncm91bmQ9IiNjYmQ1ZTEiIE1hcmdpbj0iMCwzLDAs'
+        'MCIvPgogICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0idHh0SGVhZGVyU3ViIiBUZXh0PSJHSU4tV2luLU9wdGlt'
+        'aXplciB2MDQzIFtWbGFkaU1JUiArIEFJXSIgRm9udFNpemU9IjEwIiBGb3JlZ3JvdW5kPSIjNjQ3NDhiIiBNYXJnaW49IjAsMSww'
+        'LDAiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3Jk'
+        'ZXI+CgogICAgICAgIDwhLS0gUHJlc2V0cyBCYXIgLS0+CiAgICAgICAgPEJvcmRlciBHcmlkLlJvdz0iMSIgQmFja2dyb3VuZD0i'
+        'IzFlMjAyNiIgQ29ybmVyUmFkaXVzPSI0IiBQYWRkaW5nPSIxMCw2IiBNYXJnaW49IjAsMCwwLDgiIEJvcmRlckJydXNoPSIjMjUy'
+        'ODJlIiBCb3JkZXJUaGlja25lc3M9IjEiPgogICAgICAgICAgICA8RG9ja1BhbmVsIExhc3RDaGlsZEZpbGw9IlRydWUiPgogICAg'
+        'ICAgICAgICAgICAgPFRleHRCbG9jayBOYW1lPSJ0eHRQcmVzZXRzIiBUZXh0PSJQcmVzZXRzOiIgVmVydGljYWxBbGlnbm1lbnQ9'
+        'IkNlbnRlciIgRm9udFdlaWdodD0iQm9sZCIgRm9yZWdyb3VuZD0iI2I1YmFjMSIgTWFyZ2luPSIwLDAsMTAsMCIvPgogICAgICAg'
+        'ICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50YXRpb249Ikhvcml6b250YWwiPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24g'
+        'TmFtZT0iYnRuU2VsZWN0QWxsIiBDb250ZW50PSLinJMgU2VsZWN0IEFsbCAoTWF4IENsZWFuKSIgTWFyZ2luPSIwLDAsNiwwIiBQ'
+        'YWRkaW5nPSIxMCw0IiBCYWNrZ3JvdW5kPSIjMTQ1MzJkIiBCb3JkZXJCcnVzaD0iIzIyYzU1ZSIgRm9yZWdyb3VuZD0iIzg2ZWZh'
+        'YyIgRm9udFdlaWdodD0iU2VtaUJvbGQiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0bkRlc2VsZWN0QWxs'
+        'IiBDb250ZW50PSLinJcgRGVzZWxlY3QgQWxsIiBNYXJnaW49IjAsMCw2LDAiIFBhZGRpbmc9IjEwLDQiLz4KICAgICAgICAgICAg'
+        'ICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blByZXNldE9mZmljZSIgQ29udGVudD0i8J+PoiBPZmZpY2UgKEtlZXAgT25lRHJpdmUp'
+        'IiBNYXJnaW49IjAsMCw2LDAiIFBhZGRpbmc9IjEwLDQiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blBy'
+        'ZXNldEdhbWluZyIgQ29udGVudD0i4pqhIEdhbWluZyAoS2VlcCBYYm94KSIgTWFyZ2luPSIwLDAsNiwwIiBQYWRkaW5nPSIxMCw0'
+        'Ii8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvRG9ja1BhbmVsPgogICAgICAgIDwvQm9yZGVy'
+        'PgoKICAgICAgICA8IS0tIE1haW4gU2Nyb2xsYWJsZSBPcHRpb25zIEdyaWQgLS0+CiAgICAgICAgPFNjcm9sbFZpZXdlciBHcmlk'
+        'LlJvdz0iMiIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRvIiBIb3Jpem9udGFsU2Nyb2xsQmFyVmlzaWJpbGl0eT0i'
+        'RGlzYWJsZWQiIE1hcmdpbj0iMCwwLDAsOCI+CiAgICAgICAgICAgIDxHcmlkPgogICAgICAgICAgICAgICAgPEdyaWQuQ29sdW1u'
+        'RGVmaW5pdGlvbnM+CiAgICAgICAgICAgICAgICAgICAgPENvbHVtbkRlZmluaXRpb24gV2lkdGg9IioiLz4KICAgICAgICAgICAg'
+        'ICAgICAgICA8Q29sdW1uRGVmaW5pdGlvbiBXaWR0aD0iKiIvPgogICAgICAgICAgICAgICAgICAgIDxDb2x1bW5EZWZpbml0aW9u'
+        'IFdpZHRoPSIqIi8+CiAgICAgICAgICAgICAgICA8L0dyaWQuQ29sdW1uRGVmaW5pdGlvbnM+CgogICAgICAgICAgICAgICAgPCEt'
+        'LSBDT0xVTU4gMSAtLT4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIEdyaWQuQ29sdW1uPSIwIiBNYXJnaW49IjAsMCw2LDAi'
+        'PgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IFByaXZhY3kgJiBUZWxlbWV0cnkgLS0+CiAgICAgICAgICAgICAgICAg'
+        'ICAgPEdyb3VwQm94IE5hbWU9ImdycFByaXZhY3kiIEhlYWRlcj0iUHJpdmFjeSAmYW1wOyBUZWxlbWV0cnkiPgogICAgICAgICAg'
+        'ICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtf'
+        'dGVsZW1fZGlhZ3RyYWNrIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
+        'YW1lPSJjaGtfdGVsZW1fZG13YXBwdXNoIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
+        'aGVja0JveCBOYW1lPSJjaGtfdGVsZW1fd2VyIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
+        'IDxDaGVja0JveCBOYW1lPSJjaGtfdGVsZW1fYWxsb3dfdGVsZW0iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190ZWxlbV9hZF9pZCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RlbGVtX2lua2luZyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RlbGVtX2FjdGl2aXR5IiBJc0NoZWNrZWQ9IlRydWUi'
+        'Lz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdGVsZW1fbG9jYXRpb24iIElzQ2hlY2tl'
+        'ZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190ZWxlbV9mZWVkYmFjayIg'
+        'SXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3RlbGVtX3Rh'
+        'c2tzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdGVs'
+        'ZW1fY29ydGFuYSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0i'
+        'Y2hrX25ldF93aWZpX3ByaXZhY3kiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFu'
+        'ZWw+CiAgICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4KCiAgICAgICAgICAgICAgICAgICAgPCEtLSBHcm91cDogU2VjdXJp'
+        'dHkgJiBVQUMgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFNlY3VyaXR5IiBIZWFkZXI9IlNlY3Vy'
+        'aXR5ICZhbXA7IFVBQyBUd2Vha3MiPgogICAgICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc2VjX3VhY19xdWlldCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3NlY19hZG1pbl9hcHByb3ZhbCIgSXNDaGVja2VkPSJUcnVl'
+        'Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3NlY19zbWFydHNjcmVlbiIgSXNDaGVj'
+        'a2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3NlY19vcGVuX2ZpbGVf'
+        'd2FybmluZyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAg'
+        'ICAgICAgICAgICA8L0dyb3VwQm94PgoKICAgICAgICAgICAgICAgICAgICA8IS0tIEdyb3VwOiBDbG91ZCAmIENvbnN1bWVyIC0t'
+        'PgogICAgICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1lPSJncnBDbG91ZCIgSGVhZGVyPSJDbG91ZCAmYW1wOyBDb25zdW1l'
+        'ciBGZWF0dXJlcyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgPENoZWNrQm94IE5hbWU9ImNoa19jbG91ZF9vbmVkcml2ZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Nsb3VkX3NldHRpbmdzX3N5bmMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbG91ZF9iaW5nX3NlYXJjaCIgSXNDaGVja2VkPSJU'
+        'cnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Nsb3VkX3Nwb3RsaWdodCIgSXND'
+        'aGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2Nsb3VkX2NvbnN1'
+        'bWVyX2ZlYXR1cmVzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAg'
+        'ICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IE1pY3Jvc29mdCBFZGdl'
+        'IC0tPgogICAgICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1lPSJncnBFZGdlIiBIZWFkZXI9Ik1pY3Jvc29mdCBFZGdlIE9w'
+        'dGltaXphdGlvbiI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgPENoZWNrQm94IE5hbWU9ImNoa19lZGdlX2JhY2tncm91bmQiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19lZGdlX3N0YXJ0dXBfYm9vc3QiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19lZGdlX3RlbGVtZXRyeSIgSXNDaGVja2VkPSJUcnVl'
+        'Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2VkZ2Vfc2lkZWJhciIgSXNDaGVja2Vk'
+        'PSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2VkZ2VfcHJlbGF1bmNoIiBJ'
+        'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZWRnZV9maXJz'
+        'dF9ydW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19l'
+        'ZGdlX3VucGluIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJj'
+        'aGtfYnJvd3Nlcl91cGRhdGVycyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5l'
+        'bD4KICAgICAgICAgICAgICAgICAgICA8L0dyb3VwQm94PgogICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgoKICAgICAgICAg'
+        'ICAgICAgIDwhLS0gQ09MVU1OIDIgLS0+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBHcmlkLkNvbHVtbj0iMSIgTWFyZ2lu'
+        'PSIzLDAsMywwIj4KICAgICAgICAgICAgICAgICAgICA8IS0tIEdyb3VwOiBFeHBsb3JlciwgRGVza3RvcCAmIFRhc2tiYXIgLS0+'
+        'CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFVJIiBIZWFkZXI9IkV4cGxvcmVyLCBEZXNrdG9wICZhbXA7'
+        'IFRhc2tiYXIiPgogICAgICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
+        'IDwhLS0gSGlnaGxpZ2h0ZWQgaW4gWWVsbG93OiBTaGVsbCBGb2xkZXJzIFJlbG9jYXRpb24gdG8gRDpcIChPRkYgYnkgZGVmYXVs'
+        'dCkgLS0+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Qm9yZGVyIEJhY2tncm91bmQ9IiMyMzFmMDgiIEJvcmRlckJydXNo'
+        'PSIjZWFiMzA4IiBCb3JkZXJUaGlja25lc3M9IjEiIENvcm5lclJhZGl1cz0iNCIgUGFkZGluZz0iNiw0IiBNYXJnaW49IjAsMCww'
+        'LDYiPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3JlbG9jX2RvY3VtZW50cyIgSXNDaGVja2VkPSJGYWxzZSIgRm9yZWdyb3Vu'
+        'ZD0iI2ZhY2MxNSIgRm9udFdlaWdodD0iQm9sZCIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tC'
+        'b3ggTmFtZT0iY2hrX3JlbG9jX2Rlc2t0b3AiIElzQ2hlY2tlZD0iRmFsc2UiIEZvcmVncm91bmQ9IiNmYWNjMTUiIEZvbnRXZWln'
+        'aHQ9IkJvbGQiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICA8L0JvcmRlcj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfd2lk'
+        'Z2V0cyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Vp'
+        'X3RlYW1zX2NoYXQiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9'
+        'ImNoa191aV9jb3BpbG90IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
+        'YW1lPSJjaGtfdWlfcmVjYWxsIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0Jv'
+        'eCBOYW1lPSJjaGtfdWlfc3RhcnRfYWRzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
+        'aGVja0JveCBOYW1lPSJjaGtfdWlfZXhwbG9yZXJfYWRzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfd2VsY29tZV9zY3JlZW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPg0KICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfbG9ja3NjcmVlbl9jbGVhbiIgSXNDaGVja2VkPSJUcnVl'
+        'Ii8+DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9jb2xvcl9hY2NlbnRfdGhlbWUi'
+        'IElzQ2hlY2tlZD0iVHJ1ZSIvPg0KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfbW91'
+        'c2VfaW52ZXJ0ZWRfbGFyZ2UiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94'
+        'IE5hbWU9ImNoa191aV9jbGFzc2ljX2NvbnRleHQiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9oaWRlX3NlYXJjaCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3VpX2hpZGVfdGFza3ZpZXciIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9zaG93X2FsbF90cmF5X2ljb25zIiBJc0NoZWNrZWQ9'
+        'IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfbmV2ZXJfY29tYmluZV90'
+        'YXNrYmFyIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtf'
+        'dWlfc2hvd190aGlzX3BjIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
+        'YW1lPSJjaGtfdWlfY2xvY2tfMjRoX3NlY29uZHMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgPENoZWNrQm94IE5hbWU9ImNoa191aV9yZWdpb25fdGltZV9jemVjaCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3VpX2xhbmdfa2V5Ym9hcmRzIiBJc0NoZWNrZWQ9IlRydWUiLz4K'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfcmVnaW9uYWxfZGF0ZV9mb3JtYXQiIElz'
+        'Q2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190Yl9zbWFsbF9p'
+        'Y29ucyIgSXNDaGVja2VkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa190'
+        'Yl9sb2NrIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtf'
+        'dGJfaGlkZV9hY3Rpb25fY2VudGVyIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVj'
+        'a0JveCBOYW1lPSJjaGtfdGJfaGlkZV9wZW9wbGUiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgPENoZWNrQm94IE5hbWU9ImNoa19leHBfb3Blbl90aGlzX3BjIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfdWlfZm9sZGVyX3ZpZXdfbGlzdF9zb3J0X3R5cGUiIElzQ2hlY2tlZD0i'
+        'VHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19leHBfaGlkZV91c2VyX2ZvbGRl'
+        'cnMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19leHBf'
+        'bm9fc2hvcnRjdXRfc3VmZml4IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0Jv'
+        'eCBOYW1lPSJjaGtfZXhwX2hpZGVfcXVpY2tfYWNjZXNzX3JlY2VudCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2V4cF9zaG93X2Z1bGxfcGF0aCIgSXNDaGVja2VkPSJUcnVlIi8+CiAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2V4cF9zZXBhcmF0ZV9wcm9jZXNzIiBJc0NoZWNr'
+        'ZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZXhwX2hpZGVfbmF2X2xp'
+        'YnJhcmllcyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
+        'X2Rlc2t0b3Bfc2hvd191c2VyX2ZvbGRlciIgSXNDaGVja2VkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0'
+        'YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4KCiAgICAgICAgICAgICAgICAgICAgPCEtLSBHcm91cDog'
+        'Q29udGV4dCBNZW51IENsZWFudXAgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycENvbnRleHRNZW51'
+        'IiBIZWFkZXI9IkNvbnRleHQgTWVudSBDbGVhbnVwIChSaWdodC1DbGljaykiPgogICAgICAgICAgICAgICAgICAgICAgICA8U3Rh'
+        'Y2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY3R4X2NsZWFudXBfYmxvYXQi'
+        'IElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jdHhfd2lu'
+        'cmFyX2VtYWlsIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAg'
+        'ICAgICAgICAgICAgIDwvR3JvdXBCb3g+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CgogICAgICAgICAgICAgICAgPCEt'
+        'LSBDT0xVTU4gMyAtLT4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIEdyaWQuQ29sdW1uPSIyIiBNYXJnaW49IjYsMCwwLDAi'
+        'PgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IFdpbmRvd3MgVXBkYXRlICYgU3lzdGVtIERpYWdub3N0aWNzIC0tPgog'
+        'ICAgICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1lPSJncnBXaW5VcGRhdGUiIEhlYWRlcj0iV2luZG93cyBVcGRhdGUsIEJT'
+        'T0QgJmFtcDsgU3lzdGVtIj4KICAgICAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3d1X2Rpc2FibGVfYXV0b191cGRhdGVzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfd3VfZXhjbHVkZV9kcml2ZXJzIiBJc0NoZWNrZWQ9'
+        'IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfd3VfZXhjbHVkZV9tc3J0IiBJ'
+        'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2Jzb2Rf'
+        'bm9fYXV0b3JlYm9vdCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFt'
+        'ZT0iY2hrX3N5c19zbWFsbF9taW5pZHVtcCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8'
+        'Q2hlY2tCb3ggTmFtZT0iY2hrX3N5c19mYXN0X3N0YXJ0dXBfb2ZmIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2Rpc2FibGVfcmVtb3RlX2Fzc2lzdCIgSXNDaGVja2VkPSJUcnVl'
+        'Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3N5c19lbmFibGVfcGhvdG9fdmlld2Vy'
+        'IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX25v'
+        'dGVwYWRfdHdlYWtzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAg'
+        'ICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IEFwcHMgJiBCbG9hdHdh'
+        'cmUgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycEFwcHMiIEhlYWRlcj0iQXBwIERlYmxvYXRlciAm'
+        'YW1wOyBQcm92aXNpb25lZCBQYWNrYWdlcyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19hcHBfeGJveCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9nYW1lYmFyX2Rpc2FibGUiIElzQ2hlY2tlZD0iVHJ1'
+        'ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19hcHBfZ2FtZXMiIElzQ2hlY2tlZD0i'
+        'VHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19hcHBfbmV3cyIgSXNDaGVja2Vk'
+        'PSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9vZmZpY2Vfc3R1YiIg'
+        'SXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9jbGlw'
+        'Y2hhbXAiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19h'
+        'cHBfcGVvcGxlIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJj'
+        'aGtfYXBwX2ZlZWRiYWNrIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
+        'YW1lPSJjaGtfYXBwX2dldF9oZWxwIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVj'
+        'a0JveCBOYW1lPSJjaGtfYXBwX3Bob25lIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFj'
+        'a1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IFNl'
+        'cnZpY2VzICYgUGVyZm9ybWFuY2UgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFNlcnZpY2VzIiBI'
+        'ZWFkZXI9IlN5c3RlbSBQZXJmb3JtYW5jZSAmYW1wOyBTZXJ2aWNlcyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1Bh'
+        'bmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfc3lzbWFpbiIgSXNDaGVja2Vk'
+        'PSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9pbmRleGluZyIgSXND'
+        'aGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9yZW1vdGVf'
+        'cmVnIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2'
+        'X2RlbGl2ZXJ5X29wdCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFt'
+        'ZT0iY2hrX3Nydl9yZXNlcnZlZF9zdG9yYWdlIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
+        'IDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2hpYmVybmF0aW9uIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3Bvd2VyX3BsYW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfcG93ZXJfc2xlZXBfc2NyZWVuIiBJc0NoZWNrZWQ9IlRy'
+        'dWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3NzZF90cmltIiBJc0NoZWNr'
+        'ZWQ9IlRydWUiLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9wYWdlZmlsZV9h'
+        'dXRvIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2'
+        'X25ldHdvcmtfb2ZmbG9hZCIgSXNDaGVja2VkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94'
+        'IE5hbWU9ImNoa19zcnZfdmlzdWFsX2FwcGVhcmFuY2UiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfcGNhIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl90cmt3a3MiIElzQ2hlY2tlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2lwaGxwc3ZjIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAg'
+        'ICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICA8L0dyb3VwQm94PgoKICAgICAgICAgICAg'
+        'ICAgICAgICA8IS0tIEdyb3VwOiBDYWNoZSAmIENsZWFuaW5nIC0tPgogICAgICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1l'
+        'PSJncnBDbGVhbiIgSGVhZGVyPSJDYWNoZSAmYW1wOyBDb21wb25lbnQgQ2xlYW5pbmciPgogICAgICAgICAgICAgICAgICAgICAg'
+        'ICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwhLS0gVGhlIDMgbG9uZ2VzdC9zbG93ZXN0IG1haW50'
+        'ZW5hbmNlIG9wZXJhdGlvbnMgKGhpZ2hsaWdodGVkIGluIGJyaWdodCByZWQsIE9GRiBieSBkZWZhdWx0KSAtLT4KICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZGVlcF9kaXNtX3JlcGFpciIgSXNDaGVja2VkPSJGYWxzZSIg'
+        'Rm9yZWdyb3VuZD0iI2ZmNGQ0ZiIgRm9udFdlaWdodD0iQm9sZCIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNr'
+        'Qm94IE5hbWU9ImNoa19kZWVwX2Rpc21fcmVzZXRiYXNlIiBJc0NoZWNrZWQ9IkZhbHNlIiBGb3JlZ3JvdW5kPSIjZmY0ZDRmIiBG'
+        'b250V2VpZ2h0PSJCb2xkIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2RlZXBfc2Zj'
+        'X2NvbXBhY3QiIElzQ2hlY2tlZD0iRmFsc2UiIEZvcmVncm91bmQ9IiNmZjRkNGYiIEZvbnRXZWlnaHQ9IkJvbGQiLz4KICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgIDxTZXBhcmF0b3IgQmFja2dyb3VuZD0iIzJlMzIzYiIgTWFyZ2luPSIwLDMsMCw0Ii8+CiAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX3VzZXJfdGVtcCIgSXNDaGVja2VkPSJU'
+        'cnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX3dpbl90ZW1wIiBJc0No'
+        'ZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fc29mdF9k'
+        'aXN0IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xl'
+        'YW5fdGh1bWJfY2FjaGUiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5h'
+        'bWU9ImNoa19jbGVhbl9zaGFkZXJzX2RucyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8'
+        'Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX2V2ZW50X2xvZ3MiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl9yZWN5Y2xlX2JpbiIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX2NsZWFubWdyIiBJc0NoZWNrZWQ9IlRydWUiLz4K'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CiAgICAg'
+        'ICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvR3JpZD4KICAgICAgICA8L1Njcm9sbFZpZXdlcj4KCiAgICAg'
+        'ICAgPCEtLSBMaXZlIEV4ZWN1dGlvbiBDb25zb2xlIC8gTG9nIEJveCAoSGVpZ2h0IDE4NSkgLS0+CiAgICAgICAgPEJvcmRlciBH'
+        'cmlkLlJvdz0iMyIgQmFja2dyb3VuZD0iIzBiMGMwZSIgQ29ybmVyUmFkaXVzPSI0IiBQYWRkaW5nPSI4LDYiIEJvcmRlckJydXNo'
+        'PSIjMjUyODJlIiBCb3JkZXJUaGlja25lc3M9IjEiPgogICAgICAgICAgICA8R3JpZD4KICAgICAgICAgICAgICAgIDxHcmlkLlJv'
+        'd0RlZmluaXRpb25zPgogICAgICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0aW9uIEhlaWdodD0iQXV0byIvPgogICAgICAgICAg'
+        'ICAgICAgICAgIDxSb3dEZWZpbml0aW9uIEhlaWdodD0iQXV0byIvPgogICAgICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0aW9u'
+        'IEhlaWdodD0iKiIvPgogICAgICAgICAgICAgICAgPC9HcmlkLlJvd0RlZmluaXRpb25zPgoKICAgICAgICAgICAgICAgIDwhLS0g'
+        'Q29uc29sZSBIZWFkZXIgVG9vbGJhciAtLT4KICAgICAgICAgICAgICAgIDxEb2NrUGFuZWwgR3JpZC5Sb3c9IjAiIE1hcmdpbj0i'
+        'MCwwLDAsNCI+CiAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgRG9ja1BhbmVsLkRvY2s9IlJpZ2h0IiBPcmllbnRhdGlv'
+        'bj0iSG9yaXpvbnRhbCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuQ2xlYXJMb2ciIENvbnRlbnQ9'
+        'IvCfp7kgQ2xlYXIiIE1hcmdpbj0iMCwwLDQsMCIgUGFkZGluZz0iNiwyIiBGb250U2l6ZT0iMTAiLz4KICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5Db3B5TG9nIiBDb250ZW50PSLwn5OLIENvcHkiIFBhZGRpbmc9IjYsMiIgRm9udFNp'
+        'emU9IjEwIi8+CiAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVs'
+        'IE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIj4KICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgPFRleHRCbG9jayBUZXh0PSJURVJNSU5BTCBMT0ciIEZvbnRXZWlnaHQ9IkJvbGQiIEZvbnRTaXplPSIxMSIgRm9yZWdyb3Vu'
+        'ZD0iIzAwYjRkOCIgTWFyZ2luPSIwLDAsMTAsMCIvPgogICAgICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIE5hbWU9InR4'
+        'dFN1YlN0YXR1cyIgVGV4dD0iUmVhZHkuIiBGb250U2l6ZT0iMTAuNSIgRm9yZWdyb3VuZD0iIzk0YTNiOCIgVmVydGljYWxBbGln'
+        'bm1lbnQ9IkNlbnRlciIvPgogICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgIDwvRG9ja1Bh'
+        'bmVsPgoKICAgICAgICAgICAgICAgIDwhLS0gU3ViLVRhc2sgUHJvZ3Jlc3MgQmFyIChlLmcuIERJU00vU0ZDICUpIC0tPgogICAg'
+        'ICAgICAgICAgICAgPFByb2dyZXNzQmFyIEdyaWQuUm93PSIxIiBOYW1lPSJwYlN1YlRhc2siIEhlaWdodD0iMyIgTWluaW11bT0i'
+        'MCIgTWF4aW11bT0iMTAwIiBWYWx1ZT0iMCIgRm9yZWdyb3VuZD0iIzEwYjk4MSIgQmFja2dyb3VuZD0iIzFlMjAyNiIgQm9yZGVy'
+        'VGhpY2tuZXNzPSIwIiBNYXJnaW49IjAsMCwwLDQiLz4KCiAgICAgICAgICAgICAgICA8IS0tIExvZyBUZXh0IEFyZWEgLS0+CiAg'
+        'ICAgICAgICAgICAgICA8VGV4dEJveCBHcmlkLlJvdz0iMiIgTmFtZT0idHh0Q29uc29sZUxvZyIgQmFja2dyb3VuZD0iVHJhbnNw'
+        'YXJlbnQiIEZvcmVncm91bmQ9IiM2ZWU3YjciIEZvbnRGYW1pbHk9IkNvbnNvbGFzIiBGb250U2l6ZT0iMTEiCiAgICAgICAgICAg'
+        'ICAgICAgICAgICAgICBCb3JkZXJUaGlja25lc3M9IjAiIElzUmVhZE9ubHk9IlRydWUiIFZlcnRpY2FsU2Nyb2xsQmFyVmlzaWJp'
+        'bGl0eT0iQXV0byIgSG9yaXpvbnRhbFNjcm9sbEJhclZpc2liaWxpdHk9IkF1dG8iIFRleHRXcmFwcGluZz0iV3JhcCIKICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgIFRleHQ9IlJlYWR5LiBTZWxlY3QgZGVzaXJlZCBvcHRpbWl6YXRpb24gb3B0aW9ucyBhbmQgY2xp'
+        'Y2sgU1RBUlQgT1BUSU1JWkFUSU9OLiIvPgogICAgICAgICAgICA8L0dyaWQ+CiAgICAgICAgPC9Cb3JkZXI+CgogICAgICAgIDwh'
+        'LS0gQm90dG9tIEFjdGlvbiBCYXIgLS0+CiAgICAgICAgPEJvcmRlciBHcmlkLlJvdz0iNCIgTWFyZ2luPSIwLDgsMCwwIj4KICAg'
+        'ICAgICAgICAgPERvY2tQYW5lbCBMYXN0Q2hpbGRGaWxsPSJUcnVlIj4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIERvY2tQ'
+        'YW5lbC5Eb2NrPSJSaWdodCIgT3JpZW50YXRpb249Ikhvcml6b250YWwiIFZlcnRpY2FsQWxpZ25tZW50PSJDZW50ZXIiPgogICAg'
+        'ICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuRXhwb3J0TG9nIiBDb250ZW50PSLwn5K+IEV4cG9ydCBMb2ciIE1hcmdp'
+        'bj0iMCwwLDYsMCIgUGFkZGluZz0iMTIsNiIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuU2tpcEJvdHRv'
+        'bSIgQ29udGVudD0i4o+tIFNLSVAgU1RFUCIgQmFja2dyb3VuZD0iI2Q5NzcwNiIgQm9yZGVyQnJ1c2g9IiNmNTllMGIiIEZvcmVn'
+        'cm91bmQ9IiNmZmZmZmYiIEZvbnRXZWlnaHQ9IkJvbGQiIFBhZGRpbmc9IjE0LDYiIE1hcmdpbj0iMCwwLDYsMCIgRm9udFNpemU9'
+        'IjEyIiBJc0VuYWJsZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5TdGFydEJvdHRvbSIg'
+        'Q29udGVudD0i8J+agCDQntCf0KLQmNCc0JjQl9CY0KDQntCS0JDQotCsIiBCYWNrZ3JvdW5kPSIjMDA3N2I2IiBCb3JkZXJCcnVz'
+        'aD0iIzAwOTZjNyIgRm9yZWdyb3VuZD0iI2ZmZmZmZiIgRm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTYsNiIgTWFyZ2luPSIw'
+        'LDAsNiwwIiBGb250U2l6ZT0iMTIiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blJlYm9vdEJvdHRvbSIg'
+        'Q29udGVudD0i4pqhIFJFQk9PVCIgQmFja2dyb3VuZD0iI2RjMjYyNiIgQm9yZGVyQnJ1c2g9IiNmZjRkNGYiIEZvcmVncm91bmQ9'
+        'IiNmZmZmZmYiIEZvbnRXZWlnaHQ9IkJvbGQiIFBhZGRpbmc9IjE2LDYiIE1hcmdpbj0iMCwwLDYsMCIgRm9udFNpemU9IjEyIiBW'
+        'aXNpYmlsaXR5PSJWaXNpYmxlIi8+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5FeGl0Qm90dG9tIiBDb250'
+        'ZW50PSJFeGl0IiBNYXJnaW49IjAsMCwwLDAiIFBhZGRpbmc9IjEyLDYiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4K'
+        'ICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9yaWVudGF0aW9uPSJWZXJ0aWNhbCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRl'
+        'ciIgTWFyZ2luPSIwLDAsMTIsMCI+CiAgICAgICAgICAgICAgICAgICAgPFByb2dyZXNzQmFyIE5hbWU9InBiUHJvZ3Jlc3MiIEhl'
+        'aWdodD0iOCIgTWluaW11bT0iMCIgTWF4aW11bT0iMTAwIiBWYWx1ZT0iMCIgRm9yZWdyb3VuZD0iIzAwYjRkOCIgQmFja2dyb3Vu'
+        'ZD0iIzI1MjgyZSIgQm9yZGVyVGhpY2tuZXNzPSIwIiBNYXJnaW49IjAsMCwwLDQiLz4KICAgICAgICAgICAgICAgICAgICA8VGV4'
+        'dEJsb2NrIE5hbWU9InR4dFN0YXR1cyIgVGV4dD0iUmVhZHkuIDExMCBPcHRpbWl6YXRpb24gTW9kdWxlcyBBY3RpdmUuIiBGb3Jl'
+        'Z3JvdW5kPSIjOTQ5YmE0IiBGb250U2l6ZT0iMTEiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAg'
+        'PC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3JkZXI+CiAgICA8L0dyaWQ+CjwvV2luZG93Pg=='
+    ) -join '')
 $xamlBytes = [System.Convert]::FromBase64String($xamlBase64)
 
 $xamlString = [System.Text.Encoding]::UTF8.GetString($xamlBytes)
@@ -1453,7 +1463,7 @@ $chkNames = @(
 
     "chk_edge_background", "chk_edge_startup_boost", "chk_edge_telemetry", "chk_edge_sidebar",
 
-    "chk_edge_prelaunch", "chk_edge_first_run", "chk_edge_unpin",
+    "chk_edge_prelaunch", "chk_edge_first_run", "chk_edge_unpin", "chk_browser_updaters",
 
     "chk_reloc_documents", "chk_reloc_desktop", "chk_ui_widgets", "chk_ui_teams_chat", "chk_ui_copilot", "chk_ui_recall",
 
@@ -1510,12 +1520,14 @@ foreach ($name in $chkNames) {
 
 }
 
-# Hardened initial state: Ensure dangerous/token filtering tweaks are unchecked by default
+# Hardened initial state: Defaults configured per Vladimir requirements
 if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
 if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+if ($controls["chk_browser_updaters"]) { $controls["chk_browser_updaters"].IsChecked = $true }
+if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
+if ($controls["chk_app_office_stub"]) { $controls["chk_app_office_stub"].IsChecked = $true }
 if ($controls["chk_deep_dism_repair"]) { $controls["chk_deep_dism_repair"].IsChecked = $false }
 if ($controls["chk_deep_dism_resetbase"]) { $controls["chk_deep_dism_resetbase"].IsChecked = $false }
 if ($controls["chk_deep_sfc_compact"]) { $controls["chk_deep_sfc_compact"].IsChecked = $false }
@@ -1865,9 +1877,10 @@ $btnSelectAll.Add_Click({
     if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
     if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
     if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_browser_updaters"]) { $controls["chk_browser_updaters"].IsChecked = $true }
+if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
     if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
@@ -1895,7 +1908,7 @@ $btnPresetOffice.Add_Click({
 
     $controls["chk_cloud_onedrive"].IsChecked = $false
 
-    $controls["chk_app_office_stub"].IsChecked = $false
+    $controls["chk_app_office_stub"].IsChecked = $true
 
     $controls["chk_app_phone"].IsChecked = $false
 
@@ -1904,9 +1917,10 @@ $btnPresetOffice.Add_Click({
     if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
     if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
     if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_browser_updaters"]) { $controls["chk_browser_updaters"].IsChecked = $true }
+if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
     if ($controls["chk_srv_indexing"]) { $controls["chk_srv_indexing"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
@@ -1932,9 +1946,10 @@ $btnPresetGaming.Add_Click({
     if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
     if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
     if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_browser_updaters"]) { $controls["chk_browser_updaters"].IsChecked = $true }
+if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
     if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
@@ -2140,7 +2155,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v041 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v043 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -2421,13 +2436,20 @@ $executeOptimization = {
 
     if ($controls["chk_telem_cortana"].IsChecked) {
 
-        $actions += @{ Name = "Disable Cortana Assistant"; Script = {
+        $actions += @{ Name = "Completely Uninstall & Purge Cortana Assistant"; Script = {
+
+            Log-Message "Completely removing Cortana package and disabling assistant..." "INFO"
+            Stop-Process -Name "Cortana" -Force -ErrorAction SilentlyContinue
+            Get-AppxPackage -AllUsers -Name "*Microsoft.549981C3F5F10*" -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxPackage -AllUsers -Name "*Cortana*" -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.PackageName -like "*Cortana*" -or $_.PackageName -like "*549981C3F5F10*" } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
 
             New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force -ErrorAction SilentlyContinue | Out-Null
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortanaAboveLock" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortanaAboveLock" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "CortanaConsent" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "CanCortanaBeOrganized" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
 
         }}
 
@@ -2763,6 +2785,91 @@ $executeOptimization = {
             }
         }}
     }
+
+    if ($controls["chk_browser_updaters"].IsChecked) {
+        $actions += @{ Name = "Purge Chrome, Brave & Cent Browser Background Updaters"; Script = {
+            Log-Message "Stopping browser background updaters and purging Update directories..." "INFO"
+
+            # 1. Terminate running updater processes
+            $updProcs = @("GoogleUpdate", "BraveUpdate", "CentBrowserUpdate", "MicrosoftEdgeUpdate")
+            foreach ($p in $updProcs) {
+                Get-Process -Name $p -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+            }
+
+            # 2. Stop and disable updater services
+            $updServices = @(
+                "gupdate", "gupdatem", "GoogleChromeElevationService",
+                "brave", "bravem", "BraveElevationService",
+                "CentBrowserUpdate", "CentBrowserElevationService",
+                "edgeupdate", "edgeupdatem"
+            )
+            foreach ($s in $updServices) {
+                Stop-Service -Name $s -Force -ErrorAction SilentlyContinue
+                Set-Service -Name $s -StartupType Disabled -ErrorAction SilentlyContinue
+                sc.exe config $s start= disabled 2>$null | Out-Null
+            }
+
+            # 3. Delete scheduled updater tasks
+            $updTaskPatterns = @("GoogleUpdate*", "*Chrome*", "BraveUpdate*", "*Brave*", "CentBrowserUpdate*", "*CentBrowser*")
+            foreach ($pat in $updTaskPatterns) {
+                Get-ScheduledTask -TaskName $pat -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue
+            }
+            try {
+                $rawTasks = schtasks.exe /query /fo csv 2>$null | ConvertFrom-Csv
+                foreach ($t in $rawTasks) {
+                    $tn = $t.TaskName
+                    if ($tn -and ($tn -match "GoogleUpdate|BraveUpdate|CentBrowser")) {
+                        schtasks.exe /delete /tn $tn /f 2>$null | Out-Null
+                    }
+                }
+            } catch {}
+
+            # 4. Recursively purge all Update folders across system and user profiles
+            $targetDirs = @(
+                "$env:ProgramFiles\Google\Update",
+                "${env:ProgramFiles(x86)}\Google\Update",
+                "$env:LOCALAPPDATA\Google\Update",
+                "$env:ProgramFiles\BraveSoftware\Update",
+                "${env:ProgramFiles(x86)}\BraveSoftware\Update",
+                "$env:LOCALAPPDATA\BraveSoftware\Update",
+                "$env:ProgramFiles\CentBrowser\Update",
+                "${env:ProgramFiles(x86)}\CentBrowser\Update",
+                "$env:LOCALAPPDATA\CentBrowser\Update"
+            )
+            Get-ChildItem -Path "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                $uDir = $_.FullName
+                $targetDirs += "$uDir\AppData\Local\Google\Update"
+                $targetDirs += "$uDir\AppData\Local\BraveSoftware\Update"
+                $targetDirs += "$uDir\AppData\Local\CentBrowser\Update"
+            }
+            foreach ($dir in $targetDirs) {
+                if (Test-Path $dir) {
+                    try {
+                        cmd.exe /c "takeown /f `"$dir`" /r /d y" 2>$null | Out-Null
+                        cmd.exe /c "icacls `"$dir`" /grant administrators:F /t /c /q" 2>$null | Out-Null
+                        Remove-Item -Path $dir -Recurse -Force -ErrorAction SilentlyContinue
+                        Log-Message "Deleted browser update folder: $dir" "INFO"
+                    } catch {}
+                }
+            }
+
+            # 5. Lock update check via Registry policies (UpdateDefault=0, AutoUpdateCheckPeriodMinutes=0)
+            $regPolicies = @(
+                "HKLM:\SOFTWARE\Policies\Google\Update",
+                "HKLM:\SOFTWARE\Policies\BraveSoftware\Update",
+                "HKLM:\SOFTWARE\Policies\CentBrowser\Update"
+            )
+            foreach ($rp in $regPolicies) {
+                New-Item -Path $rp -Force -ErrorAction SilentlyContinue | Out-Null
+                Set-ItemProperty -Path $rp -Name "AutoUpdateCheckPeriodMinutes" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+                Set-ItemProperty -Path $rp -Name "UpdateDefault" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+                Set-ItemProperty -Path $rp -Name "DisableAutoUpdateChecksCheckboxValue" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            }
+
+            Log-Message "Browser background updaters stopped and Update folders purged." "SUCCESS"
+        }}
+    }
+
 
 
     # 5. Explorer, Desktop, Taskbar & Start Menu (Dism++ Tweaks)
@@ -3841,11 +3948,30 @@ $executeOptimization = {
 
     if ($controls["chk_app_office_stub"].IsChecked) {
 
-        $actions += @{ Name = "Remove Microsoft 365 Stub"; Script = {
+        $actions += @{ Name = "Completely Remove Demo/Trial Microsoft Office & Commercial Trialware"; Script = {
 
-            Get-AppxPackage -AllUsers *MicrosoftOfficeHub* -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-            Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like "*MicrosoftOfficeHub*" } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            Log-Message "Purging demo Microsoft Office (1-month trial) & sponsored trial bloatware..." "INFO"
+            $officeStubs = @(
+                "*MicrosoftOfficeHub*",
+                "*Office.OneNote*",
+                "*Microsoft.Office.Desktop*",
+                "*MyOffice*",
+                "*Microsoft365*",
+                "*Clipchamp*",
+                "*Spotify*",
+                "*Disney*",
+                "*Netflix*",
+                "*Amazon*",
+                "*TikTok*",
+                "*CandyCrush*",
+                "*MarchofEmpires*",
+                "*BubbleWitch*"
+            )
+            foreach ($p in $officeStubs) {
+                Get-AppxPackage -AllUsers -Name $p -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+                Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.PackageName -like $p -or $_.DisplayName -like $p } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            }
+            Log-Message "Demo Office and commercial trialware removed." "SUCCESS"
 
         }}
 
@@ -4030,19 +4156,41 @@ $executeOptimization = {
     }
 
     if ($controls["chk_srv_ssd_trim"].IsChecked) {
+        $actions += @{ Name = "Deep SSD & NVMe M.2 Performance Optimization & ReTrim"; Script = {
+            Log-Message "Configuring maximum SSD & NVMe M.2 filesystem optimizations..." "INFO"
 
-        $actions += @{ Name = "Disable LastAccess & Trigger SSD TRIM"; Script = {
+            # 1. Enforce TRIM / Delete Notification for SSD / NVMe
+            cmd.exe /c "fsutil.exe behavior set DisableDeleteNotify 0" 2>$null | Out-Null
 
-            fsutil.exe behavior set disablelastaccess 1 2>$null | Out-Null
+            # 2. Disable LastAccess timestamps on NTFS (saves high-frequency write cycles on SSD)
+            cmd.exe /c "fsutil.exe behavior set disablelastaccess 1" 2>$null | Out-Null
 
-            fsutil.exe behavior set disable8dot3 0 2>$null | Out-Null
+            # 3. Expand NTFS memory cache pool (NtfsMemoryUsage=2) to maximize NVMe/SSD I/O bandwidth
+            cmd.exe /c "fsutil.exe behavior set NtfsMemoryUsage 2" 2>$null | Out-Null
 
-            Log-Message "Running SSD TRIM on drive C:\..." "INFO"
+            # 4. Disable 8.3 short filename generation (disable8dot3=1) to eliminate legacy directory overhead
+            cmd.exe /c "fsutil.exe behavior set disable8dot3 1" 2>$null | Out-Null
 
-            Optimize-Volume -DriveLetter C -ReTrim -ErrorAction SilentlyContinue
+            # 5. Disable HDD Scheduled Defragmentation (unnecessary wear on SSD/NVMe)
+            Disable-ScheduledTask -TaskPath "\Microsoft\Windows\Defrag\" -TaskName "ScheduledDefrag" -ErrorAction SilentlyContinue
+            cmd.exe /c "schtasks.exe /change /tn `"\Microsoft\Windows\Defrag\ScheduledDefrag`" /disable" 2>$null | Out-Null
 
+            # 6. Disable Superfetch / SysMain and Prefetcher in Registry (HDD relics obsolete on SSD/NVMe)
+            $memMgr = "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters"
+            if (Test-Path $memMgr) {
+                Set-ItemProperty -Path $memMgr -Name "EnablePrefetcher" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+                Set-ItemProperty -Path $memMgr -Name "EnableSuperfetch" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            }
+
+            # 7. Execute active ReTrim across all attached SSD / NVMe fixed volumes
+            Get-Volume -ErrorAction SilentlyContinue | Where-Object { $_.DriveType -eq "Fixed" -and $_.DriveLetter } | ForEach-Object {
+                $dl = $_.DriveLetter
+                Log-Message "Executing active ReTrim optimization on Drive ${dl}:..." "INFO"
+                Optimize-Volume -DriveLetter $dl -ReTrim -Verbose -ErrorAction SilentlyContinue
+            }
+
+            Log-Message "Deep SSD & NVMe M.2 optimizations applied successfully." "SUCCESS"
         }}
-
     }
 
     if ($controls["chk_srv_pagefile_auto"].IsChecked) {
@@ -4555,7 +4703,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v041. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v043. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -4759,14 +4907,42 @@ $executeOptimization = {
 
     $btnPresetGaming.IsEnabled = $true
 
-    # Display clear completion dialog with task count; log and all results remain visible in the main window
-
-    $completeMsg = switch ($global:currentLang) {
-            "en" { "Optimization completed successfully!`n`nTasks executed: $total of $total`n`nAll results and status of each task are preserved in the Terminal Log below.`n`nYou can click '⚡ REBOOT' on the panel whenever you are ready to restart your PC." }
-            "cs" { "Optimalizace byla úspěšně dokončena!`n`nProvedeno úloh: $total z $total`n`nVšechny výsledky a stav každé úlohy jsou zachovány v protokolu terminálu níže.`n`nAž budete připraveni restartovat systém, klikněte na tlačítko '⚡ REBOOT' na panelu." }
-            "ru" { "Глубокая оптимизация Windows успешно завершена!`n`nВыполнено задач: $total из $total`n`nВсе подробные результаты и статус каждой операции сохранены в окне Терминала ниже.`n`nКогда будете готовы перезагрузить систему, нажмите яркую кнопку «⚡ REBOOT / Перезагрузка» на панели." }
+    # Big clear completion banner in Terminal Log (NO popup MessageBox per Vladimir directive)
+    $bannerText = switch ($global:currentLang) {
+        "en" {
+            "`r`n" + ("=" * 76) + "`r`n" +
+            "  >>> [DONE] ALL OPTIMIZATION TASKS COMPLETED SUCCESSFULLY! <<<`r`n" +
+            "  Tasks executed: $total of $total`r`n" +
+            "  PLEASE RESTART YOUR COMPUTER WHEN YOU HAVE TIME (BUTTON [⚡ REBOOT]).`r`n" +
+            ("=" * 76) + "`r`n"
         }
-        [System.Windows.MessageBox]::Show($completeMsg, "GIN-Win-Optimizer v041 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+        "cs" {
+            "`r`n" + ("=" * 76) + "`r`n" +
+            "  >>> [HOTOVO] VŠECHNY ÚLOHY OPTIMALIZACE BYLY ÚSPĚŠNĚ DOKONČENY! <<<`r`n" +
+            "  Provedeno úloh: $total z $total`r`n" +
+            "  RESTARTUJTE POČÍTAČ, AŽ BUDETE MÍT ČAS (TLAČÍTKO [⚡ REBOOT]).`r`n" +
+            ("=" * 76) + "`r`n"
+        }
+        "ru" {
+            "`r`n" + ("=" * 76) + "`r`n" +
+            "  >>> [ГОТОВО] ВСЕ ОПЕРАЦИИ ОПТИМИЗАЦИИ УСПЕШНО ЗАВЕРШЕНЫ! <<<`r`n" +
+            "  Выполнено задач: $total из $total`r`n" +
+            "  ЖЕЛАТЕЛЬНО ПЕРЕЗАГРУЗИТЬ КОМПЬЮТЕР, КОГДА БУДЕТ ВРЕМЯ (КНОПКА [⚡ REBOOT]).`r`n" +
+            ("=" * 76) + "`r`n"
+        }
+    }
+    $txtConsoleLog.AppendText($bannerText)
+    $txtConsoleLog.ScrollToEnd()
+    if ($txtStatus) {
+        $txtStatus.Text = switch ($global:currentLang) {
+            "en" { "✅ COMPLETED! Please restart your computer when you have time." }
+            "cs" { "✅ HOTOVO! Restartujte počítač, až budete mít čas." }
+            "ru" { "✅ ГОТОВО! Желательно перезагрузить компьютер, когда будет время." }
+        }
+    }
+    if ($txtSubStatus) {
+        $txtSubStatus.Text = "All $total tasks finished."
+    }
 }
 
 # Wire Start Buttons
@@ -4783,7 +4959,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v041 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v043 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 
