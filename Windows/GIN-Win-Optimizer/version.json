@@ -1,10 +1,10 @@
 {
   "project": "GIN-Win-Optimizer",
-  "current_version": "v041",
+  "current_version": "v042",
   "updated_at": "2026-11-05",
   "active_versions": [
-    "GIN-Win-Optimizer_v041.cmd",
-    "GIN-Win-Optimizer_v040.cmd"
+    "GIN-Win-Optimizer_v042.cmd",
+    "GIN-Win-Optimizer_v041.cmd"
   ],
   "sync_targets": {
     "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -14,14 +14,14 @@
   },
   "changelog": [
     {
+      "version": "v042",
+      "date": "2026-11-05",
+      "changes": "Comprehensive Deep Optimization Suite: 1) Enforced UAC slider to absolute minimum ('Never Notify' / EnableLUA=0, ConsentPromptBehaviorAdmin=0, ConsentPromptBehaviorUser=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0); 2) Completely uninstalled and purged Cortana assistant packages & provisioned stubs; 3) Added automatic background updater purge for Google Chrome, Brave, and Cent Browser (stopping gupdate/brave services, disabling tasks, deleting all Update folders and disabling background mode); 4) Verified 100% Windows Update lock; 5) Completely purged demo 1-month Microsoft Office stubs, OneNote, and commercial trial bloatware (Clipchamp, Spotify, Disney, Netflix, TikTok, sponsored games); 6) Enabled chk_srv_pca (disable PcaSvc), chk_srv_trkwks (disable TrkWks NTFS network tracking), and chk_srv_iphlpsvc (disable IPv6 transition) by default and in all presets; 7) Implemented maximum full SSD & NVMe M.2 optimization (TRIM enable, disable LastAccess, NtfsMemoryUsage=2 high-IOPS cache, disable SysMain/Prefetcher/ReadyBoost, disable scheduled HDD defrag, active multi-drive ReTrim); 8) Enforced elevated Administrator disk cleanup; 9) Eliminated popup completion MessageBox in favor of prominent in-log terminal banner."
+    },
+    {
       "version": "v041",
       "date": "2026-11-05",
       "changes": "Critical Network ServiceDll & Total Zero-UAC Fix: Fixed destructive New-Item -Force bug on HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanmanWorkstation\\Parameters that wiped ServiceDll (causing Error 2 'The system cannot find the file specified' and dropping mapped network drives R:, S:, Z: across reboots); enforced explicit ServiceDll=%SystemRoot%\\System32\\wkssvc.dll preservation; enforced EnableLUA=0 in HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System for permanent 100% elimination of all UAC prompts across all Windows editions; synced to desktop D:\\MEGA\\DOCS\\desktop."
-    },
-    {
-      "version": "v040",
-      "date": "2026-11-05",
-      "changes": "Single-Standard CMD Architecture, Full x86/x64 & Win 7-11 Compatibility, Silent UAC Hardening: Standardized on standalone portable CMD format (EXE removed per Vladimir directive); guaranteed zero antivirus friction and instant bypass of SmartScreen blocks; auto-elevation via native net session + RunAs; enforced UAC slider to minimum ('Never Notify' - ConsentPromptBehaviorAdmin=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0); disabled chk_sec_admin_approval by default across all presets; hardened environment variable passing ($env:GIN_OPT_SCRIPT); preserved EnableLinkedConnections=1 and LAN/SMB persistence."
     }
   ]
 }

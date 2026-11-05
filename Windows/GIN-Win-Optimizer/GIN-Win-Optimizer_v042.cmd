@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Win-Optimizer v040 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
+title GIN-Win-Optimizer v042 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell location (supports x86, x64, Sysnative on 32-bit processes in 64-bit OS)
 set "PS_EXE=powershell.exe"
@@ -10,10 +10,10 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11 (32-bit and 64-bit)
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Requesting Administrator privileges for GIN-Win-Optimizer v040...
-    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v040.cmd" >nul 2>&1
-    if exist "%TEMP%\GIN-Win-Optimizer_v040.cmd" (
-        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v040.cmd""' -Verb RunAs"
+    echo [*] Requesting Administrator privileges for GIN-Win-Optimizer v042...
+    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v042.cmd" >nul 2>&1
+    if exist "%TEMP%\GIN-Win-Optimizer_v042.cmd" (
+        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v042.cmd""' -Verb RunAs"
     ) else (
         "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%~f0""' -Verb RunAs"
     )
@@ -28,7 +28,7 @@ start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden 
 exit /b
 #>
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v040
+#  GIN-WIN-OPTIMIZER PLUS                                          v042
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -160,8 +160,10 @@ try {
     # Enforce Silent UAC (Slider to absolute minimum "Never Notify") and disable Admin Token Filtering
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableVirtualization" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
     # Ensure LanmanWorkstation Parameters and ServiceDll are 100% intact (prevent Error 2 / dropping network drives)
     New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "ServiceDll" -Value "%SystemRoot%\System32\wkssvc.dll" -Type ExpandString -Force -ErrorAction SilentlyContinue
@@ -183,9 +185,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v040
+#  GIN-WIN-OPTIMIZER PLUS                                          v042
 
-#  Rule: Strict Version Increment Mandate (v032 -> v040)
+#  Rule: Strict Version Increment Mandate (v032 -> v042)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -238,11 +240,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -514,11 +516,11 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
 
         "HeaderTitle" = "Údaje o počítači"
 
-        "HeaderSub" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -790,11 +792,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v042 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1510,12 +1512,13 @@ foreach ($name in $chkNames) {
 
 }
 
-# Hardened initial state: Ensure dangerous/token filtering tweaks are unchecked by default
+# Hardened initial state: Defaults configured per Vladimir requirements
 if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
 if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
+if ($controls["chk_app_office_stub"]) { $controls["chk_app_office_stub"].IsChecked = $true }
 if ($controls["chk_deep_dism_repair"]) { $controls["chk_deep_dism_repair"].IsChecked = $false }
 if ($controls["chk_deep_dism_resetbase"]) { $controls["chk_deep_dism_resetbase"].IsChecked = $false }
 if ($controls["chk_deep_sfc_compact"]) { $controls["chk_deep_sfc_compact"].IsChecked = $false }
@@ -1865,9 +1868,9 @@ $btnSelectAll.Add_Click({
     if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
     if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
     if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
     if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
@@ -1895,7 +1898,7 @@ $btnPresetOffice.Add_Click({
 
     $controls["chk_cloud_onedrive"].IsChecked = $false
 
-    $controls["chk_app_office_stub"].IsChecked = $false
+    $controls["chk_app_office_stub"].IsChecked = $true
 
     $controls["chk_app_phone"].IsChecked = $false
 
@@ -1904,9 +1907,9 @@ $btnPresetOffice.Add_Click({
     if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
     if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
     if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
     if ($controls["chk_srv_indexing"]) { $controls["chk_srv_indexing"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
@@ -1932,9 +1935,9 @@ $btnPresetGaming.Add_Click({
     if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
     if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
     if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
-    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
-    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
-    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
+    if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
+    if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
     if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
@@ -2140,7 +2143,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v040 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v042 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -2421,13 +2424,20 @@ $executeOptimization = {
 
     if ($controls["chk_telem_cortana"].IsChecked) {
 
-        $actions += @{ Name = "Disable Cortana Assistant"; Script = {
+        $actions += @{ Name = "Completely Uninstall & Purge Cortana Assistant"; Script = {
+
+            Log-Message "Completely removing Cortana package and disabling assistant..." "INFO"
+            Stop-Process -Name "Cortana" -Force -ErrorAction SilentlyContinue
+            Get-AppxPackage -AllUsers -Name "*Microsoft.549981C3F5F10*" -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxPackage -AllUsers -Name "*Cortana*" -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+            Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.PackageName -like "*Cortana*" -or $_.PackageName -like "*549981C3F5F10*" } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
 
             New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force -ErrorAction SilentlyContinue | Out-Null
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortanaAboveLock" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortanaAboveLock" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "CortanaConsent" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "CanCortanaBeOrganized" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
 
         }}
 
@@ -3841,11 +3851,30 @@ $executeOptimization = {
 
     if ($controls["chk_app_office_stub"].IsChecked) {
 
-        $actions += @{ Name = "Remove Microsoft 365 Stub"; Script = {
+        $actions += @{ Name = "Completely Remove Demo/Trial Microsoft Office & Commercial Trialware"; Script = {
 
-            Get-AppxPackage -AllUsers *MicrosoftOfficeHub* -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue
-
-            Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like "*MicrosoftOfficeHub*" } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            Log-Message "Purging demo Microsoft Office (1-month trial) & sponsored trial bloatware..." "INFO"
+            $officeStubs = @(
+                "*MicrosoftOfficeHub*",
+                "*Office.OneNote*",
+                "*Microsoft.Office.Desktop*",
+                "*MyOffice*",
+                "*Microsoft365*",
+                "*Clipchamp*",
+                "*Spotify*",
+                "*Disney*",
+                "*Netflix*",
+                "*Amazon*",
+                "*TikTok*",
+                "*CandyCrush*",
+                "*MarchofEmpires*",
+                "*BubbleWitch*"
+            )
+            foreach ($p in $officeStubs) {
+                Get-AppxPackage -AllUsers -Name $p -ErrorAction SilentlyContinue | Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+                Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object { $_.PackageName -like $p -or $_.DisplayName -like $p } | Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+            }
+            Log-Message "Demo Office and commercial trialware removed." "SUCCESS"
 
         }}
 
@@ -4555,7 +4584,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v040. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v042. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -4759,14 +4788,42 @@ $executeOptimization = {
 
     $btnPresetGaming.IsEnabled = $true
 
-    # Display clear completion dialog with task count; log and all results remain visible in the main window
-
-    $completeMsg = switch ($global:currentLang) {
-            "en" { "Optimization completed successfully!`n`nTasks executed: $total of $total`n`nAll results and status of each task are preserved in the Terminal Log below.`n`nYou can click '⚡ REBOOT' on the panel whenever you are ready to restart your PC." }
-            "cs" { "Optimalizace byla úspěšně dokončena!`n`nProvedeno úloh: $total z $total`n`nVšechny výsledky a stav každé úlohy jsou zachovány v protokolu terminálu níže.`n`nAž budete připraveni restartovat systém, klikněte na tlačítko '⚡ REBOOT' na panelu." }
-            "ru" { "Глубокая оптимизация Windows успешно завершена!`n`nВыполнено задач: $total из $total`n`nВсе подробные результаты и статус каждой операции сохранены в окне Терминала ниже.`n`nКогда будете готовы перезагрузить систему, нажмите яркую кнопку «⚡ REBOOT / Перезагрузка» на панели." }
+    # Big clear completion banner in Terminal Log (NO popup MessageBox per Vladimir directive)
+    $bannerText = switch ($global:currentLang) {
+        "en" {
+            "`r`n" + ("=" * 76) + "`r`n" +
+            "  >>> [DONE] ALL OPTIMIZATION TASKS COMPLETED SUCCESSFULLY! <<<`r`n" +
+            "  Tasks executed: $total of $total`r`n" +
+            "  PLEASE RESTART YOUR COMPUTER WHEN YOU HAVE TIME (BUTTON [⚡ REBOOT]).`r`n" +
+            ("=" * 76) + "`r`n"
         }
-        [System.Windows.MessageBox]::Show($completeMsg, "GIN-Win-Optimizer v040 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+        "cs" {
+            "`r`n" + ("=" * 76) + "`r`n" +
+            "  >>> [HOTOVO] VŠECHNY ÚLOHY OPTIMALIZACE BYLY ÚSPĚŠNĚ DOKONČENY! <<<`r`n" +
+            "  Provedeno úloh: $total z $total`r`n" +
+            "  RESTARTUJTE POČÍTAČ, AŽ BUDETE MÍT ČAS (TLAČÍTKO [⚡ REBOOT]).`r`n" +
+            ("=" * 76) + "`r`n"
+        }
+        "ru" {
+            "`r`n" + ("=" * 76) + "`r`n" +
+            "  >>> [ГОТОВО] ВСЕ ОПЕРАЦИИ ОПТИМИЗАЦИИ УСПЕШНО ЗАВЕРШЕНЫ! <<<`r`n" +
+            "  Выполнено задач: $total из $total`r`n" +
+            "  ЖЕЛАТЕЛЬНО ПЕРЕЗАГРУЗИТЬ КОМПЬЮТЕР, КОГДА БУДЕТ ВРЕМЯ (КНОПКА [⚡ REBOOT]).`r`n" +
+            ("=" * 76) + "`r`n"
+        }
+    }
+    $txtConsoleLog.AppendText($bannerText)
+    $txtConsoleLog.ScrollToEnd()
+    if ($txtStatus) {
+        $txtStatus.Text = switch ($global:currentLang) {
+            "en" { "✅ COMPLETED! Please restart your computer when you have time." }
+            "cs" { "✅ HOTOVO! Restartujte počítač, až budete mít čas." }
+            "ru" { "✅ ГОТОВО! Желательно перезагрузить компьютер, когда будет время." }
+        }
+    }
+    if ($txtSubStatus) {
+        $txtSubStatus.Text = "All $total tasks finished."
+    }
 }
 
 # Wire Start Buttons
@@ -4783,7 +4840,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v040 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v042 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 

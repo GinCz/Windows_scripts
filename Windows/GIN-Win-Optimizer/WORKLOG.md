@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-11-05 — Release v042 (Comprehensive Deep Optimization, Browser Updaters, Demo Office & SSD M.2 Suite)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version to `v042`.
+- **UAC Slider to Minimum ("Never Notify")**: Configured `EnableLUA = 0`, `ConsentPromptBehaviorAdmin = 0`, `ConsentPromptBehaviorUser = 0`, `PromptOnSecureDesktop = 0`, `FilterAdministratorToken = 0`.
+- **Cortana Complete Removal**: Completely purged Cortana appx and provisioned packages from system.
+- **Browser Background Updaters Purged**: Added killer for Google Chrome, Brave, and Cent Browser background updaters; disabled services and tasks; deleted all `Update` folders; disabled background mode.
+- **Demo Office & Trial Bloatware Purged**: Purged 1-month demo Office stubs and commercial trial apps.
+- **Service Tweaks Defaults**: `chk_srv_pca`, `chk_srv_trkwks`, `chk_srv_iphlpsvc` enabled by default.
+- **SSD & NVMe M.2 Maximum Suite**: TRIM enabled, LastAccess disabled, NtfsMemoryUsage=2 (NVMe cache boost), SysMain/Prefetcher disabled, scheduled HDD defrag disabled, active multi-drive ReTrim executed.
+- **No Popup Dialogs**: Replaced completion popup MessageBox with terminal log banner.
+- **Delivery**: Uploaded `GIN-Win-Optimizer_v042.cmd` to `D:\MEGA\DOCS\desktop` and `WIN-FLASH`.
+
 ## 2026-11-05 — Release v041 (LanmanWorkstation ServiceDll Fix & Permanent Zero-UAC)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v040` to `v041` for all changes fixing the network drives drop bug and UAC suppression.
 - **Root Cause & Fix for Network Drives (System Error 2)**:

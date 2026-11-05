@@ -4,6 +4,39 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v042] - 2026-11-05
+- **Enforced UAC Slider to Absolute Minimum ("Never Notify")**:
+  - Configured `EnableLUA = 0`, `ConsentPromptBehaviorAdmin = 0`, `ConsentPromptBehaviorUser = 0`, `PromptOnSecureDesktop = 0`, `FilterAdministratorToken = 0`.
+  - Guaranteed UAC settings slider is located at the lowest position ("Никогда не уведомлять / Never Notify") without elevation screens.
+- **Complete Cortana Package Removal**:
+  - Completely uninstalled and purged `Microsoft.549981C3F5F10` and `Cortana` from both installed user packages and provisioned online appx packages.
+  - Disabled Cortana search policies and assistant consent keys.
+- **Browser Background Updaters & Update Folders Purge (Chrome, Brave, Cent Browser)**:
+  - Added autonomous killer for `GoogleUpdate`, `BraveUpdate`, and `CentUpdate` processes.
+  - Disabled services `gupdate`, `gupdatem`, `brave`, `bravem` and all scheduled tasks.
+  - Recursively deleted `Update` folders across Program Files and AppData.
+  - Disabled `BackgroundModeEnabled` policies for Chrome and Brave.
+- **Complete Purge of Demo/Trial Microsoft Office & Bloatware**:
+  - Completely purged trial 1-month Microsoft Office stubs (`MicrosoftOfficeHub`, `Office.OneNote`, `Microsoft.Office.Desktop`, `MyOffice`, `Microsoft365`).
+  - Purged commercial trial apps: `Clipchamp`, `Spotify`, `Disney`, `Netflix`, `Amazon`, `TikTok`, `CandyCrush`, `MarchofEmpires`, etc.
+- **Service Tweaks Defaults Hardened**:
+  - Enabled by default: `chk_srv_pca` (disables Program Compatibility Assistant `PcaSvc`).
+  - Enabled by default: `chk_srv_trkwks` (disables Distributed Link Tracking `TrkWks` on NTFS networks).
+  - Enabled by default: `chk_srv_iphlpsvc` (disables IPv6 transition helper `iphlpsvc`).
+- **Complete SSD & NVMe M.2 Maximum Optimization Suite**:
+  - Enforced `fsutil behavior set DisableDeleteNotify 0` (hardware TRIM enabled).
+  - Disabled `NtfsDisableLastAccessUpdate` to eliminate redundant SSD writes.
+  - Set `NtfsMemoryUsage = 2` (expands NTFS memory cache pool for high-IOPS NVMe M.2 performance).
+  - Disabled `SysMain` / Superfetch and HDD `Prefetcher` (damaging and redundant on SSD/M.2).
+  - Disabled `ReadyBoost` and scheduled HDD defragmentation (`ScheduledDefrag`).
+  - Executed active multi-drive hardware `ReTrim` across all fixed SSD volumes.
+- **Administrator Disk Cleanup**:
+  - Elevated cleanup with `StateFlags6553 = 2` for cleanmgr, direct deletion of Temp, Windows Error Reporting dumps, and delivery optimization caches.
+- **Elimination of Completion Popup MessageBox**:
+  - Removed modal `MessageBox::Show` dialog upon completion.
+  - Replaced with prominent, clear multi-line ASCII banner directly in the Terminal Log and dynamic status header.
+- **Desktop & Media Delivery**: Uploaded to `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v042.cmd` and `D:\MEGA\WIN-FLASH\Util-WINDOWS\`.
+
 ## [v041] - 2026-11-05
 - **Critical Fix for Network Drives (LanmanWorkstation ServiceDll)**:
   - Eliminated destructive `New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Force` call that wiped existing registry values in that subkey.
