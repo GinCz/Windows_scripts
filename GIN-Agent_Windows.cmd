@@ -1,47 +1,53 @@
 @echo off
 :: ==============================================================================
-:: GIN-Agent Windows PC Launcher v2026-11-05_v007
+:: GIN-Agent Windows PC Launcher v008 (2026-11-05)
 :: Author: VladiMIR+AI
 :: Description: Universal 1-Click Remote Access Agent for Windows 10/11 (32/64-bit)
-:: Gateway: Dual Resilient Fallback (Global / Russia) • Zero-Trace
+:: Gateway: Resilient Triple Fallback (Global / Russia RU-208 / Russia RU-109)
 :: ==============================================================================
-chcp 65001 >nul
+setlocal EnableExtensions
+chcp 65001 >nul 2>&1
 cls
-
-:: Check for administrator rights; auto-elevate with UAC if needed
-net session >nul 2>&1
-if %errorlevel% neq 0 (
-    echo [*] Запрос прав Администратора (UAC)...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k ""%~f0""' -Verb RunAs"
-    exit /b
-)
 
 title GIN-Agent Windows PC [VladiMIR+AI]
 
 echo ================================================================================
-echo           GIN-AGENT WINDOWS PC - 1-CLICK ADMINISTRATOR LAUNCHER
+echo           GIN-AGENT WINDOWS PC - 1-CLICK REMOTE ACCESS AGENT
+echo                              [VladiMIR+AI]
 echo ================================================================================
 echo.
-echo [*] Запуск универсального сервисного агента...
-echo [*] Пожалуйста, не закрывайте это окно во время сервисного обслуживания.
-echo.
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText($args[0], [System.Text.Encoding]::UTF8); $tag = ':::POWERSHELL_PAYLOAD:::'; $pos = $raw.IndexOf($tag); if ($pos -ge 0) { & ([ScriptBlock]::Create($raw.Substring($pos + $tag.Length))) }" "%~f0"
+:: Pass script full path via environment variable (immune to spaces, special chars, parentheses)
+set "GIN_AGENT_PATH=%~f0"
+
+:: Check PowerShell availability
+set "PS_CMD=powershell.exe"
+if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
+    set "PS_CMD=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+)
+
+:: Run embedded PowerShell payload safely
+"%PS_CMD%" -NoProfile -ExecutionPolicy Bypass -Command "$p = $env:GIN_AGENT_PATH; if ([string]::IsNullOrEmpty($p) -or -not (Test-Path -LiteralPath $p)) { Write-Host '[X] Ошибка: Не удалось прочитать путь к файлу агента.' -ForegroundColor Red; exit 1 }; try { Unblock-File -LiteralPath $p -ErrorAction SilentlyContinue } catch {}; $txt = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8); $marker = ':::POWERSHELL_PAYLOAD:::'; $idx = $txt.IndexOf($marker); if ($idx -ge 0) { $code = $txt.Substring($idx + $marker.Length); $sb = [ScriptBlock]::Create($code); & $sb } else { Write-Host '[X] Ошибка: Секция POWERSHELL_PAYLOAD не найдена!' -ForegroundColor Red; exit 2 }"
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [X] Ошибка выполнения агента (Код ошибки: %errorlevel%).
+)
 
 echo.
 echo ================================================================================
 echo [*] Сессия GIN-Agent завершена. Окно оставлено открытым для диагностики.
-echo [*] Вы можете закрыть это окно вручную.
+echo [*] Вы можете закрыть это окно вручную или нажать любую клавишу.
 echo ================================================================================
 pause
 exit /b
 
 :::POWERSHELL_PAYLOAD:::
 # ==============================================================================
-# GIN-Agent Windows PC v2026-11-05_v007
+# GIN-Agent Windows PC v008
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
-# Gateways: Global (remote.gincz.com) & Russia (vds4you-208)
+# Gateways: Global (remote.gincz.com), RU-FastNode (195.158.255.208), RU-109 (212.109.223.109)
 # ==============================================================================
 
 $ErrorActionPreference = "Continue"
@@ -56,10 +62,11 @@ try {
 $token = "GinCz-Remote-2026"
 $headers = @{ "Token" = $token }
 
-# Resilient Dual Gateway Selection (Global & Russia Fast Node)
+# Resilient Triple Gateway Selection
 $gateways = @(
     @{ Name = "Global (remote.gincz.com)"; Url = "https://remote.gincz.com/agent-api" },
-    @{ Name = "Russia (RU-FastNode)"; Url = "http://195.158.255.208/agent-api" }
+    @{ Name = "Russia (RU-FastNode)"; Url = "http://195.158.255.208/agent-api" },
+    @{ Name = "Russia (RU-109)"; Url = "http://212.109.223.109/agent-api" }
 )
 
 $serverUrl = ""
@@ -87,10 +94,6 @@ try {
     $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 } catch {}
 
-if (-not $admin) {
-    Write-Warning "Внимание: Запущено без прав Администратора. Для полной диагностики рекомендуются права администратора."
-}
-
 # Host Architecture & Telemetry
 $arch = if ([IntPtr]::Size -eq 8) { "64-bit" } else { "32-bit" }
 $osName = "Microsoft Windows ($arch)"
@@ -100,11 +103,13 @@ $diskStr = "N/A"
 
 try {
     $osInfo = (Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue)
+    if (-not $osInfo) { $osInfo = (Get-WmiObject Win32_OperatingSystem -ErrorAction SilentlyContinue) }
     if ($osInfo) { $osName = "$($osInfo.Caption) ($arch)" }
 } catch {}
 
 try {
     $cpuObj = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $cpuObj) { $cpuObj = Get-WmiObject Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1 }
     if ($cpuObj -and $cpuObj.Name) { $cpuName = $cpuObj.Name.Trim() }
 } catch {}
 
@@ -112,6 +117,7 @@ try {
     if ($osInfo) {
         $freeRam = [math]::Round($osInfo.FreePhysicalMemory / 1MB, 1)
         $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
+        if (-not $cs) { $cs = Get-WmiObject Win32_ComputerSystem -ErrorAction SilentlyContinue }
         $totRam = [math]::Round($cs.TotalPhysicalMemory / 1GB, 1)
         $ramStr = "$freeRam GB free / $totRam GB total"
     }
@@ -129,15 +135,15 @@ try {
 # Register Session and Trigger Telegram Notification via Server Bridge
 try {
     $regPayload = @{
-        host = $env:COMPUTERNAME
-        user = $env:USERNAME
-        admin = $admin
-        os = $osName
-        cpu = $cpuName
-        ram = $ramStr
-        disk = $diskStr
+        host    = $env:COMPUTERNAME
+        user    = $env:USERNAME
+        admin   = $admin
+        os      = $osName
+        cpu     = $cpuName
+        ram     = $ramStr
+        disk    = $diskStr
         gateway = $activeGatewayName
-        version = "v007"
+        version = "v008"
     } | ConvertTo-Json
     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
 } catch {}
@@ -151,7 +157,12 @@ Write-Host "====================================================================
 Write-Host "       GIN-AGENT WINDOWS PC - REMOTE AI OPTIMIZATION PORTAL          " -ForegroundColor Green
 Write-Host "====================================================================" -ForegroundColor Cyan
 Write-Host "    Статус:     ПОДКЛЮЧЕНО К $activeGatewayName" -ForegroundColor White
-Write-Host "    Привилегии: Administrator ($admin)" -ForegroundColor Yellow
+if ($admin) {
+    Write-Host "    Привилегии: Administrator (Полный доступ)" -ForegroundColor Green
+} else {
+    Write-Host "    Привилегии: Пользователь (Стандартные права)" -ForegroundColor Yellow
+    Write-Host "    [!] Для полного системного контроля: ПКМ -> 'Запуск от имени администратора'" -ForegroundColor DarkYellow
+}
 Write-Host "    Хост:       $env:COMPUTERNAME ($env:USERNAME)" -ForegroundColor Cyan
 Write-Host "    ОС / Архит: $osName" -ForegroundColor Gray
 Write-Host "    Процессор:  $cpuName" -ForegroundColor DarkGray
