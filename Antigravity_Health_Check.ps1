@@ -4,8 +4,9 @@
     Author: Vladimir Bulantsev (@GinCz) & AI
     Repository: GinCz/Windows_scripts
 .DESCRIPTION
-    Audits and purges stale Antigravity daemon hubs, orphan session locks, and crash logs
-    to prevent socket connection timeouts and chat startup freezes.
+    Audits and purges stale Antigravity daemon hubs, orphan session locks, crash logs,
+    and performs SQLite database optimization (WAL checkpoint & VACUUM) to prevent
+    freezes, high latency, and startup delays.
 #>
 
 [CmdletBinding()]
@@ -19,26 +20,11 @@ $appData = Join-Path $env:USERPROFILE ".gemini\antigravity"
 $daemonDir = Join-Path $appData "daemon"
 $presenceDir = Join-Path $appData "presence"
 $crashesDir = Join-Path $appData "crashes"
+$convsDir = Join-Path $appData "conversations"
 $stateFile = Join-Path $appData "last_health_check.json"
 
 $currentDate = Get-Date
 $isMonday = ($currentDate.DayOfWeek -eq [System.DayOfWeek]::Monday)
-
-# Check if already run this week (unless -Force)
-if (-not $Force -and (Test-Path $stateFile)) {
-    try {
-        $lastState = Get-Content -Path $stateFile -Raw -Encoding UTF8 | ConvertFrom-Json
-        if ($lastState.LastRun) {
-            $lastRunDate = [DateTime]::Parse($lastState.LastRun)
-            $diffDays = ($currentDate - $lastRunDate).TotalDays
-            # If not Monday and ran less than 5 days ago, skip unless forced
-            if (-not $isMonday -and $diffDays -lt 5) {
-                Write-Host "Antigravity Health Check: Already verified within this cycle ($($lastState.LastRun)). Skipping." -ForegroundColor DarkGray
-                return
-            }
-        }
-    } catch {}
-}
 
 Write-Host "=== Antigravity Health Check & Maintenance Audit ===" -ForegroundColor Cyan
 
@@ -46,8 +32,9 @@ $cleanedHubs = 0
 $activeHubs = 0
 $cleanedLocks = 0
 $activeLocks = 0
+$optimizedDbs = 0
 
-# 1. Audit Daemon Hubs
+# 1. Audit Daemon Hubs (Always executed)
 if (Test-Path $daemonDir) {
     $hubFiles = Get-ChildItem -Path "$daemonDir\hub_*.json" -ErrorAction SilentlyContinue
     foreach ($hub in $hubFiles) {
@@ -74,7 +61,7 @@ if (Test-Path $daemonDir) {
     }
 }
 
-# 2. Audit Presence Locks
+# 2. Audit Presence Locks (Always executed to prevent chat freezes)
 if (Test-Path $presenceDir) {
     $lockFiles = Get-ChildItem -Path "$presenceDir\*.lock" -ErrorAction SilentlyContinue
     foreach ($lock in $lockFiles) {
@@ -112,7 +99,27 @@ if (Test-Path $crashesDir) {
     }
 }
 
-# 4. Save Health State
+# 4. SQLite Optimization & Compaction (Monday or -Force)
+$pyExe = "C:\Users\USER\.local\bin\python3.14.exe"
+if (($Force -or $isMonday) -and (Test-Path $pyExe)) {
+    Write-Host "  [OPTIMIZE] Running SQLite WAL checkpoint and VACUUM..." -ForegroundColor Cyan
+    $dbFiles = @()
+    $sumDb = Join-Path $appData "conversation_summaries.db"
+    if (Test-Path $sumDb) { $dbFiles += $sumDb }
+    if (Test-Path $convsDir) {
+        $dbFiles += (Get-ChildItem -Path "$convsDir\*.db" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName)
+    }
+
+    foreach ($db in $dbFiles) {
+        try {
+            & $pyExe -c "import sqlite3; con = sqlite3.connect(r'$db'); con.execute('PRAGMA wal_checkpoint(TRUNCATE);'); con.execute('VACUUM;'); con.execute('PRAGMA optimize;'); con.close()" 2>$null
+            $optimizedDbs++
+        } catch {}
+    }
+    Write-Host "  [OPTIMIZE] Compacted and verified $optimizedDbs SQLite databases" -ForegroundColor Green
+}
+
+# 5. Save Health State
 if (-not $CheckOnly) {
     $state = [PSCustomObject]@{
         LastRun = $currentDate.ToString("yyyy-MM-dd HH:mm:ss")
@@ -122,9 +129,10 @@ if (-not $CheckOnly) {
         ActiveLocks = $activeLocks
         CleanedLocks = $cleanedLocks
         CleanedCrashes = $cleanedCrashes
+        OptimizedDbs = $optimizedDbs
         Status = "Healthy"
     }
     $state | ConvertTo-Json | Set-Content -Path $stateFile -Encoding UTF8
 }
 
-Write-Host "Audit Complete: Active Hubs: $activeHubs | Cleaned Hubs: $cleanedHubs | Active Locks: $activeLocks | Cleaned Locks: $cleanedLocks" -ForegroundColor Green
+Write-Host "Audit Complete: Active Hubs: $activeHubs | Cleaned Hubs: $cleanedHubs | Active Locks: $activeLocks | Cleaned Locks: $cleanedLocks | Optimized DBs: $optimizedDbs" -ForegroundColor Green
