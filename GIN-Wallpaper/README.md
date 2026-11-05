@@ -1,4 +1,4 @@
-# 🖼 GIN-Wallpaper-Calend v002
+# 🖼 GIN-Wallpaper-Calend v003
 
 > **Умные обои с русским календарём для Windows** — лёгкий трей-апплет с установщиком  
 > **Автор:** [GinCz / Vladimir Bulantsev ↗](https://github.com/GinCz)  
@@ -10,7 +10,7 @@
 ## 🚀 Быстрый старт — Установка
 
 **Скачать установщик:**  
-[`GIN-Wallpaper-Calend_v002_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v002_Setup.exe)
+[`GIN-Wallpaper-Calend_v003_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v003_Setup.exe)
 
 > **Запустить от имени Администратора** → следовать инструкциям → ✅ Готово!
 
@@ -79,7 +79,7 @@
 ```bat
 build_setup.bat
 ```
-Результат: `GIN-Wallpaper-Calend_v002_Setup.exe`
+Результат: `GIN-Wallpaper-Calend_v003_Setup.exe`
 
 > Требует: .NET Framework 4.x (для `csc.exe`) или PowerShell 5+
 
@@ -95,7 +95,7 @@ pythonw gin_wallpaper.py
 
 ```
 GIN-Wallpaper/
-├── GIN-Wallpaper-Calend_v002_Setup.exe  # ← Скачать и запустить!
+├── GIN-Wallpaper-Calend_v003_Setup.exe  # ← Скачать и запустить!
 ├── installer_setup.cs                    # C# WinForms установщик
 ├── build_setup.bat                       # Сборка Setup EXE
 ├── gin_wallpaper.py                      # Python движок (обои + календарь)
@@ -113,7 +113,7 @@ GIN-Wallpaper/
 
 | Версия | Дата | Изменения |
 |---|---|---|
-| v002 | 2026-11-05 | Первый релиз: трей + календарь + 8 тем + автосмена + полноценный установщик |
+| v003 | 2026-11-05 | Первый релиз: трей + календарь + 8 тем + автосмена + полноценный установщик |
 
 ---
 

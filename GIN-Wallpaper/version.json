@@ -1,23 +1,21 @@
 {
-  "version": "v002",
+  "version": "v003",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v002_Setup.exe",
-  "description": "Умные обои с русским календарём для Windows (tray app)",
+  "installer": "GIN-Wallpaper-Calend_v003_Setup.exe",
+  "description": "Умные обои с русским календарём для Windows (100% Standalone, Zero Dependencies)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-05",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v002_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v003_Setup.exe",
   "features": [
-    "Трей-апплет (двойной клик = новые обои)",
-    "Скачивание картинок с Unsplash/Pexels/Picsum",
-    "8 тем: космос, природа, авто, города, животные, абстракция, океан, зима",
-    "Выбор нескольких тем / случайная",
-    "Интервал смены: 1ч / 3ч / 6ч / 1 день",
-    "Русский календарь в правом верхнем углу",
+    "100% автономный нативный бинарник без Python и зависимостей",
+    "Трей-апплет (двойной клик = мгновенная смена обоев)",
+    "Скачивание картинок высокого разрешения под монитор",
+    "Русский календарь в правом верхнем углу с подсветкой текущего дня",
     "Установка в Program Files + запись в Add/Remove Programs",
-    "Чистое удаление через Uninstaller (батник в Temp с задержкой)",
+    "Чистое удаление через Uninstaller (самоочистка через Temp)",
     "Автозагрузка при старте Windows",
-    "Нативный Go runner с красивой 256x256 иконкой",
-    "Максимально лёгкий (< 20 МБ RAM в фоне)"
+    "Красивая 256x256 встроенная иконка Win32 PE",
+    "Потребление памяти < 12 МБ RAM"
   ]
 }
