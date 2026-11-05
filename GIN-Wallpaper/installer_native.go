@@ -101,22 +101,63 @@ func downloadFile(url, dest string) error {
 	return err
 }
 
-func createShortcut(shortcutPath, target, arguments, workDir, description, iconPath string) {
-	tmpVBS := filepath.Join(os.TempDir(), fmt.Sprintf("sc_%d.vbs", time.Now().UnixNano()))
-	content := fmt.Sprintf(`Set ws = CreateObject("WScript.Shell")
-Set sc = ws.CreateShortcut("%s")
-sc.TargetPath = "%s"
-sc.Arguments = "%s"
-sc.WorkingDirectory = "%s"
-sc.Description = "%s"
-sc.IconLocation = "%s,0"
-sc.Save
-`, shortcutPath, target, arguments, workDir, description, iconPath)
+func getDesktopDirectories() []string {
+	res := []string{
+		`D:\MEGA\DOCS\desktop`,
+		`D:\mega\docs\desktop`,
+		filepath.Join(os.Getenv("USERPROFILE"), "Desktop"),
+		filepath.Join(os.Getenv("PUBLIC"), "Desktop"),
+	}
+	var existing []string
+	for _, d := range res {
+		if d == "" {
+			continue
+		}
+		if fi, err := os.Stat(d); err == nil && fi.IsDir() {
+			existing = append(existing, d)
+		}
+	}
+	// Fallback: if none exists, create D:\MEGA\DOCS\desktop or user desktop
+	if len(existing) == 0 {
+		ud := filepath.Join(os.Getenv("USERPROFILE"), "Desktop")
+		os.MkdirAll(ud, 0755)
+		existing = append(existing, ud)
+	}
+	return existing
+}
 
-	os.WriteFile(tmpVBS, []byte(content), 0644)
-	cmd := exec.Command("wscript.exe", tmpVBS)
+func createShortcutsSafe(targetExe, workDir string) {
+	psScript := fmt.Sprintf(`
+$w = New-Object -ComObject WScript.Shell
+$deskDirs = @('D:\MEGA\DOCS\desktop', 'D:\mega\docs\desktop', [Environment]::GetFolderPath('Desktop'), "$env:USERPROFILE\Desktop", "$env:PUBLIC\Desktop")
+foreach ($d in $deskDirs) {
+    if (Test-Path $d) {
+        try {
+            $s = $w.CreateShortcut("$d\GIN-Wallpaper-Calend.lnk")
+            $s.TargetPath = '%s'
+            $s.WorkingDirectory = '%s'
+            $s.IconLocation = '%s,0'
+            $s.Description = 'GIN-Wallpaper-Calend by VladiMIR+AI'
+            $s.Save()
+        } catch {}
+    }
+}
+$sm = [Environment]::GetFolderPath('Programs')
+if (Test-Path $sm) {
+    try {
+        $s = $w.CreateShortcut("$sm\GIN-Wallpaper-Calend.lnk")
+        $s.TargetPath = '%s'
+        $s.WorkingDirectory = '%s'
+        $s.IconLocation = '%s,0'
+        $s.Description = 'GIN-Wallpaper-Calend by VladiMIR+AI'
+        $s.Save()
+    } catch {}
+}
+`, targetExe, workDir, targetExe, targetExe, workDir, targetExe)
+
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Run()
-	os.Remove(tmpVBS)
 }
 
 func main() {
@@ -145,10 +186,11 @@ func main() {
 		exec.Command("reg", "delete", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`, "/f").Run()
 		exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, "/v", "GIN-Wallpaper-Calend", "/f").Run()
 
-		// Shortcuts
-		desktop := filepath.Join(os.Getenv("USERPROFILE"), "Desktop", "GIN-Wallpaper-Calend.lnk")
+		// Remove shortcuts from all possible desktop folders
+		for _, d := range getDesktopDirectories() {
+			os.Remove(filepath.Join(d, "GIN-Wallpaper-Calend.lnk"))
+		}
 		startMenu := filepath.Join(os.Getenv("APPDATA"), `Microsoft\Windows\Start Menu\Programs\GIN-Wallpaper-Calend.lnk`)
-		os.Remove(desktop)
 		os.Remove(startMenu)
 
 		// Remove directory deferred
@@ -192,7 +234,7 @@ func main() {
 		os.WriteFile(icoDest, embeddedAppICO, 0644)
 	}
 
-	// 2. Write native runner EXE
+	// 2. Write native runner EXE (with compiled icon)
 	mainExe := filepath.Join(targetDir, "GIN-Wallpaper-Calend.exe")
 	if len(embeddedRunnerEXE) > 0 {
 		os.WriteFile(mainExe, embeddedRunnerEXE, 0755)
@@ -200,10 +242,7 @@ func main() {
 
 	// 3. Download gin_wallpaper.py
 	pyDest := filepath.Join(targetDir, "gin_wallpaper.py")
-	if err := downloadFile(rawBase+"/gin_wallpaper.py", pyDest); err != nil {
-		// Try mirror or write fallback
-		time.Sleep(500 * time.Millisecond)
-	}
+	downloadFile(rawBase+"/gin_wallpaper.py", pyDest)
 
 	// 4. Copy self as Uninstaller
 	selfExe, _ := os.Executable()
@@ -234,11 +273,7 @@ func main() {
 	exec.Command("reg", "add", runKey, "/v", "GIN-Wallpaper-Calend", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, mainExe), "/f").Run()
 
 	// 8. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with embedded icon!
-	desktop := filepath.Join(os.Getenv("USERPROFILE"), "Desktop", "GIN-Wallpaper-Calend.lnk")
-	startMenu := filepath.Join(os.Getenv("APPDATA"), `Microsoft\Windows\Start Menu\Programs\GIN-Wallpaper-Calend.lnk`)
-
-	createShortcut(desktop, mainExe, "", targetDir, "GIN-Wallpaper-Calend", mainExe)
-	createShortcut(startMenu, mainExe, "", targetDir, "GIN-Wallpaper-Calend", mainExe)
+	createShortcutsSafe(mainExe, targetDir)
 
 	// 9. Launch immediately!
 	exec.Command(mainExe).Start()
