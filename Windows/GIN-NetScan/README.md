@@ -84,3 +84,16 @@ Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Window
 This application is provided completely **free of charge (Freeware)** for personal, educational, and commercial use.
 - **100% Free:** Zero ads, zero telemetry, zero hidden monetization, zero subscription fees.
 - **Proprietary Freeware Core:** The network discovery engine and Win32 GDI architecture are developed and maintained exclusively by Vladimir Bulantsev. Reverse engineering, decompilation, redistribution for a fee, or unauthorized repackaging are strictly prohibited.
+
+
+---
+
+# ⚡ ЖЕЛЕЗНЫЙ ЗАКОН ДОСТАВКИ: ТОЛЬКО НА РАБОЧИЙ СТОЛ ВЛАДИМИРА (D:\MEGA\DOCS\desktop)
+
+> **КАТЕГОРИЧЕСКИЙ ЗАПРЕТ СТОРОННИХ ПАПОК И СЕРВЕРА DE-222:**
+> Все без исключения новые приложения, утилиты, скрипты (CMD, BAT, PS1), таблицы Excel, файлы и скомпилированные релизы для Windows **ОБЯЗАНЫ АВТОНОМНО И БЕЗ НАПОМИНАНИЙ ЗАПИСЫВАТЬСЯ ТОЛЬКО НА РАБОЧИЙ СТОЛ ВЛАДИМИРА**:
+> - **Локальный путь на компьютере Владимира:** `D:\MEGA\DOCS\desktop`
+> - **Облачный путь синхронизации в MEGA:** `/MEGA/DOCS/desktop/`
+> - **Команда загрузки с сервера DE-222:** `mega-put -c "<file_path>" "/MEGA/DOCS/desktop/"`
+>
+> 🛑 **СТРОГИЙ ЗАПРЕТ:** Запрещено оставлять созданные или обновленные файлы только локально на сервере, только в git-репозитории или на сетевых дисках. Любой релизный файл Windows (.cmd, .bat, .exe, .xlsx, .zip) сразу после создания ДОЛЖЕН лежать в `/MEGA/DOCS/desktop/`!
