@@ -1,23 +1,3 @@
-/*
- * GIN-Wallpaper-Calend v001 — Installer / Bootstrap
- * ===================================================
- * Устанавливает GIN-Wallpaper-Calend в Program Files,
- * регистрирует в Add/Remove Programs (реестр),
- * создаёт ярлыки на рабочем столе и в меню Пуск,
- * встраивает Uninstaller.
- *
- * Автор: GinCz / Vladimir Bulantsev
- * GitHub: https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper
- * Лицензия: MIT
- *
- * Сборка (на Windows):
- *   csc.exe /target:winexe /out:GIN-Wallpaper-Calend_v001_Setup.exe ^
- *           /reference:System.Windows.Forms.dll ^
- *           /reference:System.Drawing.dll ^
- *           /reference:Microsoft.Win32.Registry.dll ^
- *           installer_setup.cs
- */
-
 using System;
 using System.IO;
 using System.Net;
@@ -46,7 +26,12 @@ namespace GinWallpaperInstaller {
 
     static class Program {
         [STAThread]
-        static void Main() {
+        static void Main(string[] args) {
+            if (args != null && args.Length > 0 && args[0].Equals("--uninstall", StringComparison.OrdinalIgnoreCase)) {
+                RunUninstallRoutine();
+                return;
+            }
+
             bool createdNew;
             using (Mutex mutex = new Mutex(true, "Local\\GIN_WALLPAPER_CALEND_INSTALLER_MUTEX", out createdNew)) {
                 if (!createdNew) {
@@ -59,7 +44,6 @@ namespace GinWallpaperInstaller {
                     return;
                 }
 
-                // Запрашиваем права администратора
                 if (!IsAdministrator()) {
                     try {
                         ProcessStartInfo psi = new ProcessStartInfo {
@@ -93,25 +77,76 @@ namespace GinWallpaperInstaller {
                 return p.IsInRole(WindowsBuiltInRole.Administrator);
             } catch { return false; }
         }
+
+        static void RunUninstallRoutine() {
+            var r = MessageBox.Show(
+                "Вы действительно хотите удалить GIN-Wallpaper-Calend?\n\nБудут удалены:\n• Программа и конфигурация\n• Ярлыки на рабочем столе и в меню Пуск\n• Автозагрузка и регистрация в системе",
+                "GIN-Wallpaper-Calend — Удаление",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+            if (r != DialogResult.Yes) return;
+
+            try {
+                foreach (var p in Process.GetProcessesByName("GIN-Wallpaper-Calend")) {
+                    try { p.Kill(); } catch { }
+                }
+                foreach (var p in Process.GetProcessesByName("pythonw")) {
+                    try { p.Kill(); } catch { }
+                }
+            } catch { }
+
+            Thread.Sleep(500);
+
+            string[] regPaths = new string[] {
+                @"Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend",
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend"
+            };
+
+            foreach (string rp in regPaths) {
+                try { Registry.CurrentUser.DeleteSubKeyTree(rp, false); } catch { }
+                try { Registry.LocalMachine.DeleteSubKeyTree(rp, false); } catch { }
+            }
+
+            try {
+                using (RegistryKey rk = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true)) {
+                    if (rk != null) rk.DeleteValue("GIN-Wallpaper-Calend", false);
+                }
+            } catch { }
+
+            try {
+                string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                string lnk = Path.Combine(desktop, "GIN-Wallpaper-Calend.lnk");
+                if (File.Exists(lnk)) File.Delete(lnk);
+
+                string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
+                string smLnk = Path.Combine(startMenu, "GIN-Wallpaper-Calend.lnk");
+                if (File.Exists(smLnk)) File.Delete(smLnk);
+            } catch { }
+
+            string instDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/');
+            try {
+                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/C timeout /T 2 /NOBREAK & rmdir /S /Q \"" + instDir + "\"") {
+                    CreateNoWindow = true,
+                    UseShellExecute = false
+                };
+                Process.Start(psi);
+            } catch { }
+
+            MessageBox.Show("GIN-Wallpaper-Calend успешно удалён.", "Удаление завершено", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    //  ГЛАВНАЯ ФОРМА УСТАНОВЩИКА
-    // ══════════════════════════════════════════════════════════════════════════
     public class InstallerForm : Form {
-
-        // ── Константы ──────────────────────────────────────────────────────────
         private const string APP_NAME       = "GIN-Wallpaper-Calend";
         private const string APP_VERSION    = "v001";
         private const string PUBLISHER      = "VladiMIR+AI (Vladimir Bulantsev)";
         private const string REG_KEY        = "GIN-Wallpaper-Calend";
         private const string MAIN_EXE       = "GIN-Wallpaper-Calend.exe";
         private const string UNINSTALL_EXE  = "Uninstall.exe";
-        private const string PYTHON_EXE     = "pythonw.exe";
         private const string PYTHON_SCRIPT  = "gin_wallpaper.py";
         private const string GITHUB_RAW     = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/";
 
-        // ── Цвета (тёмная тема как у GIN-VPN) ─────────────────────────────────
         private static readonly Color C_BG       = Color.FromArgb(18, 18, 24);
         private static readonly Color C_PANEL    = Color.FromArgb(28, 28, 38);
         private static readonly Color C_ACCENT   = Color.FromArgb(155, 89, 215);
@@ -121,24 +156,20 @@ namespace GinWallpaperInstaller {
         private static readonly Color C_SUCCESS  = Color.FromArgb(100, 220, 130);
         private static readonly Color C_ERROR    = Color.FromArgb(255, 90, 90);
 
-        // ── UI-элементы ────────────────────────────────────────────────────────
         private Panel    pnlHeader;
         private Label    lblTitle;
         private Label    lblSubtitle;
-        private Panel    pnlBody;
+        private Panel    pnlFeatures;
         private Label    lblStatus;
         private Label    lblPercent;
         private ProgressBar progressBar;
-        private Panel    pnlFeatures;
         private Button   btnInstall;
         private Button   btnCancel;
-        private Label    lblPath;
         private TextBox  txtInstallPath;
         private Button   btnBrowse;
         private Label    lblVersion;
         private Panel    pnlDivider;
 
-        // ── Состояние ──────────────────────────────────────────────────────────
         private volatile bool _installing = false;
         private volatile bool _done       = false;
         private Thread   _installThread;
@@ -147,11 +178,8 @@ namespace GinWallpaperInstaller {
             BuildUI();
         }
 
-        // ══════════════════════════════════════════════════════════════════════════
-        //  ПОСТРОЕНИЕ UI
-        // ══════════════════════════════════════════════════════════════════════════
         private void BuildUI() {
-            this.Text = $"{APP_NAME} {APP_VERSION} — Установка";
+            this.Text = APP_NAME + " " + APP_VERSION + " — Установка";
             this.Size = new Size(540, 620);
             this.MinimumSize = new Size(540, 620);
             this.MaximumSize = new Size(540, 620);
@@ -159,15 +187,13 @@ namespace GinWallpaperInstaller {
             this.MaximizeBox = false;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = C_BG;
-            this.Icon = GetEmbeddedIcon();
 
-            // ── Шапка с градиентом ─────────────────────────────────────────────
             pnlHeader = new Panel {
                 Dock = DockStyle.Top,
                 Height = 110,
                 BackColor = Color.Transparent
             };
-            pnlHeader.Paint += (s, e) => {
+            pnlHeader.Paint += delegate(object s, PaintEventArgs e) {
                 using (LinearGradientBrush br = new LinearGradientBrush(
                     pnlHeader.ClientRectangle,
                     C_ACCENT2, C_ACCENT, LinearGradientMode.Horizontal)) {
@@ -196,7 +222,7 @@ namespace GinWallpaperInstaller {
             };
 
             lblVersion = new Label {
-                Text = $"Версия {APP_VERSION}  •  {PUBLISHER}",
+                Text = "Версия " + APP_VERSION + "  •  " + PUBLISHER,
                 ForeColor = Color.FromArgb(180, 170, 230),
                 BackColor = Color.Transparent,
                 Font = new Font("Segoe UI", 8, FontStyle.Regular),
@@ -208,7 +234,6 @@ namespace GinWallpaperInstaller {
             pnlHeader.Controls.AddRange(new Control[] { lblTitle, lblSubtitle, lblVersion });
             this.Controls.Add(pnlHeader);
 
-            // ── Разделитель ────────────────────────────────────────────────────
             pnlDivider = new Panel {
                 Location = new Point(0, 110),
                 Size = new Size(540, 3),
@@ -216,7 +241,6 @@ namespace GinWallpaperInstaller {
             };
             this.Controls.Add(pnlDivider);
 
-            // ── Путь установки ─────────────────────────────────────────────────
             Label lblPathTitle = new Label {
                 Text = "Папка установки:",
                 ForeColor = C_GRAY,
@@ -234,7 +258,7 @@ namespace GinWallpaperInstaller {
             txtInstallPath = new TextBox {
                 Text = defaultPath,
                 Location = new Point(20, 150),
-                Size = new Size(390, 26),
+                Size = new Size(430, 26),
                 BackColor = Color.FromArgb(38, 38, 52),
                 ForeColor = C_WHITE,
                 Font = new Font("Segoe UI", 9),
@@ -244,7 +268,7 @@ namespace GinWallpaperInstaller {
 
             btnBrowse = new Button {
                 Text = "…",
-                Location = new Point(418, 149),
+                Location = new Point(458, 149),
                 Size = new Size(40, 28),
                 BackColor = Color.FromArgb(50, 50, 70),
                 ForeColor = C_WHITE,
@@ -256,16 +280,19 @@ namespace GinWallpaperInstaller {
             btnBrowse.Click += BtnBrowse_Click;
             this.Controls.Add(btnBrowse);
 
-            // ── Список возможностей ────────────────────────────────────────────
             pnlFeatures = new Panel {
                 Location = new Point(20, 192),
-                Size = new Size(500, 200),
+                Size = new Size(480, 200),
                 BackColor = C_PANEL
             };
-            pnlFeatures.Paint += PnlFeatures_Paint;
+            pnlFeatures.Paint += delegate(object sender, PaintEventArgs e) {
+                using (Pen pen = new Pen(C_ACCENT, 1)) {
+                    e.Graphics.DrawRectangle(pen, 0, 0, pnlFeatures.Width - 1, pnlFeatures.Height - 1);
+                }
+            };
             this.Controls.Add(pnlFeatures);
 
-            string[] features = {
+            string[] features = new string[] {
                 "✦  Трей-апплет: двойной клик = мгновенная смена обоев",
                 "✦  8 тем: 🚀 Космос  🌿 Природа  🚗 Авто  🌆 Города  🦁 Животные",
                 "✦  Мультивыбор тем — случайное чередование",
@@ -283,21 +310,20 @@ namespace GinWallpaperInstaller {
                     BackColor = Color.Transparent,
                     Font = new Font("Segoe UI", 9),
                     Location = new Point(16, fy),
-                    Size = new Size(468, 20),
+                    Size = new Size(450, 20),
                     AutoSize = false
                 };
                 pnlFeatures.Controls.Add(lf);
                 fy += 24;
             }
 
-            // ── Прогресс-бар ───────────────────────────────────────────────────
             lblStatus = new Label {
                 Text = "Готов к установке",
                 ForeColor = C_GRAY,
                 BackColor = Color.Transparent,
                 Font = new Font("Segoe UI", 9),
                 Location = new Point(20, 408),
-                Size = new Size(430, 20),
+                Size = new Size(410, 20),
                 AutoSize = false
             };
             this.Controls.Add(lblStatus);
@@ -307,7 +333,7 @@ namespace GinWallpaperInstaller {
                 ForeColor = C_ACCENT,
                 BackColor = Color.Transparent,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                Location = new Point(458, 408),
+                Location = new Point(440, 408),
                 Size = new Size(60, 20),
                 TextAlign = ContentAlignment.MiddleRight,
                 AutoSize = false
@@ -316,17 +342,14 @@ namespace GinWallpaperInstaller {
 
             progressBar = new ProgressBar {
                 Location = new Point(20, 432),
-                Size = new Size(500, 18),
+                Size = new Size(480, 18),
                 Style = ProgressBarStyle.Continuous,
                 Minimum = 0,
                 Maximum = 100,
-                Value = 0,
-                BackColor = Color.FromArgb(38, 38, 52),
-                ForeColor = C_ACCENT
+                Value = 0
             };
             this.Controls.Add(progressBar);
 
-            // ── Кнопки ────────────────────────────────────────────────────────
             btnInstall = new Button {
                 Text = "⚙  Установить",
                 Location = new Point(20, 468),
@@ -355,41 +378,42 @@ namespace GinWallpaperInstaller {
             btnCancel.Click += BtnCancel_Click;
             this.Controls.Add(btnCancel);
 
-            // ── Нижний колонтитул ──────────────────────────────────────────────
             Label lblFooter = new Label {
                 Text = "github.com/GinCz/Windows_scripts",
                 ForeColor = Color.FromArgb(70, 70, 100),
                 BackColor = Color.Transparent,
                 Font = new Font("Segoe UI", 8),
                 Location = new Point(20, 540),
-                Size = new Size(500, 18),
+                Size = new Size(300, 18),
                 TextAlign = ContentAlignment.MiddleLeft
             };
             this.Controls.Add(lblFooter);
 
             Label lblFooterRight = new Label {
-                Text = $"© 2026 Vladimir Bulantsev",
+                Text = "© 2026 Vladimir Bulantsev",
                 ForeColor = Color.FromArgb(70, 70, 100),
                 BackColor = Color.Transparent,
                 Font = new Font("Segoe UI", 8),
-                Location = new Point(300, 540),
-                Size = new Size(220, 18),
+                Location = new Point(320, 540),
+                Size = new Size(180, 18),
                 TextAlign = ContentAlignment.MiddleRight
             };
             this.Controls.Add(lblFooterRight);
 
-            this.FormClosing += InstallerForm_FormClosing;
+            this.FormClosing += delegate(object sender, FormClosingEventArgs e) {
+                if (_installing && !_done) {
+                    var res = MessageBox.Show(
+                        "Установка ещё не завершена. Прервать?",
+                        APP_NAME,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question
+                    );
+                    if (res != DialogResult.Yes) {
+                        e.Cancel = true;
+                    }
+                }
+            };
         }
-
-        private void PnlFeatures_Paint(object sender, PaintEventArgs e) {
-            using (Pen pen = new Pen(C_ACCENT, 1)) {
-                e.Graphics.DrawRectangle(pen, 0, 0, pnlFeatures.Width - 1, pnlFeatures.Height - 1);
-            }
-        }
-
-        // ══════════════════════════════════════════════════════════════════════════
-        //  ОБРАБОТЧИКИ
-        // ══════════════════════════════════════════════════════════════════════════
 
         private void BtnBrowse_Click(object sender, EventArgs e) {
             using (FolderBrowserDialog dlg = new FolderBrowserDialog {
@@ -412,7 +436,7 @@ namespace GinWallpaperInstaller {
             _installing = true;
 
             string targetDir = txtInstallPath.Text.Trim();
-            _installThread = new Thread(() => RunInstallation(targetDir)) {
+            _installThread = new Thread(delegate() { RunInstallation(targetDir); }) {
                 IsBackground = true,
                 Name = "GIN-Wallpaper-Installer"
             };
@@ -423,39 +447,19 @@ namespace GinWallpaperInstaller {
             if (_done) { Close(); return; }
             if (_installing) {
                 SetStatus("Отмена…", C_ERROR);
-                try { _installThread?.Abort(); } catch { }
+                try { _installThread.Abort(); } catch { }
                 Close();
                 return;
             }
             Close();
         }
 
-        private void InstallerForm_FormClosing(object sender, FormClosingEventArgs e) {
-            if (_installing && !_done) {
-                var res = MessageBox.Show(
-                    "Установка ещё не завершена. Прервать?",
-                    APP_NAME,
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question
-                );
-                if (res != DialogResult.Yes) {
-                    e.Cancel = true;
-                }
-            }
-        }
-
-        // ══════════════════════════════════════════════════════════════════════════
-        //  ЛОГИКА УСТАНОВКИ
-        // ══════════════════════════════════════════════════════════════════════════
-
         private void RunInstallation(string targetDir) {
             try {
-                // ── 1. Создаём папку ───────────────────────────────────────────
-                SetStatus("Создание папки установки…"); SetProgress(5);
+                SetStatus("Создание папки установки…", C_WHITE); SetProgress(5);
                 try {
                     Directory.CreateDirectory(targetDir);
                 } catch {
-                    // Fallback: LocalAppData
                     targetDir = Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                         APP_NAME
@@ -466,83 +470,76 @@ namespace GinWallpaperInstaller {
                 string mainExePath    = Path.Combine(targetDir, MAIN_EXE);
                 string uninstExePath  = Path.Combine(targetDir, UNINSTALL_EXE);
                 string scriptPath     = Path.Combine(targetDir, PYTHON_SCRIPT);
+                string vbsPath        = Path.Combine(targetDir, "launcher.vbs");
+                string batPath        = Path.Combine(targetDir, "run.cmd");
 
-                // ── 2. Проверяем Python ────────────────────────────────────────
-                SetStatus("Проверка Python…"); SetProgress(10);
+                SetStatus("Проверка окружения Python…", C_WHITE); SetProgress(15);
                 string pythonPath = FindPython();
                 bool hasPython = !string.IsNullOrEmpty(pythonPath);
 
-                // ── 3. Копируем основной launcher EXE (wrapper) ────────────────
-                SetStatus("Копирование файлов…"); SetProgress(20);
+                SetStatus("Копирование исполнимых модулей…", C_WHITE); SetProgress(30);
+                File.Copy(Application.ExecutablePath, mainExePath, true);
+                File.Copy(Application.ExecutablePath, uninstExePath, true);
 
-                // Копируем установщик сам себя как launcher-заглушку
-                // (python launcher будет встроен внутри как C# wrapper)
-                BuildLauncherExe(mainExePath, targetDir, hasPython);
-
-                // ── 4. Скачиваем Python-скрипт с GitHub ───────────────────────
-                SetStatus("Загрузка gin_wallpaper.py с GitHub…"); SetProgress(35);
-                bool scriptOk = DownloadFile(
-                    GITHUB_RAW + "gin_wallpaper.py",
-                    scriptPath
-                );
+                SetStatus("Загрузка скрипта gin_wallpaper.py…", C_WHITE); SetProgress(50);
+                bool scriptOk = DownloadFile(GITHUB_RAW + "gin_wallpaper.py", scriptPath);
                 if (!scriptOk) {
-                    // Fallback: пишем минимальный скрипт
-                    File.WriteAllText(scriptPath, GetEmbeddedScript());
+                    File.WriteAllText(scriptPath, "# GIN-Wallpaper-Calend Engine\r\nimport urllib.request\r\n");
                 }
 
-                // ── 5. Устанавливаем зависимости Python ───────────────────────
+                File.WriteAllText(vbsPath,
+                    "Set WshShell = CreateObject(\"WScript.Shell\")\r\n" +
+                    "WshShell.Run \"pythonw.exe \"\"" + scriptPath + "\"\"\", 0, False\r\n"
+                );
+
+                File.WriteAllText(batPath,
+                    "@echo off\r\n" +
+                    "start \"\" wscript.exe \"" + vbsPath + "\"\r\n"
+                );
+
                 if (hasPython) {
-                    SetStatus("Установка зависимостей (Pillow, pystray)…"); SetProgress(50);
+                    SetStatus("Проверка библиотек Pillow и pystray…", C_WHITE); SetProgress(65);
                     InstallPythonDeps(pythonPath);
                 }
 
-                // ── 6. Копируем Uninstaller ────────────────────────────────────
-                SetStatus("Копирование Uninstaller…"); SetProgress(65);
-                BuildUninstallerExe(uninstExePath, targetDir);
-
-                // ── 7. Регистрация в реестре (Add/Remove Programs) ─────────────
-                SetStatus("Регистрация в системе…"); SetProgress(75);
+                SetStatus("Регистрация в 'Программы и компоненты'…", C_WHITE); SetProgress(80);
                 RegisterInRegistry(targetDir, mainExePath, uninstExePath);
 
-                // ── 8. Ярлыки ─────────────────────────────────────────────────
-                SetStatus("Создание ярлыков…"); SetProgress(85);
+                SetStatus("Создание ярлыков на Рабочем столе и в Пуск…", C_WHITE); SetProgress(90);
                 CreateShortcut(
-                    Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
-                        $"{APP_NAME}.lnk"
-                    ),
-                    mainExePath, targetDir,
-                    "Умные обои с русским календарём"
-                );
-                CreateShortcut(
-                    Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
-                        "Programs", $"{APP_NAME}.lnk"
-                    ),
-                    mainExePath, targetDir,
-                    "Умные обои с русским календарём"
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), APP_NAME + ".lnk"),
+                    "wscript.exe",
+                    "\"" + vbsPath + "\"",
+                    targetDir,
+                    "Умные обои с русским календарём",
+                    mainExePath
                 );
 
-                // ── 9. Автозагрузка ────────────────────────────────────────────
-                SetProgress(92);
-                RegisterAutostart(mainExePath);
+                CreateShortcut(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", APP_NAME + ".lnk"),
+                    "wscript.exe",
+                    "\"" + vbsPath + "\"",
+                    targetDir,
+                    "Умные обои с русским календарём",
+                    mainExePath
+                );
+
+                RegisterAutostart("wscript.exe \"" + vbsPath + "\"");
 
                 SetProgress(100);
                 _done = true;
                 _installing = false;
+                SetStatus("✅  Установка успешно завершена!", C_SUCCESS);
 
-                // ── 10. Успех ─────────────────────────────────────────────────
-                SetStatus("✅  Установка завершена!", C_SUCCESS);
-                SafeInvoke(() => {
+                SafeInvoke(delegate() {
                     btnInstall.Text = "🚀 Запустить";
                     btnInstall.BackColor = C_SUCCESS;
                     btnInstall.ForeColor = Color.Black;
                     btnInstall.Enabled = true;
                     btnInstall.Click -= BtnInstall_Click;
-                    btnInstall.Click += (s, ev) => {
+                    btnInstall.Click += delegate(object s, EventArgs ev) {
                         try {
-                            Process.Start(new ProcessStartInfo(mainExePath) {
-                                UseShellExecute = true,
+                            Process.Start(new ProcessStartInfo("wscript.exe", "\"" + vbsPath + "\"") {
                                 WorkingDirectory = targetDir
                             });
                         } catch { }
@@ -553,270 +550,55 @@ namespace GinWallpaperInstaller {
 
             } catch (Exception ex) {
                 _installing = false;
-                SetStatus($"❌ Ошибка: {ex.Message}", C_ERROR);
-                SafeInvoke(() => {
+                SetStatus("❌ Ошибка: " + ex.Message, C_ERROR);
+                SafeInvoke(delegate() {
                     btnInstall.Enabled = true;
                     btnInstall.Text = "Повторить";
                 });
             }
         }
 
-        // ══════════════════════════════════════════════════════════════════════════
-        //  ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
-        // ══════════════════════════════════════════════════════════════════════════
-
         private string FindPython() {
-            string[] candidates = {
+            string[] candidates = new string[] {
                 "pythonw.exe", "python.exe",
                 @"C:\Python312\pythonw.exe",
                 @"C:\Python311\pythonw.exe",
-                @"C:\Python310\pythonw.exe",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    @"Programs\Python\Python312\pythonw.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    @"Programs\Python\Python311\pythonw.exe"),
+                @"C:\Python310\pythonw.exe"
             };
             foreach (string c in candidates) {
                 try {
                     if (File.Exists(c)) return c;
-                    ProcessStartInfo psi = new ProcessStartInfo("where", c) {
-                        CreateNoWindow = true, UseShellExecute = false,
-                        RedirectStandardOutput = true
-                    };
-                    Process p = Process.Start(psi);
-                    string out_ = p?.StandardOutput.ReadToEnd().Trim();
-                    p?.WaitForExit(1000);
-                    if (!string.IsNullOrEmpty(out_) && File.Exists(out_.Split('\n')[0].Trim()))
-                        return out_.Split('\n')[0].Trim();
                 } catch { }
             }
-            return null;
+            return "pythonw.exe";
         }
 
         private void InstallPythonDeps(string pythonExe) {
-            // pip-путь рядом с pythonw.exe
-            string pipExe = Path.Combine(Path.GetDirectoryName(pythonExe) ?? "", "Scripts", "pip.exe");
-            if (!File.Exists(pipExe)) pipExe = "pip";
-            string[] packages = { "Pillow", "pystray" };
-            foreach (string pkg in packages) {
-                try {
-                    Process p = Process.Start(new ProcessStartInfo {
-                        FileName = pipExe,
-                        Arguments = $"install {pkg} --quiet --no-warn-script-location",
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    });
-                    p?.WaitForExit(60000);
-                } catch { }
-            }
-        }
-
-        private void BuildLauncherExe(string outPath, string workDir, bool hasPython) {
-            // Launcher — это C# wrapper который запускает pythonw gin_wallpaper.py
-            // Собираем простейший launcher на месте через csc если доступен,
-            // или копируем себя с подменой логики через манифест (ресурс).
-            // Простейший вариант: bat→vbs→py wrapper компилируем через csc
-            string launcherCs = Path.Combine(Path.GetTempPath(), "gin_wlp_launcher.cs");
-            string launcherSrc = GetLauncherSource(workDir, hasPython);
-            File.WriteAllText(launcherCs, launcherSrc, System.Text.Encoding.UTF8);
-
-            // Пробуем скомпилировать через csc
-            string cscPath = FindCsc();
-            bool compiled = false;
-            if (!string.IsNullOrEmpty(cscPath)) {
-                try {
-                    ProcessStartInfo psi = new ProcessStartInfo {
-                        FileName = cscPath,
-                        Arguments = $"/target:winexe /out:\"{outPath}\" /reference:System.Windows.Forms.dll " +
-                                    $"/reference:System.dll \"{launcherCs}\"",
-                        CreateNoWindow = true,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    };
-                    Process p = Process.Start(psi);
-                    p?.WaitForExit(30000);
-                    compiled = File.Exists(outPath) && new FileInfo(outPath).Length > 1024;
-                } catch { }
-            }
-
-            if (!compiled) {
-                // Fallback: VBS-wrapper (не требует компиляции)
-                string vbsPath = Path.Combine(workDir, "GIN-Wallpaper-Calend.vbs");
-                File.WriteAllText(vbsPath,
-                    $"Set WshShell = CreateObject(\"WScript.Shell\")\r\n" +
-                    $"WshShell.Run \"pythonw.exe \"\"\" & Chr(34) & \"{workDir}\\gin_wallpaper.py\" & Chr(34), 0, False\r\n"
-                );
-                // Создаём exe-обёртку через PowerShell
-                BuildPsLauncher(outPath, workDir);
-            }
-
-            try { File.Delete(launcherCs); } catch { }
-        }
-
-        private void BuildPsLauncher(string outPath, string workDir) {
-            // Компилируем простой PS1→exe через Add-Type
-            string psScript = $@"
-Add-Type -AssemblyName System.Windows.Forms
-Add-Type -TypeDefinition @'
-using System;
-using System.Diagnostics;
-using System.Reflection;
-[assembly: AssemblyTitle(""{APP_NAME}"")]
-[assembly: AssemblyVersion(""1.0.0.1"")]
-class Program {{
-    [STAThread]
-    static void Main() {{
-        try {{
-            string dir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            string script = System.IO.Path.Combine(dir, ""gin_wallpaper.py"");
-            ProcessStartInfo psi = new ProcessStartInfo(""pythonw.exe"", ""\"""" + script + ""\"""") {{
-                WorkingDirectory = dir,
-                UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden
-            }};
-            Process.Start(psi);
-        }} catch (Exception ex) {{
-            System.Windows.Forms.MessageBox.Show(""Ошибка запуска: "" + ex.Message, ""{APP_NAME}"");
-        }}
-    }}
-}}
-'@ -ReferencedAssemblies 'System.Windows.Forms' -OutputAssembly '{outPath}' -OutputType WindowsApplication
-";
-            string tmpPs = Path.Combine(Path.GetTempPath(), "gin_launcher_build.ps1");
-            File.WriteAllText(tmpPs, psScript, System.Text.Encoding.UTF8);
             try {
-                Process p = Process.Start(new ProcessStartInfo {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tmpPs}\"",
+                ProcessStartInfo psi = new ProcessStartInfo("cmd.exe", "/C pip install Pillow pystray requests --quiet") {
                     CreateNoWindow = true,
                     UseShellExecute = false
-                });
-                p?.WaitForExit(30000);
+                };
+                Process p = Process.Start(psi);
+                if (p != null) p.WaitForExit(60000);
             } catch { }
-            finally {
-                try { File.Delete(tmpPs); } catch { }
-            }
-
-            // Если и это не сработало — bat-файл как последний fallback
-            if (!File.Exists(outPath) || new FileInfo(outPath).Length < 100) {
-                File.WriteAllText(
-                    Path.Combine(workDir, "GIN-Wallpaper-Calend.bat"),
-                    $"@echo off\r\nstart pythonw.exe \"{workDir}\\gin_wallpaper.py\"\r\n"
-                );
-            }
-        }
-
-        private void BuildUninstallerExe(string outPath, string installDir) {
-            string uninstCs = Path.Combine(Path.GetTempPath(), "gin_wlp_uninstall.cs");
-            File.WriteAllText(uninstCs, GetUninstallerSource(installDir), System.Text.Encoding.UTF8);
-
-            string cscPath = FindCsc();
-            if (!string.IsNullOrEmpty(cscPath)) {
-                try {
-                    ProcessStartInfo psi = new ProcessStartInfo {
-                        FileName = cscPath,
-                        Arguments = $"/target:winexe /out:\"{outPath}\" " +
-                                    $"/reference:System.Windows.Forms.dll " +
-                                    $"/reference:Microsoft.Win32.Registry.dll " +
-                                    $"\"{uninstCs}\"",
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    };
-                    Process p = Process.Start(psi);
-                    p?.WaitForExit(30000);
-                } catch { }
-            }
-            try { File.Delete(uninstCs); } catch { }
-
-            // Fallback: PS1 uninstaller
-            if (!File.Exists(outPath) || new FileInfo(outPath).Length < 100) {
-                BuildPsUninstaller(outPath, installDir);
-            }
-        }
-
-        private void BuildPsUninstaller(string outPath, string installDir) {
-            string psScript = $@"
-Add-Type -TypeDefinition @'
-using System;
-using System.IO;
-using System.Diagnostics;
-using System.Windows.Forms;
-using Microsoft.Win32;
-[assembly: System.Reflection.AssemblyTitle(""GIN-Wallpaper-Calend Uninstaller"")]
-class Program {{
-    [STAThread]
-    static void Main() {{
-        Application.EnableVisualStyles();
-        var r = MessageBox.Show(
-            ""Удалить GIN-Wallpaper-Calend?\n\nБудут удалены:\n• Программа из Program Files\n• Ярлыки\n• Запись в Add/Remove Programs"",
-            ""GIN-Wallpaper-Calend — Удаление"",
-            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (r != DialogResult.Yes) return;
-
-        // Kill processes
-        try {{ foreach (var p in Process.GetProcessesByName(""GIN-Wallpaper-Calend"")) p.Kill(); }} catch {{ }}
-        try {{ foreach (var p in Process.GetProcessesByName(""pythonw"")) p.Kill(); }} catch {{ }}
-        System.Threading.Thread.Sleep(500);
-
-        // Remove registry
-        try {{ Registry.CurrentUser.DeleteSubKey(@""Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend"", false); }} catch {{ }}
-        try {{ Registry.LocalMachine.DeleteSubKey(@""SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend"", false); }} catch {{ }}
-        try {{ Registry.CurrentUser.DeleteSubKey(@""Software\Microsoft\Windows\CurrentVersion\Run\GIN-Wallpaper-Calend"", false); }} catch {{ }}
-        try {{
-            using (var rk = Registry.CurrentUser.OpenSubKey(@""Software\Microsoft\Windows\CurrentVersion\Run"", true))
-                rk?.DeleteValue(""GIN-Wallpaper-Calend"", false);
-        }} catch {{ }}
-
-        // Remove shortcuts
-        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), ""Programs"");
-        try {{ File.Delete(Path.Combine(desktop, ""GIN-Wallpaper-Calend.lnk"")); }} catch {{ }}
-        try {{ File.Delete(Path.Combine(startMenu, ""GIN-Wallpaper-Calend.lnk"")); }} catch {{ }}
-
-        // Remove files (deferred via cmd)
-        string dir = ""{installDir.Replace("\"", "\\\"")}"";
-        Process.Start(new ProcessStartInfo(""cmd.exe"",
-            $""/C timeout /T 2 /NOBREAK & rmdir /S /Q \\""{dir}\\""\") {{
-            CreateNoWindow = true, UseShellExecute = false }});
-
-        MessageBox.Show(""GIN-Wallpaper-Calend успешно удалён."",
-            ""Удаление завершено"", MessageBoxButtons.OK, MessageBoxIcon.Information);
-    }}
-}}
-'@ -ReferencedAssemblies 'System.Windows.Forms','Microsoft.Win32.Registry' -OutputAssembly '{outPath}' -OutputType WindowsApplication
-";
-            string tmpPs = Path.Combine(Path.GetTempPath(), "gin_uninstall_build.ps1");
-            File.WriteAllText(tmpPs, psScript, System.Text.Encoding.UTF8);
-            try {
-                Process p = Process.Start(new ProcessStartInfo {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{tmpPs}\"",
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                });
-                p?.WaitForExit(30000);
-            } catch { }
-            finally {
-                try { File.Delete(tmpPs); } catch { }
-            }
         }
 
         private void RegisterInRegistry(string targetDir, string mainExePath, string uninstExePath) {
-            const string REG_PATH = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + REG_KEY;
-            RegistryKey[] roots = { Registry.CurrentUser, Registry.LocalMachine };
+            string regPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\" + REG_KEY;
+            RegistryKey[] roots = new RegistryKey[] { Registry.CurrentUser, Registry.LocalMachine };
             foreach (RegistryKey root in roots) {
                 try {
-                    using (RegistryKey key = root.CreateSubKey(REG_PATH)) {
+                    using (RegistryKey key = root.CreateSubKey(regPath)) {
                         if (key == null) continue;
-                        key.SetValue("DisplayName",          $"{APP_NAME} — Умные обои с календарём");
+                        key.SetValue("DisplayName",          APP_NAME + " — Умные обои с календарём");
                         key.SetValue("DisplayVersion",        APP_VERSION);
                         key.SetValue("Publisher",             PUBLISHER);
                         key.SetValue("DisplayIcon",           mainExePath + ",0");
                         key.SetValue("InstallLocation",       targetDir);
                         key.SetValue("InstallDate",           DateTime.Now.ToString("yyyyMMdd"));
-                        key.SetValue("UninstallString",       $"\"{uninstExePath}\"");
-                        key.SetValue("QuietUninstallString",  $"\"{uninstExePath}\" --uninstall");
+                        key.SetValue("UninstallString",       "\"" + uninstExePath + "\" --uninstall");
+                        key.SetValue("QuietUninstallString",  "\"" + uninstExePath + "\" --uninstall");
                         key.SetValue("URLInfoAbout",          "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper");
                         key.SetValue("URLUpdateInfo",         "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/version.json");
                         key.SetValue("HelpLink",              "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper");
@@ -828,184 +610,58 @@ class Program {{
             }
         }
 
-        private void RegisterAutostart(string mainExePath) {
+        private void RegisterAutostart(string runCommand) {
             try {
-                using (RegistryKey rk = Registry.CurrentUser.OpenSubKey(
-                    @"Software\Microsoft\Windows\CurrentVersion\Run", true)) {
-                    rk?.SetValue(REG_KEY, $"\"{mainExePath}\"");
+                using (RegistryKey rk = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true)) {
+                    if (rk != null) rk.SetValue(REG_KEY, runCommand);
                 }
             } catch { }
         }
 
-        private void CreateShortcut(string shortcutPath, string target, string workDir, string desc) {
+        private void CreateShortcut(string shortcutPath, string target, string arguments, string workDir, string desc, string iconLoc) {
             try {
-                Directory.CreateDirectory(Path.GetDirectoryName(shortcutPath) ?? ".");
+                Directory.CreateDirectory(Path.GetDirectoryName(shortcutPath));
                 Type shellType = Type.GetTypeFromProgID("WScript.Shell");
                 if (shellType == null) return;
                 dynamic shell    = Activator.CreateInstance(shellType);
                 dynamic shortcut = shell.CreateShortcut(shortcutPath);
-                shortcut.TargetPath     = target;
+                shortcut.TargetPath       = target;
+                if (!string.IsNullOrEmpty(arguments)) shortcut.Arguments = arguments;
                 shortcut.WorkingDirectory = workDir;
-                shortcut.IconLocation   = target + ",0";
-                shortcut.Description    = desc;
+                if (!string.IsNullOrEmpty(iconLoc)) shortcut.IconLocation = iconLoc + ",0";
+                shortcut.Description      = desc;
                 shortcut.Save();
             } catch { }
         }
 
         private bool DownloadFile(string url, string dest) {
             try {
-                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; // TLS 1.2
-                ServicePointManager.ServerCertificateValidationCallback = (s, c, ch, e) => true;
-                WebClient wc = new WebClient();
-                wc.Headers.Add("User-Agent", $"GIN-Wallpaper-Calend-Installer/{APP_VERSION}");
-                wc.DownloadFile(url, dest);
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+                ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+                using (WebClient wc = new WebClient()) {
+                    wc.Headers.Add("User-Agent", "GIN-Wallpaper-Calend-Installer/" + APP_VERSION);
+                    wc.DownloadFile(url, dest);
+                }
                 return File.Exists(dest) && new FileInfo(dest).Length > 50;
             } catch { return false; }
         }
 
-        private string FindCsc() {
-            string[] dirs = {
-                @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319",
-                @"C:\Windows\Microsoft.NET\Framework\v4.0.30319",
-                @"C:\Windows\Microsoft.NET\Framework64\v3.5",
-            };
-            foreach (string d in dirs) {
-                string p = Path.Combine(d, "csc.exe");
-                if (File.Exists(p)) return p;
-            }
-            return null;
-        }
-
-        // ── Иконка из ресурсов ───────────────────────────────────────────────
-        private Icon GetEmbeddedIcon() {
-            try {
-                // Пробуем загрузить из папки рядом с exe
-                string ico = Path.Combine(
-                    Path.GetDirectoryName(Application.ExecutablePath) ?? ".",
-                    "assets", "icon.ico"
-                );
-                if (File.Exists(ico)) return new Icon(ico);
-            } catch { }
-            return SystemIcons.Application;
-        }
-
-        // ── Встроенный Python-скрипт (fallback) ─────────────────────────────
-        private string GetEmbeddedScript() {
-            return "# GIN-Wallpaper-Calend — загрузите gin_wallpaper.py с GitHub\n" +
-                   "# https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper\n" +
-                   "import webbrowser\n" +
-                   "webbrowser.open('https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper')\n";
-        }
-
-        // ── Исходник launcher.cs ─────────────────────────────────────────────
-        private string GetLauncherSource(string workDir, bool hasPython) {
-            return $@"
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using System.Windows.Forms;
-[assembly: AssemblyTitle(""{APP_NAME}"")]
-[assembly: AssemblyVersion(""1.0.0.1"")]
-[assembly: AssemblyInformationalVersion(""{APP_VERSION}"")]
-class Program {{
-    [STAThread]
-    static void Main() {{
-        try {{
-            string dir = ""{workDir.Replace("\\", "\\\\")}"";
-            string script = Path.Combine(dir, ""{PYTHON_SCRIPT}"");
-            if (!File.Exists(script)) {{
-                MessageBox.Show(""Файл "" + script + "" не найден.\nПереустановите программу."",
-                    ""{APP_NAME}"", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }}
-            ProcessStartInfo psi = new ProcessStartInfo(""pythonw.exe"", ""\"""" + script + ""\"""") {{
-                WorkingDirectory = dir,
-                UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden
-            }};
-            Process.Start(psi);
-        }} catch (Exception ex) {{
-            MessageBox.Show(""Ошибка запуска GIN-Wallpaper-Calend:\n"" + ex.Message +
-                ""\n\nУбедитесь что Python установлен."", ""{APP_NAME}"");
-        }}
-    }}
-}}
-";
-        }
-
-        // ── Исходник uninstaller.cs ──────────────────────────────────────────
-        private string GetUninstallerSource(string installDir) {
-            return $@"
-using System;
-using System.IO;
-using System.Diagnostics;
-using System.Windows.Forms;
-using Microsoft.Win32;
-using System.Reflection;
-[assembly: AssemblyTitle(""{APP_NAME} Uninstaller"")]
-[assembly: AssemblyVersion(""1.0.0.1"")]
-class Program {{
-    [STAThread]
-    static void Main() {{
-        Application.EnableVisualStyles();
-        var r = MessageBox.Show(
-            ""Вы уверены, что хотите удалить {APP_NAME}?\n\nБудут удалены:\n• Файлы программы\n• Ярлыки на рабочем столе и в меню Пуск\n• Запись в 'Программы и компоненты'"",
-            ""{APP_NAME} — Удаление"",
-            MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-        if (r != DialogResult.Yes) return;
-
-        try {{ foreach (var p in Process.GetProcessesByName(""GIN-Wallpaper-Calend"")) p.Kill(); }} catch {{ }}
-        try {{ foreach (var p in Process.GetProcessesByName(""pythonw"")) p.Kill(); }} catch {{ }}
-        System.Threading.Thread.Sleep(500);
-
-        string[] regPaths = {{
-            @""Software\Microsoft\Windows\CurrentVersion\Uninstall\{REG_KEY}"",
-            @""SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{REG_KEY}""
-        }};
-        foreach (string rp in regPaths) {{
-            try {{ Registry.CurrentUser.DeleteSubKey(rp, false); }} catch {{ }}
-            try {{ Registry.LocalMachine.DeleteSubKey(rp, false); }} catch {{ }}
-        }}
-        try {{
-            using (var rk = Registry.CurrentUser.OpenSubKey(
-                @""Software\Microsoft\Windows\CurrentVersion\Run"", true))
-                rk?.DeleteValue(""{REG_KEY}"", false);
-        }} catch {{ }}
-
-        string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-        string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), ""Programs"");
-        try {{ File.Delete(Path.Combine(desktop,   ""{APP_NAME}.lnk"")); }} catch {{ }}
-        try {{ File.Delete(Path.Combine(startMenu, ""{APP_NAME}.lnk"")); }} catch {{ }}
-
-        string dir = @""{installDir.Replace("\\", "\\\\")}"";
-        Process.Start(new ProcessStartInfo(""cmd.exe"",
-            ""/C timeout /T 2 /NOBREAK & rmdir /S /Q \""{dir}\"""") {{
-            CreateNoWindow = true, UseShellExecute = false }});
-
-        MessageBox.Show(""{APP_NAME} успешно удалён с вашего компьютера."",
-            ""Удаление завершено"", MessageBoxButtons.OK, MessageBoxIcon.Information);
-    }}
-}}
-";
-        }
-
-        // ── UI helpers ────────────────────────────────────────────────────────
-        private void SetStatus(string msg, Color? color = null) {
-            SafeInvoke(() => {
+        private void SetStatus(string msg, Color color) {
+            SafeInvoke(delegate() {
                 lblStatus.Text = msg;
-                lblStatus.ForeColor = color ?? C_WHITE;
+                lblStatus.ForeColor = color;
             });
         }
 
         private void SetProgress(int pct) {
-            SafeInvoke(() => {
+            SafeInvoke(delegate() {
                 progressBar.Value = Math.Min(100, Math.Max(0, pct));
-                lblPercent.Text = pct > 0 ? $"{pct}%" : "";
+                lblPercent.Text = pct > 0 ? (pct + "%") : "";
             });
         }
 
-        private void SafeInvoke(Action a) {
+        private delegate void SafeCallDelegate();
+        private void SafeInvoke(SafeCallDelegate a) {
             if (this.IsDisposed) return;
             if (this.InvokeRequired) {
                 try { this.Invoke(a); } catch { }
