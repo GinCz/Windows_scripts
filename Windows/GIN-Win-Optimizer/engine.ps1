@@ -1,5 +1,5 @@
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v044
+#  GIN-WIN-OPTIMIZER PLUS                                          v045
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -128,13 +128,18 @@ try {
     # Pre-enable UNC and LinkedConnections so launching from network shares never drops
     New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Force -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLinkedConnections" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-    # Enforce Silent UAC (Slider to absolute minimum "Never Notify") and disable Admin Token Filtering
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLUA" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableVirtualization" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+    # Enforce TOTAL Zero-UAC (EnableLUA=0, Slider to absolute minimum "Never Notify", zero prompts)
+    $sysPol = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+    if (-not (Test-Path $sysPol)) { New-Item -Path $sysPol -Force -ErrorAction SilentlyContinue | Out-Null }
+    Set-ItemProperty -Path $sysPol -Name "EnableLUA" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "EnableInstallerDetection" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "ValidateAdminCodeSignatures" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "EnableLinkedConnections" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path $sysPol -Name "EnableVirtualization" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
     # Ensure LanmanWorkstation Parameters and ServiceDll are 100% intact (prevent Error 2 / dropping network drives)
     New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "ServiceDll" -Value "%SystemRoot%\System32\wkssvc.dll" -Type ExpandString -Force -ErrorAction SilentlyContinue
@@ -156,9 +161,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v044
+#  GIN-WIN-OPTIMIZER PLUS                                          v045
 
-#  Rule: Strict Version Increment Mandate (v032 -> v044)
+#  Rule: Strict Version Increment Mandate (v032 -> v045)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -211,11 +216,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v044 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v045 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v044 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v045 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -293,7 +298,7 @@ $t = @{
 
         "chk_net_wifi_privacy" = "Wi-Fi: Disable Random Hardware Addresses (MAC) & Disable Hotspot 2.0 Online Sign-Up"
 
-        "chk_sec_uac_quiet" = "Silent UAC for Administrators (No prompts/dimming, keeps UWP apps working)"
+        "chk_sec_uac_quiet" = "Total Zero-UAC (Disable UAC completely: EnableLUA=0, Slider to zero, no elevation prompts)"
 
         "chk_sec_admin_approval" = "Enable Admin Approval Mode for built-in Administrator account"
 
@@ -488,11 +493,11 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v044 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v045 [VladiMIR + AI]"
 
         "HeaderTitle" = "Údaje o počítači"
 
-        "HeaderSub" = "GIN-Win-Optimizer v044 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v045 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -570,7 +575,7 @@ $t = @{
 
         "chk_net_wifi_privacy" = "Wi-Fi: Vypnout náhodné hardwarové adresy (MAC) a vypnout Hotspot 2.0 Online Sign-Up"
 
-        "chk_sec_uac_quiet" = "Tichý režim UAC pro správce (bez ztmavnutí obrazovky, UWP zachováno)"
+        "chk_sec_uac_quiet" = "Úplné vypnutí UAC (Řízení uživatelských účtů na nulu: EnableLUA=0, jezdec na nulu, bez výzev)"
 
         "chk_sec_admin_approval" = "Povolit režim schvalování správcem pro vestavěný účet Administrator"
 
@@ -765,11 +770,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v044 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v045 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v044 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v045 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -847,7 +852,7 @@ $t = @{
 
         "chk_net_wifi_privacy" = "Wi-Fi: отключить случайные аппаратные адреса (MAC) и отключить Hotspot 2.0 Online Sign-Up"
 
-        "chk_sec_uac_quiet" = "Бесшумный UAC для Администратора (без затемнения экрана, UWP работает)"
+        "chk_sec_uac_quiet" = "Полное отключение UAC (Контроль учетных записей на ноль: EnableLUA=0, ползунок в 0, без запросов)"
 
         "chk_sec_admin_approval" = "Включить режим одобрения администратором для встроенной учетной записи"
 
@@ -1047,7 +1052,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDQ0IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDQ1IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -1140,7 +1145,7 @@ $xamlBase64 = (@(
         'ayBOYW1lPSJ0eHRIb3N0SW5mbyIgVGV4dD0iSG9zdDogbG9jYWwgfCDQo9GB0YLRgNC+0LnRgdGC0LLQvjogUEMgfCBXaW5kb3dz'
         'OiAxMCBQcm8gfCBJUDogMTI3LjAuMC4xIiBGb250U2l6ZT0iMTEiIEZvcmVncm91bmQ9IiNjYmQ1ZTEiIE1hcmdpbj0iMCwzLDAs'
         'MCIvPgogICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0idHh0SGVhZGVyU3ViIiBUZXh0PSJHSU4tV2luLU9wdGlt'
-        'aXplciB2MDQ0IFtWbGFkaU1JUiArIEFJXSIgRm9udFNpemU9IjEwIiBGb3JlZ3JvdW5kPSIjNjQ3NDhiIiBNYXJnaW49IjAsMSww'
+        'aXplciB2MDQ1IFtWbGFkaU1JUiArIEFJXSIgRm9udFNpemU9IjEwIiBGb3JlZ3JvdW5kPSIjNjQ3NDhiIiBNYXJnaW49IjAsMSww'
         'LDAiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3Jk'
         'ZXI+CgogICAgICAgIDwhLS0gUHJlc2V0cyBCYXIgLS0+CiAgICAgICAgPEJvcmRlciBHcmlkLlJvdz0iMSIgQmFja2dyb3VuZD0i'
         'IzFlMjAyNiIgQ29ybmVyUmFkaXVzPSI0IiBQYWRkaW5nPSIxMCw2IiBNYXJnaW49IjAsMCwwLDgiIEJvcmRlckJydXNoPSIjMjUy'
@@ -2122,7 +2127,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v044 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v045 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -2451,18 +2456,20 @@ $executeOptimization = {
 
     # 2. Security & UAC
 
-    if ($controls["chk_sec_uac_quiet"].IsChecked) {
-
-        $actions += @{ Name = "Silent UAC for Administrators (Slider to Minimum: Never Notify)"; Script = {
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
+        if ($controls["chk_sec_uac_quiet"].IsChecked) {
+        $actions += @{ Name = "Total Zero-UAC: Disable UAC Completely (EnableLUA=0, Slider to Zero, Never Notify)"; Script = {
+            $sysPol = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+            if (-not (Test-Path $sysPol)) { New-Item -Path $sysPol -Force -ErrorAction SilentlyContinue | Out-Null }
+            Set-ItemProperty -Path $sysPol -Name "EnableLUA" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "EnableInstallerDetection" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "ValidateAdminCodeSignatures" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $sysPol -Name "EnableLinkedConnections" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Log-Message "Total Zero-UAC applied: EnableLUA=0, ConsentPromptBehaviorAdmin=0, ConsentPromptBehaviorUser=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0 (Slider at absolute zero)." "SUCCESS"
         }}
-
     }
 
     if ($controls["chk_sec_admin_approval"].IsChecked) {
@@ -4341,8 +4348,14 @@ $executeOptimization = {
         } catch {}
 
         # 2. Enable Guest SMB Auth, Admin Mapped Drives (EnableLinkedConnections), and UNC Script Execution (DisableUNCCheck)
-        New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Force -ErrorAction SilentlyContinue | Out-Null
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLinkedConnections" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+        $sysPol = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
+        if (-not (Test-Path $sysPol)) { New-Item -Path $sysPol -Force -ErrorAction SilentlyContinue | Out-Null }
+        Set-ItemProperty -Path $sysPol -Name "EnableLinkedConnections" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $sysPol -Name "EnableLUA" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $sysPol -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $sysPol -Name "ConsentPromptBehaviorUser" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $sysPol -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+        Set-ItemProperty -Path $sysPol -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
         New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -ErrorAction SilentlyContinue | Out-Null
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "ServiceDll" -Value "%SystemRoot%\System32\wkssvc.dll" -Type ExpandString -Force -ErrorAction SilentlyContinue
         Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "AllowInsecureGuestAuth" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
@@ -4670,7 +4683,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v044. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v045. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -4926,7 +4939,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v044 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v045 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 

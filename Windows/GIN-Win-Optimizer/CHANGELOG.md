@@ -4,6 +4,15 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v045] - 2026-11-05
+- **Comprehensive Total Zero-UAC Enforcement (EnableLUA=0, Slider to Zero)**:
+  - Enforced immediate registry execution at the CMD launcher level upon elevation to permanently turn off UAC: `EnableLUA=0`, `ConsentPromptBehaviorAdmin=0`, `ConsentPromptBehaviorUser=0`, `PromptOnSecureDesktop=0`, `FilterAdministratorToken=0`, `EnableInstallerDetection=0`, `ValidateAdminCodeSignatures=0`.
+  - Updated `chk_sec_uac_quiet` execution task to explicitly set `EnableLUA=0` and all zero-prompt registry values, moving the Windows UAC slider to the lowest possible level ('Never Notify').
+  - Replaced destructive `New-Item -Force` on `Policies\System` with non-destructive path existence checks to prevent wiping system security policies.
+  - Updated multilingual descriptions (RU, EN, CS) to reflect 'Total Zero-UAC (EnableLUA=0)'.
+  - Retention cleanup: kept strictly 2 latest versions (`GIN-Win-Optimizer_v045.cmd` and `GIN-Win-Optimizer_v044.cmd`).
+  - Uploaded verified `GIN-Win-Optimizer_v045.cmd` directly to `D:\MEGA\DOCS\desktop`.
+
 ## [v044] - 2026-11-05
 - **Critical CMD Launcher Header Restoration**:
   - Restored clean, canonical CMD/PowerShell polyglot header without corrupted variable expansions or duplicate comment closers.

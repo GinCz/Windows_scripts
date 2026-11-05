@@ -1,10 +1,10 @@
 {
   "project": "GIN-Win-Optimizer",
-  "current_version": "v044",
+  "current_version": "v045",
   "updated_at": "2026-11-05",
   "active_versions": [
-    "GIN-Win-Optimizer_v044.cmd",
-    "GIN-Win-Optimizer_v042.cmd"
+    "GIN-Win-Optimizer_v045.cmd",
+    "GIN-Win-Optimizer_v044.cmd"
   ],
   "sync_targets": {
     "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -14,6 +14,11 @@
   },
   "changelog": [
     {
+      "version": "v045",
+      "date": "2026-11-05",
+      "changes": "Comprehensive Total Zero-UAC Enforcement: 1) Hardcoded immediate reg add at CMD launcher elevation to disable UAC permanently in registry (EnableLUA=0, ConsentPromptBehaviorAdmin=0, ConsentPromptBehaviorUser=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0, EnableInstallerDetection=0, ValidateAdminCodeSignatures=0); 2) Updated taskMap['chk_sec_uac_quiet'] to enforce EnableLUA=0 and all zero-prompt keys on optimization; 3) Replaced destructive New-Item -Force on Policies\\System with safe non-destructive checks; 4) Updated EN/RU/CS localization to 'Total Zero-UAC (EnableLUA=0)'; 5) Synced directly to D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v045.cmd."
+    },
+    {
       "version": "v044",
       "date": "2026-11-05",
       "changes": "Critical CMD Launcher Header Restoration: Fixed corrupted cmd polyglot header that contained stray duplicate comment closers and escaped variables preventing execution on Windows 10; completely purged accidental batch header remnants from pure PowerShell engine.ps1; verified clean execution via both non-elevated double-click auto-elevation and direct 'Run as Administrator'; synchronized to D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v044.cmd."
@@ -22,11 +27,6 @@
       "version": "v043",
       "date": "2026-11-05",
       "changes": "Critical Syntax Bug Fix & Engine Hardening: Fixed fatal PowerShell ParseException at line 1419 character 16 caused by an extra closing parenthesis in the XAML base64 join statement (') -join ''))' -> ') -join '')'); verified 100% clean abstract syntax tree and balanced brackets across entire engine; updated internal XAML headers to v043."
-    },
-    {
-      "version": "v042",
-      "date": "2026-11-05",
-      "changes": "Comprehensive Deep Optimization Suite: 1) Enforced UAC slider to absolute minimum ('Never Notify' / EnableLUA=0, ConsentPromptBehaviorAdmin=0, ConsentPromptBehaviorUser=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0); 2) Completely uninstalled and purged Cortana assistant packages & provisioned stubs; 3) Added automatic background updater purge for Google Chrome, Brave, and Cent Browser (stopping gupdate/brave services, disabling tasks, deleting all Update folders and disabling background mode); 4) Verified 100% Windows Update lock; 5) Completely purged demo 1-month Microsoft Office stubs, OneNote, and commercial trial bloatware (Clipchamp, Spotify, Disney, Netflix, TikTok, sponsored games); 6) Enabled chk_srv_pca (disable PcaSvc), chk_srv_trkwks (disable TrkWks NTFS network tracking), and chk_srv_iphlpsvc (disable IPv6 transition) by default and in all presets; 7) Implemented maximum full SSD & NVMe M.2 optimization (TRIM enable, disable LastAccess, NtfsMemoryUsage=2 high-IOPS cache, disable SysMain/Prefetcher/ReadyBoost, disable scheduled HDD defrag, active multi-drive ReTrim); 8) Enforced elevated Administrator disk cleanup; 9) Eliminated popup completion MessageBox in favor of prominent in-log terminal banner."
     }
   ]
 }

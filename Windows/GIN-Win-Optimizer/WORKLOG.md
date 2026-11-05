@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-11-05 — Release v045 (Total Zero-UAC Enforcement & Registry Hardening)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v044` to `v045`.
+- **Root Cause & Comprehensive Fix for UAC Prompt**:
+  - Diagnosed why UAC prompt was still appearing: in earlier releases `chk_sec_uac_quiet` did not set `EnableLUA=0`, and `New-Item -Force` on `Policies\System` was overwriting the key state without re-asserting zero-UAC policies.
+  - Added direct `reg add` in elevated CMD launcher to kill UAC instantly at the root (`EnableLUA=0`, `ConsentPromptBehaviorAdmin=0`, `ConsentPromptBehaviorUser=0`, `PromptOnSecureDesktop=0`, `FilterAdministratorToken=0`).
+  - Added explicit `EnableLUA=0` inside `chk_sec_uac_quiet` in `engine.ps1` to guarantee the UAC slider drops to absolute bottom ('Never Notify').
+  - Replaced all `New-Item -Force` on `Policies\System` with non-destructive path verification.
+- **Desktop Delivery**:
+  - Removed outdated versions from Desktop.
+  - Uploaded verified `GIN-Win-Optimizer_v045.cmd` to `D:\MEGA\DOCS\desktop` via `mega-put`.
+
 ## 2026-11-05 — Release v044 (CMD Launcher Header Fix & Execution Restoration)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v043` to `v044`.
 - **Root Cause & Immediate Fix**:
