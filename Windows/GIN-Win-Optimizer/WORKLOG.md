@@ -2,6 +2,25 @@
 
 ---
 
+## 2026-11-05 — Release v040 (Single-Standard CMD, Silent UAC Hardening & EXE Removal)
+- **Unified CMD Architecture**: Per Vladimir directive, removed the compiled EXE binary (`GIN-Win-Optimizer.exe`) and associated build toolchain. Selected standalone polyglot CMD as the single official format to eliminate all friction with antivirus heuristics, browser download blocking, and Windows SmartScreen unknown publisher warnings.
+- **Universal Architecture (x86 32-bit & x64) across Windows 7/8/10/11**: Tested and hardened execution for older and 32-bit platforms (e.g. Windows 7 SP1 x86 accounting PCs) without requiring newer .NET Framework runtimes.
+- **Auto-Elevation & UNC Resilience**:
+  - Implemented `net session >nul 2>&1` check on startup.
+  - Automatic elevated restart via PowerShell `Start-Process cmd.exe ... -Verb RunAs` if launched without admin privileges.
+  - Added staging to local `%TEMP%\GIN-Win-Optimizer_v040.cmd` when launched from UNC shares (`\\server\share`).
+  - Passed script path via `$env:GIN_OPT_SCRIPT` to prevent quote-escaping syntax breaks on paths with spaces or Czech diacritics.
+- **Silent UAC (Slider to Minimum: Never Notify)**:
+  - Enforced `ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`, and `FilterAdministratorToken = 0` both in Pre-Execution block and in `chk_sec_uac_quiet` action.
+  - Automatically unchecked `chk_sec_admin_approval` by default and across all presets (`SelectAll`, `Office`, `Gaming`) so Admin token filtering is never activated.
+  - Maintained `EnableLUA = 1` for 100% Modern/UWP app compatibility.
+- **Network Drives & LAN Sharing Stability**:
+  - Preserved `EnableLinkedConnections = 1` in `HKLM\...\Policies\System` so mapped drives are shared between standard and elevated sessions.
+  - Kept `chk_srv_network_offload`, `chk_srv_pca`, `chk_srv_trkwks`, `chk_srv_iphlpsvc` unchecked by default to prevent SMB session drops.
+- **Retention & Sync**:
+  - Deleted obsolete CMD versions (`v015`–`v038`), keeping strictly the 2 latest versions (`v040` and `v039`).
+  - Synchronized changes to `Windows_scripts` public mirror and prepared Git commit.
+
 ## 2026-11-04 — Release v039 (Ultarix 14-PC Audit & Syntax Fix)
 - Fixed `$actions +=` syntax bug in `engine.ps1`.
 - Audited all 14 Ultarix workstation failure modes (Windows 10 32-bit x86, 4 GB RAM, FORM studio NexusDB, STEREO, DUEL, Ekonom, SMB shares, network printers, UNC execution) and hardened both `GIN-Win-Optimizer.exe` (v039) and `GIN-Win-Optimizer_v039.cmd`.

@@ -3,47 +3,47 @@
 > **Private Repository:** [Secret_Privat / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer)  
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
-> **Target OS:** Windows 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions: Home, Pro, Enterprise, LTSC)  
-> **Current Version:** `v039` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v039.cmd` and `GIN-Win-Optimizer_v038.cmd`).
+> **Target OS:** Windows 7 / 8 / 8.1 / 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions)  
+> **Current Version:** `v040` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v040.cmd` and `GIN-Win-Optimizer_v039.cmd`).
 
 ---
 
-## 🚀 GIN-Win-Optimizer v039: Ultralightweight, Safe & Antivirus-Immune Architecture
+## 🚀 GIN-Win-Optimizer v040: Unified Standalone CMD Architecture & Silent UAC Hardening
 
-Version `v039` represents a major architectural overhaul focusing on extreme lightness, rock-solid stability, and total antivirus transparency:
-- **Ultra-Compact Footprint (12.8 KB)**: Reduced from 244 KB down to less than 13 KB. No heavy embedded assemblies, no monolithic GUI overhead, no bloated payloads.
-- **100% Antivirus Immunity**: Completely transparent native Windows CMD batch script with CRLF line terminators. Zero obfuscation, zero Base64 payloads, zero suspicious downloader scripts. Trusted natively by Windows Defender and SmartScreen.
-- **Universal Architecture Compatibility**: Seamless native execution on both 32-bit (x86) and 64-bit (x64) platforms across Windows 10 Home/Pro/Enterprise/LTSC and Windows 11.
-- **Code Page & Console Stability**: Uses pure standard ASCII console output with clear step-by-step `[OK]` status markers. **Eliminates `chcp 65001`**, preventing Win32 Error 0x1F (`Zařízení připojené k systému nefunguje` / `A device attached to the system is not functioning`) on Czech and European Windows installations.
+Version `v040` establishes the single-standard CMD format (EXE removed per Vladimir directive for maximum sysadmin portability and antivirus immunity):
+- **Universal Single-Standard CMD**: Standalone hybrid script running natively across Windows 7 SP1, 8, 8.1, 10, and 11 on both 32-bit (x86) and 64-bit (x64) architectures.
+- **100% Antivirus & SmartScreen Immunity**: Zero binary blocks, zero quarantine risk, zero compiler dependencies. Can be transferred via AnyDesk, RDP, Telegram, USB flash drives, or network shares without triggering "Unknown Publisher" security blocks.
+- **Robust Auto-Elevation (`RunAs`)**: Checks administrative privileges natively via `net session >nul 2>&1`. Automatically re-elevates if launched by regular double-click, staging to local `%TEMP%` when running from UNC network shares (`\\server\share`).
+- **Silent UAC (Slider to Minimum: "Never Notify")**: Programmatically enforces the UAC slider to the lowest level (`ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`, `FilterAdministratorToken = 0`), completely eliminating yellow security popups. Modern UWP apps remain fully functional (`EnableLUA = 1`).
+- **Network Drives & LAN Sharing Protection**: Retains `EnableLinkedConnections = 1`, `AllowInsecureGuestAuth = 1`, and `DisableUNCCheck = 1` while keeping `chk_srv_network_offload` and dangerous token filtering unchecked by default.
 
 ---
 
-## 🛠️ Core Functional Modules (v039)
+## 🛠️ Core Functional Modules (v040)
 
-### 1. Network & File / Printer Sharing Optimization (Ultarix Standard)
+### 1. Security & UAC Hardening
+- **Slider to Minimum (Never Notify)**: Pre-configures `ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`, and `FilterAdministratorToken = 0`.
+- **Token Filtering Disabled by Default**: `chk_sec_admin_approval` is disabled across all presets, preventing accidental elevation prompts for Administrators.
+- **Open File Warning**: Disables "Open File - Security Warning" for downloaded files (`LowRiskFileTypes`).
+
+### 2. Network & File / Printer Sharing Protection (Ultarix Standard)
 - **Active Network Profile to Private**: Converts public connections to Private (`Doma/Kancelář`) via PowerShell and NetworkList registry, ensuring local firewall rules unblock LAN discovery and file/printer sharing.
 - **Guest SMB Share Access (`AllowInsecureGuestAuth = 1`)**: Enables LanmanWorkstation guest authentication for unhindered access to network NAS, routers, and legacy file shares.
 - **Admin Mapped Drives (`EnableLinkedConnections = 1`)**: Ensures network drive mappings remain fully accessible to both unprivileged desktop users and elevated Administrator processes.
 - **UNC Path Execution (`DisableUNCCheck = 1`)**: Disables UNC validation warnings, enabling scripts to execute directly from network shares.
 - **Core Discovery & Printing Services Auto-Start**: Enforces automatic startup for `FDResPub`, `fdPHost`, `LanmanWorkstation`, `LanmanServer`, `Spooler`, `lmhosts`, and `Dnscache`.
-- **Comprehensive Firewall Rules**: Activates Network Discovery and File and Printer Sharing firewall rules across multiple localized rule groups.
 
-### 2. Memory & Performance Optimization (Crucial for 32-bit & Low-RAM PCs)
+### 3. Memory & Performance Optimization
 - **Static Pagefile Fixation (4096–8192 MB on C:)**: Disables automatic managed pagefile and locks a stable, contiguous 4–8 GB virtual memory backing on drive `C:`, preventing memory allocation crashes (`0xe0000008` / out-of-commit).
 - **Hibernation Disabling (`powercfg -h off`)**: Immediately removes `hiberfil.sys`, recovering 4 to 8 GB of valuable SSD/system storage.
 - **Visual Effects Tuning**: Eliminates sluggish window minimize/maximize and taskbar animations (`MinAnimate = 0`, `MenuShowDelay = 100`) while strictly preserving **ClearType font smoothing** (`FontSmoothing = 2`, `FontSmoothingType = 2`) for crisp text legibility.
 
-### 3. Safe System Cleanup
+### 4. Safe System Cleanup
 - **Temporary Files**: Cleans user `%TEMP%` and `%SystemRoot%\Temp`.
 - **Windows Update Cache**: Safely stops `wuauserv`, purges `%SystemRoot%\SoftwareDistribution\Download\*`, and restarts the update service.
 - **Explorer Thumbnail & Icon Caches**: Purges cached thumbnail databases to resolve icon corruption and free disk space.
 - **Diagnostics Dumps**: Deletes user crash dumps, mini dumps, and memory dumps.
-
-### 4. Telemetry, Error Reporting & Security Integrity
-- **Safe Telemetry Deactivation**: Disables background telemetry services `DiagTrack` and `dmwappushservice`, sets DataCollection GPO to Security level (0) without breaking any network or system components.
-- **Error Reporting Deactivation**: Disables `WerSvc` and sets Windows Error Reporting GPO policies to disabled.
-- **Antivirus & Driver Integrity**: **Strictly preserves Windows Defender and system drivers** without interference or tampering.
 
 ---
 
@@ -51,8 +51,8 @@ Version `v039` represents a major architectural overhaul focusing on extreme lig
 
 | Environment / Medium | Path | Target Version | Retention Policy |
 | :--- | :--- | :---: | :---: |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v039.cmd` | v039 | Latest 2 versions |
-| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v039.cmd` | v039 | Latest 2 versions |
-| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS/GIN-Win-Optimizer_v039.cmd` | v039 | Latest 2 versions |
-| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v039 | Full Git history |
-| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v039 | Full Git history |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v040.cmd` | v040 | Latest 2 versions |
+| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v040.cmd` | v040 | Latest 2 versions |
+| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS\GIN-Win-Optimizer_v040.cmd` | v040 | Latest 2 versions |
+| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v040 | Full Git history |
+| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v040 | Full Git history |

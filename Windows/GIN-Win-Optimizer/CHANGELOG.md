@@ -4,6 +4,23 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v040] - 2026-11-05
+- **Single-Standard CMD Format**: Standardized on unified portable CMD polyglot architecture per Vladimir directive. Removed compiled EXE (`GIN-Win-Optimizer.exe`) and binary build toolchain to avoid all delivery, SmartScreen, and Antivirus friction.
+- **Universal Architecture (x86 & x64) & Legacy Windows Support**: Full native support for Windows 7 SP1, 8, 8.1, 10, and 11 across both 32-bit (x86) and 64-bit (x64) environments.
+- **Silent UAC & Slider to Minimum**:
+  - Programmatically pre-configures and enforces UAC slider to absolute minimum ("Never Notify"): `ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`, `FilterAdministratorToken = 0`.
+  - Permanently eliminates yellow "Unknown Publisher" UAC security prompt screens.
+  - Automatically unchecks `chk_sec_admin_approval` by default across all presets (`SelectAll`, `Office`, `Gaming`) so Admin token filtering is never accidentally turned on.
+- **Auto-Elevation with UNC Share Safety**:
+  - Automatically verifies administrative session using native `net session >nul 2>&1`.
+  - Re-elevates via PowerShell `Start-Process cmd.exe ... -Verb RunAs` if launched with regular privileges.
+  - Detects UNC network share execution (`\\server\share`) and stages to local `%TEMP%\GIN-Win-Optimizer_v040.cmd` to prevent cmd.exe UNC errors.
+  - Passes script path via `$env:GIN_OPT_SCRIPT` with fallback to avoid quote escaping or Czech diacritic path issues.
+- **Network Drives & LAN Sharing Stability**:
+  - Preserved `EnableLinkedConnections = 1` so mapped network drives are shared across standard and elevated sessions.
+  - Preserved guest SMB share access (`AllowInsecureGuestAuth = 1`) and UNC execution (`DisableUNCCheck = 1`).
+  - Guaranteed continuous auto-start of network services (`FDResPub`, `fdPHost`, `LanmanWorkstation`, `LanmanServer`, `lmhosts`, `Dnscache`, `SSDPSRV`, `upnphost`, `Spooler`).
+
 ## [v039] - 2026-11-04
 - **Critical Fix**: Fixed missing `$actions` variable before `+=` at the LAN Discovery block (`engine.ps1` line 4150) that threw `The term '+=' is not recognized` on Optimize.
 - **Ultarix 14-PC Accounting & 32-bit Hardening**:

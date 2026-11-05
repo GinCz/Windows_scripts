@@ -1,6 +1,6 @@
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v039
-#  Windows 10/11 Ultimate Optimizer & Deep Cleaner
+#  GIN-WIN-OPTIMIZER PLUS                                          v040
+#  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
 #  Telegram Support: https://t.me/GinCz
@@ -125,9 +125,13 @@ try {
         'add "HKLM\SOFTWARE\Policies\Microsoft\EdgeUpdate" /v "DoNotCreateDesktopShortcut" /t REG_DWORD /d 1 /f /reg:64',
         'add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v "DisableEdgeDesktopShortcutCreation" /t REG_DWORD /d 1 /f /reg:64'
     )
-    # Pre-enable UNC and LinkedConnections so launching from network shares (\\Ulps1\util) never drops
+    # Pre-enable UNC and LinkedConnections so launching from network shares never drops
     New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Force -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "EnableLinkedConnections" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+    # Enforce Silent UAC (Slider to absolute minimum "Never Notify") and disable Admin Token Filtering
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
     New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Force -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Name "AllowInsecureGuestAuth" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
     New-Item -Path "HKLM:\SOFTWARE\Microsoft\Command Processor" -Force -ErrorAction SilentlyContinue | Out-Null
@@ -147,9 +151,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v039
+#  GIN-WIN-OPTIMIZER PLUS                                          v040
 
-#  Rule: Strict Version Increment Mandate (v032 -> v039)
+#  Rule: Strict Version Increment Mandate (v032 -> v040)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -202,11 +206,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v039 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v039 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -478,11 +482,11 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v039 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
 
         "HeaderTitle" = "Údaje o počítači"
 
-        "HeaderSub" = "GIN-Win-Optimizer v039 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -754,11 +758,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v039 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v039 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v040 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1474,6 +1478,20 @@ foreach ($name in $chkNames) {
 
 }
 
+# Hardened initial state: Ensure dangerous/token filtering tweaks are unchecked by default
+if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
+if ($controls["chk_srv_network_offload"]) { $controls["chk_srv_network_offload"].IsChecked = $false }
+if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
+if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
+if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+if ($controls["chk_deep_dism_repair"]) { $controls["chk_deep_dism_repair"].IsChecked = $false }
+if ($controls["chk_deep_dism_resetbase"]) { $controls["chk_deep_dism_resetbase"].IsChecked = $false }
+if ($controls["chk_deep_sfc_compact"]) { $controls["chk_deep_sfc_compact"].IsChecked = $false }
+if ($controls["chk_tb_small_icons"]) { $controls["chk_tb_small_icons"].IsChecked = $false }
+if ($controls["chk_desktop_show_user_folder"]) { $controls["chk_desktop_show_user_folder"].IsChecked = $false }
+if ($controls["chk_reloc_documents"]) { $controls["chk_reloc_documents"].IsChecked = $false }
+if ($controls["chk_reloc_desktop"]) { $controls["chk_reloc_desktop"].IsChecked = $false }
+
 # Find Buttons & Bars
 
 $btnStartTop      = $window.FindName("btnStartTop")
@@ -1818,6 +1836,7 @@ $btnSelectAll.Add_Click({
     if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
     if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
     if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
     $controls["chk_deep_dism_resetbase"].IsChecked = $false
@@ -1884,6 +1903,7 @@ $btnPresetGaming.Add_Click({
     if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $false }
     if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $false }
     if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $false }
+    if ($controls["chk_sec_admin_approval"]) { $controls["chk_sec_admin_approval"].IsChecked = $false }
     $controls["chk_deep_dism_repair"].IsChecked = $false
 
     $controls["chk_deep_dism_resetbase"].IsChecked = $false
@@ -2088,7 +2108,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v039 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v040 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -2412,11 +2432,13 @@ $executeOptimization = {
 
     if ($controls["chk_sec_uac_quiet"].IsChecked) {
 
-        $actions += @{ Name = "Silent UAC for Administrators"; Script = {
+        $actions += @{ Name = "Silent UAC for Administrators (Slider to Minimum: Never Notify)"; Script = {
 
             Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "ConsentPromptBehaviorAdmin" -Value 0 -Type DWord -ErrorAction SilentlyContinue
 
             Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "PromptOnSecureDesktop" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" -Name "FilterAdministratorToken" -Value 0 -Type DWord -ErrorAction SilentlyContinue
 
         }}
 
@@ -4500,7 +4522,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v039. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v040. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -4711,7 +4733,7 @@ $executeOptimization = {
             "cs" { "Optimalizace byla úspěšně dokončena!`n`nProvedeno úloh: $total z $total`n`nVšechny výsledky a stav každé úlohy jsou zachovány v protokolu terminálu níže.`n`nAž budete připraveni restartovat systém, klikněte na tlačítko '⚡ REBOOT' na panelu." }
             "ru" { "Глубокая оптимизация Windows успешно завершена!`n`nВыполнено задач: $total из $total`n`nВсе подробные результаты и статус каждой операции сохранены в окне Терминала ниже.`n`nКогда будете готовы перезагрузить систему, нажмите яркую кнопку «⚡ REBOOT / Перезагрузка» на панели." }
         }
-        [System.Windows.MessageBox]::Show($completeMsg, "GIN-Win-Optimizer v039 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
+        [System.Windows.MessageBox]::Show($completeMsg, "GIN-Win-Optimizer v040 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Information)
 }
 
 # Wire Start Buttons
@@ -4728,7 +4750,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v039 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v040 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 
