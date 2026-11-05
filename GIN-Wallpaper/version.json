@@ -1,20 +1,17 @@
 {
-  "version": "v005",
+  "version": "v006",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v005_Setup.exe",
-  "description": "Умные обои с русским календарём для Windows (Яркий жёлтый цвет выходных, затемнённая подложка, иконка в трее с меню настроек)",
+  "installer": "GIN-Wallpaper-Calend_v006_Setup.exe",
+  "description": "Умные обои с русским календарём для Windows (Fix Tray Right-Click Menu + Separate Native Uninstall.exe)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
-  "date": "2026-11-05",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v005_Setup.exe",
+  "date": "2026-11-06",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v006_Setup.exe",
   "features": [
-    "Подложка календаря сделана темнее (контрастная 57% затемнённость)",
-    "Суббота и Воскресенье (Сб, Вс) и все даты выходных окрашены в яркий неоновый жёлтый цвет",
-    "Будни отображаются чётким ярким белым цветом",
-    "Текущий день подсвечен контрастным королевским сине-фиолетовым маркером",
-    "Полноценная видимая цветная иконка в трее (Shell_NotifyIconW NIF_ICON + LoadImageW)",
-    "Контекстное меню по правому клику в трее: Сменить сейчас / Настройки / Выход",
-    "Окно Настроек с выбором тем, интервала и масштаба шрифта",
-    "100% автономный нативный бинарник без Python"
+    "Исправлен клик правой кнопкой мыши по иконке в трее (WM_TRAYICON 0x8001 + WM_RBUTTONUP + WM_CONTEXTMENU)",
+    "Контекстное меню в трее: Сменить обои сейчас / Настройки / Выход",
+    "Выделенный отдельный бинарник Uninstall.exe для чистого удаления и закрытия программы",
+    "Подложка календаря с отличным контрастом и яркими жёлтыми выходными",
+    "100% автономный нативный Go бинарник без Python"
   ]
 }
