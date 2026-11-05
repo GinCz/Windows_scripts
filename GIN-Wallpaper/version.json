@@ -1,21 +1,20 @@
 {
-  "version": "v003",
+  "version": "v004",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v003_Setup.exe",
-  "description": "Умные обои с русским календарём для Windows (100% Standalone, Zero Dependencies)",
+  "installer": "GIN-Wallpaper-Calend_v004_Setup.exe",
+  "description": "Умные обои с русским календарём для Windows (TrueType Font, 20% Alpha, Settings Window)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-05",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v003_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v004_Setup.exe",
   "features": [
-    "100% автономный нативный бинарник без Python и зависимостей",
-    "Трей-апплет (двойной клик = мгновенная смена обоев)",
-    "Скачивание картинок высокого разрешения под монитор",
-    "Русский календарь в правом верхнем углу с подсветкой текущего дня",
-    "Установка в Program Files + запись в Add/Remove Programs",
-    "Чистое удаление через Uninstaller (самоочистка через Temp)",
-    "Автозагрузка при старте Windows",
-    "Красивая 256x256 встроенная иконка Win32 PE",
-    "Потребление памяти < 12 МБ RAM"
+    "Встроенный TrueType векторный кириллический шрифт DejaVu Sans Bold",
+    "Идеальное чёткое отображение русских месяцев и дней недели",
+    "20% прозрачный элегантный фон под календарём (alpha = 51/255)",
+    "Шрифт и календарь увеличены ровно в 2 раза по умолчанию",
+    "Окно Настроек (ПКМ по трею -> Настройки): выбор тем, интервала и размера шрифта",
+    "Темы: Космос, Природа, Автомобили, Города, Все подряд",
+    "100% автономный нативный Go бинарник (никаких Python/VBS)",
+    "Встроенная 256x256 цветная иконка Win32 PE"
   ]
 }
