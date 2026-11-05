@@ -1,0 +1,18 @@
+{
+  "version": "v001",
+  "name": "GIN-Wallpaper",
+  "installer": "GIN-Wallpaper_v001.exe",
+  "description": "Умные обои с календарём для Windows (tray app)",
+  "author": "GinCz / Vladimir Bulantsev",
+  "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
+  "date": "2026-11-05",
+  "features": [
+    "Трей-апплет (двойной клик = новые обои)",
+    "Скачивание картинок с Unsplash/Pexels/Picsum",
+    "Темы: космос, природа, авто, города, животные, абстракция, океан, зима",
+    "Выбор нескольких тем / случайная",
+    "Интервал смены: 1ч / 3ч / 6ч / 1 день",
+    "Календарь в правом верхнем углу (как на скриншоте)",
+    "Максимально лёгкий (< 20 МБ RAM в фоне)"
+  ]
+}
