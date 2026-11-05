@@ -168,11 +168,11 @@ func main() {
 			return
 		}
 
-		title := "GIN-Wallpaper-Calend v004 — Uninstall"
+		title := "GIN-Wallpaper-Calend v005 — Uninstall"
 		q := "Are you sure you want to completely remove GIN-Wallpaper-Calend?"
 		doneMsg := "GIN-Wallpaper-Calend has been successfully removed."
 		if ru {
-			title = "GIN-Wallpaper-Calend v004 — Удаление"
+			title = "GIN-Wallpaper-Calend v005 — Удаление"
 			q = "Вы действительно хотите полностью удалить GIN-Wallpaper-Calend?"
 			doneMsg = "GIN-Wallpaper-Calend был успешно удалён."
 		}
@@ -222,11 +222,11 @@ del "%%~f0" >nul 2>&1
 		return
 	}
 
-	title := "GIN-Wallpaper-Calend v004 — Setup"
-	qInstall := "Install GIN-Wallpaper-Calend v004 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+	title := "GIN-Wallpaper-Calend v005 — Setup"
+	qInstall := "Install GIN-Wallpaper-Calend v005 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
 	if ru {
-		title = "GIN-Wallpaper-Calend v004 — Установка"
-		qInstall = "Установить GIN-Wallpaper-Calend v004 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+		title = "GIN-Wallpaper-Calend v005 — Установка"
+		qInstall = "Установить GIN-Wallpaper-Calend v005 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
 	}
 
 	if msgBox(title, qInstall, MB_YESNO|MB_ICONINFO) != IDYES {
@@ -264,12 +264,12 @@ del "%%~f0" >nul 2>&1
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v004 — Smart Wallpaper with Calendar"
+	dispName := "GIN-Wallpaper-Calend v005 — Smart Wallpaper with Calendar"
 	if ru {
-		dispName = "GIN-Wallpaper-Calend v004 — Умные обои с календарём"
+		dispName = "GIN-Wallpaper-Calend v005 — Умные обои с календарём"
 	}
 	exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v004", "/f").Run()
+	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v005", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, icoDest), "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "InstallLocation", "/t", "REG_SZ", "/d", targetDir, "/f").Run()
@@ -286,9 +286,9 @@ del "%%~f0" >nul 2>&1
 	// 9. Launch immediately!
 	exec.Command(mainExe).Start()
 
-	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v004 is now running in your system tray (bottom-right near clock).\nDesktop shortcut created with custom icon."
+	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v005 is now running in your system tray (bottom-right near clock).\nDesktop shortcut created with custom icon."
 	if ru {
-		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v004 запущен в системном трее (в правом нижнем углу возле часов).\nЯрлык с красивой иконкой создан на Рабочем столе."
+		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v005 запущен в системном трее (в правом нижнем углу возле часов).\nЯрлык с красивой иконкой создан на Рабочем столе."
 	}
 	msgBox(title, successMsg, MB_OK|MB_ICONINFO)
 }

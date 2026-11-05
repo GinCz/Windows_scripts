@@ -32,6 +32,7 @@ var embeddedAppICO []byte
 var (
 	user32                    = syscall.NewLazyDLL("user32.dll")
 	shell32                   = syscall.NewLazyDLL("shell32.dll")
+	kernel32                  = syscall.NewLazyDLL("kernel32.dll")
 	procSystemParametersInfoW = user32.NewProc("SystemParametersInfoW")
 	procGetSystemMetrics      = user32.NewProc("GetSystemMetrics")
 	procShell_NotifyIconW     = shell32.NewProc("Shell_NotifyIconW")
@@ -50,6 +51,8 @@ var (
 	procShowWindow            = user32.NewProc("ShowWindow")
 	procDestroyWindow         = user32.NewProc("DestroyWindow")
 	procSendMessageW          = user32.NewProc("SendMessageW")
+	procLoadImageW            = user32.NewProc("LoadImageW")
+	procGetModuleHandleW      = kernel32.NewProc("GetModuleHandleW")
 )
 
 const (
@@ -88,6 +91,11 @@ const (
 	BM_GETCHECK         = 0x00F0
 	BST_CHECKED         = 0x0001
 	BST_UNCHECKED       = 0x0000
+
+	IMAGE_ICON     = 1
+	LR_LOADFROMFILE = 0x00000010
+	LR_DEFAULTSIZE = 0x00000040
+	LR_SHARED      = 0x00008000
 )
 
 type Config struct {
@@ -147,6 +155,7 @@ var (
 	nid          NOTIFYICONDATAW
 	hwndTray     syscall.Handle
 	hwndSettings syscall.Handle
+	hIconApp     syscall.Handle
 	appDataDir   string
 	cfg          Config
 	parsedFont   *truetype.Font
@@ -163,7 +172,7 @@ func loadConfig() {
 	cfg = Config{
 		Theme:         "all",
 		IntervalHours: 3,
-		FontSizeScale: 2.0, // Default 2x larger
+		FontSizeScale: 2.0,
 	}
 	cfgPath := filepath.Join(appDataDir, "config.json")
 	if data, err := os.ReadFile(cfgPath); err == nil {
@@ -243,7 +252,6 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 
 	now := time.Now()
 
-	// 2x larger dimensions
 	scale := cfg.FontSizeScale
 	if scale < 1.0 {
 		scale = 2.0
@@ -255,8 +263,8 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 	x0 := bounds.Dx() - calW - margin
 	y0 := margin
 
-	// 20% transparent dark background (alpha = 51 out of 255)
-	boxCol := color.RGBA{10, 10, 18, 51}
+	// Darker background with excellent contrast (alpha = 145 / 255 (~57% opacity))
+	boxCol := color.RGBA{12, 12, 20, 145}
 	for y := y0; y < y0+calH && y < bounds.Dy(); y++ {
 		for x := x0; x < x0+calW && x < bounds.Dx(); x++ {
 			orig := rgba.At(x, y)
@@ -268,8 +276,8 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 		}
 	}
 
-	// Elegant subtle neon border
-	borderColor := color.RGBA{180, 130, 240, 180}
+	// Border
+	borderColor := color.RGBA{180, 130, 240, 210}
 	for x := x0; x < x0+calW && x < bounds.Dx(); x++ {
 		rgba.Set(x, y0, borderColor)
 		rgba.Set(x, y0+calH-1, borderColor)
@@ -305,13 +313,13 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 	}
 	titleDrawer.DrawString(title)
 
-	// Draw Weekday headers (Пн Вт Ср Чт Пт Сб Вс)
+	// Weekdays: Monday-Friday = Pure White, Saturday-Sunday = Bright Neon Yellow!
 	colStep := int(62 * (scale / 2.0))
 	hdrY := y0 + int(82*(scale/2.0))
 	for i, d := range ruDays {
-		col := color.RGBA{210, 210, 235, 255}
+		col := color.RGBA{255, 255, 255, 255} // Pure bright white
 		if i >= 5 {
-			col = color.RGBA{255, 110, 110, 255} // Red weekend
+			col = color.RGBA{255, 230, 0, 255} // Bright vibrant Yellow for Sat and Sun!
 		}
 		dDrawer := &font.Drawer{
 			Dst:  rgba,
@@ -324,7 +332,7 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 
 	// Days grid calculation
 	firstDay := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local)
-	startWeekday := (int(firstDay.Weekday()) + 6) % 7 // Monday = 0
+	startWeekday := (int(firstDay.Weekday()) + 6) % 7
 	daysInMonth := time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, time.Local).Day()
 
 	curX := startWeekday
@@ -336,10 +344,14 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 		posX := x0 + int(24*(scale/2.0)) + curX*colStep
 		posY := gridStartY + curY*rowStep
 
-		dayCol := color.RGBA{240, 240, 255, 255}
+		dayCol := color.RGBA{255, 255, 255, 255} // Bright White for weekdays
+		if curX >= 5 {
+			dayCol = color.RGBA{255, 230, 0, 255} // Bright Vibrant Yellow for Weekend dates!
+		}
+
 		if d == now.Day() {
-			dayCol = color.RGBA{0, 240, 255, 255} // Bright cyan today
-			// Glow box around today
+			dayCol = color.RGBA{255, 255, 255, 255}
+			// Distinct bright purple/blue box for Today
 			bw := int(34 * (scale / 2.0))
 			bh := int(24 * (scale / 2.0))
 			bx := posX - int(6*(scale/2.0))
@@ -347,12 +359,10 @@ func renderCalendarOverlay(bg image.Image) *image.RGBA {
 			for gy := by; gy < by+bh; gy++ {
 				for gx := bx; gx < bx+bw; gx++ {
 					if gx >= 0 && gx < bounds.Dx() && gy >= 0 && gy < bounds.Dy() {
-						rgba.Set(gx, gy, color.RGBA{90, 40, 160, 200})
+						rgba.Set(gx, gy, color.RGBA{65, 80, 240, 240}) // Bright saturated Royal Blue
 					}
 				}
 			}
-		} else if curX >= 5 {
-			dayCol = color.RGBA{255, 120, 120, 240}
 		}
 
 		dayDrawer := &font.Drawer{
@@ -399,7 +409,7 @@ func createSettingsWindow() {
 	}
 
 	className, _ := syscall.UTF16PtrFromString("GIN_Wallpaper_SettingsClass")
-	title, _ := syscall.UTF16PtrFromString("GIN-Wallpaper-Calend v004 — Настройки")
+	title, _ := syscall.UTF16PtrFromString("GIN-Wallpaper-Calend v005 — Настройки")
 
 	wnd, _, _ := procCreateWindowExW.Call(
 		0,
@@ -484,7 +494,6 @@ func createControls(parent syscall.Handle) {
 		procSendMessageW.Call(uintptr(rbFontLarge), BM_SETCHECK, BST_CHECKED, 0)
 	}
 
-	// Buttons
 	saveTxt, _ := syscall.UTF16PtrFromString("Сохранить и применить")
 	closeTxt, _ := syscall.UTF16PtrFromString("Закрыть")
 	procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(btnClass)), uintptr(unsafe.Pointer(saveTxt)), WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON, 30, 465, 200, 34, uintptr(parent), 501, 0, 0)
@@ -594,6 +603,39 @@ func wndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
 	return ret
 }
 
+func loadAppIcon() syscall.Handle {
+	// Try loading from embedded resource ID 1
+	hInstance, _, _ := procGetModuleHandleW.Call(0)
+	hIco, _, _ := procLoadImageW.Call(hInstance, 1, uintptr(IMAGE_ICON), 16, 16, uintptr(LR_DEFAULTSIZE|LR_SHARED))
+	if hIco != 0 {
+		return syscall.Handle(hIco)
+	}
+
+	// Fallback to app.ico from disk
+	exePath, _ := os.Executable()
+	diskIco := filepath.Join(filepath.Dir(exePath), "app.ico")
+	if _, err := os.Stat(diskIco); err == nil {
+		pIco, _ := syscall.UTF16PtrFromString(diskIco)
+		hIcoDisk, _, _ := procLoadImageW.Call(0, uintptr(unsafe.Pointer(pIco)), uintptr(IMAGE_ICON), 16, 16, uintptr(LR_LOADFROMFILE))
+		if hIcoDisk != 0 {
+			return syscall.Handle(hIcoDisk)
+		}
+	}
+
+	// Fallback: write embeddedAppICO to temp and load
+	if len(embeddedAppICO) > 0 {
+		tmpIco := filepath.Join(os.TempDir(), "gin_wallpaper_tray.ico")
+		os.WriteFile(tmpIco, embeddedAppICO, 0644)
+		pTmp, _ := syscall.UTF16PtrFromString(tmpIco)
+		hTmp, _, _ := procLoadImageW.Call(0, uintptr(unsafe.Pointer(pTmp)), uintptr(IMAGE_ICON), 16, 16, uintptr(LR_LOADFROMFILE))
+		if hTmp != 0 {
+			return syscall.Handle(hTmp)
+		}
+	}
+
+	return 0
+}
+
 func main() {
 	appDataDir = filepath.Join(os.Getenv("APPDATA"), "GIN-Wallpaper-Calend")
 	os.MkdirAll(appDataDir, 0755)
@@ -607,11 +649,15 @@ func main() {
 		fmt.Printf("Font error: %v\n", err)
 	}
 
+	hIconApp = loadAppIcon()
+
 	className, _ := syscall.UTF16PtrFromString("GIN_Wallpaper_TrayClass")
 	wc := WNDCLASSEXW{
 		CbSize:        uint32(unsafe.Sizeof(WNDCLASSEXW{})),
 		LpfnWndProc:   syscall.NewCallback(wndProc),
 		LpszClassName: className,
+		HIcon:         hIconApp,
+		HIconSm:       hIconApp,
 	}
 	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wc)))
 
@@ -620,6 +666,8 @@ func main() {
 		CbSize:        uint32(unsafe.Sizeof(WNDCLASSEXW{})),
 		LpfnWndProc:   syscall.NewCallback(settingsWndProc),
 		LpszClassName: settingsClass,
+		HIcon:         hIconApp,
+		HIconSm:       hIconApp,
 		HbrBackground: syscall.Handle(15 + 1),
 	}
 	procRegisterClassExW.Call(uintptr(unsafe.Pointer(&wcSettings)))
@@ -632,13 +680,15 @@ func main() {
 	)
 	hwndTray = syscall.Handle(hwnd)
 
+	// Explicitly assign HIcon and NIF_ICON!
 	nid.CbSize = uint32(unsafe.Sizeof(nid))
 	nid.Hwnd = hwndTray
 	nid.UID = 1
-	nid.UFlags = NIF_MESSAGE | NIF_TIP
+	nid.UFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP
 	nid.UCallbackMessage = WM_TRAYICON
+	nid.HIcon = hIconApp
 
-	tip, _ := syscall.UTF16FromString("GIN-Wallpaper-Calend v004")
+	tip, _ := syscall.UTF16FromString("GIN-Wallpaper-Calend v005")
 	for i := 0; i < len(tip) && i < 127; i++ {
 		nid.SzTip[i] = tip[i]
 	}
