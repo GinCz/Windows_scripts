@@ -1,8 +1,8 @@
 {
-  "version": "v042",
+  "version": "v043",
   "name": "GIN-Voice",
   "installer": "GIN-Voice_Setup.exe",
-  "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Tail Audio Protection + Zero Hallucination Conditioning",
+  "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Dynamic VAD Silence Trimming + Multi-Pass Hallucination Defense",
   "release_date": "2026-11-05",
   "author": "VladiMIR+AI",
   "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
