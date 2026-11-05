@@ -1,6 +1,5 @@
 @echo off
 setlocal EnableExtensions
-chcp 65001 >nul 2>&1
 cls
 
 title GIN-Agent Windows PC [VladiMIR+AI]
@@ -10,26 +9,27 @@ echo           GIN-AGENT WINDOWS PC - 1-CLICK REMOTE ACCESS AGENT
 echo                              [VladiMIR+AI]
 echo ================================================================================
 echo.
-echo [*] Инициализация сервисного агента...
+echo [*] Initializing remote service agent...
 
 set "GIN_AGENT_FILE=%~f0"
 if "%GIN_AGENT_FILE%"=="" set "GIN_AGENT_FILE=%CD%\GIN-Agent_Windows.cmd"
 
-powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:GIN_AGENT_FILE; if (-not $f -or -not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -LiteralPath $f -Raw -Encoding UTF8) -replace '(?s)^.*?::POWERSHELL_START::\r?\n',''; iex $code } else { Write-Host '[X] Ошибка: Не удалось определить путь к файлу агента.' -ForegroundColor Red }"
+powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:GIN_AGENT_FILE; if (-not $f -or -not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -LiteralPath $f -Raw) -replace '(?s)^.*?::POWERSHELL_START::\r?\n',''; iex $code } else { Write-Host '[X] ERROR: Could not locate agent script file.' -ForegroundColor Red }"
 
 echo.
 echo ================================================================================
-echo [*] Сессия GIN-Agent завершена. Окно оставлено открытым для диагностики.
-echo [*] Вы можете закрыть это окно вручную или нажать любую клавишу.
+echo [*] GIN-Agent session ended. Window kept open for diagnosis.
+echo [*] You can close this window manually or press any key.
 echo ================================================================================
 pause
 exit /b
 
 ::POWERSHELL_START::
 # ==============================================================================
-# GIN-Agent Windows PC v011
+# GIN-Agent Windows PC v012
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
+# Language: 100% Pure ASCII English (Universal Locale & Encoding Immunity)
 # Gateways: Global (remote.gincz.com), RU-FastNode (195.158.255.208), RU-109 (212.109.223.109)
 # ==============================================================================
 
@@ -45,7 +45,7 @@ try {
 
     $token = "GinCz-Remote-2026"
     $headers = @{ 
-        "Token" = $token
+        "Token"  = $token
         "X-Host" = $env:COMPUTERNAME
     }
 
@@ -130,7 +130,7 @@ try {
             ram     = $ramStr
             disk    = $diskStr
             gateway = $activeGatewayName
-            version = "v011"
+            version = "v012"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
@@ -143,31 +143,31 @@ try {
     Write-Host "====================================================================" -ForegroundColor Cyan
     Write-Host "       GIN-AGENT WINDOWS PC - REMOTE AI OPTIMIZATION PORTAL          " -ForegroundColor Green
     Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "    Статус:     ПОДКЛЮЧЕНО К $activeGatewayName" -ForegroundColor White
+    Write-Host "    Status:     CONNECTED TO $activeGatewayName" -ForegroundColor White
     if ($admin) {
-        Write-Host "    Привилегии: Administrator (Полный доступ)" -ForegroundColor Green
+        Write-Host "    Privileges: Administrator (Full Access)" -ForegroundColor Green
     } else {
-        Write-Host "    Привилегии: Пользователь (Стандартные права)" -ForegroundColor Yellow
-        Write-Host "    [!] Для полного системного контроля: ПКМ -> 'Запуск от имени администратора'" -ForegroundColor DarkYellow
+        Write-Host "    Privileges: User (Standard Rights)" -ForegroundColor Yellow
+        Write-Host "    [!] For full control: Right-Click -> 'Run as administrator'" -ForegroundColor DarkYellow
     }
-    Write-Host "    Хост:       $env:COMPUTERNAME ($env:USERNAME)" -ForegroundColor Cyan
-    Write-Host "    ОС / Архит: $osName" -ForegroundColor Gray
-    Write-Host "    Процессор:  $cpuName" -ForegroundColor DarkGray
-    Write-Host "    ОЗУ / Диск: $ramStr | $diskStr" -ForegroundColor DarkGray
+    Write-Host "    Host:       $env:COMPUTERNAME ($env:USERNAME)" -ForegroundColor Cyan
+    Write-Host "    OS / Arch:  $osName" -ForegroundColor Gray
+    Write-Host "    CPU:        $cpuName" -ForegroundColor DarkGray
+    Write-Host "    RAM / Disk: $ramStr | $diskStr" -ForegroundColor DarkGray
     Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-    Write-Host "    [+] Уведомление о сессии отправлено в Telegram Владимиру." -ForegroundColor Green
-    Write-Host "    Система готова к проведению диагностики и аудита Antigravity." -ForegroundColor Gray
-    Write-Host "    [!] Не закрывайте это окно, пока Antigravity выполняет работы." -ForegroundColor Yellow
-    Write-Host "    (Для завершения сессии нажмите Ctrl+C или закройте окно)" -ForegroundColor DarkGray
+    Write-Host "    [+] Telegram notification sent to Vladimir." -ForegroundColor Green
+    Write-Host "    System is ready for diagnostics and Antigravity maintenance." -ForegroundColor Gray
+    Write-Host "    [!] Keep this window open while Antigravity performs tasks." -ForegroundColor Yellow
+    Write-Host "    (To end session: press Ctrl+C or close window)" -ForegroundColor DarkGray
     Write-Host "====================================================================" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "[*] Ожидание задач от Antigravity AI..." -ForegroundColor Green
+    Write-Host "[*] Listening for Antigravity AI tasks..." -ForegroundColor Green
 
     # Resilient Main Polling Loop
     while ($true) {
         try {
             $headers = @{ 
-                "Token" = $token
+                "Token"  = $token
                 "X-Host" = $env:COMPUTERNAME
             }
             $pollUrl = "$serverUrl/poll?h=$env:COMPUTERNAME"
@@ -175,7 +175,7 @@ try {
             if ($resp -and $resp.command) {
                 $cmdId = $resp.id
                 $cmdText = $resp.command
-                Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] Задача #$cmdId принята: $cmdText" -ForegroundColor Magenta
+                Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] Task #$cmdId received: $cmdText" -ForegroundColor Magenta
                 
                 $out = ""
                 try {
@@ -184,17 +184,17 @@ try {
                 } catch {
                     $out = $_.Exception.Message
                 }
-                if (-not $out -or $out.Trim() -eq "") { $out = "[OK: Команда успешно выполнена без вывода]" }
+                if (-not $out -or $out.Trim() -eq "") { $out = "[OK: Command completed with no output]" }
 
                 $bodyObj = @{
-                    id = $cmdId
+                    id     = $cmdId
                     output = $out
                 }
                 $jsonBody = $bodyObj | ConvertTo-Json
                 
                 try {
                     Invoke-RestMethod -Uri "$serverUrl/result" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $jsonBody -TimeoutSec 15 -ErrorAction Stop | Out-Null
-                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Задача #$cmdId завершена, отчет передан." -ForegroundColor Green
+                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Task #$cmdId finished, report transmitted." -ForegroundColor Green
                 } catch {
                     $bytes = [System.Text.Encoding]::UTF8.GetBytes($jsonBody)
                     $req = [System.Net.HttpWebRequest]::Create("$serverUrl/result")
@@ -206,14 +206,14 @@ try {
                     $reqStream.Write($bytes, 0, $bytes.Length)
                     $reqStream.Close()
                     $null = $req.GetResponse()
-                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Задача #$cmdId завершена, отчет передан (fallback)." -ForegroundColor Green
+                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Task #$cmdId finished, report transmitted (fallback)." -ForegroundColor Green
                 }
             }
         } catch {}
         Start-Sleep -Milliseconds 600
     }
 } catch {
-    Write-Host "`n[X] Критическая ошибка: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "[*] Окно зафиксировано для диагностики." -ForegroundColor Yellow
+    Write-Host "`n[X] Critical error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "[*] Window kept open for debugging." -ForegroundColor Yellow
     while ($true) { Start-Sleep -Seconds 300 }
 }
