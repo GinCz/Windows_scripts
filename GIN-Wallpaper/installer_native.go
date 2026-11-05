@@ -117,7 +117,6 @@ func getDesktopDirectories() []string {
 			existing = append(existing, d)
 		}
 	}
-	// Fallback: if none exists, create D:\MEGA\DOCS\desktop or user desktop
 	if len(existing) == 0 {
 		ud := filepath.Join(os.Getenv("USERPROFILE"), "Desktop")
 		os.MkdirAll(ud, 0755)
@@ -126,7 +125,7 @@ func getDesktopDirectories() []string {
 	return existing
 }
 
-func createShortcutsSafe(targetExe, workDir string) {
+func createShortcutsSafe(targetExe, workDir, icoPath string) {
 	psScript := fmt.Sprintf(`
 $w = New-Object -ComObject WScript.Shell
 $deskDirs = @('D:\MEGA\DOCS\desktop', 'D:\mega\docs\desktop', [Environment]::GetFolderPath('Desktop'), "$env:USERPROFILE\Desktop", "$env:PUBLIC\Desktop")
@@ -153,7 +152,7 @@ if (Test-Path $sm) {
         $s.Save()
     } catch {}
 }
-`, targetExe, workDir, targetExe, targetExe, workDir, targetExe)
+`, targetExe, workDir, icoPath, targetExe, workDir, icoPath)
 
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -164,11 +163,16 @@ func main() {
 	ru := isRussianLocale()
 
 	if len(os.Args) > 1 && os.Args[1] == "--uninstall" {
-		title := "GIN-Wallpaper-Calend — Uninstall"
+		if !isAdmin() {
+			runSelfAsAdmin()
+			return
+		}
+
+		title := "GIN-Wallpaper-Calend v002 — Uninstall"
 		q := "Are you sure you want to completely remove GIN-Wallpaper-Calend?"
 		doneMsg := "GIN-Wallpaper-Calend has been successfully removed."
 		if ru {
-			title = "GIN-Wallpaper-Calend — Удаление"
+			title = "GIN-Wallpaper-Calend v002 — Удаление"
 			q = "Вы действительно хотите полностью удалить GIN-Wallpaper-Calend?"
 			doneMsg = "GIN-Wallpaper-Calend был успешно удалён."
 		}
@@ -180,24 +184,33 @@ func main() {
 		// Kill processes
 		exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe").Run()
 		exec.Command("taskkill", "/F", "/IM", "pythonw.exe").Run()
+		time.Sleep(500 * time.Millisecond)
 
 		// Registry cleanup
 		exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`, "/f").Run()
 		exec.Command("reg", "delete", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`, "/f").Run()
 		exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, "/v", "GIN-Wallpaper-Calend", "/f").Run()
 
-		// Remove shortcuts from all possible desktop folders
+		// Shortcuts
 		for _, d := range getDesktopDirectories() {
 			os.Remove(filepath.Join(d, "GIN-Wallpaper-Calend.lnk"))
 		}
 		startMenu := filepath.Join(os.Getenv("APPDATA"), `Microsoft\Windows\Start Menu\Programs\GIN-Wallpaper-Calend.lnk`)
 		os.Remove(startMenu)
 
-		// Remove directory deferred
+		// Self deletion via scheduled cmd batch in temp
 		exe, _ := os.Executable()
 		instDir := filepath.Dir(exe)
-		cmdStr := fmt.Sprintf("/C timeout /T 2 /NOBREAK & rmdir /S /Q \"%s\"", instDir)
-		exec.Command("cmd.exe", cmdStr).Start()
+		batDel := filepath.Join(os.TempDir(), "gin_cleanup.bat")
+		batContent := fmt.Sprintf(`@echo off
+timeout /T 1 /NOBREAK >nul
+taskkill /F /IM GIN-Wallpaper-Calend.exe >nul 2>&1
+taskkill /F /IM Uninstall.exe >nul 2>&1
+rd /S /Q "%s" >nul 2>&1
+del "%%~f0" >nul 2>&1
+`, instDir)
+		os.WriteFile(batDel, []byte(batContent), 0644)
+		exec.Command("cmd.exe", "/C", "start", "/min", batDel).Start()
 
 		msgBox(title, doneMsg, MB_OK|MB_ICONINFO)
 		return
@@ -209,11 +222,11 @@ func main() {
 		return
 	}
 
-	title := "GIN-Wallpaper-Calend v001 — Setup"
-	qInstall := "Install GIN-Wallpaper-Calend (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+	title := "GIN-Wallpaper-Calend v002 — Setup"
+	qInstall := "Install GIN-Wallpaper-Calend v002 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
 	if ru {
-		title = "GIN-Wallpaper-Calend v001 — Установка"
-		qInstall = "Установить GIN-Wallpaper-Calend (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+		title = "GIN-Wallpaper-Calend v002 — Установка"
+		qInstall = "Установить GIN-Wallpaper-Calend v002 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
 	}
 
 	if msgBox(title, qInstall, MB_YESNO|MB_ICONINFO) != IDYES {
@@ -234,7 +247,7 @@ func main() {
 		os.WriteFile(icoDest, embeddedAppICO, 0644)
 	}
 
-	// 2. Write native runner EXE (with compiled icon)
+	// 2. Write native runner EXE
 	mainExe := filepath.Join(targetDir, "GIN-Wallpaper-Calend.exe")
 	if len(embeddedRunnerEXE) > 0 {
 		os.WriteFile(mainExe, embeddedRunnerEXE, 0755)
@@ -256,14 +269,14 @@ func main() {
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend — Smart Wallpaper with Calendar"
+	dispName := "GIN-Wallpaper-Calend v002 — Smart Wallpaper with Calendar"
 	if ru {
-		dispName = "GIN-Wallpaper-Calend — Умные обои с календарём"
+		dispName = "GIN-Wallpaper-Calend v002 — Умные обои с календарём"
 	}
 	exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v001", "/f").Run()
+	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v002", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, mainExe), "/f").Run()
+	exec.Command("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, icoDest), "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "InstallLocation", "/t", "REG_SZ", "/d", targetDir, "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "UninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s" --uninstall`, uninstExe), "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "QuietUninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s" --uninstall`, uninstExe), "/f").Run()
@@ -272,15 +285,15 @@ func main() {
 	runKey := `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 	exec.Command("reg", "add", runKey, "/v", "GIN-Wallpaper-Calend", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, mainExe), "/f").Run()
 
-	// 8. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with embedded icon!
-	createShortcutsSafe(mainExe, targetDir)
+	// 8. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with custom ICO!
+	createShortcutsSafe(mainExe, targetDir, icoDest)
 
 	// 9. Launch immediately!
 	exec.Command(mainExe).Start()
 
-	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend is now running in your system tray (bottom-right near clock).\nDesktop shortcut created with custom icon."
+	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v002 is now running in your system tray (bottom-right near clock).\nDesktop shortcut created with custom icon."
 	if ru {
-		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend запущен в системном трее (в правом нижнем углу возле часов).\nЯрлык с красивой иконкой создан на Рабочем столе."
+		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v002 запущен в системном трее (в правом нижнем углу возле часов).\nЯрлык с красивой иконкой создан на Рабочем столе."
 	}
 	msgBox(title, successMsg, MB_OK|MB_ICONINFO)
 }

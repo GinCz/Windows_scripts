@@ -1,12 +1,12 @@
 {
-  "version": "v001",
+  "version": "v002",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v001_Setup.exe",
+  "installer": "GIN-Wallpaper-Calend_v002_Setup.exe",
   "description": "Умные обои с русским календарём для Windows (tray app)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-05",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v001_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v002_Setup.exe",
   "features": [
     "Трей-апплет (двойной клик = новые обои)",
     "Скачивание картинок с Unsplash/Pexels/Picsum",
@@ -15,8 +15,9 @@
     "Интервал смены: 1ч / 3ч / 6ч / 1 день",
     "Русский календарь в правом верхнем углу",
     "Установка в Program Files + запись в Add/Remove Programs",
-    "Собственный Uninstaller",
+    "Чистое удаление через Uninstaller (батник в Temp с задержкой)",
     "Автозагрузка при старте Windows",
+    "Нативный Go runner с красивой 256x256 иконкой",
     "Максимально лёгкий (< 20 МБ RAM в фоне)"
   ]
 }
