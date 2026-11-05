@@ -4,14 +4,14 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
 > **Target OS:** Windows 7 / 8 / 8.1 / 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions)  
-> **Current Version:** `v040` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v040.cmd` and `GIN-Win-Optimizer_v039.cmd`).
+> **Current Version:** `v041` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v041.cmd` and `GIN-Win-Optimizer_v039.cmd`).
 
 ---
 
-## 🚀 GIN-Win-Optimizer v040: Unified Standalone CMD Architecture & Silent UAC Hardening
+## 🚀 GIN-Win-Optimizer v041: Unified Standalone CMD Architecture & Silent UAC Hardening
 
-Version `v040` establishes the single-standard CMD format (EXE removed per Vladimir directive for maximum sysadmin portability and antivirus immunity):
+Version `v041` establishes the single-standard CMD format (EXE removed per Vladimir directive for maximum sysadmin portability and antivirus immunity):
 - **Universal Single-Standard CMD**: Standalone hybrid script running natively across Windows 7 SP1, 8, 8.1, 10, and 11 on both 32-bit (x86) and 64-bit (x64) architectures.
 - **100% Antivirus & SmartScreen Immunity**: Zero binary blocks, zero quarantine risk, zero compiler dependencies. Can be transferred via AnyDesk, RDP, Telegram, USB flash drives, or network shares without triggering "Unknown Publisher" security blocks.
 - **Robust Auto-Elevation (`RunAs`)**: Checks administrative privileges natively via `net session >nul 2>&1`. Automatically re-elevates if launched by regular double-click, staging to local `%TEMP%` when running from UNC network shares (`\\server\share`).
@@ -20,7 +20,7 @@ Version `v040` establishes the single-standard CMD format (EXE removed per Vladi
 
 ---
 
-## 🛠️ Core Functional Modules (v040)
+## 🛠️ Core Functional Modules (v041)
 
 ### 1. Security & UAC Hardening
 - **Slider to Minimum (Never Notify)**: Pre-configures `ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`, and `FilterAdministratorToken = 0`.
@@ -51,11 +51,11 @@ Version `v040` establishes the single-standard CMD format (EXE removed per Vladi
 
 | Environment / Medium | Path | Target Version | Retention Policy |
 | :--- | :--- | :---: | :---: |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v040.cmd` | v040 | Latest 2 versions |
-| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v040.cmd` | v040 | Latest 2 versions |
-| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS\GIN-Win-Optimizer_v040.cmd` | v040 | Latest 2 versions |
-| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v040 | Full Git history |
-| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v040 | Full Git history |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v041.cmd` | v041 | Latest 2 versions |
+| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v041.cmd` | v041 | Latest 2 versions |
+| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS\GIN-Win-Optimizer_v041.cmd` | v041 | Latest 2 versions |
+| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v041 | Full Git history |
+| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v041 | Full Git history |
 
 
 ---

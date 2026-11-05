@@ -4,6 +4,16 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v041] - 2026-11-05
+- **Critical Fix for Network Drives (LanmanWorkstation ServiceDll)**:
+  - Eliminated destructive `New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanWorkstation\Parameters" -Force` call that wiped existing registry values in that subkey.
+  - Resolved `System Error 2: The system cannot find the file specified` on `LanmanWorkstation` service startup by explicitly ensuring `ServiceDll = %SystemRoot%\System32\wkssvc.dll`.
+  - Guaranteed mapped network drives (`R:`, `S:`, `Z:`, and SMB shares) remain 100% accessible and persistent across reboots on all client PCs.
+- **Permanent Zero-UAC Elimination (`EnableLUA = 0`)**:
+  - Enforced `EnableLUA = 0` in `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System` alongside `ConsentPromptBehaviorAdmin = 0` and `FilterAdministratorToken = 0`.
+  - Completely eliminates all UAC prompts, security dialogs, and yellow elevation screens across all user and admin actions.
+- **Delivery**: Uploaded directly to Vladimir desktop `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v041.cmd` and `D:\MEGA\WIN-FLASH\Util-WINDOWS\`.
+
 ## [v040] - 2026-11-05
 - **Single-Standard CMD Format**: Standardized on unified portable CMD polyglot architecture per Vladimir directive. Removed compiled EXE (`GIN-Win-Optimizer.exe`) and binary build toolchain to avoid all delivery, SmartScreen, and Antivirus friction.
 - **Universal Architecture (x86 & x64) & Legacy Windows Support**: Full native support for Windows 7 SP1, 8, 8.1, 10, and 11 across both 32-bit (x86) and 64-bit (x64) environments.

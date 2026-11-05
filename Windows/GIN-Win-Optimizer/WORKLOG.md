@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-11-05 — Release v041 (LanmanWorkstation ServiceDll Fix & Permanent Zero-UAC)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v040` to `v041` for all changes fixing the network drives drop bug and UAC suppression.
+- **Root Cause & Fix for Network Drives (System Error 2)**:
+  - Diagnosed live on test host `E14--HOME`: `LanmanWorkstation` failed to start with Error 2 because `New-Item -Force` wiped `Parameters\ServiceDll`.
+  - Fixed script to strictly preserve and explicitly enforce `ServiceDll = %SystemRoot%\System32\wkssvc.dll`.
+  - Verified network drives `R:` and `S:` immediately restored and operational.
+- **Permanent Zero-UAC Hardening**: Added `EnableLUA = 0` to permanently silence all UAC dialogs across all Windows editions.
+- **Desktop Delivery**: Uploaded `GIN-Win-Optimizer_v041.cmd` to `D:\MEGA\DOCS\desktop` via `mega-put`.
+
 ## 2026-11-05 — Release v040 (Single-Standard CMD, Silent UAC Hardening & EXE Removal)
 - **Unified CMD Architecture**: Per Vladimir directive, removed the compiled EXE binary (`GIN-Win-Optimizer.exe`) and associated build toolchain. Selected standalone polyglot CMD as the single official format to eliminate all friction with antivirus heuristics, browser download blocking, and Windows SmartScreen unknown publisher warnings.
 - **Universal Architecture (x86 32-bit & x64) across Windows 7/8/10/11**: Tested and hardened execution for older and 32-bit platforms (e.g. Windows 7 SP1 x86 accounting PCs) without requiring newer .NET Framework runtimes.

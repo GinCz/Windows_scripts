@@ -1,10 +1,10 @@
 {
   "project": "GIN-Win-Optimizer",
-  "current_version": "v040",
+  "current_version": "v041",
   "updated_at": "2026-11-05",
   "active_versions": [
-    "GIN-Win-Optimizer_v040.cmd",
-    "GIN-Win-Optimizer_v039.cmd"
+    "GIN-Win-Optimizer_v041.cmd",
+    "GIN-Win-Optimizer_v040.cmd"
   ],
   "sync_targets": {
     "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -14,14 +14,14 @@
   },
   "changelog": [
     {
+      "version": "v041",
+      "date": "2026-11-05",
+      "changes": "Critical Network ServiceDll & Total Zero-UAC Fix: Fixed destructive New-Item -Force bug on HKLM:\\SYSTEM\\CurrentControlSet\\Services\\LanmanWorkstation\\Parameters that wiped ServiceDll (causing Error 2 'The system cannot find the file specified' and dropping mapped network drives R:, S:, Z: across reboots); enforced explicit ServiceDll=%SystemRoot%\\System32\\wkssvc.dll preservation; enforced EnableLUA=0 in HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System for permanent 100% elimination of all UAC prompts across all Windows editions; synced to desktop D:\\MEGA\\DOCS\\desktop."
+    },
+    {
       "version": "v040",
       "date": "2026-11-05",
       "changes": "Single-Standard CMD Architecture, Full x86/x64 & Win 7-11 Compatibility, Silent UAC Hardening: Standardized on standalone portable CMD format (EXE removed per Vladimir directive); guaranteed zero antivirus friction and instant bypass of SmartScreen blocks; auto-elevation via native net session + RunAs; enforced UAC slider to minimum ('Never Notify' - ConsentPromptBehaviorAdmin=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0); disabled chk_sec_admin_approval by default across all presets; hardened environment variable passing ($env:GIN_OPT_SCRIPT); preserved EnableLinkedConnections=1 and LAN/SMB persistence."
-    },
-    {
-      "version": "v039",
-      "date": "2026-11-04",
-      "changes": "Critical Fix & Ultarix Accounting Hardening (14-PC Audit): Fixed syntax error ($actions += @{ Name = 'Ensure LAN Discovery...' }) at line 4150; hardened mandatory LAN & Accounting block (Private profile on active & registry network profiles, AllowInsecureGuestAuth=1, EnableLinkedConnections=1, DisableUNCCheck=1, auto-start FDResPub/fdPHost/LanmanWorkstation/LanmanServer/Spooler/lmhosts/Dnscache/NlaSvc/SSDPSRV/upnphost + accounting DB services FSServer412Service/MSSQL/Firebird, localized & resource-ID Firewall rules, taskoffload=enabled); disabled dangerous checkboxes by default and in presets (chk_srv_network_offload, chk_srv_pca, chk_srv_trkwks, chk_srv_iphlpsvc, chk_srv_indexing in Office); enforced disable8dot3=0 for 16/32-bit DOS/Win32 accounting apps (STEREO/Ekonom); fixed pagefile to 4096-8192 MB on 4GB RAM 32-bit PCs (preventing 0xe0000008 crashes); removed forced en-US UI language override; guarded 32-bit reg.exe calls; removed chcp 65001 from CMD header to prevent Win32 0x1F error; added local %TEMP% staging for UNC share execution (\\\\Ulps1\\util)."
     }
   ]
 }
