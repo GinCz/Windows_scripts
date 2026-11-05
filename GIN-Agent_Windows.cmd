@@ -1,10 +1,4 @@
 @echo off
-:: ==============================================================================
-:: GIN-Agent Windows PC Launcher v008 (2026-11-05)
-:: Author: VladiMIR+AI
-:: Description: Universal 1-Click Remote Access Agent for Windows 10/11 (32/64-bit)
-:: Gateway: Resilient Triple Fallback (Global / Russia RU-208 / Russia RU-109)
-:: ==============================================================================
 setlocal EnableExtensions
 chcp 65001 >nul 2>&1
 cls
@@ -16,23 +10,12 @@ echo           GIN-AGENT WINDOWS PC - 1-CLICK REMOTE ACCESS AGENT
 echo                              [VladiMIR+AI]
 echo ================================================================================
 echo.
+echo [*] Инициализация сервисного агента...
 
-:: Pass script full path via environment variable (immune to spaces, special chars, parentheses)
-set "GIN_AGENT_PATH=%~f0"
+set "GIN_AGENT_FILE=%~f0"
+if "%GIN_AGENT_FILE%"=="" set "GIN_AGENT_FILE=%CD%\GIN-Agent_Windows.cmd"
 
-:: Check PowerShell availability
-set "PS_CMD=powershell.exe"
-if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
-    set "PS_CMD=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-)
-
-:: Run embedded PowerShell payload safely
-"%PS_CMD%" -NoProfile -ExecutionPolicy Bypass -Command "$p = $env:GIN_AGENT_PATH; if ([string]::IsNullOrEmpty($p) -or -not (Test-Path -LiteralPath $p)) { Write-Host '[X] Ошибка: Не удалось прочитать путь к файлу агента.' -ForegroundColor Red; exit 1 }; try { Unblock-File -LiteralPath $p -ErrorAction SilentlyContinue } catch {}; $txt = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8); $marker = ':::POWERSHELL_PAYLOAD:::'; $idx = $txt.IndexOf($marker); if ($idx -ge 0) { $code = $txt.Substring($idx + $marker.Length); $sb = [ScriptBlock]::Create($code); & $sb } else { Write-Host '[X] Ошибка: Секция POWERSHELL_PAYLOAD не найдена!' -ForegroundColor Red; exit 2 }"
-
-if %errorlevel% neq 0 (
-    echo.
-    echo [X] Ошибка выполнения агента (Код ошибки: %errorlevel%).
-)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:GIN_AGENT_FILE; if (-not $f -or -not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -LiteralPath $f -Raw -Encoding UTF8) -replace '(?s)^.*?::POWERSHELL_START::\r?\n',''; iex $code } else { Write-Host '[X] Ошибка: Не удалось определить путь к файлу агента.' -ForegroundColor Red }"
 
 echo.
 echo ================================================================================
@@ -42,9 +25,9 @@ echo ===========================================================================
 pause
 exit /b
 
-:::POWERSHELL_PAYLOAD:::
+::POWERSHELL_START::
 # ==============================================================================
-# GIN-Agent Windows PC v008
+# GIN-Agent Windows PC v010
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
 # Gateways: Global (remote.gincz.com), RU-FastNode (195.158.255.208), RU-109 (212.109.223.109)
@@ -143,7 +126,7 @@ try {
         ram     = $ramStr
         disk    = $diskStr
         gateway = $activeGatewayName
-        version = "v008"
+        version = "v010"
     } | ConvertTo-Json
     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
 } catch {}
