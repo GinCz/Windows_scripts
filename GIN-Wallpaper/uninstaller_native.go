@@ -110,21 +110,12 @@ func main() {
 	startMenu := filepath.Join(os.Getenv("APPDATA"), `Microsoft\Windows\Start Menu\Programs\GIN-Wallpaper-Calend.lnk`)
 	os.Remove(startMenu)
 
-	// 4. Deferred self-wiping batch script
+	// 4. Deferred cleanup without batch files (runs in %TEMP% so Program Files is not locked)
 	exe, _ := os.Executable()
 	instDir := filepath.Dir(exe)
-	batDel := filepath.Join(os.TempDir(), "gin_uninstall_cleaner.bat")
-	batContent := fmt.Sprintf(`@echo off
-timeout /T 1 /NOBREAK >nul
-taskkill /F /IM GIN-Wallpaper-Calend.exe >nul 2>&1
-taskkill /F /IM Uninstall.exe >nul 2>&1
-timeout /T 1 /NOBREAK >nul
-rd /S /Q "%s" >nul 2>&1
-del "%%~f0" >nul 2>&1
-`, instDir)
-	os.WriteFile(batDel, []byte(batContent), 0644)
-
-	cmd := exec.Command("cmd.exe", "/C", "start", "/min", batDel)
+	cleanerCmd := fmt.Sprintf(`ping 127.0.0.1 -n 3 >nul & taskkill /F /IM GIN-Wallpaper-Calend.exe >nul 2>&1 & taskkill /F /IM Uninstall.exe >nul 2>&1 & rd /S /Q "%s"`, instDir)
+	cmd := exec.Command("cmd.exe", "/C", cleanerCmd)
+	cmd.Dir = os.TempDir()
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmd.Start()
 
