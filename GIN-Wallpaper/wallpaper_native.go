@@ -83,7 +83,7 @@ var (
 )
 
 const (
-	AppVersion = "v014"
+	AppVersion = "v015"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -269,7 +269,7 @@ var (
 	hFontCorbel     syscall.Handle
 	hFontConsolas   syscall.Handle
 	hFontTreb       syscall.Handle
-	hFontImpact     syscall.Handle
+	hFontCambria    syscall.Handle
 	hFontGothic     syscall.Handle
 	hFontCandara    syscall.Handle
 	hFontConstantia syscall.Handle
@@ -302,14 +302,11 @@ var (
 	// Radio buttons - Intervals (4)
 	rb1h, rb3h, rb6h, rb24h syscall.Handle
 
-	// Radio buttons - Font styles (12 fonts in 2 columns)
+	// Radio buttons - Font styles (12 fonts in 2 columns, single-line format)
 	rbFontSegoe, rbFontBahn, rbFontArial, rbFontVerdana, rbFontGeorgia, rbFontCorbel syscall.Handle
-	rbFontConsolas, rbFontTreb, rbFontImpact, rbFontGothic, rbFontCandara, rbFontConstantia syscall.Handle
+	rbFontConsolas, rbFontTreb, rbFontCambria, rbFontGothic, rbFontCandara, rbFontConstantia syscall.Handle
 
-	lblSampSegoe, lblSampBahn, lblSampArial, lblSampVerdana, lblSampGeorgia, lblSampCorbel syscall.Handle
-	lblSampConsolas, lblSampTreb, lblSampImpact, lblSampGothic, lblSampCandara, lblSampConstantia syscall.Handle
-
-	// Radio buttons - Font scale (5 variants: 1.4x, 1.7x, 2.0x, 2.5x, 3.0x)
+	// Radio buttons - Font scale (5 variants: 1.4x, 1.7x, 2.0x, 2.25x, 2.8x)
 	rbFontScale1, rbFontScale2, rbFontScale3, rbFontScale4, rbFontScale5 syscall.Handle
 
 	// Action buttons (Bottom)
@@ -587,12 +584,9 @@ func getFontForStyle(style string) *truetype.Font {
 	case "bahn", "bahnschrift":
 		fontFile = filepath.Join(fontsDir, "bahnschrift.ttf")
 	case "arial":
-		fontFile = filepath.Join(fontsDir, "ariblk.ttf")
-		if _, err := os.Stat(fontFile); err != nil {
-			fontFile = filepath.Join(fontsDir, "arialbd.ttf")
-		}
+		fontFile = filepath.Join(fontsDir, "arial.ttf")
 	case "verdana":
-		fontFile = filepath.Join(fontsDir, "verdanab.ttf")
+		fontFile = filepath.Join(fontsDir, "verdana.ttf")
 	case "consolas":
 		fontFile = filepath.Join(fontsDir, "consolab.ttf")
 		if _, err := os.Stat(fontFile); err != nil {
@@ -600,8 +594,11 @@ func getFontForStyle(style string) *truetype.Font {
 		}
 	case "trebuchet":
 		fontFile = filepath.Join(fontsDir, "trebucbd.ttf")
-	case "impact":
-		fontFile = filepath.Join(fontsDir, "impact.ttf")
+	case "cambria", "impact":
+		fontFile = filepath.Join(fontsDir, "cambriab.ttf")
+		if _, err := os.Stat(fontFile); err != nil {
+			fontFile = filepath.Join(fontsDir, "cambria.ttc")
+		}
 	case "gothic":
 		fontFile = filepath.Join(fontsDir, "gothicb.ttf")
 		if _, err := os.Stat(fontFile); err != nil {
@@ -999,47 +996,47 @@ func initFonts() {
 		hUIFontSm = syscall.Handle(hFS)
 	}
 
-	// 12 Distinct Fonts for Samples (20pt Bold for crisp clarity without clipping)
-	makeFont := func(name string) syscall.Handle {
-		h, _, _ := procCreateFontW.Call(uintptr(20), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr(name))))
+	// 12 Distinct Fonts for single-line radio previews
+	makeFont := func(name string, weight int) syscall.Handle {
+		h, _, _ := procCreateFontW.Call(uintptr(16), 0, 0, 0, uintptr(weight), 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr(name))))
 		return syscall.Handle(h)
 	}
 
 	if hFontSegoe == 0 {
-		hFontSegoe = makeFont("Segoe UI")
+		hFontSegoe = makeFont("Segoe UI", 700)
 	}
 	if hFontBahn == 0 {
-		hFontBahn = makeFont("Bahnschrift")
+		hFontBahn = makeFont("Bahnschrift", 600)
 	}
 	if hFontArial == 0 {
-		hFontArial = makeFont("Arial")
+		hFontArial = makeFont("Arial", 400) // Regular Arial
 	}
 	if hFontVerdana == 0 {
-		hFontVerdana = makeFont("Verdana")
+		hFontVerdana = makeFont("Verdana", 400) // Regular Verdana
 	}
 	if hFontGeorgia == 0 {
-		hFontGeorgia = makeFont("Georgia")
+		hFontGeorgia = makeFont("Georgia", 700)
 	}
 	if hFontCorbel == 0 {
-		hFontCorbel = makeFont("Corbel")
+		hFontCorbel = makeFont("Corbel", 700)
 	}
 	if hFontConsolas == 0 {
-		hFontConsolas = makeFont("Consolas")
+		hFontConsolas = makeFont("Consolas", 700)
 	}
 	if hFontTreb == 0 {
-		hFontTreb = makeFont("Trebuchet MS")
+		hFontTreb = makeFont("Trebuchet MS", 700)
 	}
-	if hFontImpact == 0 {
-		hFontImpact = makeFont("Impact")
+	if hFontCambria == 0 {
+		hFontCambria = makeFont("Cambria", 700) // Elegant Cambria (replaces Impact)
 	}
 	if hFontGothic == 0 {
-		hFontGothic = makeFont("Century Gothic")
+		hFontGothic = makeFont("Century Gothic", 700)
 	}
 	if hFontCandara == 0 {
-		hFontCandara = makeFont("Candara")
+		hFontCandara = makeFont("Candara", 700)
 	}
 	if hFontConstantia == 0 {
-		hFontConstantia = makeFont("Constantia")
+		hFontConstantia = makeFont("Constantia", 700)
 	}
 
 	// Big Live Preview Font (22pt Bold)
@@ -1060,8 +1057,8 @@ func createSettingsWindow() {
 	initFonts()
 
 	screenW, screenH := getRealScreenResolution()
-	winW, winH := 760, 840
-	posX := 60
+	winW, winH := 820, 650
+	posX := 50
 	posY := 20
 	if posX+winW > screenW {
 		posX = 10
@@ -1170,111 +1167,85 @@ func createControls(parent syscall.Handle) {
 	selectCurrentIntervalRadio()
 
 	// Divider 3: Between Intervals and Fonts (Full Width)
-	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 274, 760, 1, parent, 53))
+	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 274, 820, 1, parent, 53))
 
-	// Section 3: Fonts (12 Distinct Choices in 2 Columns with 20pt Bold Sample, NO digits)
-	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options in 2 Columns):", WS_CHILD|WS_VISIBLE, 20, 282, 700, 20, parent, 13))
+	// Section 3: Fonts (12 Distinct Choices in 2 Columns, Single-Line with Date Sample)
+	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options):", WS_CHILD|WS_VISIBLE, 20, 282, 780, 20, parent, 13))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecFonts), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	sampDate := getTodaySampleString()
+	// Column 1 (Left): Fonts 1 to 6 (X = 25, W = 375)
+	rbFontSegoe = createRadio("1. Segoe UI Bold", 25, 304, 375, 22, parent, 401, true) // WS_GROUP start
+	procSendMessageW.Call(uintptr(rbFontSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
 
-	// Column 1 (Left): Fonts 1 to 6 (X = 25, W = 345)
-	// Row 0: Font 1 - Segoe UI Bold
-	rbFontSegoe = createRadio("1. 🔠 Segoe UI Bold", 25, 306, 345, 18, parent, 401, true) // WS_GROUP start
-	lblSampSegoe = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 326, 325, 28, parent, 431))
-	procSendMessageW.Call(uintptr(lblSampSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
+	rbFontBahn = createRadio("2. Bahnschrift", 25, 327, 375, 22, parent, 402, false)
+	procSendMessageW.Call(uintptr(rbFontBahn), WM_SETFONT, uintptr(hFontBahn), 1)
 
-	// Row 1: Font 2 - Bahnschrift
-	rbFontBahn = createRadio("2. 📐 Bahnschrift", 25, 358, 345, 18, parent, 402, false)
-	lblSampBahn = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 378, 325, 28, parent, 432))
-	procSendMessageW.Call(uintptr(lblSampBahn), WM_SETFONT, uintptr(hFontBahn), 1)
+	rbFontArial = createRadio("3. Arial", 25, 350, 375, 22, parent, 403, false)
+	procSendMessageW.Call(uintptr(rbFontArial), WM_SETFONT, uintptr(hFontArial), 1)
 
-	// Row 2: Font 3 - Arial Bold
-	rbFontArial = createRadio("3. 🛡️ Arial Bold", 25, 410, 345, 18, parent, 403, false)
-	lblSampArial = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 430, 325, 28, parent, 433))
-	procSendMessageW.Call(uintptr(lblSampArial), WM_SETFONT, uintptr(hFontArial), 1)
+	rbFontVerdana = createRadio("4. Verdana", 25, 373, 375, 22, parent, 404, false)
+	procSendMessageW.Call(uintptr(rbFontVerdana), WM_SETFONT, uintptr(hFontVerdana), 1)
 
-	// Row 3: Font 4 - Verdana Bold
-	rbFontVerdana = createRadio("4. 👓 Verdana Bold", 25, 462, 345, 18, parent, 404, false)
-	lblSampVerdana = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 482, 325, 28, parent, 434))
-	procSendMessageW.Call(uintptr(lblSampVerdana), WM_SETFONT, uintptr(hFontVerdana), 1)
+	rbFontGeorgia = createRadio("5. Georgia Bold", 25, 396, 375, 22, parent, 405, false)
+	procSendMessageW.Call(uintptr(rbFontGeorgia), WM_SETFONT, uintptr(hFontGeorgia), 1)
 
-	// Row 4: Font 5 - Georgia Bold
-	rbFontGeorgia = createRadio("5. 📜 Georgia Bold", 25, 514, 345, 18, parent, 405, false)
-	lblSampGeorgia = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 534, 325, 28, parent, 435))
-	procSendMessageW.Call(uintptr(lblSampGeorgia), WM_SETFONT, uintptr(hFontGeorgia), 1)
+	rbFontCorbel = createRadio("6. Corbel Bold", 25, 419, 375, 22, parent, 406, false)
+	procSendMessageW.Call(uintptr(rbFontCorbel), WM_SETFONT, uintptr(hFontCorbel), 1)
 
-	// Row 5: Font 6 - Corbel Bold
-	rbFontCorbel = createRadio("6. 💎 Corbel Bold", 25, 566, 345, 18, parent, 406, false)
-	lblSampCorbel = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 586, 325, 28, parent, 436))
-	procSendMessageW.Call(uintptr(lblSampCorbel), WM_SETFONT, uintptr(hFontCorbel), 1)
+	// Column 2 (Right): Fonts 7 to 12 (X = 415, W = 375)
+	rbFontConsolas = createRadio("7. Consolas Bold", 415, 304, 375, 22, parent, 407, false)
+	procSendMessageW.Call(uintptr(rbFontConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
 
-	// Column 2 (Right): Fonts 7 to 12 (X = 385, W = 345)
-	// Row 0: Font 7 - Consolas Bold
-	rbFontConsolas = createRadio("7. 💻 Consolas Bold", 385, 306, 345, 18, parent, 407, false)
-	lblSampConsolas = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 326, 325, 28, parent, 437))
-	procSendMessageW.Call(uintptr(lblSampConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
+	rbFontTreb = createRadio("8. Trebuchet MS Bold", 415, 327, 375, 22, parent, 408, false)
+	procSendMessageW.Call(uintptr(rbFontTreb), WM_SETFONT, uintptr(hFontTreb), 1)
 
-	// Row 1: Font 8 - Trebuchet MS Bold
-	rbFontTreb = createRadio("8. ✒️ Trebuchet MS Bold", 385, 358, 345, 18, parent, 408, false)
-	lblSampTreb = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 378, 325, 28, parent, 438))
-	procSendMessageW.Call(uintptr(lblSampTreb), WM_SETFONT, uintptr(hFontTreb), 1)
+	rbFontCambria = createRadio("9. Cambria Bold", 415, 350, 375, 22, parent, 409, false)
+	procSendMessageW.Call(uintptr(rbFontCambria), WM_SETFONT, uintptr(hFontCambria), 1)
 
-	// Row 2: Font 9 - Impact
-	rbFontImpact = createRadio("9. 💥 Impact", 385, 410, 345, 18, parent, 409, false)
-	lblSampImpact = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 430, 325, 28, parent, 439))
-	procSendMessageW.Call(uintptr(lblSampImpact), WM_SETFONT, uintptr(hFontImpact), 1)
+	rbFontGothic = createRadio("10. Century Gothic Bold", 415, 373, 375, 22, parent, 410, false)
+	procSendMessageW.Call(uintptr(rbFontGothic), WM_SETFONT, uintptr(hFontGothic), 1)
 
-	// Row 3: Font 10 - Century Gothic Bold
-	rbFontGothic = createRadio("10. ⭕ Century Gothic Bold", 385, 462, 345, 18, parent, 410, false)
-	lblSampGothic = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 482, 325, 28, parent, 440))
-	procSendMessageW.Call(uintptr(lblSampGothic), WM_SETFONT, uintptr(hFontGothic), 1)
+	rbFontCandara = createRadio("11. Candara Bold", 415, 396, 375, 22, parent, 411, false)
+	procSendMessageW.Call(uintptr(rbFontCandara), WM_SETFONT, uintptr(hFontCandara), 1)
 
-	// Row 4: Font 11 - Candara Bold
-	rbFontCandara = createRadio("11. 🎨 Candara Bold", 385, 514, 345, 18, parent, 411, false)
-	lblSampCandara = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 534, 325, 28, parent, 441))
-	procSendMessageW.Call(uintptr(lblSampCandara), WM_SETFONT, uintptr(hFontCandara), 1)
-
-	// Row 5: Font 12 - Constantia Bold
-	rbFontConstantia = createRadio("12. 🏛️ Constantia Bold", 385, 566, 345, 18, parent, 412, false)
-	lblSampConstantia = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 586, 325, 28, parent, 442))
-	procSendMessageW.Call(uintptr(lblSampConstantia), WM_SETFONT, uintptr(hFontConstantia), 1)
+	rbFontConstantia = createRadio("12. Constantia Bold", 415, 419, 375, 22, parent, 412, false)
+	procSendMessageW.Call(uintptr(rbFontConstantia), WM_SETFONT, uintptr(hFontConstantia), 1)
 
 	selectCurrentFontRadio()
 
 	// Divider 4: Between Fonts and Scale (Full Width)
-	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 622, 760, 1, parent, 54))
+	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 450, 820, 1, parent, 54))
 
 	// Section 4: Scale (5 options)
-	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 630, 700, 20, parent, 14))
+	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 458, 780, 20, parent, 14))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecScale), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rbFontScale1 = createRadio("Compact (1.4x)", 25, 654, 135, 22, parent, 451, true) // WS_GROUP start
-	rbFontScale2 = createRadio("Medium (1.7x)", 165, 654, 135, 22, parent, 452, false)
-	rbFontScale3 = createRadio("Standard (2.0x)", 305, 654, 150, 22, parent, 453, false)
-	rbFontScale4 = createRadio("Large (2.5x)", 460, 654, 130, 22, parent, 454, false)
-	rbFontScale5 = createRadio("Huge (3.0x)", 595, 654, 135, 22, parent, 455, false)
+	rbFontScale1 = createRadio("Compact (1.4x)", 25, 482, 145, 22, parent, 451, true) // WS_GROUP start
+	rbFontScale2 = createRadio("Medium (1.7x)", 175, 482, 145, 22, parent, 452, false)
+	rbFontScale3 = createRadio("Standard (2.0x)", 325, 482, 165, 22, parent, 453, false)
+	rbFontScale4 = createRadio("Large (2.25x)", 495, 482, 150, 22, parent, 454, false)
+	rbFontScale5 = createRadio("Huge (2.8x)", 650, 482, 145, 22, parent, 455, false)
 
 	selectCurrentScaleRadio()
 
 	// Divider 5: Between Scale and Status / Buttons (Full Width)
-	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 686, 760, 1, parent, 55))
+	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 514, 820, 1, parent, 55))
 
 	// Status Info Label
-	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 694, 700, 20, parent, 505))
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 522, 780, 20, parent, 505))
 	if hUIFontSm != 0 {
 		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
 	}
 
-	// Bottom Action Buttons (Y = 724, Height = 44)
-	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 724, 168, 44, parent, 601))
-	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 203, 724, 168, 44, parent, 602))
-	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 381, 724, 168, 44, parent, 603))
-	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 559, 724, 168, 44, parent, 604))
+	// Bottom Action Buttons (Y = 550, Height = 42)
+	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 550, 182, 42, parent, 601))
+	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 550, 182, 42, parent, 602))
+	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 550, 182, 42, parent, 603))
+	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 550, 182, 42, parent, 604))
 }
 
 func getTodaySampleString() string {
@@ -1285,9 +1256,9 @@ func getTodaySampleString() string {
 	yr := now.Year()
 
 	if isRu() {
-		return fmt.Sprintf("%s, %d %s %d года", ruFullDays[wDay], mDay, ruMonths[mIdx], yr)
+		return fmt.Sprintf("%s, %d %s %d", ruFullDays[wDay], mDay, ruMonths[mIdx], yr)
 	}
-	return fmt.Sprintf("%s, %d %s %d", enFullDays[wDay], mDay, enMonths[mIdx], yr)
+	return fmt.Sprintf("%s, %s %d, %d", enFullDays[wDay], enMonths[mIdx], mDay, yr)
 }
 
 func createCtrl(className *uint16, text string, style uint32, x, y, w, h int, parent syscall.Handle, id uintptr) uintptr {
@@ -1447,8 +1418,8 @@ func selectCurrentFontRadio() {
 		procSendMessageW.Call(uintptr(rbFontConsolas), BM_SETCHECK, BST_CHECKED, 0)
 	case "trebuchet":
 		procSendMessageW.Call(uintptr(rbFontTreb), BM_SETCHECK, BST_CHECKED, 0)
-	case "impact":
-		procSendMessageW.Call(uintptr(rbFontImpact), BM_SETCHECK, BST_CHECKED, 0)
+	case "cambria", "impact":
+		procSendMessageW.Call(uintptr(rbFontCambria), BM_SETCHECK, BST_CHECKED, 0)
 	case "gothic":
 		procSendMessageW.Call(uintptr(rbFontGothic), BM_SETCHECK, BST_CHECKED, 0)
 	case "candara":
@@ -1465,9 +1436,9 @@ func selectCurrentScaleRadio() {
 		procSendMessageW.Call(uintptr(rbFontScale1), BM_SETCHECK, BST_CHECKED, 0)
 	} else if cfg.FontSizeScale <= 1.85 {
 		procSendMessageW.Call(uintptr(rbFontScale2), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale >= 2.8 {
+	} else if cfg.FontSizeScale >= 2.6 {
 		procSendMessageW.Call(uintptr(rbFontScale5), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale >= 2.3 {
+	} else if cfg.FontSizeScale >= 2.1 {
 		procSendMessageW.Call(uintptr(rbFontScale4), BM_SETCHECK, BST_CHECKED, 0)
 	} else {
 		procSendMessageW.Call(uintptr(rbFontScale3), BM_SETCHECK, BST_CHECKED, 0)
@@ -1487,19 +1458,6 @@ func updateTexts() {
 	procSetWindowTextW.Call(uintptr(hwndSettings), uintptr(unsafe.Pointer(strPtr(wTitle))))
 
 	sampDate := getTodaySampleString()
-
-	setTxt(lblSampSegoe, sampDate)
-	setTxt(lblSampBahn, sampDate)
-	setTxt(lblSampArial, sampDate)
-	setTxt(lblSampVerdana, sampDate)
-	setTxt(lblSampGeorgia, sampDate)
-	setTxt(lblSampCorbel, sampDate)
-	setTxt(lblSampConsolas, sampDate)
-	setTxt(lblSampTreb, sampDate)
-	setTxt(lblSampImpact, sampDate)
-	setTxt(lblSampGothic, sampDate)
-	setTxt(lblSampCandara, sampDate)
-	setTxt(lblSampConstantia, sampDate)
 
 	if ru {
 		setTxt(lblSecThemes, "🎨 Тематика обоев (выберите несколько или «Все подряд»):")
@@ -1523,25 +1481,25 @@ func updateTexts() {
 		setTxt(rb24h, "1 раз в сутки")
 
 		setTxt(lblSecFonts, "🔤 Выбор шрифта календаря (12 вариантов в 2 столбика):")
-		setTxt(rbFontSegoe, "1. 🔠 Segoe UI Bold")
-		setTxt(rbFontBahn, "2. 📐 Bahnschrift")
-		setTxt(rbFontArial, "3. 🛡️ Arial Bold")
-		setTxt(rbFontVerdana, "4. 👓 Verdana Bold")
-		setTxt(rbFontGeorgia, "5. 📜 Georgia Bold")
-		setTxt(rbFontCorbel, "6. 💎 Corbel Bold")
-		setTxt(rbFontConsolas, "7. 💻 Consolas Bold")
-		setTxt(rbFontTreb, "8. ✒️ Trebuchet MS Bold")
-		setTxt(rbFontImpact, "9. 💥 Impact")
-		setTxt(rbFontGothic, "10. ⭕ Century Gothic Bold")
-		setTxt(rbFontCandara, "11. 🎨 Candara Bold")
-		setTxt(rbFontConstantia, "12. 🏛️ Constantia Bold")
+		setTxt(rbFontSegoe, fmt.Sprintf("1. Segoe UI Bold - %s", sampDate))
+		setTxt(rbFontBahn, fmt.Sprintf("2. Bahnschrift - %s", sampDate))
+		setTxt(rbFontArial, fmt.Sprintf("3. Arial - %s", sampDate))
+		setTxt(rbFontVerdana, fmt.Sprintf("4. Verdana - %s", sampDate))
+		setTxt(rbFontGeorgia, fmt.Sprintf("5. Georgia Bold - %s", sampDate))
+		setTxt(rbFontCorbel, fmt.Sprintf("6. Corbel Bold - %s", sampDate))
+		setTxt(rbFontConsolas, fmt.Sprintf("7. Consolas Bold - %s", sampDate))
+		setTxt(rbFontTreb, fmt.Sprintf("8. Trebuchet MS Bold - %s", sampDate))
+		setTxt(rbFontCambria, fmt.Sprintf("9. Cambria Bold - %s", sampDate))
+		setTxt(rbFontGothic, fmt.Sprintf("10. Century Gothic Bold - %s", sampDate))
+		setTxt(rbFontCandara, fmt.Sprintf("11. Candara Bold - %s", sampDate))
+		setTxt(rbFontConstantia, fmt.Sprintf("12. Constantia Bold - %s", sampDate))
 
 		setTxt(lblSecScale, "🔍 Масштаб и размер календаря:")
 		setTxt(rbFontScale1, "Компактный (1.4x)")
 		setTxt(rbFontScale2, "Умеренный (1.7x)")
 		setTxt(rbFontScale3, "Стандартный (2.0x, Оптимально)")
-		setTxt(rbFontScale4, "Крупный (2.5x)")
-		setTxt(rbFontScale5, "Очень крупный (3.0x)")
+		setTxt(rbFontScale4, "Крупный (2.25x)")
+		setTxt(rbFontScale5, "Очень крупный (2.8x)")
 
 		setTxt(lblStatusInfo, "Готово. Нажмите «Применить сейчас», чтобы сразу сменить обои и календарь.")
 	} else {
@@ -1566,25 +1524,25 @@ func updateTexts() {
 		setTxt(rb24h, "24 hours (Daily)")
 
 		setTxt(lblSecFonts, "🔤 Calendar Font Choices (12 Options in 2 Columns):")
-		setTxt(rbFontSegoe, "1. 🔠 Segoe UI Bold")
-		setTxt(rbFontBahn, "2. 📐 Bahnschrift")
-		setTxt(rbFontArial, "3. 🛡️ Arial Bold")
-		setTxt(rbFontVerdana, "4. 👓 Verdana Bold")
-		setTxt(rbFontGeorgia, "5. 📜 Georgia Bold")
-		setTxt(rbFontCorbel, "6. 💎 Corbel Bold")
-		setTxt(rbFontConsolas, "7. 💻 Consolas Bold")
-		setTxt(rbFontTreb, "8. ✒️ Trebuchet MS Bold")
-		setTxt(rbFontImpact, "9. 💥 Impact")
-		setTxt(rbFontGothic, "10. ⭕ Century Gothic Bold")
-		setTxt(rbFontCandara, "11. 🎨 Candara Bold")
-		setTxt(rbFontConstantia, "12. 🏛️ Constantia Bold")
+		setTxt(rbFontSegoe, fmt.Sprintf("1. Segoe UI Bold - %s", sampDate))
+		setTxt(rbFontBahn, fmt.Sprintf("2. Bahnschrift - %s", sampDate))
+		setTxt(rbFontArial, fmt.Sprintf("3. Arial - %s", sampDate))
+		setTxt(rbFontVerdana, fmt.Sprintf("4. Verdana - %s", sampDate))
+		setTxt(rbFontGeorgia, fmt.Sprintf("5. Georgia Bold - %s", sampDate))
+		setTxt(rbFontCorbel, fmt.Sprintf("6. Corbel Bold - %s", sampDate))
+		setTxt(rbFontConsolas, fmt.Sprintf("7. Consolas Bold - %s", sampDate))
+		setTxt(rbFontTreb, fmt.Sprintf("8. Trebuchet MS Bold - %s", sampDate))
+		setTxt(rbFontCambria, fmt.Sprintf("9. Cambria Bold - %s", sampDate))
+		setTxt(rbFontGothic, fmt.Sprintf("10. Century Gothic Bold - %s", sampDate))
+		setTxt(rbFontCandara, fmt.Sprintf("11. Candara Bold - %s", sampDate))
+		setTxt(rbFontConstantia, fmt.Sprintf("12. Constantia Bold - %s", sampDate))
 
 		setTxt(lblSecScale, "🔍 Calendar Scale and Size:")
 		setTxt(rbFontScale1, "Compact (1.4x)")
 		setTxt(rbFontScale2, "Medium (1.7x)")
 		setTxt(rbFontScale3, "Standard (2.0x, Optimal)")
-		setTxt(rbFontScale4, "Large (2.5x)")
-		setTxt(rbFontScale5, "Extra Large (3.0x)")
+		setTxt(rbFontScale4, "Large (2.25x)")
+		setTxt(rbFontScale5, "Extra Large (2.8x)")
 
 		setTxt(lblStatusInfo, "Ready. Click 'Apply Now' to change wallpaper and calendar immediately.")
 	}
@@ -1648,8 +1606,8 @@ func readCurrentUISelections() {
 		cfg.FontStyle = "consolas"
 	} else if isChecked(rbFontTreb) {
 		cfg.FontStyle = "trebuchet"
-	} else if isChecked(rbFontImpact) {
-		cfg.FontStyle = "impact"
+	} else if isChecked(rbFontCambria) {
+		cfg.FontStyle = "cambria"
 	} else if isChecked(rbFontGothic) {
 		cfg.FontStyle = "gothic"
 	} else if isChecked(rbFontCandara) {
@@ -1665,9 +1623,9 @@ func readCurrentUISelections() {
 	} else if isChecked(rbFontScale2) {
 		cfg.FontSizeScale = 1.7
 	} else if isChecked(rbFontScale4) {
-		cfg.FontSizeScale = 2.5
+		cfg.FontSizeScale = 2.25
 	} else if isChecked(rbFontScale5) {
-		cfg.FontSizeScale = 3.0
+		cfg.FontSizeScale = 2.8
 	} else {
 		cfg.FontSizeScale = 2.0
 	}
@@ -1825,8 +1783,8 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		drawHLine(46)  // 1. Above Themes
 		drawHLine(214) // 2. Between Themes and Intervals
 		drawHLine(274) // 3. Between Intervals and Fonts
-		drawHLine(622) // 4. Between Fonts and Scale
-		drawHLine(686) // 5. Between Scale and Status / Buttons
+		drawHLine(450) // 4. Between Fonts and Scale
+		drawHLine(514) // 5. Between Scale and Status / Buttons
 		return 1
 
 	case WM_CTLCOLORSTATIC:
@@ -1974,7 +1932,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 				{406, rbFontCorbel, "corbel"},
 				{407, rbFontConsolas, "consolas"},
 				{408, rbFontTreb, "trebuchet"},
-				{409, rbFontImpact, "impact"},
+				{409, rbFontCambria, "cambria"},
 				{410, rbFontGothic, "gothic"},
 				{411, rbFontCandara, "candara"},
 				{412, rbFontConstantia, "constantia"},
@@ -1999,8 +1957,8 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 				{451, rbFontScale1, 1.4},
 				{452, rbFontScale2, 1.7},
 				{453, rbFontScale3, 2.0},
-				{454, rbFontScale4, 2.5},
-				{455, rbFontScale5, 3.0},
+				{454, rbFontScale4, 2.25},
+				{455, rbFontScale5, 2.8},
 			}
 			for _, sr := range scaleRadios {
 				if sr.id == uintptr(id) {
