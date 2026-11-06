@@ -14,7 +14,7 @@ setlocal enabledelayedexpansion
 ::   User: vlad
 ::
 ::   CHANGES v2026.07.11:
-::     - AWS_42 (3.79.14.42) replaced with AWS_12 (18.195.117.12)
+::     - AWS_42 (198.51.100.42) replaced with AWS_12 (198.51.100.12)
 ::
 ::   CHANGES v2026.06.14b:
 ::     - Before each mount, net use X: /delete is executed — fixes the error
@@ -24,12 +24,12 @@ setlocal enabledelayedexpansion
 ::     - connection timeout increased to 8 sec, ping to 1500ms
 ::
 ::   Drives:
-::     A: — AWS_12        18.195.117.12
-::     I: — ILYA_221      89.110.69.221
-::     N: — PILIK_33      195.63.138.33
-::     Q: — SO_38         144.124.233.38
-::     W: — STOLB_24      144.124.239.24
-::     Y: — ALEX_180      88.210.6.180
+::     A: — AWS_12        198.51.100.12
+::     I: — ILYA_221      198.51.100.221
+::     N: — PILIK_33      198.51.100.33
+::     Q: — SO_38         198.51.100.38
+::     W: — STOLB_24      198.51.100.24
+::     Y: — ALEX_180      198.51.100.180
 :: ==========================================================================================
 
 :: Color codes (requires ANSI support — Windows 10+ with VT enabled)
@@ -41,7 +41,7 @@ set "YELLOW=%ESC%[93m"
 set "RED=%ESC%[91m"
 set "WHITE=%ESC%[97m"
 
-set "USER=vlad"
+set "USER=admin"
 if defined SMB_PASS (
     set "PASS=%SMB_PASS%"
 ) else (
@@ -57,12 +57,12 @@ echo %YELLOW%===================================================================
 echo.
 
 echo %YELLOW%[ STATUS ]%RESET% Saving credentials to the system...
-cmdkey /add:18.195.117.12     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:89.110.69.221     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:195.63.138.33     /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:144.124.233.38    /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:144.124.239.24    /user:%USER% /pass:%PASS% >nul 2>&1
-cmdkey /add:88.210.6.180      /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:198.51.100.12     /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:198.51.100.221     /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:198.51.100.33     /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:198.51.100.38    /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:198.51.100.24    /user:%USER% /pass:%PASS% >nul 2>&1
+cmdkey /add:198.51.100.180      /user:%USER% /pass:%PASS% >nul 2>&1
 echo %YELLOW%[ STATUS ]%RESET% Credentials saved.
 echo %YELLOW%[ STATUS ]%RESET% Disconnecting old drives and starting parallel mount...
 echo.
@@ -74,17 +74,17 @@ echo.
 ::   4. If ping failed -> [SKIP]
 ::   5. Save result to %TMPDIR%\DRIVE.txt for the final table
 
-start /b cmd /c "net use A: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 18.195.117.12 >nul 2>&1 && (net use A: \\18.195.117.12\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\A.txt\" || echo ERROR > \"%TMPDIR%\A.txt\") || echo SKIP > \"%TMPDIR%\A.txt\""
+start /b cmd /c "net use A: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 198.51.100.12 >nul 2>&1 && (net use A: \\198.51.100.12\share /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\A.txt\" || echo ERROR > \"%TMPDIR%\A.txt\") || echo SKIP > \"%TMPDIR%\A.txt\""
 
-start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 89.110.69.221 >nul 2>&1 && (net use I: \\89.110.69.221\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\I.txt\" || echo ERROR > \"%TMPDIR%\I.txt\") || echo SKIP > \"%TMPDIR%\I.txt\""
+start /b cmd /c "net use I: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 198.51.100.221 >nul 2>&1 && (net use I: \\198.51.100.221\share /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\I.txt\" || echo ERROR > \"%TMPDIR%\I.txt\") || echo SKIP > \"%TMPDIR%\I.txt\""
 
-start /b cmd /c "net use N: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 195.63.138.33 >nul 2>&1 && (net use N: \\195.63.138.33\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\N.txt\" || echo ERROR > \"%TMPDIR%\N.txt\") || echo SKIP > \"%TMPDIR%\N.txt\""
+start /b cmd /c "net use N: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 198.51.100.33 >nul 2>&1 && (net use N: \\198.51.100.33\share /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\N.txt\" || echo ERROR > \"%TMPDIR%\N.txt\") || echo SKIP > \"%TMPDIR%\N.txt\""
 
-start /b cmd /c "net use Q: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.233.38 >nul 2>&1 && (net use Q: \\144.124.233.38\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Q.txt\" || echo ERROR > \"%TMPDIR%\Q.txt\") || echo SKIP > \"%TMPDIR%\Q.txt\""
+start /b cmd /c "net use Q: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 198.51.100.38 >nul 2>&1 && (net use Q: \\198.51.100.38\share /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Q.txt\" || echo ERROR > \"%TMPDIR%\Q.txt\") || echo SKIP > \"%TMPDIR%\Q.txt\""
 
-start /b cmd /c "net use W: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 144.124.239.24 >nul 2>&1 && (net use W: \\144.124.239.24\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\W.txt\" || echo ERROR > \"%TMPDIR%\W.txt\") || echo SKIP > \"%TMPDIR%\W.txt\""
+start /b cmd /c "net use W: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 198.51.100.24 >nul 2>&1 && (net use W: \\198.51.100.24\share /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\W.txt\" || echo ERROR > \"%TMPDIR%\W.txt\") || echo SKIP > \"%TMPDIR%\W.txt\""
 
-start /b cmd /c "net use Y: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 88.210.6.180 >nul 2>&1 && (net use Y: \\88.210.6.180\vlad /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Y.txt\" || echo ERROR > \"%TMPDIR%\Y.txt\") || echo SKIP > \"%TMPDIR%\Y.txt\""
+start /b cmd /c "net use Y: /delete /yes >nul 2>&1 & ping -n 1 -w 1500 198.51.100.180 >nul 2>&1 && (net use Y: \\198.51.100.180\share /user:%USER% %PASS% >nul 2>&1 && echo OK > \"%TMPDIR%\Y.txt\" || echo ERROR > \"%TMPDIR%\Y.txt\") || echo SKIP > \"%TMPDIR%\Y.txt\""
 
 :: Wait for all background processes to finish (8 sec — buffer for slow servers)
 timeout /t 8 /nobreak >nul
@@ -97,12 +97,12 @@ echo.
 echo %WHITE%  Drive  Server             IP                  Status%RESET%
 echo %WHITE%  ─────────────────────────────────────────────────────────────────%RESET%
 
-call :show_result A AWS_12      18.195.117.12
-call :show_result I ILYA_221    89.110.69.221
-call :show_result N PILIK_33    195.63.138.33
-call :show_result Q SO_38       144.124.233.38
-call :show_result W STOLB_24    144.124.239.24
-call :show_result Y ALEX_180    88.210.6.180
+call :show_result A AWS_12      198.51.100.12
+call :show_result I ILYA_221    198.51.100.221
+call :show_result N PILIK_33    198.51.100.33
+call :show_result Q SO_38       198.51.100.38
+call :show_result W STOLB_24    198.51.100.24
+call :show_result Y ALEX_180    198.51.100.180
 
 echo.
 echo %YELLOW%=================================================================================%RESET%

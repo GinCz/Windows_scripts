@@ -23,6 +23,32 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 
 ---
 
+## ⚡ Quick Download Hub & 1-Click Launch
+
+Direct download links for the latest standalone Windows binaries (.exe) and one-click execution commands:
+
+### 🪟 Standalone Executables (.exe)
+| Application | Version | Direct Download (.exe) | Platform | Key Architecture |
+| :--- | :---: | :--- | :--- | :--- |
+| 🎙️ **[GIN-Voice](Windows/GIN-Voice/)** | `v041` | [⬇️ **Download GIN-Voice.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice.exe) • [Setup](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice_Setup.exe) | Win 10/11 x64 | Ultra-fast multilingual voice-to-text, whisper AI code-switching engine |
+| 🔍 **[GIN-NetScan](Windows/GIN-NetScan/)** | `v002` | [⬇️ **Download GIN-NetScan.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetScan/GIN-NetScan.exe) | Win 10/11 x64/x86 | High-speed multi-threaded Win32 LAN host discovery & TCP port scanner |
+| 🛡️ **[GIN-VPN](Windows/GIN-VPN/)** | `v094` | [⬇️ **Download GIN-VPN.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe) • [Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_Installer.exe) | Win 10/11 x64 | Standalone Xray VLESS-Reality client with dynamic tray sentinel & killswitch |
+| 🎨 **[GIN-Wallpaper](GIN-Wallpaper/)** | `v012` | [⬇️ **Download GIN-Wallpaper.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend.exe) | Win 10/11 x64 | Dynamic desktop wallpaper switcher with live embedded calendar |
+| ⚡ **[GIN-Win-Optimizer](Windows/GIN-Win-Optimizer/)** | `v045` | [⬇️ **Download GIN-Win-Optimizer.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v045.cmd) | Win 10/11 / Server | Enterprise Windows debloater, telemetry disable, and RAM footprint optimizer |
+
+### ⚡ Essential System & Administration Scripts
+| Script | Category | 1-Click Download / Execution | Description |
+| :--- | :--- | :--- | :--- |
+| 🧹 **`CLEAN.cmd`** | Maintenance | [⬇️ Download CLEAN.cmd](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/CLEAN.cmd) | Deep junk cleaner: Temp, Prefetch, SoftwareDistribution, browser caches |
+| 🚀 **`WIN_Optimize.bat`** | Optimization | [⬇️ Download WIN_Optimize.bat](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/WIN_Optimize.bat) | DPC latency tuner, background service debloater, timer resolution fix |
+| 🛡️ **`System_Security_Miner_Audit.cmd`** | Security | [⬇️ Download Audit Tool](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/System_Security_Miner_Audit.cmd) | Cryptominer detection, malicious scheduled task & autorun deep audit |
+| 🔧 **`Error_80070002_AI.cmd`** | Windows Update | [⬇️ Download Fix Script](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Error_80070002_AI.cmd) | One-click Windows Update repair: resets BITS, wuauserv, and clears CBS store |
+| 📦 **`Install_7zip_Universal.bat`** | Software | [⬇️ Download 7-Zip Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Install_7zip_Universal.bat) | Universal silent 7-Zip deployer with auto-architecture detection |
+| 💾 **`SMB_Connect.bat`** | Storage | [⬇️ Download SMB_Connect.bat](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/SMB_Connect.bat) | Multi-threaded parallel Samba network drive mounter |
+| 🛠️ **`WinUtil`** | Maintenance | `iwr -useb https://raw.githubusercontent.com/GinCz/Windows_scripts/main/WinUtil_VladiMIR/winutil.ps1 | iex` | Standalone modular Windows utility suite |
+
+---
+
 ## Table of Contents
 
 - [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
@@ -232,13 +258,13 @@ CLEAN.cmd -Startup
 `SMB_Connect.bat` connects Samba servers simultaneously as Windows network drives.
 
 ```text
-[  OK  ]  A:  AWS_12       18.195.117.12
-[  OK  ]  E:  IONOS_38     82.223.116.38
-[  OK  ]  I:  ILYA_221     89.110.69.221
-[  OK  ]  N:  PILIK_33     195.63.138.33
-[  OK  ]  Q:  SO_38        144.124.233.38
-[  OK  ]  W:  STOLB_24     144.124.239.24
-[  OK  ]  Y:  ALEX_180     88.210.6.180
+[  OK  ]  A:  AWS_12       198.51.100.12
+[  OK  ]  E:  IONOS_38     198.51.100.38
+[  OK  ]  I:  ILYA_221     198.51.100.221
+[  OK  ]  N:  PILIK_33     198.51.100.33
+[  OK  ]  Q:  SO_38        198.51.100.39
+[  OK  ]  W:  STOLB_24     198.51.100.24
+[  OK  ]  Y:  ALEX_180     198.51.100.180
 ```
 
 All servers run **Samba on Ubuntu 24 LTS** with IPGuard triple-layer security.
