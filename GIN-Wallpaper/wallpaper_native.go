@@ -81,7 +81,7 @@ var (
 )
 
 const (
-	AppVersion = "v012"
+	AppVersion = "v013"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -246,6 +246,11 @@ var (
 	hBrushEvening syscall.Handle
 	hBrushNight   syscall.Handle
 
+	// Brushes for neat horizontal dividers
+	hBrushDayLine     syscall.Handle
+	hBrushEveningLine syscall.Handle
+	hBrushNightLine   syscall.Handle
+
 	// Fonts for UI
 	hUIFont     syscall.Handle
 	hUIFontBold syscall.Handle
@@ -265,6 +270,13 @@ var (
 	hFontCandara    syscall.Handle
 	hFontConstantia syscall.Handle
 	hFontBigPrev    syscall.Handle
+
+	// Section Dividers (Thin neat horizontal lines)
+	divThemes   syscall.Handle
+	divInterval syscall.Handle
+	divFonts    syscall.Handle
+	divScale    syscall.Handle
+	divBottom   syscall.Handle
 
 	// Controls
 	lblTitle       syscall.Handle
@@ -927,6 +939,19 @@ func initThemeBrushes() {
 		bNight, _, _ := procCreateSolidBrush.Call(uintptr(rgb(18, 20, 26)))
 		hBrushNight = syscall.Handle(bNight)
 	}
+
+	if hBrushDayLine == 0 {
+		bDayL, _, _ := procCreateSolidBrush.Call(uintptr(rgb(214, 218, 226)))
+		hBrushDayLine = syscall.Handle(bDayL)
+	}
+	if hBrushEveningLine == 0 {
+		bEveL, _, _ := procCreateSolidBrush.Call(uintptr(rgb(72, 80, 98)))
+		hBrushEveningLine = syscall.Handle(bEveL)
+	}
+	if hBrushNightLine == 0 {
+		bNightL, _, _ := procCreateSolidBrush.Call(uintptr(rgb(46, 52, 68)))
+		hBrushNightLine = syscall.Handle(bNightL)
+	}
 }
 
 func initFonts() {
@@ -1004,7 +1029,7 @@ func createSettingsWindow() {
 	initFonts()
 
 	screenW, screenH := getRealScreenResolution()
-	winW, winH := 760, 830
+	winW, winH := 760, 840
 	posX := 60
 	posY := 20
 	if posX+winW > screenW {
@@ -1070,45 +1095,54 @@ func createControls(parent syscall.Handle) {
 	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 565, 10, 52, 30, parent, 104))
 	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 622, 10, 52, 30, parent, 105))
 
+	// Divider 1: Above Themes
+	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 46, 705, 1, parent, 51))
+
 	// Section 1: Themes (12 in 2 columns)
-	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Theme / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 48, 680, 20, parent, 11))
+	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Theme / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 54, 680, 20, parent, 11))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecThemes), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
 	// Column 1
-	rbAll = createRadio("🎲 All Random (Mix)", 30, 70, 320, 20, parent, 201, true) // WS_GROUP start
-	rbAbstract = createRadio("🌀 Abstract & 3D Art", 30, 92, 320, 20, parent, 202, false)
-	rbFractal = createRadio("🔮 3D Fractals & Abstract Art", 30, 114, 320, 20, parent, 203, false)
-	rbLinux = createRadio("🐧 Linux Style (Arch / Minimal OS)", 30, 136, 320, 20, parent, 204, false)
-	rbSpace = createRadio("🚀 Space & Galaxies (Nebula)", 30, 158, 320, 20, parent, 205, false)
-	rbNature = createRadio("🌿 Nature & Landscapes", 30, 180, 320, 20, parent, 206, false)
+	rbAll = createRadio("🎲 All Random (Mix)", 30, 76, 320, 20, parent, 201, true) // WS_GROUP start
+	rbAbstract = createRadio("🌀 Abstract & 3D Art", 30, 98, 320, 20, parent, 202, false)
+	rbFractal = createRadio("🔮 3D Fractals & Abstract Art", 30, 120, 320, 20, parent, 203, false)
+	rbLinux = createRadio("🐧 Linux Style (Arch / Minimal OS)", 30, 142, 320, 20, parent, 204, false)
+	rbSpace = createRadio("🚀 Space & Galaxies (Nebula)", 30, 164, 320, 20, parent, 205, false)
+	rbNature = createRadio("🌿 Nature & Landscapes", 30, 186, 320, 20, parent, 206, false)
 
 	// Column 2
-	rbCars = createRadio("🏎️ Cars & Supercars", 370, 70, 320, 20, parent, 207, false)
-	rbCity = createRadio("🌆 City & Architecture", 370, 92, 320, 20, parent, 208, false)
-	rbCyberpunk = createRadio("⚡ Cyberpunk & Neon", 370, 114, 320, 20, parent, 209, false)
-	rbMinimal = createRadio("🖤 Minimalism & Dark AMOLED", 370, 136, 320, 20, parent, 210, false)
-	rbAnimals = createRadio("🐾 Wildlife & Animals", 370, 158, 320, 20, parent, 211, false)
-	rbAnime = createRadio("⛩️ Anime & Digital Scenery", 370, 180, 320, 20, parent, 212, false)
+	rbCars = createRadio("🏎️ Cars & Supercars", 370, 76, 320, 20, parent, 207, false)
+	rbCity = createRadio("🌆 City & Architecture", 370, 98, 320, 20, parent, 208, false)
+	rbCyberpunk = createRadio("⚡ Cyberpunk & Neon", 370, 120, 320, 20, parent, 209, false)
+	rbMinimal = createRadio("🖤 Minimalism & Dark AMOLED", 370, 142, 320, 20, parent, 210, false)
+	rbAnimals = createRadio("🐾 Wildlife & Animals", 370, 164, 320, 20, parent, 211, false)
+	rbAnime = createRadio("⛩️ Anime & Digital Scenery", 370, 186, 320, 20, parent, 212, false)
 
 	selectCurrentThemeRadio()
 
+	// Divider 2: Between Themes and Intervals
+	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 214, 705, 1, parent, 52))
+
 	// Section 2: Intervals
-	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 210, 680, 20, parent, 12))
+	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 222, 680, 20, parent, 12))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecInt), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rb1h = createRadio("1 hour", 30, 232, 120, 22, parent, 301, true) // WS_GROUP start
-	rb3h = createRadio("3 hours (Recommended)", 160, 232, 200, 22, parent, 302, false)
-	rb6h = createRadio("6 hours", 370, 232, 120, 22, parent, 303, false)
-	rb24h = createRadio("24 hours (Daily)", 510, 232, 150, 22, parent, 304, false)
+	rb1h = createRadio("1 hour", 30, 244, 120, 22, parent, 301, true) // WS_GROUP start
+	rb3h = createRadio("3 hours (Recommended)", 160, 244, 200, 22, parent, 302, false)
+	rb6h = createRadio("6 hours", 370, 244, 120, 22, parent, 303, false)
+	rb24h = createRadio("24 hours (Daily)", 510, 244, 150, 22, parent, 304, false)
 
 	selectCurrentIntervalRadio()
 
+	// Divider 3: Between Intervals and Fonts
+	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 274, 705, 1, parent, 53))
+
 	// Section 3: Fonts (12 Distinct Choices in 2 Columns with 20pt Bold Sample, NO digits)
-	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options in 2 Columns):", WS_CHILD|WS_VISIBLE, 20, 266, 700, 20, parent, 13))
+	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options in 2 Columns):", WS_CHILD|WS_VISIBLE, 20, 282, 700, 20, parent, 13))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecFonts), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
@@ -1117,77 +1151,80 @@ func createControls(parent syscall.Handle) {
 
 	// Column 1 (Left): Fonts 1 to 6 (X = 25, W = 345)
 	// Row 0: Font 1 - Segoe UI Bold
-	rbFontSegoe = createRadio("1. 🔠 Segoe UI Bold", 25, 290, 345, 18, parent, 401, true) // WS_GROUP start
-	lblSampSegoe = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 310, 325, 28, parent, 431))
+	rbFontSegoe = createRadio("1. 🔠 Segoe UI Bold", 25, 306, 345, 18, parent, 401, true) // WS_GROUP start
+	lblSampSegoe = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 326, 325, 28, parent, 431))
 	procSendMessageW.Call(uintptr(lblSampSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
 
 	// Row 1: Font 2 - Bahnschrift
-	rbFontBahn = createRadio("2. 📐 Bahnschrift", 25, 342, 345, 18, parent, 402, false)
-	lblSampBahn = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 362, 325, 28, parent, 432))
+	rbFontBahn = createRadio("2. 📐 Bahnschrift", 25, 358, 345, 18, parent, 402, false)
+	lblSampBahn = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 378, 325, 28, parent, 432))
 	procSendMessageW.Call(uintptr(lblSampBahn), WM_SETFONT, uintptr(hFontBahn), 1)
 
 	// Row 2: Font 3 - Arial Bold
-	rbFontArial = createRadio("3. 🛡️ Arial Bold", 25, 394, 345, 18, parent, 403, false)
-	lblSampArial = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 414, 325, 28, parent, 433))
+	rbFontArial = createRadio("3. 🛡️ Arial Bold", 25, 410, 345, 18, parent, 403, false)
+	lblSampArial = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 430, 325, 28, parent, 433))
 	procSendMessageW.Call(uintptr(lblSampArial), WM_SETFONT, uintptr(hFontArial), 1)
 
 	// Row 3: Font 4 - Verdana Bold
-	rbFontVerdana = createRadio("4. 👓 Verdana Bold", 25, 446, 345, 18, parent, 404, false)
-	lblSampVerdana = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 466, 325, 28, parent, 434))
+	rbFontVerdana = createRadio("4. 👓 Verdana Bold", 25, 462, 345, 18, parent, 404, false)
+	lblSampVerdana = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 482, 325, 28, parent, 434))
 	procSendMessageW.Call(uintptr(lblSampVerdana), WM_SETFONT, uintptr(hFontVerdana), 1)
 
 	// Row 4: Font 5 - Georgia Bold
-	rbFontGeorgia = createRadio("5. 📜 Georgia Bold", 25, 498, 345, 18, parent, 405, false)
-	lblSampGeorgia = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 518, 325, 28, parent, 435))
+	rbFontGeorgia = createRadio("5. 📜 Georgia Bold", 25, 514, 345, 18, parent, 405, false)
+	lblSampGeorgia = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 534, 325, 28, parent, 435))
 	procSendMessageW.Call(uintptr(lblSampGeorgia), WM_SETFONT, uintptr(hFontGeorgia), 1)
 
 	// Row 5: Font 6 - Corbel Bold
-	rbFontCorbel = createRadio("6. 💎 Corbel Bold", 25, 550, 345, 18, parent, 406, false)
-	lblSampCorbel = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 570, 325, 28, parent, 436))
+	rbFontCorbel = createRadio("6. 💎 Corbel Bold", 25, 566, 345, 18, parent, 406, false)
+	lblSampCorbel = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 45, 586, 325, 28, parent, 436))
 	procSendMessageW.Call(uintptr(lblSampCorbel), WM_SETFONT, uintptr(hFontCorbel), 1)
 
 	// Column 2 (Right): Fonts 7 to 12 (X = 385, W = 345)
 	// Row 0: Font 7 - Consolas Bold
-	rbFontConsolas = createRadio("7. 💻 Consolas Bold", 385, 290, 345, 18, parent, 407, false)
-	lblSampConsolas = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 310, 325, 28, parent, 437))
+	rbFontConsolas = createRadio("7. 💻 Consolas Bold", 385, 306, 345, 18, parent, 407, false)
+	lblSampConsolas = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 326, 325, 28, parent, 437))
 	procSendMessageW.Call(uintptr(lblSampConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
 
 	// Row 1: Font 8 - Trebuchet MS Bold
-	rbFontTreb = createRadio("8. ✒️ Trebuchet MS Bold", 385, 342, 345, 18, parent, 408, false)
-	lblSampTreb = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 362, 325, 28, parent, 438))
+	rbFontTreb = createRadio("8. ✒️ Trebuchet MS Bold", 385, 358, 345, 18, parent, 408, false)
+	lblSampTreb = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 378, 325, 28, parent, 438))
 	procSendMessageW.Call(uintptr(lblSampTreb), WM_SETFONT, uintptr(hFontTreb), 1)
 
 	// Row 2: Font 9 - Impact
-	rbFontImpact = createRadio("9. 💥 Impact", 385, 394, 345, 18, parent, 409, false)
-	lblSampImpact = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 414, 325, 28, parent, 439))
+	rbFontImpact = createRadio("9. 💥 Impact", 385, 410, 345, 18, parent, 409, false)
+	lblSampImpact = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 430, 325, 28, parent, 439))
 	procSendMessageW.Call(uintptr(lblSampImpact), WM_SETFONT, uintptr(hFontImpact), 1)
 
 	// Row 3: Font 10 - Century Gothic Bold
-	rbFontGothic = createRadio("10. ⭕ Century Gothic Bold", 385, 446, 345, 18, parent, 410, false)
-	lblSampGothic = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 466, 325, 28, parent, 440))
+	rbFontGothic = createRadio("10. ⭕ Century Gothic Bold", 385, 462, 345, 18, parent, 410, false)
+	lblSampGothic = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 482, 325, 28, parent, 440))
 	procSendMessageW.Call(uintptr(lblSampGothic), WM_SETFONT, uintptr(hFontGothic), 1)
 
 	// Row 4: Font 11 - Candara Bold
-	rbFontCandara = createRadio("11. 🎨 Candara Bold", 385, 498, 345, 18, parent, 411, false)
-	lblSampCandara = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 518, 325, 28, parent, 441))
+	rbFontCandara = createRadio("11. 🎨 Candara Bold", 385, 514, 345, 18, parent, 411, false)
+	lblSampCandara = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 534, 325, 28, parent, 441))
 	procSendMessageW.Call(uintptr(lblSampCandara), WM_SETFONT, uintptr(hFontCandara), 1)
 
 	// Row 5: Font 12 - Constantia Bold
-	rbFontConstantia = createRadio("12. 🏛️ Constantia Bold", 385, 550, 345, 18, parent, 412, false)
-	lblSampConstantia = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 570, 325, 28, parent, 442))
+	rbFontConstantia = createRadio("12. 🏛️ Constantia Bold", 385, 566, 345, 18, parent, 412, false)
+	lblSampConstantia = syscall.Handle(createCtrl(staticClass, sampDate, WS_CHILD|WS_VISIBLE, 405, 586, 325, 28, parent, 442))
 	procSendMessageW.Call(uintptr(lblSampConstantia), WM_SETFONT, uintptr(hFontConstantia), 1)
 
 	selectCurrentFontRadio()
 
+	// Divider 4: Between Fonts and Scale
+	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 622, 705, 1, parent, 54))
+
 	// Section 4: Scale
-	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 612, 700, 20, parent, 14))
+	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 630, 700, 20, parent, 14))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecScale), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rbFontNormal = createRadio("Standard (2.0x, Optimal)", 30, 636, 220, 22, parent, 451, true) // WS_GROUP start
-	rbFontLarge = createRadio("Large (2.6x)", 260, 636, 180, 22, parent, 452, false)
-	rbFontHuge = createRadio("Extra Large (3.2x)", 460, 636, 220, 22, parent, 453, false)
+	rbFontNormal = createRadio("Standard (2.0x, Optimal)", 30, 654, 220, 22, parent, 451, true) // WS_GROUP start
+	rbFontLarge = createRadio("Large (2.6x)", 260, 654, 180, 22, parent, 452, false)
+	rbFontHuge = createRadio("Extra Large (3.2x)", 460, 654, 220, 22, parent, 453, false)
 
 	if cfg.FontSizeScale <= 2.2 {
 		procSendMessageW.Call(uintptr(rbFontNormal), BM_SETCHECK, BST_CHECKED, 0)
@@ -1197,17 +1234,20 @@ func createControls(parent syscall.Handle) {
 		procSendMessageW.Call(uintptr(rbFontLarge), BM_SETCHECK, BST_CHECKED, 0)
 	}
 
+	// Divider 5: Between Scale and Status / Buttons
+	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 686, 705, 1, parent, 55))
+
 	// Status Info Label
-	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 672, 700, 20, parent, 505))
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 694, 700, 20, parent, 505))
 	if hUIFontSm != 0 {
 		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
 	}
 
-	// Bottom Action Buttons (Y = 704, Height = 44)
-	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 704, 168, 44, parent, 601))
-	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 203, 704, 168, 44, parent, 602))
-	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 381, 704, 168, 44, parent, 603))
-	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 559, 704, 168, 44, parent, 604))
+	// Bottom Action Buttons (Y = 724, Height = 44)
+	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 724, 168, 44, parent, 601))
+	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 203, 724, 168, 44, parent, 602))
+	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 381, 724, 168, 44, parent, 603))
+	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 559, 724, 168, 44, parent, 604))
 }
 
 func getTodaySampleString() string {
@@ -1640,16 +1680,43 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		var rc RECT
 		procGetClientRect.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&rc)))
 		brush := hBrushEvening
+		lineBrush := hBrushEveningLine
 		if cfg.ThemeMode == ThemeModeDay {
 			brush = hBrushDay
+			lineBrush = hBrushDayLine
 		} else if cfg.ThemeMode == ThemeModeNight {
 			brush = hBrushNight
+			lineBrush = hBrushNightLine
 		}
 		procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), uintptr(brush))
+
+		// Draw thin neat horizontal divider lines
+		rLine := RECT{Left: 20, Right: 725}
+		drawHLine := func(y int32) {
+			rLine.Top = y
+			rLine.Bottom = y + 1
+			procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rLine)), uintptr(lineBrush))
+		}
+		drawHLine(46)  // 1. Above Themes
+		drawHLine(214) // 2. Between Themes and Intervals
+		drawHLine(274) // 3. Between Intervals and Fonts
+		drawHLine(622) // 4. Between Fonts and Scale
+		drawHLine(686) // 5. Between Scale and Status / Buttons
 		return 1
 
 	case WM_CTLCOLORSTATIC:
 		hDC := wParam
+		ctrl := syscall.Handle(lParam)
+		if ctrl == divThemes || ctrl == divInterval || ctrl == divFonts || ctrl == divScale || ctrl == divBottom {
+			lineBrush := hBrushEveningLine
+			if cfg.ThemeMode == ThemeModeDay {
+				lineBrush = hBrushDayLine
+			} else if cfg.ThemeMode == ThemeModeNight {
+				lineBrush = hBrushNightLine
+			}
+			return uintptr(lineBrush)
+		}
+
 		procSetBkMode.Call(hDC, 1)
 
 		if cfg.ThemeMode == ThemeModeDay {

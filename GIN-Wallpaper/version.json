@@ -1,17 +1,18 @@
 {
-  "version": "v012",
+  "version": "v013",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v012_Setup.exe",
-  "description": "Умные обои с русским календарём для Windows 10/11 (4K UHD, 12 шрифтов, высота окна 830px без наложений, крупный стандартный календарь 2.0x, тема Фракталы вместо Windows)",
+  "installer": "GIN-Wallpaper-Calend_v013_Setup.exe",
+  "description": "Умные обои с русским календарём для Windows 10/11 (4K UHD, 12 шрифтов, аккуратные тонкие разделительные линии между всеми секциями настроек)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-06",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v012_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v013_Setup.exe",
   "features": [
-    "Увеличена высота окна Настроек (830px): ликвидировано наложение блока шрифтов на интервалы, свободные отступы",
+    "Тонкие аккуратные горизонтальные разделительные линии между всеми секциями окна настроек (Темы, Интервалы, Шрифты, Масштаб, Кнопки)",
+    "Высота окна 840px с комфортными полями и идеальной адаптацией цвета разделителей под темы День / Графит / Ночь",
     "Стандартный размер календаря увеличен в 2 раза (2.0x Оптимально) для отличной читаемости на рабочем столе",
     "Тема Windows заменена на эффектную «🔮 3D Фракталы и Абстракция» с отборными 4K обоями",
-    "Публикация пункта трей-меню исправлена: «📁 Открыть папку программы»",
+    "Контекстное меню в трее: «📁 Открыть папку программы»",
     "12 вариантов системных шрифтов Windows 10/11 с образцами 20pt Bold без обрезания даты",
     "Проверенный двухфазный Uninstall.exe со 100% удалением всех файлов и папки"
   ]
