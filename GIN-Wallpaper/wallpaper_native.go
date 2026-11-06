@@ -67,6 +67,8 @@ var (
 	procInvalidateRect        = user32.NewProc("InvalidateRect")
 	procDrawTextW             = user32.NewProc("DrawTextW")
 	procMessageBoxW           = user32.NewProc("MessageBoxW")
+	procEnableWindow          = user32.NewProc("EnableWindow")
+	procIsWindowEnabled       = user32.NewProc("IsWindowEnabled")
 
 	procCreateFontW           = gdi32.NewProc("CreateFontW")
 	procCreateSolidBrush      = gdi32.NewProc("CreateSolidBrush")
@@ -81,7 +83,7 @@ var (
 )
 
 const (
-	AppVersion = "v013"
+	AppVersion = "v014"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -125,6 +127,7 @@ const (
 	WS_GROUP            = 0x00020000
 	WS_TABSTOP          = 0x00010000
 	BS_AUTORADIOBUTTON  = 0x00000009
+	BS_AUTOCHECKBOX     = 0x00000003
 	BS_OWNERDRAW        = 0x0000000B
 	BM_SETCHECK         = 0x00F1
 	BM_GETCHECK         = 0x00F0
@@ -148,12 +151,13 @@ const (
 )
 
 type Config struct {
-	Theme         string  `json:"theme"`
-	IntervalHours int     `json:"interval_hours"`
-	FontSizeScale float64 `json:"font_size_scale"`
-	FontStyle     string  `json:"font_style"`
-	ThemeMode     int     `json:"theme_mode"`
-	Lang          string  `json:"lang"`
+	Themes        []string `json:"themes"`
+	Theme         string   `json:"theme,omitempty"`
+	IntervalHours int      `json:"interval_hours"`
+	FontSizeScale float64  `json:"font_size_scale"`
+	FontStyle     string   `json:"font_style"`
+	ThemeMode     int      `json:"theme_mode"`
+	Lang          string   `json:"lang"`
 }
 
 type RemoteVersionInfo struct {
@@ -291,9 +295,9 @@ var (
 	btnModeDay, btnModeEvening, btnModeNight syscall.Handle
 	btnLangEN, btnLangRU                     syscall.Handle
 
-	// Radio buttons - Themes (12)
-	rbAll, rbAbstract, rbFractal, rbLinux, rbSpace, rbNature syscall.Handle
-	rbCars, rbCity, rbCyberpunk, rbMinimal, rbAnimals, rbAnime syscall.Handle
+	// Checkboxes - Themes (12)
+	cbAll, cb3DAbstract, cbFlowers, cbOcean, cbSpace, cbNature syscall.Handle
+	cbCars, cbCity, cbCyberpunk, cbMinimal, cbAnimals, cbAnime syscall.Handle
 
 	// Radio buttons - Intervals (4)
 	rb1h, rb3h, rb6h, rb24h syscall.Handle
@@ -305,8 +309,8 @@ var (
 	lblSampSegoe, lblSampBahn, lblSampArial, lblSampVerdana, lblSampGeorgia, lblSampCorbel syscall.Handle
 	lblSampConsolas, lblSampTreb, lblSampImpact, lblSampGothic, lblSampCandara, lblSampConstantia syscall.Handle
 
-	// Radio buttons - Font scale (3)
-	rbFontNormal, rbFontLarge, rbFontHuge syscall.Handle
+	// Radio buttons - Font scale (5 variants: 1.4x, 1.7x, 2.0x, 2.5x, 3.0x)
+	rbFontScale1, rbFontScale2, rbFontScale3, rbFontScale4, rbFontScale5 syscall.Handle
 
 	// Action buttons (Bottom)
 	btnApply, btnSave, btnRandom, btnClose syscall.Handle
@@ -334,6 +338,7 @@ func isRu() bool {
 
 func loadConfig() {
 	cfg = Config{
+		Themes:        []string{"all"},
 		Theme:         "all",
 		IntervalHours: 3,
 		FontSizeScale: 2.0,
@@ -349,14 +354,27 @@ func loadConfig() {
 	if cfg.IntervalHours <= 0 {
 		cfg.IntervalHours = 3
 	}
-	if cfg.FontSizeScale <= 0 || cfg.FontSizeScale < 1.8 {
+	if cfg.FontSizeScale <= 0 {
 		cfg.FontSizeScale = 2.0
 	}
 	if cfg.FontStyle == "" {
 		cfg.FontStyle = "segoe"
 	}
-	if cfg.Theme == "" || cfg.Theme == "windows" {
-		cfg.Theme = "fractal"
+	if len(cfg.Themes) == 0 {
+		if cfg.Theme != "" && cfg.Theme != "all" {
+			if cfg.Theme == "windows" || cfg.Theme == "linux" {
+				cfg.Themes = []string{"all"}
+			} else if cfg.Theme == "abstract" || cfg.Theme == "fractal" {
+				cfg.Themes = []string{"3d_abstract"}
+			} else {
+				cfg.Themes = []string{cfg.Theme}
+			}
+		} else {
+			cfg.Themes = []string{"all"}
+		}
+	}
+	if cfg.Theme == "" {
+		cfg.Theme = cfg.Themes[0]
 	}
 	if cfg.Lang == "" {
 		cfg.Lang = "en"
@@ -437,14 +455,17 @@ type WallhavenResp struct {
 	} `json:"data"`
 }
 
-func getThemeQuery(theme string) string {
+func getSingleThemeQuery(theme string) string {
 	switch theme {
-	case "abstract":
-		return "abstract"
-	case "fractal", "windows":
-		return "fractal"
-	case "linux":
-		return "linux"
+	case "3d_abstract", "abstract", "fractal":
+		queries := []string{"3d render", "fractal", "abstract 3d", "texture 3d"}
+		return queries[rand.Intn(len(queries))]
+	case "flowers":
+		queries := []string{"flowers", "roses", "blossom", "floral"}
+		return queries[rand.Intn(len(queries))]
+	case "ocean":
+		queries := []string{"ocean", "sea waves", "beach sunset", "tropical coast"}
+		return queries[rand.Intn(len(queries))]
 	case "space":
 		return "space"
 	case "nature":
@@ -462,14 +483,24 @@ func getThemeQuery(theme string) string {
 	case "anime":
 		return "anime"
 	default:
-		all := []string{"abstract", "fractal", "linux", "space", "nature", "supercar", "city", "cyberpunk", "minimalism", "wildlife", "anime"}
+		all := []string{"3d render", "fractal", "abstract 3d", "flowers", "ocean", "space", "nature", "supercar", "city", "cyberpunk", "minimalism", "wildlife", "anime"}
 		return all[rand.Intn(len(all))]
 	}
 }
 
+func getThemeQuery() string {
+	selected := cfg.Themes
+	if len(selected) == 0 || (len(selected) == 1 && selected[0] == "all") {
+		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "cars", "city", "cyberpunk", "minimalism", "animals", "anime"}
+		return getSingleThemeQuery(all[rand.Intn(len(all))])
+	}
+	choice := selected[rand.Intn(len(selected))]
+	return getSingleThemeQuery(choice)
+}
+
 func downloadRandomWallpaper(w, h int) (image.Image, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
-	themeQuery := getThemeQuery(cfg.Theme)
+	themeQuery := getThemeQuery()
 
 	// Stage 1: Wallhaven 4K UHD Query (3840x2160 minimum)
 	wallhavenUrl := fmt.Sprintf("https://wallhaven.cc/api/v1/search?q=%s&atleast=3840x2160&sorting=random&purity=100",
@@ -1095,35 +1126,35 @@ func createControls(parent syscall.Handle) {
 	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 565, 10, 52, 30, parent, 104))
 	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 622, 10, 52, 30, parent, 105))
 
-	// Divider 1: Above Themes
-	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 46, 705, 1, parent, 51))
+	// Divider 1: Above Themes (Full Width)
+	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 46, 760, 1, parent, 51))
 
-	// Section 1: Themes (12 in 2 columns)
-	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Theme / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 54, 680, 20, parent, 11))
+	// Section 1: Themes (12 Checkboxes in 2 columns: All Random + 11 Categories)
+	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Themes / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 54, 680, 20, parent, 11))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecThemes), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
 	// Column 1
-	rbAll = createRadio("🎲 All Random (Mix)", 30, 76, 320, 20, parent, 201, true) // WS_GROUP start
-	rbAbstract = createRadio("🌀 Abstract & 3D Art", 30, 98, 320, 20, parent, 202, false)
-	rbFractal = createRadio("🔮 3D Fractals & Abstract Art", 30, 120, 320, 20, parent, 203, false)
-	rbLinux = createRadio("🐧 Linux Style (Arch / Minimal OS)", 30, 142, 320, 20, parent, 204, false)
-	rbSpace = createRadio("🚀 Space & Galaxies (Nebula)", 30, 164, 320, 20, parent, 205, false)
-	rbNature = createRadio("🌿 Nature & Landscapes", 30, 186, 320, 20, parent, 206, false)
+	cbAll = createCheckbox("🎲 All Random (Mix)", 30, 76, 330, 20, parent, 201)
+	cb3DAbstract = createCheckbox("🔮 3D Renders, Textures, Fractals & Abstract", 30, 98, 330, 20, parent, 202)
+	cbFlowers = createCheckbox("🌸 Flowers & Blossom", 30, 120, 330, 20, parent, 203)
+	cbOcean = createCheckbox("🌊 Ocean, Sea & Waves", 30, 142, 330, 20, parent, 204)
+	cbSpace = createCheckbox("🚀 Space & Galaxies (Nebula)", 30, 164, 330, 20, parent, 205)
+	cbNature = createCheckbox("🌿 Nature & Landscapes", 30, 186, 330, 20, parent, 206)
 
 	// Column 2
-	rbCars = createRadio("🏎️ Cars & Supercars", 370, 76, 320, 20, parent, 207, false)
-	rbCity = createRadio("🌆 City & Architecture", 370, 98, 320, 20, parent, 208, false)
-	rbCyberpunk = createRadio("⚡ Cyberpunk & Neon", 370, 120, 320, 20, parent, 209, false)
-	rbMinimal = createRadio("🖤 Minimalism & Dark AMOLED", 370, 142, 320, 20, parent, 210, false)
-	rbAnimals = createRadio("🐾 Wildlife & Animals", 370, 164, 320, 20, parent, 211, false)
-	rbAnime = createRadio("⛩️ Anime & Digital Scenery", 370, 186, 320, 20, parent, 212, false)
+	cbCars = createCheckbox("🏎️ Cars & Supercars", 370, 76, 330, 20, parent, 207)
+	cbCity = createCheckbox("🌆 City & Architecture", 370, 98, 330, 20, parent, 208)
+	cbCyberpunk = createCheckbox("⚡ Cyberpunk & Neon", 370, 120, 330, 20, parent, 209)
+	cbMinimal = createCheckbox("🖤 Minimalism & Dark AMOLED", 370, 142, 330, 20, parent, 210)
+	cbAnimals = createCheckbox("🐾 Wildlife & Animals", 370, 164, 330, 20, parent, 211)
+	cbAnime = createCheckbox("⛩️ Anime & Digital Scenery", 370, 186, 330, 20, parent, 212)
 
-	selectCurrentThemeRadio()
+	selectCurrentThemeCheckboxes()
 
-	// Divider 2: Between Themes and Intervals
-	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 214, 705, 1, parent, 52))
+	// Divider 2: Between Themes and Intervals (Full Width)
+	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 214, 760, 1, parent, 52))
 
 	// Section 2: Intervals
 	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 222, 680, 20, parent, 12))
@@ -1138,8 +1169,8 @@ func createControls(parent syscall.Handle) {
 
 	selectCurrentIntervalRadio()
 
-	// Divider 3: Between Intervals and Fonts
-	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 274, 705, 1, parent, 53))
+	// Divider 3: Between Intervals and Fonts (Full Width)
+	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 274, 760, 1, parent, 53))
 
 	// Section 3: Fonts (12 Distinct Choices in 2 Columns with 20pt Bold Sample, NO digits)
 	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options in 2 Columns):", WS_CHILD|WS_VISIBLE, 20, 282, 700, 20, parent, 13))
@@ -1213,29 +1244,25 @@ func createControls(parent syscall.Handle) {
 
 	selectCurrentFontRadio()
 
-	// Divider 4: Between Fonts and Scale
-	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 622, 705, 1, parent, 54))
+	// Divider 4: Between Fonts and Scale (Full Width)
+	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 622, 760, 1, parent, 54))
 
-	// Section 4: Scale
+	// Section 4: Scale (5 options)
 	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 630, 700, 20, parent, 14))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecScale), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rbFontNormal = createRadio("Standard (2.0x, Optimal)", 30, 654, 220, 22, parent, 451, true) // WS_GROUP start
-	rbFontLarge = createRadio("Large (2.6x)", 260, 654, 180, 22, parent, 452, false)
-	rbFontHuge = createRadio("Extra Large (3.2x)", 460, 654, 220, 22, parent, 453, false)
+	rbFontScale1 = createRadio("Compact (1.4x)", 25, 654, 135, 22, parent, 451, true) // WS_GROUP start
+	rbFontScale2 = createRadio("Medium (1.7x)", 165, 654, 135, 22, parent, 452, false)
+	rbFontScale3 = createRadio("Standard (2.0x)", 305, 654, 150, 22, parent, 453, false)
+	rbFontScale4 = createRadio("Large (2.5x)", 460, 654, 130, 22, parent, 454, false)
+	rbFontScale5 = createRadio("Huge (3.0x)", 595, 654, 135, 22, parent, 455, false)
 
-	if cfg.FontSizeScale <= 2.2 {
-		procSendMessageW.Call(uintptr(rbFontNormal), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale >= 3.0 {
-		procSendMessageW.Call(uintptr(rbFontHuge), BM_SETCHECK, BST_CHECKED, 0)
-	} else {
-		procSendMessageW.Call(uintptr(rbFontLarge), BM_SETCHECK, BST_CHECKED, 0)
-	}
+	selectCurrentScaleRadio()
 
-	// Divider 5: Between Scale and Status / Buttons
-	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 20, 686, 705, 1, parent, 55))
+	// Divider 5: Between Scale and Status / Buttons (Full Width)
+	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 686, 760, 1, parent, 55))
 
 	// Status Info Label
 	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 694, 700, 20, parent, 505))
@@ -1282,32 +1309,112 @@ func createRadio(caption string, x, y, w, h int, parent syscall.Handle, id uintp
 	return hCtrl
 }
 
-func selectCurrentThemeRadio() {
-	switch cfg.Theme {
-	case "abstract":
-		procSendMessageW.Call(uintptr(rbAbstract), BM_SETCHECK, BST_CHECKED, 0)
-	case "fractal", "windows":
-		procSendMessageW.Call(uintptr(rbFractal), BM_SETCHECK, BST_CHECKED, 0)
-	case "linux":
-		procSendMessageW.Call(uintptr(rbLinux), BM_SETCHECK, BST_CHECKED, 0)
-	case "space":
-		procSendMessageW.Call(uintptr(rbSpace), BM_SETCHECK, BST_CHECKED, 0)
-	case "nature":
-		procSendMessageW.Call(uintptr(rbNature), BM_SETCHECK, BST_CHECKED, 0)
-	case "cars":
-		procSendMessageW.Call(uintptr(rbCars), BM_SETCHECK, BST_CHECKED, 0)
-	case "city":
-		procSendMessageW.Call(uintptr(rbCity), BM_SETCHECK, BST_CHECKED, 0)
-	case "cyberpunk":
-		procSendMessageW.Call(uintptr(rbCyberpunk), BM_SETCHECK, BST_CHECKED, 0)
-	case "minimalism":
-		procSendMessageW.Call(uintptr(rbMinimal), BM_SETCHECK, BST_CHECKED, 0)
-	case "animals":
-		procSendMessageW.Call(uintptr(rbAnimals), BM_SETCHECK, BST_CHECKED, 0)
-	case "anime":
-		procSendMessageW.Call(uintptr(rbAnime), BM_SETCHECK, BST_CHECKED, 0)
-	default:
-		procSendMessageW.Call(uintptr(rbAll), BM_SETCHECK, BST_CHECKED, 0)
+func createCheckbox(caption string, x, y, w, h int, parent syscall.Handle, id uintptr) syscall.Handle {
+	btnClass := strPtr("BUTTON")
+	style := uint32(WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | WS_TABSTOP)
+	r := createCtrl(btnClass, caption, style, x, y, w, h, parent, id)
+	hCtrl := syscall.Handle(r)
+	if hUIFont != 0 {
+		procSendMessageW.Call(uintptr(hCtrl), WM_SETFONT, uintptr(hUIFont), 1)
+	}
+	return hCtrl
+}
+
+func enableCtrl(h syscall.Handle, enable bool) {
+	val := uintptr(0)
+	if enable {
+		val = 1
+	}
+	procEnableWindow.Call(uintptr(h), val)
+}
+
+func isEnabled(h syscall.Handle) bool {
+	r, _, _ := procIsWindowEnabled.Call(uintptr(h))
+	return r != 0
+}
+
+type ThemeCheckboxInfo struct {
+	id uintptr
+	h  syscall.Handle
+	th string
+}
+
+func getIndividualThemeCheckboxes() []ThemeCheckboxInfo {
+	return []ThemeCheckboxInfo{
+		{202, cb3DAbstract, "3d_abstract"},
+		{203, cbFlowers, "flowers"},
+		{204, cbOcean, "ocean"},
+		{205, cbSpace, "space"},
+		{206, cbNature, "nature"},
+		{207, cbCars, "cars"},
+		{208, cbCity, "city"},
+		{209, cbCyberpunk, "cyberpunk"},
+		{210, cbMinimal, "minimalism"},
+		{211, cbAnimals, "animals"},
+		{212, cbAnime, "anime"},
+	}
+}
+
+func updateThemeCheckboxesState() {
+	allChecked := isChecked(cbAll)
+	items := getIndividualThemeCheckboxes()
+	for _, it := range items {
+		enableCtrl(it.h, !allChecked)
+		if allChecked {
+			procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_UNCHECKED, 0)
+		}
+		procInvalidateRect.Call(uintptr(it.h), 0, 1)
+	}
+}
+
+func selectCurrentThemeCheckboxes() {
+	items := getIndividualThemeCheckboxes()
+	isAll := false
+	if len(cfg.Themes) == 0 {
+		isAll = true
+	} else {
+		for _, t := range cfg.Themes {
+			if t == "all" {
+				isAll = true
+				break
+			}
+		}
+	}
+
+	if isAll {
+		procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_CHECKED, 0)
+		for _, it := range items {
+			procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_UNCHECKED, 0)
+			enableCtrl(it.h, false)
+			procInvalidateRect.Call(uintptr(it.h), 0, 1)
+		}
+	} else {
+		procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_UNCHECKED, 0)
+		activeMap := make(map[string]bool)
+		for _, t := range cfg.Themes {
+			activeMap[t] = true
+			if t == "abstract" || t == "fractal" || t == "windows" {
+				activeMap["3d_abstract"] = true
+			}
+		}
+		anyChecked := false
+		for _, it := range items {
+			enableCtrl(it.h, true)
+			if activeMap[it.th] {
+				procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_CHECKED, 0)
+				anyChecked = true
+			} else {
+				procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_UNCHECKED, 0)
+			}
+			procInvalidateRect.Call(uintptr(it.h), 0, 1)
+		}
+		if !anyChecked {
+			procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_CHECKED, 0)
+			for _, it := range items {
+				enableCtrl(it.h, false)
+				procInvalidateRect.Call(uintptr(it.h), 0, 1)
+			}
+		}
 	}
 }
 
@@ -1353,6 +1460,20 @@ func selectCurrentFontRadio() {
 	}
 }
 
+func selectCurrentScaleRadio() {
+	if cfg.FontSizeScale <= 1.5 {
+		procSendMessageW.Call(uintptr(rbFontScale1), BM_SETCHECK, BST_CHECKED, 0)
+	} else if cfg.FontSizeScale <= 1.85 {
+		procSendMessageW.Call(uintptr(rbFontScale2), BM_SETCHECK, BST_CHECKED, 0)
+	} else if cfg.FontSizeScale >= 2.8 {
+		procSendMessageW.Call(uintptr(rbFontScale5), BM_SETCHECK, BST_CHECKED, 0)
+	} else if cfg.FontSizeScale >= 2.3 {
+		procSendMessageW.Call(uintptr(rbFontScale4), BM_SETCHECK, BST_CHECKED, 0)
+	} else {
+		procSendMessageW.Call(uintptr(rbFontScale3), BM_SETCHECK, BST_CHECKED, 0)
+	}
+}
+
 func updateTexts() {
 	ru := isRu()
 	setTxt := func(h syscall.Handle, txt string) {
@@ -1381,19 +1502,19 @@ func updateTexts() {
 	setTxt(lblSampConstantia, sampDate)
 
 	if ru {
-		setTxt(lblSecThemes, "🎨 Тематика обоев (выберите желаемый стиль):")
-		setTxt(rbAll, "🎲 Все подряд (Случайный микс)")
-		setTxt(rbAbstract, "🌀 Абстракция и 3D рендеры")
-		setTxt(rbFractal, "🔮 3D Фракталы и Абстракция")
-		setTxt(rbLinux, "🐧 В стиле Linux (Arch / Minimal OS)")
-		setTxt(rbSpace, "🚀 Космос и Галактики (Nebula)")
-		setTxt(rbNature, "🌿 Природа и пейзажи (Горы, Океан)")
-		setTxt(rbCars, "🏎️ Автомобили и Суперкары")
-		setTxt(rbCity, "🌆 Города и Архитектура (Skylines)")
-		setTxt(rbCyberpunk, "⚡ Киберпанк и Неон (Synthwave)")
-		setTxt(rbMinimal, "🖤 Минимализм и Dark AMOLED")
-		setTxt(rbAnimals, "🐾 Животные и Дикая природа")
-		setTxt(rbAnime, "⛩️ Аниме и Цифровой Арт")
+		setTxt(lblSecThemes, "🎨 Тематика обоев (выберите несколько или «Все подряд»):")
+		setTxt(cbAll, "🎲 Все подряд (Случайный микс)")
+		setTxt(cb3DAbstract, "🔮 3D Рендеры, Фактуры, Фракталы, Абстракция")
+		setTxt(cbFlowers, "🌸 Цветы и ботаника")
+		setTxt(cbOcean, "🌊 Океан, море и побережье")
+		setTxt(cbSpace, "🚀 Космос и Галактики (Nebula)")
+		setTxt(cbNature, "🌿 Природа и пейзажи")
+		setTxt(cbCars, "🏎️ Автомобили и Суперкары")
+		setTxt(cbCity, "🌆 Города и Архитектура (Skylines)")
+		setTxt(cbCyberpunk, "⚡ Киберпанк и Неон (Synthwave)")
+		setTxt(cbMinimal, "🖤 Минимализм и Dark AMOLED")
+		setTxt(cbAnimals, "🐾 Животные и Дикая природа")
+		setTxt(cbAnime, "⛩️ Аниме и Цифровой Арт")
 
 		setTxt(lblSecInt, "⏱ Интервал автоматической смены обоев:")
 		setTxt(rb1h, "1 час")
@@ -1416,25 +1537,27 @@ func updateTexts() {
 		setTxt(rbFontConstantia, "12. 🏛️ Constantia Bold")
 
 		setTxt(lblSecScale, "🔍 Масштаб и размер календаря:")
-		setTxt(rbFontNormal, "Стандартный (2.0x, Оптимально)")
-		setTxt(rbFontLarge, "Крупный (2.6x)")
-		setTxt(rbFontHuge, "Очень крупный (3.2x)")
+		setTxt(rbFontScale1, "Компактный (1.4x)")
+		setTxt(rbFontScale2, "Умеренный (1.7x)")
+		setTxt(rbFontScale3, "Стандартный (2.0x, Оптимально)")
+		setTxt(rbFontScale4, "Крупный (2.5x)")
+		setTxt(rbFontScale5, "Очень крупный (3.0x)")
 
 		setTxt(lblStatusInfo, "Готово. Нажмите «Применить сейчас», чтобы сразу сменить обои и календарь.")
 	} else {
-		setTxt(lblSecThemes, "🎨 Wallpaper Theme (Select desired photo style):")
-		setTxt(rbAll, "🎲 All Random (Mix of all themes)")
-		setTxt(rbAbstract, "🌀 Abstract & 3D Renders")
-		setTxt(rbFractal, "🔮 3D Fractals & Abstract Art")
-		setTxt(rbLinux, "🐧 Linux Style (Arch / Minimal OS)")
-		setTxt(rbSpace, "🚀 Space & Galaxies (Nebula)")
-		setTxt(rbNature, "🌿 Nature & Landscapes")
-		setTxt(rbCars, "🏎️ Cars & Supercars")
-		setTxt(rbCity, "🌆 City & Architecture (Skylines)")
-		setTxt(rbCyberpunk, "⚡ Cyberpunk & Neon (Synthwave)")
-		setTxt(rbMinimal, "🖤 Minimalism & Dark AMOLED")
-		setTxt(rbAnimals, "🐾 Wildlife & Animals")
-		setTxt(rbAnime, "⛩️ Anime & Digital Scenery")
+		setTxt(lblSecThemes, "🎨 Wallpaper Themes (Check multiple or 'All Random'):")
+		setTxt(cbAll, "🎲 All Random (Mix of all themes)")
+		setTxt(cb3DAbstract, "🔮 3D Renders, Textures, Fractals & Abstract")
+		setTxt(cbFlowers, "🌸 Flowers & Blossom")
+		setTxt(cbOcean, "🌊 Ocean, Sea & Waves")
+		setTxt(cbSpace, "🚀 Space & Galaxies (Nebula)")
+		setTxt(cbNature, "🌿 Nature & Landscapes")
+		setTxt(cbCars, "🏎️ Cars & Supercars")
+		setTxt(cbCity, "🌆 City & Architecture (Skylines)")
+		setTxt(cbCyberpunk, "⚡ Cyberpunk & Neon (Synthwave)")
+		setTxt(cbMinimal, "🖤 Minimalism & Dark AMOLED")
+		setTxt(cbAnimals, "🐾 Wildlife & Animals")
+		setTxt(cbAnime, "⛩️ Anime & Digital Scenery")
 
 		setTxt(lblSecInt, "⏱ Auto-Change Interval:")
 		setTxt(rb1h, "1 hour")
@@ -1457,9 +1580,11 @@ func updateTexts() {
 		setTxt(rbFontConstantia, "12. 🏛️ Constantia Bold")
 
 		setTxt(lblSecScale, "🔍 Calendar Scale and Size:")
-		setTxt(rbFontNormal, "Standard (2.0x, Optimal)")
-		setTxt(rbFontLarge, "Large (2.6x)")
-		setTxt(rbFontHuge, "Extra Large (3.2x)")
+		setTxt(rbFontScale1, "Compact (1.4x)")
+		setTxt(rbFontScale2, "Medium (1.7x)")
+		setTxt(rbFontScale3, "Standard (2.0x, Optimal)")
+		setTxt(rbFontScale4, "Large (2.5x)")
+		setTxt(rbFontScale5, "Extra Large (3.0x)")
 
 		setTxt(lblStatusInfo, "Ready. Click 'Apply Now' to change wallpaper and calendar immediately.")
 	}
@@ -1477,30 +1602,26 @@ func isChecked(h syscall.Handle) bool {
 }
 
 func readCurrentUISelections() {
-	if isChecked(rbAbstract) {
-		cfg.Theme = "abstract"
-	} else if isChecked(rbFractal) {
-		cfg.Theme = "fractal"
-	} else if isChecked(rbLinux) {
-		cfg.Theme = "linux"
-	} else if isChecked(rbSpace) {
-		cfg.Theme = "space"
-	} else if isChecked(rbNature) {
-		cfg.Theme = "nature"
-	} else if isChecked(rbCars) {
-		cfg.Theme = "cars"
-	} else if isChecked(rbCity) {
-		cfg.Theme = "city"
-	} else if isChecked(rbCyberpunk) {
-		cfg.Theme = "cyberpunk"
-	} else if isChecked(rbMinimal) {
-		cfg.Theme = "minimalism"
-	} else if isChecked(rbAnimals) {
-		cfg.Theme = "animals"
-	} else if isChecked(rbAnime) {
-		cfg.Theme = "anime"
-	} else {
+	if isChecked(cbAll) {
+		cfg.Themes = []string{"all"}
 		cfg.Theme = "all"
+	} else {
+		var selected []string
+		items := getIndividualThemeCheckboxes()
+		for _, it := range items {
+			if isChecked(it.h) {
+				selected = append(selected, it.th)
+			}
+		}
+		if len(selected) == 0 {
+			cfg.Themes = []string{"all"}
+			cfg.Theme = "all"
+			procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_CHECKED, 0)
+			updateThemeCheckboxesState()
+		} else {
+			cfg.Themes = selected
+			cfg.Theme = selected[0]
+		}
 	}
 
 	if isChecked(rb1h) {
@@ -1539,12 +1660,16 @@ func readCurrentUISelections() {
 		cfg.FontStyle = "segoe"
 	}
 
-	if isChecked(rbFontNormal) {
-		cfg.FontSizeScale = 2.0
-	} else if isChecked(rbFontHuge) {
-		cfg.FontSizeScale = 3.2
+	if isChecked(rbFontScale1) {
+		cfg.FontSizeScale = 1.4
+	} else if isChecked(rbFontScale2) {
+		cfg.FontSizeScale = 1.7
+	} else if isChecked(rbFontScale4) {
+		cfg.FontSizeScale = 2.5
+	} else if isChecked(rbFontScale5) {
+		cfg.FontSizeScale = 3.0
 	} else {
-		cfg.FontSizeScale = 2.6
+		cfg.FontSizeScale = 2.0
 	}
 }
 
@@ -1690,8 +1815,8 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		}
 		procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), uintptr(brush))
 
-		// Draw thin neat horizontal divider lines
-		rLine := RECT{Left: 20, Right: 725}
+		// Draw thin neat horizontal divider lines across full width
+		rLine := RECT{Left: 0, Right: rc.Right}
 		drawHLine := func(y int32) {
 			rLine.Top = y
 			rLine.Bottom = y + 1
@@ -1718,6 +1843,18 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		}
 
 		procSetBkMode.Call(hDC, 1)
+
+		if !isEnabled(ctrl) {
+			if cfg.ThemeMode == ThemeModeDay {
+				procSetTextColor.Call(hDC, uintptr(rgb(160, 165, 175)))
+				return uintptr(hBrushDay)
+			} else if cfg.ThemeMode == ThemeModeNight {
+				procSetTextColor.Call(hDC, uintptr(rgb(90, 100, 120)))
+				return uintptr(hBrushNight)
+			}
+			procSetTextColor.Call(hDC, uintptr(rgb(120, 130, 150)))
+			return uintptr(hBrushEvening)
+		}
 
 		if cfg.ThemeMode == ThemeModeDay {
 			procSetTextColor.Call(hDC, uintptr(rgb(30, 35, 45)))
@@ -1768,32 +1905,35 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			updatePreviewCard()
 			return 0
 
-		case 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212:
-			themeRadios := []struct {
-				id uintptr
-				h  syscall.Handle
-				th string
-			}{
-				{201, rbAll, "all"},
-				{202, rbAbstract, "abstract"},
-				{203, rbFractal, "fractal"},
-				{204, rbLinux, "linux"},
-				{205, rbSpace, "space"},
-				{206, rbNature, "nature"},
-				{207, rbCars, "cars"},
-				{208, rbCity, "city"},
-				{209, rbCyberpunk, "cyberpunk"},
-				{210, rbMinimal, "minimalism"},
-				{211, rbAnimals, "animals"},
-				{212, rbAnime, "anime"},
+		case 201: // cbAll clicked
+			if isChecked(cbAll) {
+				cfg.Themes = []string{"all"}
+				cfg.Theme = "all"
 			}
-			for _, tr := range themeRadios {
-				if tr.id == uintptr(id) {
-					procSendMessageW.Call(uintptr(tr.h), BM_SETCHECK, BST_CHECKED, 0)
-					cfg.Theme = tr.th
-				} else {
-					procSendMessageW.Call(uintptr(tr.h), BM_SETCHECK, BST_UNCHECKED, 0)
+			updateThemeCheckboxesState()
+			saveConfig()
+			return 0
+
+		case 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212: // Individual theme checkbox clicked
+			if isChecked(cbAll) {
+				procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_UNCHECKED, 0)
+				updateThemeCheckboxesState()
+			}
+			var selected []string
+			items := getIndividualThemeCheckboxes()
+			for _, it := range items {
+				if isChecked(it.h) {
+					selected = append(selected, it.th)
 				}
+			}
+			if len(selected) == 0 {
+				procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_CHECKED, 0)
+				cfg.Themes = []string{"all"}
+				cfg.Theme = "all"
+				updateThemeCheckboxesState()
+			} else {
+				cfg.Themes = selected
+				cfg.Theme = selected[0]
 			}
 			saveConfig()
 			return 0
@@ -1850,15 +1990,17 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			saveConfig()
 			return 0
 
-		case 451, 452, 453:
+		case 451, 452, 453, 454, 455:
 			scaleRadios := []struct {
 				id  uintptr
 				h   syscall.Handle
 				val float64
 			}{
-				{451, rbFontNormal, 2.0},
-				{452, rbFontLarge, 2.6},
-				{453, rbFontHuge, 3.2},
+				{451, rbFontScale1, 1.4},
+				{452, rbFontScale2, 1.7},
+				{453, rbFontScale3, 2.0},
+				{454, rbFontScale4, 2.5},
+				{455, rbFontScale5, 3.0},
 			}
 			for _, sr := range scaleRadios {
 				if sr.id == uintptr(id) {
@@ -1898,9 +2040,11 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			return 0
 
 		case 603: // 🎲 Random Theme
-			allThemes := []string{"abstract", "fractal", "linux", "space", "nature", "cars", "city", "cyberpunk", "minimalism", "animals", "anime"}
-			cfg.Theme = allThemes[rand.Intn(len(allThemes))]
-			selectCurrentThemeRadio()
+			allThemes := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "cars", "city", "cyberpunk", "minimalism", "animals", "anime"}
+			rnd := allThemes[rand.Intn(len(allThemes))]
+			cfg.Themes = []string{rnd}
+			cfg.Theme = rnd
+			selectCurrentThemeCheckboxes()
 			saveConfig()
 			updatePreviewCard()
 			go cycleWallpaper()
