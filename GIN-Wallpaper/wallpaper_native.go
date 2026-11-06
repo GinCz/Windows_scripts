@@ -2,12 +2,14 @@ package main
 
 import (
 	_ "embed"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/jpeg"
+	"math"
 	_ "image/png"
 	"io"
 	"math/rand"
@@ -40,6 +42,8 @@ var (
 	shell32                   = syscall.NewLazyDLL("shell32.dll")
 	kernel32                  = syscall.NewLazyDLL("kernel32.dll")
 	gdi32                     = syscall.NewLazyDLL("gdi32.dll")
+	winmm                     = syscall.NewLazyDLL("winmm.dll")
+	procPlaySoundW            = winmm.NewProc("PlaySoundW")
 	procSystemParametersInfoW = user32.NewProc("SystemParametersInfoW")
 	procGetSystemMetrics      = user32.NewProc("GetSystemMetrics")
 	procShell_NotifyIconW     = shell32.NewProc("Shell_NotifyIconW")
@@ -83,7 +87,7 @@ var (
 )
 
 const (
-	AppVersion = "v015"
+	AppVersion = "v016"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -101,6 +105,7 @@ const (
 	WM_SETICON       = 0x0080
 	WM_ERASEBKGND    = 0x0014
 	WM_CTLCOLORSTATIC= 0x0138
+	WM_CTLCOLORBTN   = 0x0135
 	WM_DRAWITEM      = 0x002B
 
 	NIM_ADD    = 0x00000000
@@ -310,7 +315,7 @@ var (
 	rbFontScale1, rbFontScale2, rbFontScale3, rbFontScale4, rbFontScale5 syscall.Handle
 
 	// Action buttons (Bottom)
-	btnApply, btnSave, btnRandom, btnClose syscall.Handle
+	btnApply, btnSave, btnRandom, btnClose, btnFooterVer syscall.Handle
 
 	ruMonths = []string{"", "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"}
 	enMonths = []string{"", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
@@ -810,6 +815,151 @@ func drawCalendar(rgba *image.RGBA, now time.Time, userScale float64) {
 	}
 }
 
+
+const (
+	SND_SYNC   = 0x00000000
+	SND_ASYNC  = 0x00000001
+	SND_NODEFAULT = 0x00000002
+	SND_MEMORY = 0x00000004
+)
+
+var (
+	chimeWAVBytes []byte
+	beepBeepWAVBytes []byte
+)
+
+func initAudioBuffers() {
+	if len(chimeWAVBytes) == 0 {
+		chimeWAVBytes = generateChimeWAV()
+	}
+	if len(beepBeepWAVBytes) == 0 {
+		beepBeepWAVBytes = generateBeepBeepWAV()
+	}
+}
+
+// Generates a soft magical celestial chord chime (E maj9 harp arpeggio)
+func generateChimeWAV() []byte {
+	sampleRate := 22050
+	duration := 1.3
+	totalSamples := int(float64(sampleRate) * duration)
+	notes := []struct {
+		freq, start, decay, vol float64
+	}{
+		{659.25, 0.00, 1.0, 0.28},
+		{830.61, 0.05, 1.1, 0.26},
+		{987.77, 0.10, 1.2, 0.24},
+		{1244.51, 0.15, 1.1, 0.22},
+		{1479.98, 0.20, 1.0, 0.18},
+	}
+	samples := make([]float64, totalSamples)
+	for _, n := range notes {
+		sIdx := int(n.start * float64(sampleRate))
+		for i := sIdx; i < totalSamples; i++ {
+			t := float64(i-sIdx) / float64(sampleRate)
+			attack := t / 0.015
+			if attack > 1.0 {
+				attack = 1.0
+			}
+			env := attack * math.Exp(-t*(3.5/n.decay))
+			val := math.Sin(2.0*math.Pi*n.freq*t) + 0.2*math.Sin(4.0*math.Pi*n.freq*t)
+			samples[i] += val * env * n.vol
+		}
+	}
+	maxVal := 0.0
+	for _, s := range samples {
+		if math.Abs(s) > maxVal {
+			maxVal = math.Abs(s)
+		}
+	}
+	if maxVal == 0.0 {
+		maxVal = 1.0
+	}
+	return buildWAV16Mono(sampleRate, samples, maxVal, 22000)
+}
+
+// Generates an upbeat double beep-beep signal for silent auto-update
+func generateBeepBeepWAV() []byte {
+	sampleRate := 22050
+	duration := 0.45
+	totalSamples := int(float64(sampleRate) * duration)
+	samples := make([]float64, totalSamples)
+	beeps := []struct {
+		freq, start, dur, vol float64
+	}{
+		{880.0, 0.00, 0.12, 0.35},
+		{1174.66, 0.16, 0.18, 0.38},
+	}
+	for _, b := range beeps {
+		sIdx := int(b.start * float64(sampleRate))
+		eIdx := int((b.start + b.dur) * float64(sampleRate))
+		if eIdx > totalSamples {
+			eIdx = totalSamples
+		}
+		for i := sIdx; i < eIdx; i++ {
+			t := float64(i-sIdx) / float64(sampleRate)
+			attack := t / 0.008
+			if attack > 1.0 {
+				attack = 1.0
+			}
+			decay := (b.dur - t) / b.dur
+			if decay < 0.0 {
+				decay = 0.0
+			}
+			samples[i] = math.Sin(2.0*math.Pi*b.freq*t) * attack * decay * b.vol
+		}
+	}
+	maxVal := 0.0
+	for _, s := range samples {
+		if math.Abs(s) > maxVal {
+			maxVal = math.Abs(s)
+		}
+	}
+	if maxVal == 0.0 {
+		maxVal = 1.0
+	}
+	return buildWAV16Mono(sampleRate, samples, maxVal, 24000)
+}
+
+func buildWAV16Mono(sampleRate int, samples []float64, maxVal float64, scaleAmp float64) []byte {
+	totalSamples := len(samples)
+	dataSize := totalSamples * 2
+	buf := make([]byte, 44+dataSize)
+	copy(buf[0:], "RIFF")
+	binary.LittleEndian.PutUint32(buf[4:], uint32(36+dataSize))
+	copy(buf[8:], "WAVE")
+	copy(buf[12:], "fmt ")
+	binary.LittleEndian.PutUint32(buf[16:], 16)
+	binary.LittleEndian.PutUint16(buf[20:], 1) // PCM
+	binary.LittleEndian.PutUint16(buf[22:], 1) // Mono
+	binary.LittleEndian.PutUint32(buf[24:], uint32(sampleRate))
+	binary.LittleEndian.PutUint32(buf[28:], uint32(sampleRate*2))
+	binary.LittleEndian.PutUint16(buf[32:], 2) // block align
+	binary.LittleEndian.PutUint16(buf[34:], 16) // bits
+	copy(buf[36:], "data")
+	binary.LittleEndian.PutUint32(buf[40:], uint32(dataSize))
+	for i, s := range samples {
+		val := int16((s / maxVal) * scaleAmp)
+		binary.LittleEndian.PutUint16(buf[44+i*2:], uint16(val))
+	}
+	return buf
+}
+
+func playSoftChime() {
+	go func() {
+		initAudioBuffers()
+		if len(chimeWAVBytes) > 0 {
+			procPlaySoundW.Call(uintptr(unsafe.Pointer(&chimeWAVBytes[0])), 0, uintptr(SND_MEMORY|SND_SYNC|SND_NODEFAULT))
+		}
+	}()
+}
+
+func playUpdateBeepBeep() {
+	initAudioBuffers()
+	if len(beepBeepWAVBytes) > 0 {
+		procPlaySoundW.Call(uintptr(unsafe.Pointer(&beepBeepWAVBytes[0])), 0, uintptr(SND_MEMORY|SND_SYNC|SND_NODEFAULT))
+	}
+}
+
 func cycleWallpaper() {
 	wallpaperMutex.Lock()
 	defer wallpaperMutex.Unlock()
@@ -840,6 +990,7 @@ func cycleWallpaper() {
 		f.Close()
 		ensureWallpaperStyleRegistry()
 		setWallpaperWin(outPath)
+		playSoftChime()
 	}
 }
 
@@ -909,6 +1060,12 @@ func triggerCheckForUpdates(manual bool) {
 
 		remoteVer := strings.TrimSpace(info.Version)
 		if remoteVer != "" && remoteVer != AppVersion {
+			if !manual {
+				// Fully automated 2-hour silent update with upbeat double-beep signal!
+				playUpdateBeepBeep()
+				downloadAndApplyUpdate(info.DownloadURL, info.Installer)
+				return
+			}
 			t := "GIN-Wallpaper-Calend — Update Available"
 			m := fmt.Sprintf("A new version is available: %s (current: %s).\n\nDo you want to download and install it now?", remoteVer, AppVersion)
 			if isRu() {
@@ -917,6 +1074,7 @@ func triggerCheckForUpdates(manual bool) {
 			}
 			r, _, _ := procMessageBoxW.Call(0, uintptr(unsafe.Pointer(strPtr(m))), uintptr(unsafe.Pointer(strPtr(t))), MB_YESNO|MB_ICONINFO)
 			if int(r) == IDYES {
+				playUpdateBeepBeep()
 				downloadAndApplyUpdate(info.DownloadURL, info.Installer)
 			}
 		} else if manual {
@@ -998,7 +1156,7 @@ func initFonts() {
 
 	// 12 Distinct Fonts for single-line radio previews
 	makeFont := func(name string, weight int) syscall.Handle {
-		h, _, _ := procCreateFontW.Call(uintptr(16), 0, 0, 0, uintptr(weight), 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr(name))))
+		h, _, _ := procCreateFontW.Call(uintptr(18), 0, 0, 0, uintptr(weight), 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr(name))))
 		return syscall.Handle(h)
 	}
 
@@ -1057,7 +1215,7 @@ func createSettingsWindow() {
 	initFonts()
 
 	screenW, screenH := getRealScreenResolution()
-	winW, winH := 820, 650
+	winW, winH := 820, 710
 	posX := 50
 	posY := 20
 	if posX+winW > screenW {
@@ -1176,76 +1334,79 @@ func createControls(parent syscall.Handle) {
 	}
 
 	// Column 1 (Left): Fonts 1 to 6 (X = 25, W = 375)
-	rbFontSegoe = createRadio("1. Segoe UI Bold", 25, 304, 375, 22, parent, 401, true) // WS_GROUP start
+	rbFontSegoe = createRadio("1. Segoe UI Bold", 25, 304, 375, 24, parent, 401, true) // WS_GROUP start
 	procSendMessageW.Call(uintptr(rbFontSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
 
-	rbFontBahn = createRadio("2. Bahnschrift", 25, 327, 375, 22, parent, 402, false)
+	rbFontBahn = createRadio("2. Bahnschrift", 25, 329, 375, 24, parent, 402, false)
 	procSendMessageW.Call(uintptr(rbFontBahn), WM_SETFONT, uintptr(hFontBahn), 1)
 
-	rbFontArial = createRadio("3. Arial", 25, 350, 375, 22, parent, 403, false)
+	rbFontArial = createRadio("3. Arial", 25, 354, 375, 24, parent, 403, false)
 	procSendMessageW.Call(uintptr(rbFontArial), WM_SETFONT, uintptr(hFontArial), 1)
 
-	rbFontVerdana = createRadio("4. Verdana", 25, 373, 375, 22, parent, 404, false)
+	rbFontVerdana = createRadio("4. Verdana", 25, 379, 375, 24, parent, 404, false)
 	procSendMessageW.Call(uintptr(rbFontVerdana), WM_SETFONT, uintptr(hFontVerdana), 1)
 
-	rbFontGeorgia = createRadio("5. Georgia Bold", 25, 396, 375, 22, parent, 405, false)
+	rbFontGeorgia = createRadio("5. Georgia Bold", 25, 404, 375, 24, parent, 405, false)
 	procSendMessageW.Call(uintptr(rbFontGeorgia), WM_SETFONT, uintptr(hFontGeorgia), 1)
 
-	rbFontCorbel = createRadio("6. Corbel Bold", 25, 419, 375, 22, parent, 406, false)
+	rbFontCorbel = createRadio("6. Corbel Bold", 25, 429, 375, 24, parent, 406, false)
 	procSendMessageW.Call(uintptr(rbFontCorbel), WM_SETFONT, uintptr(hFontCorbel), 1)
 
 	// Column 2 (Right): Fonts 7 to 12 (X = 415, W = 375)
-	rbFontConsolas = createRadio("7. Consolas Bold", 415, 304, 375, 22, parent, 407, false)
+	rbFontConsolas = createRadio("7. Consolas Bold", 415, 304, 375, 24, parent, 407, false)
 	procSendMessageW.Call(uintptr(rbFontConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
 
-	rbFontTreb = createRadio("8. Trebuchet MS Bold", 415, 327, 375, 22, parent, 408, false)
+	rbFontTreb = createRadio("8. Trebuchet MS Bold", 415, 329, 375, 24, parent, 408, false)
 	procSendMessageW.Call(uintptr(rbFontTreb), WM_SETFONT, uintptr(hFontTreb), 1)
 
-	rbFontCambria = createRadio("9. Cambria Bold", 415, 350, 375, 22, parent, 409, false)
+	rbFontCambria = createRadio("9. Cambria Bold", 415, 354, 375, 24, parent, 409, false)
 	procSendMessageW.Call(uintptr(rbFontCambria), WM_SETFONT, uintptr(hFontCambria), 1)
 
-	rbFontGothic = createRadio("10. Century Gothic Bold", 415, 373, 375, 22, parent, 410, false)
+	rbFontGothic = createRadio("10. Century Gothic Bold", 415, 379, 375, 24, parent, 410, false)
 	procSendMessageW.Call(uintptr(rbFontGothic), WM_SETFONT, uintptr(hFontGothic), 1)
 
-	rbFontCandara = createRadio("11. Candara Bold", 415, 396, 375, 22, parent, 411, false)
+	rbFontCandara = createRadio("11. Candara Bold", 415, 404, 375, 24, parent, 411, false)
 	procSendMessageW.Call(uintptr(rbFontCandara), WM_SETFONT, uintptr(hFontCandara), 1)
 
-	rbFontConstantia = createRadio("12. Constantia Bold", 415, 419, 375, 22, parent, 412, false)
+	rbFontConstantia = createRadio("12. Constantia Bold", 415, 429, 375, 24, parent, 412, false)
 	procSendMessageW.Call(uintptr(rbFontConstantia), WM_SETFONT, uintptr(hFontConstantia), 1)
 
 	selectCurrentFontRadio()
 
 	// Divider 4: Between Fonts and Scale (Full Width)
-	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 450, 820, 1, parent, 54))
+	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 460, 820, 1, parent, 54))
 
 	// Section 4: Scale (5 options)
-	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 458, 780, 20, parent, 14))
+	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 468, 780, 20, parent, 14))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecScale), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rbFontScale1 = createRadio("Compact (1.4x)", 25, 482, 145, 22, parent, 451, true) // WS_GROUP start
-	rbFontScale2 = createRadio("Medium (1.7x)", 175, 482, 145, 22, parent, 452, false)
-	rbFontScale3 = createRadio("Standard (2.0x)", 325, 482, 165, 22, parent, 453, false)
-	rbFontScale4 = createRadio("Large (2.25x)", 495, 482, 150, 22, parent, 454, false)
-	rbFontScale5 = createRadio("Huge (2.8x)", 650, 482, 145, 22, parent, 455, false)
+	rbFontScale1 = createRadio("Compact (1.4x)", 25, 492, 145, 22, parent, 451, true) // WS_GROUP start
+	rbFontScale2 = createRadio("Medium (1.7x)", 175, 492, 145, 22, parent, 452, false)
+	rbFontScale3 = createRadio("Standard (2.0x)", 325, 492, 165, 22, parent, 453, false)
+	rbFontScale4 = createRadio("Large (2.25x)", 495, 492, 150, 22, parent, 454, false)
+	rbFontScale5 = createRadio("Huge (2.8x)", 650, 492, 145, 22, parent, 455, false)
 
 	selectCurrentScaleRadio()
 
 	// Divider 5: Between Scale and Status / Buttons (Full Width)
-	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 514, 820, 1, parent, 55))
+	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 524, 820, 1, parent, 55))
 
 	// Status Info Label
-	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 522, 780, 20, parent, 505))
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 532, 780, 20, parent, 505))
 	if hUIFontSm != 0 {
 		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
 	}
 
-	// Bottom Action Buttons (Y = 550, Height = 42)
-	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 550, 182, 42, parent, 601))
-	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 550, 182, 42, parent, 602))
-	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 550, 182, 42, parent, 603))
-	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 550, 182, 42, parent, 604))
+	// Bottom Action Buttons (Y = 560, Height = 42)
+	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 560, 182, 42, parent, 601))
+	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 560, 182, 42, parent, 602))
+	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 560, 182, 42, parent, 603))
+	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 560, 182, 42, parent, 604))
+
+	// Centered Bottom Footer Version & Update Button (Y = 618, Width = 380, Height = 30)
+	btnFooterVer = syscall.Handle(createCtrl(btnClass, "VladiMIR + AI | v016 | (обновить)", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 220, 618, 380, 30, parent, 605))
 }
 
 func getTodaySampleString() string {
@@ -1725,6 +1886,26 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		bgCol = rgb(69, 90, 100)
 		borderCol = rgb(120, 144, 156)
 		textCol = rgb(240, 240, 240)
+
+	case 605:
+		btnText = fmt.Sprintf("VladiMIR + AI | %s | (update)", AppVersion)
+		if isRu() {
+			btnText = fmt.Sprintf("VladiMIR + AI | %s | (обновить)", AppVersion)
+		}
+		if cfg.ThemeMode == ThemeModeDay {
+			bgCol = rgb(235, 240, 250)
+			borderCol = rgb(180, 195, 215)
+			textCol = rgb(30, 80, 160)
+		} else if cfg.ThemeMode == ThemeModeNight {
+			bgCol = rgb(28, 32, 44)
+			borderCol = rgb(60, 75, 100)
+			textCol = rgb(100, 180, 246)
+		} else {
+			bgCol = rgb(45, 52, 68)
+			borderCol = rgb(80, 95, 120)
+			textCol = rgb(129, 212, 250)
+		}
+		hFont = uintptr(hUIFontSm)
 	}
 
 	if isPressed {
@@ -1783,11 +1964,11 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		drawHLine(46)  // 1. Above Themes
 		drawHLine(214) // 2. Between Themes and Intervals
 		drawHLine(274) // 3. Between Intervals and Fonts
-		drawHLine(450) // 4. Between Fonts and Scale
-		drawHLine(514) // 5. Between Scale and Status / Buttons
+		drawHLine(460) // 4. Between Fonts and Scale
+		drawHLine(524) // 5. Between Scale and Status / Buttons
 		return 1
 
-	case WM_CTLCOLORSTATIC:
+	case WM_CTLCOLORSTATIC, WM_CTLCOLORBTN:
 		hDC := wParam
 		ctrl := syscall.Handle(lParam)
 		if ctrl == divThemes || ctrl == divInterval || ctrl == divFonts || ctrl == divScale || ctrl == divBottom {
@@ -1804,13 +1985,13 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 
 		if !isEnabled(ctrl) {
 			if cfg.ThemeMode == ThemeModeDay {
-				procSetTextColor.Call(hDC, uintptr(rgb(160, 165, 175)))
+				procSetTextColor.Call(hDC, uintptr(rgb(155, 160, 170)))
 				return uintptr(hBrushDay)
 			} else if cfg.ThemeMode == ThemeModeNight {
-				procSetTextColor.Call(hDC, uintptr(rgb(90, 100, 120)))
+				procSetTextColor.Call(hDC, uintptr(rgb(100, 110, 125)))
 				return uintptr(hBrushNight)
 			}
-			procSetTextColor.Call(hDC, uintptr(rgb(120, 130, 150)))
+			procSetTextColor.Call(hDC, uintptr(rgb(130, 140, 155)))
 			return uintptr(hBrushEvening)
 		}
 
@@ -2012,6 +2193,10 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			procDestroyWindow.Call(uintptr(hwndSettings))
 			hwndSettings = 0
 			return 0
+
+		case 605: // Footer Check for updates button
+			triggerCheckForUpdates(true)
+			return 0
 		}
 
 	case WM_CLOSE:
@@ -2145,6 +2330,17 @@ func main() {
 			}
 			time.Sleep(time.Duration(hrs) * time.Hour)
 			cycleWallpaper()
+		}
+	}()
+
+	// Automated silent background update check every 2 hours
+	go func() {
+		// Initial background check 2 minutes after launch
+		time.Sleep(2 * time.Minute)
+		triggerCheckForUpdates(false)
+		for {
+			time.Sleep(2 * time.Hour)
+			triggerCheckForUpdates(false)
 		}
 	}()
 
