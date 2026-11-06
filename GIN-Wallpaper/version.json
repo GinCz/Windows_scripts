@@ -1,18 +1,18 @@
 {
-  "version": "v007",
+  "version": "v008",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v007_Setup.exe",
-  "description": "Умные обои с русским календарём для Windows (Expanded 12 Themes, Font Selection with Live Previews, Russia-Friendly Wallpapers Engine)",
+  "installer": "GIN-Wallpaper-Calend_v008_Setup.exe",
+  "description": "Умные обои с русским календарём для Windows (GIN-VPN Style Theme Switcher: Day/Evening/Night, Live EN/RU Toggle, Colorful Action Buttons, Live Preview Box, Tray Version with Update Check)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-06",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v007_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v008_Setup.exe",
   "features": [
-    "12 категорий обоев: Абстракция, Windows 11 Fluent, Linux Minimal, Космос, Природа, Суперкары, Города, Киберпанк, Минимализм, Животные, Аниме, Случайно",
-    "Выбор красивых шрифтов календаря прямо в меню с образцами (1-10 и буквы): Segoe UI Bold, Bahnschrift DIN, DejaVu Sans Bold, Consolas, Trebuchet MS",
-    "Трёхступенчатый надёжный загрузчик обоев: Wallhaven 4K + Microsoft Bing (100% работает в России без VPN) + Picsum + аварийный офлайн-градиент",
-    "Современный интерфейс настроек с нативным шрифтом Segoe UI",
-    "Исправлен клик правой кнопкой мыши по иконке в трее и выделенный бинарник Uninstall.exe",
-    "100% автономный нативный Go бинарник без необходимости устанавливать Python"
+    "Фирменный дизайн в стиле GIN-VPN: переключение темы оформления (☀️ День, ⛅ Вечер/Графит, 🌙 Ночь)",
+    "Двуязычный интерфейс: мгновенный переключатель [EN] / [RU] прямо в шапке (по умолчанию английский)",
+    "Разноцветные красивые кнопки: '⚡ Apply Now' (зелёная, мгновенная смена обоев без закрытия окна), '💾 Save & Close' (оранжевая), '🎲 Random' (фиолетовая)",
+    "Реальное применение системных шрифтов (Segoe UI, Bahnschrift, DejaVu/Arial, Consolas, Trebuchet MS) к каждому образцу",
+    "Интерактивная карточка Живого Превью (Live Preview Card) с образцами чисел 1-10 и дней недели",
+    "Контекстное меню трея: версия с кликабельной проверкой обновлений '(Check for Updates)', динамический перевод EN/RU и иконки у каждого пункта"
   ]
 }

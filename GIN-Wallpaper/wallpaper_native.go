@@ -56,7 +56,22 @@ var (
 	procSendMessageW          = user32.NewProc("SendMessageW")
 	procLoadImageW            = user32.NewProc("LoadImageW")
 	procGetModuleHandleW      = kernel32.NewProc("GetModuleHandleW")
+	procShellExecuteW         = shell32.NewProc("ShellExecuteW")
+	procSetWindowTextW        = user32.NewProc("SetWindowTextW")
+	procGetClientRect         = user32.NewProc("GetClientRect")
+	procInvalidateRect        = user32.NewProc("InvalidateRect")
+	procDrawTextW             = user32.NewProc("DrawTextW")
+
 	procCreateFontW           = gdi32.NewProc("CreateFontW")
+	procCreateSolidBrush      = gdi32.NewProc("CreateSolidBrush")
+	procDeleteObject          = gdi32.NewProc("DeleteObject")
+	procSelectObject          = gdi32.NewProc("SelectObject")
+	procSetBkMode             = gdi32.NewProc("SetBkMode")
+	procSetTextColor          = gdi32.NewProc("SetTextColor")
+	procFillRect              = user32.NewProc("FillRect")
+	procCreatePen             = gdi32.NewProc("CreatePen")
+	procRectangle             = gdi32.NewProc("Rectangle")
+	procGetStockObject        = gdi32.NewProc("GetStockObject")
 )
 
 const (
@@ -73,6 +88,9 @@ const (
 	WM_CONTEXTMENU   = 0x007B
 	WM_CLOSE         = 0x0010
 	WM_SETFONT       = 0x0030
+	WM_ERASEBKGND    = 0x0014
+	WM_CTLCOLORSTATIC= 0x0138
+	WM_DRAWITEM      = 0x002B
 
 	NIM_ADD    = 0x00000000
 	NIM_MODIFY = 0x00000001
@@ -86,16 +104,17 @@ const (
 	MF_SEPARATOR = 0x00000800
 	TPM_RIGHTBUTTON = 0x0002
 
-	IDM_CHANGE_NOW = 1001
-	IDM_SETTINGS   = 1002
-	IDM_OPEN_DIR   = 1003
-	IDM_EXIT       = 1004
+	IDM_VERSION_CHECK = 1000
+	IDM_CHANGE_NOW    = 1001
+	IDM_SETTINGS      = 1002
+	IDM_OPEN_DIR      = 1003
+	IDM_EXIT          = 1004
 
 	WS_OVERLAPPEDWINDOW = 0x00CF0000
 	WS_VISIBLE          = 0x10000000
 	WS_CHILD            = 0x40000000
 	BS_AUTORADIOBUTTON  = 0x00000009
-	BS_DEFPUSHBUTTON    = 0x00000001
+	BS_OWNERDRAW        = 0x0000000B
 	BM_SETCHECK         = 0x00F1
 	BM_GETCHECK         = 0x00F0
 	BST_CHECKED         = 0x0001
@@ -105,6 +124,11 @@ const (
 	LR_LOADFROMFILE = 0x00000010
 	LR_DEFAULTSIZE  = 0x00000040
 	LR_SHARED       = 0x00008000
+
+	// UI Theme modes (GIN-VPN Standard)
+	ThemeModeDay     = 0 // ☀️ Day (Light)
+	ThemeModeEvening = 1 // ⛅ Evening (Graphite / Slate)
+	ThemeModeNight   = 2 // 🌙 Night (Dark OLED)
 )
 
 type Config struct {
@@ -112,6 +136,8 @@ type Config struct {
 	IntervalHours int     `json:"interval_hours"`
 	FontSizeScale float64 `json:"font_size_scale"`
 	FontStyle     string  `json:"font_style"`
+	ThemeMode     int     `json:"theme_mode"` // 0: Day, 1: Evening, 2: Night
+	Lang          string  `json:"lang"`       // "en" (default) or "ru"
 }
 
 type NOTIFYICONDATAW struct {
@@ -161,17 +187,63 @@ type POINT struct {
 	Y int32
 }
 
+type RECT struct {
+	Left   int32
+	Top    int32
+	Right  int32
+	Bottom int32
+}
+
+type DRAWITEMSTRUCT struct {
+	CtlType    uint32
+	CtlID      uint32
+	ItemID     uint32
+	ItemAction uint32
+	ItemState  uint32
+	HwndItem   syscall.Handle
+	HDC        syscall.Handle
+	RcItem     RECT
+	ItemData   uintptr
+}
+
 var (
 	nid          NOTIFYICONDATAW
 	hwndTray     syscall.Handle
 	hwndSettings syscall.Handle
 	hIconApp     syscall.Handle
-	hUIFont      syscall.Handle
-	hUIFontBold  syscall.Handle
-	hUIFontSm    syscall.Handle
 	appDataDir   string
 	cfg          Config
 	parsedFont   *truetype.Font
+
+	// Brushes for window background
+	hBrushDay     syscall.Handle
+	hBrushEvening syscall.Handle
+	hBrushNight   syscall.Handle
+
+	// Fonts for UI
+	hUIFont     syscall.Handle
+	hUIFontBold syscall.Handle
+	hUIFontSm   syscall.Handle
+
+	// Specific HFONTs for font preview labels
+	hFontSegoe    syscall.Handle
+	hFontBahn     syscall.Handle
+	hFontDejavu   syscall.Handle
+	hFontConsolas syscall.Handle
+	hFontTreb     syscall.Handle
+
+	// Controls
+	lblTitle      syscall.Handle
+	lblSecThemes  syscall.Handle
+	lblSecInt     syscall.Handle
+	lblSecFonts   syscall.Handle
+	lblSecScale   syscall.Handle
+	lblStatusInfo syscall.Handle
+	hwndPreviewBox syscall.Handle
+
+	// Top Bar Buttons
+	btnModeDay, btnModeEvening, btnModeNight syscall.Handle
+	btnLangEN, btnLangRU                     syscall.Handle
 
 	// Radio buttons - Themes (12)
 	rbAll, rbAbstract, rbWindows, rbLinux, rbSpace, rbNature syscall.Handle
@@ -182,17 +254,31 @@ var (
 
 	// Radio buttons - Font styles (5)
 	rbFontSegoe, rbFontBahn, rbFontDejavu, rbFontConsolas, rbFontTreb syscall.Handle
+	lblSampSegoe, lblSampBahn, lblSampDejavu, lblSampConsolas, lblSampTreb syscall.Handle
 
 	// Radio buttons - Font scale (3)
 	rbFontNormal, rbFontLarge, rbFontHuge syscall.Handle
 
+	// Action buttons (Bottom)
+	btnApply, btnSave, btnRandom, btnClose syscall.Handle
+
 	ruMonths = []string{"", "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"}
+	enMonths = []string{"", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
 	ruDays   = []string{"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"}
+	enDays   = []string{"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"}
 )
 
 func strPtr(s string) *uint16 {
 	p, _ := syscall.UTF16PtrFromString(s)
 	return p
+}
+
+func rgb(r, g, b uint32) uint32 {
+	return (r & 0xFF) | ((g & 0xFF) << 8) | ((b & 0xFF) << 16)
+}
+
+func isRu() bool {
+	return cfg.Lang == "ru"
 }
 
 func loadConfig() {
@@ -201,6 +287,8 @@ func loadConfig() {
 		IntervalHours: 3,
 		FontSizeScale: 2.0,
 		FontStyle:     "segoe",
+		ThemeMode:     ThemeModeEvening, // Default GIN-VPN Evening (Graphite)
+		Lang:          "en",             // Default English as requested
 	}
 	cfgFile := filepath.Join(appDataDir, "config.json")
 	data, err := os.ReadFile(cfgFile)
@@ -218,6 +306,9 @@ func loadConfig() {
 	}
 	if cfg.Theme == "" {
 		cfg.Theme = "all"
+	}
+	if cfg.Lang == "" {
+		cfg.Lang = "en"
 	}
 }
 
@@ -366,7 +457,7 @@ func downloadRandomWallpaper(w, h int) (image.Image, error) {
 		}
 	}
 
-	// Stage 4: Emergency offline procedural wallpaper (ensures zero crash even offline)
+	// Stage 4: Emergency offline procedural wallpaper
 	fallbackImg := image.NewRGBA(image.Rect(0, 0, w, h))
 	for y := 0; y < h; y++ {
 		ratio := float64(y) / float64(h)
@@ -447,7 +538,7 @@ func drawCalendar(rgba *image.RGBA, now time.Time, scale float64) {
 		x0 = 10
 	}
 
-	// 1. Semi-transparent backdrop (~85% opacity) for outstanding contrast
+	// 1. Semi-transparent backdrop (~85% opacity)
 	for y := y0; y < y0+calH && y < bounds.Dy(); y++ {
 		for x := x0; x < x0+calW && x < bounds.Dx(); x++ {
 			orig := rgba.RGBAAt(x, y)
@@ -492,7 +583,13 @@ func drawCalendar(rgba *image.RGBA, now time.Time, scale float64) {
 	})
 
 	// Title
-	title := fmt.Sprintf("%d %s %d г.", now.Day(), ruMonths[int(now.Month())], now.Year())
+	var title string
+	if isRu() {
+		title = fmt.Sprintf("%d %s %d г.", now.Day(), ruMonths[int(now.Month())], now.Year())
+	} else {
+		title = fmt.Sprintf("%d %s %d", now.Day(), enMonths[int(now.Month())], now.Year())
+	}
+
 	titleDrawer := &font.Drawer{
 		Dst:  rgba,
 		Src:  image.NewUniform(color.RGBA{255, 255, 255, 255}),
@@ -508,7 +605,12 @@ func drawCalendar(rgba *image.RGBA, now time.Time, scale float64) {
 	yellowWeekend := color.RGBA{255, 230, 0, 255}
 	whiteWeekday := color.RGBA{220, 225, 235, 255}
 
-	for i, day := range ruDays {
+	daysHeader := enDays
+	if isRu() {
+		daysHeader = ruDays
+	}
+
+	for i, day := range daysHeader {
 		dx := x0 + int(20*(scale/2.0)) + int(float64(i)*colW)
 		c := whiteWeekday
 		if i >= 5 {
@@ -599,11 +701,27 @@ func showContextMenu(hwnd syscall.Handle) {
 		return
 	}
 
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_CHANGE_NOW, uintptr(unsafe.Pointer(strPtr("🔄 Сменить обои сейчас"))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_SETTINGS, uintptr(unsafe.Pointer(strPtr("⚙️ Настройки и темы..."))))
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DIR, uintptr(unsafe.Pointer(strPtr("📁 Открыть папку программы"))))
+	verTitle := "🖼 GIN-Wallpaper-Calend v008 (Check for Updates)"
+	mChange := "🔄 Change Wallpaper Now"
+	mSettings := "⚙️ Settings & Themes..."
+	mOpen := "📁 Open Program Folder"
+	mExit := "❌ Exit"
+
+	if isRu() {
+		verTitle = "🖼 GIN-Wallpaper-Calend v008 (Проверить обновление)"
+		mChange = "🔄 Сменить обои сейчас"
+		mSettings = "⚙️ Настройки и темы..."
+		mOpen = "📁 Открыть папку программы"
+		mExit = "❌ Выход"
+	}
+
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_VERSION_CHECK, uintptr(unsafe.Pointer(strPtr(verTitle))))
 	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
-	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr("❌ Выход"))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_CHANGE_NOW, uintptr(unsafe.Pointer(strPtr(mChange))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_SETTINGS, uintptr(unsafe.Pointer(strPtr(mSettings))))
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_OPEN_DIR, uintptr(unsafe.Pointer(strPtr(mOpen))))
+	procAppendMenuW.Call(hMenu, MF_SEPARATOR, 0, 0)
+	procAppendMenuW.Call(hMenu, MF_STRING, IDM_EXIT, uintptr(unsafe.Pointer(strPtr(mExit))))
 
 	var pt POINT
 	procGetCursorPos.Call(uintptr(unsafe.Pointer(&pt)))
@@ -612,191 +730,18 @@ func showContextMenu(hwnd syscall.Handle) {
 	procDestroyMenu.Call(hMenu)
 }
 
-func createSettingsWindow() {
-	if hwndSettings != 0 {
-		procShowWindow.Call(uintptr(hwndSettings), 1)
-		procSetForegroundWindow.Call(uintptr(hwndSettings))
-		return
+func initThemeBrushes() {
+	if hBrushDay == 0 {
+		bDay, _, _ := procCreateSolidBrush.Call(uintptr(rgb(244, 245, 248)))
+		hBrushDay = syscall.Handle(bDay)
 	}
-
-	// Calculate center position
-	screenW, screenH := getScreenResolution()
-	winW, winH := 680, 740
-	posX := (screenW - winW) / 2
-	posY := (screenH - winH) / 2
-	if posX < 0 {
-		posX = 50
+	if hBrushEvening == 0 {
+		bEve, _, _ := procCreateSolidBrush.Call(uintptr(rgb(45, 50, 62))) // GIN-VPN Graphite Slate
+		hBrushEvening = syscall.Handle(bEve)
 	}
-	if posY < 0 {
-		posY = 50
-	}
-
-	wnd, _, _ := procCreateWindowExW.Call(
-		0,
-		uintptr(unsafe.Pointer(strPtr("GIN_Wallpaper_SettingsClass"))),
-		uintptr(unsafe.Pointer(strPtr("GIN-Wallpaper-Calend v007 — Настройки и Темы"))),
-		WS_OVERLAPPEDWINDOW&^0x00040000,
-		uintptr(posX), uintptr(posY), uintptr(winW), uintptr(winH),
-		0, 0, 0, 0,
-	)
-	hwndSettings = syscall.Handle(wnd)
-
-	createControls(hwndSettings)
-	procShowWindow.Call(uintptr(hwndSettings), 1)
-	procSetForegroundWindow.Call(uintptr(hwndSettings))
-}
-
-func createControls(parent syscall.Handle) {
-	btnClass := strPtr("BUTTON")
-	staticClass := strPtr("STATIC")
-
-	initFonts()
-
-	addSectionLabel := func(text string, x, y, w, h int) syscall.Handle {
-		r, _, _ := procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(staticClass)), uintptr(unsafe.Pointer(strPtr(text))), WS_CHILD|WS_VISIBLE, uintptr(x), uintptr(y), uintptr(w), uintptr(h), uintptr(parent), 0, 0, 0)
-		hCtrl := syscall.Handle(r)
-		if hUIFontBold != 0 {
-			procSendMessageW.Call(uintptr(hCtrl), WM_SETFONT, uintptr(hUIFontBold), 1)
-		}
-		return hCtrl
-	}
-
-	addSampleLabel := func(text string, x, y, w, h int) syscall.Handle {
-		r, _, _ := procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(staticClass)), uintptr(unsafe.Pointer(strPtr(text))), WS_CHILD|WS_VISIBLE, uintptr(x), uintptr(y), uintptr(w), uintptr(h), uintptr(parent), 0, 0, 0)
-		hCtrl := syscall.Handle(r)
-		if hUIFontSm != 0 {
-			procSendMessageW.Call(uintptr(hCtrl), WM_SETFONT, uintptr(hUIFontSm), 1)
-		}
-		return hCtrl
-	}
-
-	createBtn := func(caption string, x, y, w, h int, id uintptr) syscall.Handle {
-		r, _, _ := procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(btnClass)), uintptr(unsafe.Pointer(strPtr(caption))), WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, uintptr(x), uintptr(y), uintptr(w), uintptr(h), uintptr(parent), id, 0, 0)
-		hCtrl := syscall.Handle(r)
-		if hUIFont != 0 {
-			procSendMessageW.Call(uintptr(hCtrl), WM_SETFONT, uintptr(hUIFont), 1)
-		}
-		return hCtrl
-	}
-
-	// 1. Theme Selection (12 themes in 2 columns)
-	addSectionLabel("🎨 Тематика обоев (выберите желаемый стиль):", 25, 12, 600, 22)
-
-	// Column 1
-	rbAll = createBtn("🎲 Все подряд (Случайный микс)", 35, 38, 280, 22, 201)
-	rbAbstract = createBtn("🌀 Абстракция и 3D рендеры", 35, 62, 280, 22, 202)
-	rbWindows = createBtn("🪟 В стиле Windows (11 / Fluent)", 35, 86, 280, 22, 203)
-	rbLinux = createBtn("🐧 В стиле Linux (Arch / Minimal OS)", 35, 110, 280, 22, 204)
-	rbSpace = createBtn("🚀 Космос и Галактики (Nebula)", 35, 134, 280, 22, 205)
-	rbNature = createBtn("🌿 Природа и пейзажи (Горы, Океан)", 35, 158, 280, 22, 206)
-
-	// Column 2
-	rbCars = createBtn("🏎️ Автомобили и Суперкары", 340, 38, 280, 22, 207)
-	rbCity = createBtn("🌆 Города и Архитектура (Skylines)", 340, 62, 280, 22, 208)
-	rbCyberpunk = createBtn("⚡ Киберпанк и Неон (Synthwave)", 340, 86, 280, 22, 209)
-	rbMinimal = createBtn("🖤 Минимализм и Dark AMOLED", 340, 110, 280, 22, 210)
-	rbAnimals = createBtn("🐾 Животные и Дикая природа", 340, 134, 280, 22, 211)
-	rbAnime = createBtn("⛩️ Аниме и Цифровой Арт", 340, 158, 280, 22, 212)
-
-	switch cfg.Theme {
-	case "abstract":
-		procSendMessageW.Call(uintptr(rbAbstract), BM_SETCHECK, BST_CHECKED, 0)
-	case "windows":
-		procSendMessageW.Call(uintptr(rbWindows), BM_SETCHECK, BST_CHECKED, 0)
-	case "linux":
-		procSendMessageW.Call(uintptr(rbLinux), BM_SETCHECK, BST_CHECKED, 0)
-	case "space":
-		procSendMessageW.Call(uintptr(rbSpace), BM_SETCHECK, BST_CHECKED, 0)
-	case "nature":
-		procSendMessageW.Call(uintptr(rbNature), BM_SETCHECK, BST_CHECKED, 0)
-	case "cars":
-		procSendMessageW.Call(uintptr(rbCars), BM_SETCHECK, BST_CHECKED, 0)
-	case "city":
-		procSendMessageW.Call(uintptr(rbCity), BM_SETCHECK, BST_CHECKED, 0)
-	case "cyberpunk":
-		procSendMessageW.Call(uintptr(rbCyberpunk), BM_SETCHECK, BST_CHECKED, 0)
-	case "minimalism":
-		procSendMessageW.Call(uintptr(rbMinimal), BM_SETCHECK, BST_CHECKED, 0)
-	case "animals":
-		procSendMessageW.Call(uintptr(rbAnimals), BM_SETCHECK, BST_CHECKED, 0)
-	case "anime":
-		procSendMessageW.Call(uintptr(rbAnime), BM_SETCHECK, BST_CHECKED, 0)
-	default:
-		procSendMessageW.Call(uintptr(rbAll), BM_SETCHECK, BST_CHECKED, 0)
-	}
-
-	// 2. Interval Selection
-	addSectionLabel("⏱ Интервал автоматической смены обоев:", 25, 192, 600, 22)
-	rb1h = createBtn("1 час", 35, 216, 120, 22, 301)
-	rb3h = createBtn("3 часа (Оптимально)", 165, 216, 180, 22, 302)
-	rb6h = createBtn("6 часов", 360, 216, 120, 22, 303)
-	rb24h = createBtn("1 раз в день", 500, 216, 130, 22, 304)
-
-	switch cfg.IntervalHours {
-	case 1:
-		procSendMessageW.Call(uintptr(rb1h), BM_SETCHECK, BST_CHECKED, 0)
-	case 6:
-		procSendMessageW.Call(uintptr(rb6h), BM_SETCHECK, BST_CHECKED, 0)
-	case 24:
-		procSendMessageW.Call(uintptr(rb24h), BM_SETCHECK, BST_CHECKED, 0)
-	default:
-		procSendMessageW.Call(uintptr(rb3h), BM_SETCHECK, BST_CHECKED, 0)
-	}
-
-	// 3. Font Selection with Samples (Digits 1-10 + Cyrillic Days)
-	addSectionLabel("🔤 Стиль шрифта календаря (с образцами цифр и букв):", 25, 252, 600, 22)
-
-	rbFontSegoe = createBtn("🔠 Segoe UI Bold (Windows Fluent)", 35, 276, 580, 22, 401)
-	addSampleLabel("   Образец:  1 2 3 4 5 6 7 8 9 10   •   Пн Вт Ср Чт Пт Сб Вс   •   Ноябрь 2026", 55, 298, 560, 18)
-
-	rbFontBahn = createBtn("📐 Bahnschrift (Geometric Tech / DIN)", 35, 320, 580, 22, 402)
-	addSampleLabel("   Образец:  1 2 3 4 5 6 7 8 9 10   •   Пн Вт Ср Чт Пт Сб Вс   •   Ноябрь 2026", 55, 342, 560, 18)
-
-	rbFontDejavu = createBtn("🛡️ DejaVu Sans Bold (Universal Clean)", 35, 364, 580, 22, 403)
-	addSampleLabel("   Образец:  1 2 3 4 5 6 7 8 9 10   •   Пн Вт Ср Чт Пт Сб Вс   •   Ноябрь 2026", 55, 386, 560, 18)
-
-	rbFontConsolas = createBtn("💻 Consolas Bold (Cyber / Monospace)", 35, 408, 580, 22, 404)
-	addSampleLabel("   Образец:  1 2 3 4 5 6 7 8 9 10   •   Пн Вт Ср Чт Пт Сб Вс   •   Ноябрь 2026", 55, 430, 560, 18)
-
-	rbFontTreb = createBtn("✒️ Trebuchet MS Bold (Design Elegance)", 35, 452, 580, 22, 405)
-	addSampleLabel("   Образец:  1 2 3 4 5 6 7 8 9 10   •   Пн Вт Ср Чт Пт Сб Вс   •   Ноябрь 2026", 55, 474, 560, 18)
-
-	switch cfg.FontStyle {
-	case "bahn", "bahnschrift":
-		procSendMessageW.Call(uintptr(rbFontBahn), BM_SETCHECK, BST_CHECKED, 0)
-	case "dejavu":
-		procSendMessageW.Call(uintptr(rbFontDejavu), BM_SETCHECK, BST_CHECKED, 0)
-	case "consolas":
-		procSendMessageW.Call(uintptr(rbFontConsolas), BM_SETCHECK, BST_CHECKED, 0)
-	case "trebuchet":
-		procSendMessageW.Call(uintptr(rbFontTreb), BM_SETCHECK, BST_CHECKED, 0)
-	default:
-		procSendMessageW.Call(uintptr(rbFontSegoe), BM_SETCHECK, BST_CHECKED, 0)
-	}
-
-	// 4. Scale Selection
-	addSectionLabel("🔍 Масштаб и размер календаря:", 25, 502, 600, 22)
-	rbFontNormal = createBtn("Стандартный (1.0x)", 35, 526, 180, 22, 411)
-	rbFontLarge = createBtn("Крупный (2.0x, Рекомендуется)", 225, 526, 250, 22, 412)
-	rbFontHuge = createBtn("Очень крупный (2.5x)", 485, 526, 180, 22, 413)
-
-	if cfg.FontSizeScale <= 1.2 {
-		procSendMessageW.Call(uintptr(rbFontNormal), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale >= 2.3 {
-		procSendMessageW.Call(uintptr(rbFontHuge), BM_SETCHECK, BST_CHECKED, 0)
-	} else {
-		procSendMessageW.Call(uintptr(rbFontLarge), BM_SETCHECK, BST_CHECKED, 0)
-	}
-
-	// Bottom action buttons
-	btnSave, _, _ := procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(btnClass)), uintptr(unsafe.Pointer(strPtr("💾 Сохранить и применить"))), WS_CHILD|WS_VISIBLE|BS_DEFPUSHBUTTON, 35, 575, 230, 36, uintptr(parent), 501, 0, 0)
-	btnClose, _, _ := procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(btnClass)), uintptr(unsafe.Pointer(strPtr("Закрыть"))), WS_CHILD|WS_VISIBLE, 280, 575, 120, 36, uintptr(parent), 502, 0, 0)
-
-	if hUIFontBold != 0 {
-		procSendMessageW.Call(btnSave, WM_SETFONT, uintptr(hUIFontBold), 1)
-	}
-	if hUIFont != 0 {
-		procSendMessageW.Call(btnClose, WM_SETFONT, uintptr(hUIFont), 1)
+	if hBrushNight == 0 {
+		bNight, _, _ := procCreateSolidBrush.Call(uintptr(rgb(18, 20, 26))) // Dark OLED
+		hBrushNight = syscall.Handle(bNight)
 	}
 }
 
@@ -828,6 +773,404 @@ func initFonts() {
 		)
 		hUIFontSm = syscall.Handle(hFS)
 	}
+
+	// Distinct fonts for each preview line
+	if hFontSegoe == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(15), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
+		hFontSegoe = syscall.Handle(h)
+	}
+	if hFontBahn == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(15), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Bahnschrift"))))
+		hFontBahn = syscall.Handle(h)
+	}
+	if hFontDejavu == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(15), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Arial"))))
+		hFontDejavu = syscall.Handle(h)
+	}
+	if hFontConsolas == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(15), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Consolas"))))
+		hFontConsolas = syscall.Handle(h)
+	}
+	if hFontTreb == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(15), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Trebuchet MS"))))
+		hFontTreb = syscall.Handle(h)
+	}
+}
+
+func createSettingsWindow() {
+	if hwndSettings != 0 {
+		procShowWindow.Call(uintptr(hwndSettings), 1)
+		procSetForegroundWindow.Call(uintptr(hwndSettings))
+		return
+	}
+
+	initThemeBrushes()
+	initFonts()
+
+	screenW, screenH := getScreenResolution()
+	winW, winH := 700, 785
+	posX := (screenW - winW) / 2
+	posY := (screenH - winH) / 2
+	if posX < 0 {
+		posX = 50
+	}
+	if posY < 0 {
+		posY = 40
+	}
+
+	wTitle := "GIN-Wallpaper-Calend v008 — Settings & Themes"
+	if isRu() {
+		wTitle = "GIN-Wallpaper-Calend v008 — Настройки и Темы"
+	}
+
+	wnd, _, _ := procCreateWindowExW.Call(
+		0,
+		uintptr(unsafe.Pointer(strPtr("GIN_Wallpaper_SettingsClass"))),
+		uintptr(unsafe.Pointer(strPtr(wTitle))),
+		WS_OVERLAPPEDWINDOW&^0x00040000,
+		uintptr(posX), uintptr(posY), uintptr(winW), uintptr(winH),
+		0, 0, 0, 0,
+	)
+	hwndSettings = syscall.Handle(wnd)
+
+	createControls(hwndSettings)
+	updateTexts()
+	updatePreviewCard()
+
+	procShowWindow.Call(uintptr(hwndSettings), 1)
+	procSetForegroundWindow.Call(uintptr(hwndSettings))
+}
+
+func createControls(parent syscall.Handle) {
+	btnClass := strPtr("BUTTON")
+	staticClass := strPtr("STATIC")
+
+	// 1. Top Header bar: Title on Left, Themes & Languages on Right (GIN-VPN Header Standard)
+	lblTitle = syscall.Handle(createCtrl(staticClass, "GIN-Wallpaper-Calend от VladiMIR+AI [v008]", WS_CHILD|WS_VISIBLE, 20, 14, 340, 26, parent, 10))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblTitle), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
+
+	// Header Mode Buttons (Ownerdrawn): Day, Evening, Night, EN, RU
+	btnModeDay = syscall.Handle(createCtrl(btnClass, "☀️", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 380, 10, 42, 30, parent, 101))
+	btnModeEvening = syscall.Handle(createCtrl(btnClass, "⛅", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 426, 10, 42, 30, parent, 102))
+	btnModeNight = syscall.Handle(createCtrl(btnClass, "🌙", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 472, 10, 42, 30, parent, 103))
+
+	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 530, 10, 52, 30, parent, 104))
+	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 586, 10, 52, 30, parent, 105))
+
+	// Section 1: Themes (12 in 2 columns)
+	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Theme / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 52, 640, 20, parent, 11))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblSecThemes), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
+
+	// Column 1
+	rbAll = createRadio("🎲 All Random (Mix)", 30, 76, 300, 20, parent, 201)
+	rbAbstract = createRadio("🌀 Abstract & 3D Art", 30, 98, 300, 20, parent, 202)
+	rbWindows = createRadio("🪟 Windows Style (Fluent/11)", 30, 120, 300, 20, parent, 203)
+	rbLinux = createRadio("🐧 Linux Style (Minimal OS)", 30, 142, 300, 20, parent, 204)
+	rbSpace = createRadio("🚀 Space & Galaxies (Nebula)", 30, 164, 300, 20, parent, 205)
+	rbNature = createRadio("🌿 Nature & Landscapes", 30, 186, 300, 20, parent, 206)
+
+	// Column 2
+	rbCars = createRadio("🏎️ Cars & Supercars", 350, 76, 300, 20, parent, 207)
+	rbCity = createRadio("🌆 City & Architecture", 350, 98, 300, 20, parent, 208)
+	rbCyberpunk = createRadio("⚡ Cyberpunk & Neon", 350, 120, 300, 20, parent, 209)
+	rbMinimal = createRadio("🖤 Minimalism & Dark AMOLED", 350, 142, 300, 20, parent, 210)
+	rbAnimals = createRadio("🐾 Wildlife & Animals", 350, 164, 300, 20, parent, 211)
+	rbAnime = createRadio("⛩️ Anime & Digital Scenery", 350, 186, 300, 20, parent, 212)
+
+	selectCurrentThemeRadio()
+
+	// Section 2: Intervals
+	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 216, 640, 20, parent, 12))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblSecInt), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
+
+	rb1h = createRadio("1 hour", 30, 238, 120, 20, parent, 301)
+	rb3h = createRadio("3 hours (Recommended)", 160, 238, 190, 20, parent, 302)
+	rb6h = createRadio("6 hours", 360, 238, 120, 20, parent, 303)
+	rb24h = createRadio("24 hours (Daily)", 490, 238, 160, 20, parent, 304)
+
+	selectCurrentIntervalRadio()
+
+	// Section 3: Fonts (Each with its distinct actual HFONT!)
+	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font & Live Sample / Шрифт календаря:", WS_CHILD|WS_VISIBLE, 20, 270, 640, 20, parent, 13))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblSecFonts), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
+
+	rbFontSegoe = createRadio("🔠 Segoe UI Bold (Windows Fluent)", 30, 292, 600, 20, parent, 401)
+	lblSampSegoe = syscall.Handle(createCtrl(staticClass, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026", WS_CHILD|WS_VISIBLE, 50, 312, 600, 18, parent, 411))
+	procSendMessageW.Call(uintptr(lblSampSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
+
+	rbFontBahn = createRadio("📐 Bahnschrift (Geometric Tech / DIN)", 30, 334, 600, 20, parent, 402)
+	lblSampBahn = syscall.Handle(createCtrl(staticClass, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026", WS_CHILD|WS_VISIBLE, 50, 354, 600, 18, parent, 412))
+	procSendMessageW.Call(uintptr(lblSampBahn), WM_SETFONT, uintptr(hFontBahn), 1)
+
+	rbFontDejavu = createRadio("🛡️ DejaVu Sans / Arial Bold (Universal)", 30, 376, 600, 20, parent, 403)
+	lblSampDejavu = syscall.Handle(createCtrl(staticClass, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026", WS_CHILD|WS_VISIBLE, 50, 396, 600, 18, parent, 413))
+	procSendMessageW.Call(uintptr(lblSampDejavu), WM_SETFONT, uintptr(hFontDejavu), 1)
+
+	rbFontConsolas = createRadio("💻 Consolas Bold (Cyber / Monospace)", 30, 418, 600, 20, parent, 404)
+	lblSampConsolas = syscall.Handle(createCtrl(staticClass, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026", WS_CHILD|WS_VISIBLE, 50, 438, 600, 18, parent, 414))
+	procSendMessageW.Call(uintptr(lblSampConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
+
+	rbFontTreb = createRadio("✒️ Trebuchet MS Bold (Design Elegance)", 30, 460, 600, 20, parent, 405)
+	lblSampTreb = syscall.Handle(createCtrl(staticClass, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026", WS_CHILD|WS_VISIBLE, 50, 480, 600, 18, parent, 415))
+	procSendMessageW.Call(uintptr(lblSampTreb), WM_SETFONT, uintptr(hFontTreb), 1)
+
+	selectCurrentFontRadio()
+
+	// Section 4: Scale
+	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 508, 640, 20, parent, 14))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblSecScale), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
+
+	rbFontNormal = createRadio("Standard (1.0x)", 30, 530, 180, 20, parent, 421)
+	rbFontLarge = createRadio("Large (2.0x, Recommended)", 220, 530, 240, 20, parent, 422)
+	rbFontHuge = createRadio("Extra Large (2.5x)", 470, 530, 180, 20, parent, 423)
+
+	if cfg.FontSizeScale <= 1.2 {
+		procSendMessageW.Call(uintptr(rbFontNormal), BM_SETCHECK, BST_CHECKED, 0)
+	} else if cfg.FontSizeScale >= 2.3 {
+		procSendMessageW.Call(uintptr(rbFontHuge), BM_SETCHECK, BST_CHECKED, 0)
+	} else {
+		procSendMessageW.Call(uintptr(rbFontLarge), BM_SETCHECK, BST_CHECKED, 0)
+	}
+
+	// Interactive Live Preview Box (Preview Card)
+	hwndPreviewBox = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 25, 560, 640, 64, parent, 500))
+
+	// Status Info Label
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click Apply to update desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 634, 640, 20, parent, 505))
+	if hUIFontSm != 0 {
+		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
+	}
+
+	// Bottom Action Buttons (Ownerdrawn with GIN-VPN Color Palette)
+	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 25, 664, 160, 38, parent, 601))
+	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 195, 664, 160, 38, parent, 602))
+	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 365, 664, 160, 38, parent, 603))
+	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 535, 664, 130, 38, parent, 604))
+}
+
+func createCtrl(className *uint16, text string, style uint32, x, y, w, h int, parent syscall.Handle, id uintptr) uintptr {
+	r, _, _ := procCreateWindowExW.Call(0, uintptr(unsafe.Pointer(className)), uintptr(unsafe.Pointer(strPtr(text))), uintptr(style), uintptr(x), uintptr(y), uintptr(w), uintptr(h), uintptr(parent), id, 0, 0)
+	return r
+}
+
+func createRadio(caption string, x, y, w, h int, parent syscall.Handle, id uintptr) syscall.Handle {
+	btnClass := strPtr("BUTTON")
+	r := createCtrl(btnClass, caption, WS_CHILD|WS_VISIBLE|BS_AUTORADIOBUTTON, x, y, w, h, parent, id)
+	hCtrl := syscall.Handle(r)
+	if hUIFont != 0 {
+		procSendMessageW.Call(uintptr(hCtrl), WM_SETFONT, uintptr(hUIFont), 1)
+	}
+	return hCtrl
+}
+
+func selectCurrentThemeRadio() {
+	switch cfg.Theme {
+	case "abstract":
+		procSendMessageW.Call(uintptr(rbAbstract), BM_SETCHECK, BST_CHECKED, 0)
+	case "windows":
+		procSendMessageW.Call(uintptr(rbWindows), BM_SETCHECK, BST_CHECKED, 0)
+	case "linux":
+		procSendMessageW.Call(uintptr(rbLinux), BM_SETCHECK, BST_CHECKED, 0)
+	case "space":
+		procSendMessageW.Call(uintptr(rbSpace), BM_SETCHECK, BST_CHECKED, 0)
+	case "nature":
+		procSendMessageW.Call(uintptr(rbNature), BM_SETCHECK, BST_CHECKED, 0)
+	case "cars":
+		procSendMessageW.Call(uintptr(rbCars), BM_SETCHECK, BST_CHECKED, 0)
+	case "city":
+		procSendMessageW.Call(uintptr(rbCity), BM_SETCHECK, BST_CHECKED, 0)
+	case "cyberpunk":
+		procSendMessageW.Call(uintptr(rbCyberpunk), BM_SETCHECK, BST_CHECKED, 0)
+	case "minimalism":
+		procSendMessageW.Call(uintptr(rbMinimal), BM_SETCHECK, BST_CHECKED, 0)
+	case "animals":
+		procSendMessageW.Call(uintptr(rbAnimals), BM_SETCHECK, BST_CHECKED, 0)
+	case "anime":
+		procSendMessageW.Call(uintptr(rbAnime), BM_SETCHECK, BST_CHECKED, 0)
+	default:
+		procSendMessageW.Call(uintptr(rbAll), BM_SETCHECK, BST_CHECKED, 0)
+	}
+}
+
+func selectCurrentIntervalRadio() {
+	switch cfg.IntervalHours {
+	case 1:
+		procSendMessageW.Call(uintptr(rb1h), BM_SETCHECK, BST_CHECKED, 0)
+	case 6:
+		procSendMessageW.Call(uintptr(rb6h), BM_SETCHECK, BST_CHECKED, 0)
+	case 24:
+		procSendMessageW.Call(uintptr(rb24h), BM_SETCHECK, BST_CHECKED, 0)
+	default:
+		procSendMessageW.Call(uintptr(rb3h), BM_SETCHECK, BST_CHECKED, 0)
+	}
+}
+
+func selectCurrentFontRadio() {
+	switch cfg.FontStyle {
+	case "bahn", "bahnschrift":
+		procSendMessageW.Call(uintptr(rbFontBahn), BM_SETCHECK, BST_CHECKED, 0)
+	case "dejavu":
+		procSendMessageW.Call(uintptr(rbFontDejavu), BM_SETCHECK, BST_CHECKED, 0)
+	case "consolas":
+		procSendMessageW.Call(uintptr(rbFontConsolas), BM_SETCHECK, BST_CHECKED, 0)
+	case "trebuchet":
+		procSendMessageW.Call(uintptr(rbFontTreb), BM_SETCHECK, BST_CHECKED, 0)
+	default:
+		procSendMessageW.Call(uintptr(rbFontSegoe), BM_SETCHECK, BST_CHECKED, 0)
+	}
+}
+
+func updateTexts() {
+	ru := isRu()
+
+	setTxt := func(h syscall.Handle, txt string) {
+		procSetWindowTextW.Call(uintptr(h), uintptr(unsafe.Pointer(strPtr(txt))))
+	}
+
+	wTitle := "GIN-Wallpaper-Calend v008 — Settings & Themes"
+	if ru {
+		wTitle = "GIN-Wallpaper-Calend v008 — Настройки и Темы"
+	}
+	procSetWindowTextW.Call(uintptr(hwndSettings), uintptr(unsafe.Pointer(strPtr(wTitle))))
+
+	if ru {
+		setTxt(lblSecThemes, "🎨 Тематика обоев (выберите желаемый стиль):")
+		setTxt(rbAll, "🎲 Все подряд (Случайный микс)")
+		setTxt(rbAbstract, "🌀 Абстракция и 3D рендеры")
+		setTxt(rbWindows, "🪟 В стиле Windows (11 / Fluent)")
+		setTxt(rbLinux, "🐧 В стиле Linux (Arch / Minimal OS)")
+		setTxt(rbSpace, "🚀 Космос и Галактики (Nebula)")
+		setTxt(rbNature, "🌿 Природа и пейзажи (Горы, Океан)")
+		setTxt(rbCars, "🏎️ Автомобили и Суперкары")
+		setTxt(rbCity, "🌆 Города и Архитектура (Skylines)")
+		setTxt(rbCyberpunk, "⚡ Киберпанк и Неон (Synthwave)")
+		setTxt(rbMinimal, "🖤 Минимализм и Dark AMOLED")
+		setTxt(rbAnimals, "🐾 Животные и Дикая природа")
+		setTxt(rbAnime, "⛩️ Аниме и Цифровой Арт")
+
+		setTxt(lblSecInt, "⏱ Интервал автоматической смены обоев:")
+		setTxt(rb1h, "1 час")
+		setTxt(rb3h, "3 часа (Оптимально)")
+		setTxt(rb6h, "6 часов")
+		setTxt(rb24h, "1 раз в сутки")
+
+		setTxt(lblSecFonts, "🔤 Стиль шрифта календаря (с реальными системными шрифтами):")
+		setTxt(rbFontSegoe, "🔠 Segoe UI Bold (Windows Fluent)")
+		setTxt(lblSampSegoe, "   1 2 3 4 5 6 7 8 9 10  •  Пн Вт Ср Чт Пт Сб Вс  •  Ноябрь 2026")
+
+		setTxt(rbFontBahn, "📐 Bahnschrift (Geometric Tech / DIN)")
+		setTxt(lblSampBahn, "   1 2 3 4 5 6 7 8 9 10  •  Пн Вт Ср Чт Пт Сб Вс  •  Ноябрь 2026")
+
+		setTxt(rbFontDejavu, "🛡️ DejaVu Sans / Arial Bold (Универсальный)")
+		setTxt(lblSampDejavu, "   1 2 3 4 5 6 7 8 9 10  •  Пн Вт Ср Чт Пт Сб Вс  •  Ноябрь 2026")
+
+		setTxt(rbFontConsolas, "💻 Consolas Bold (Cyber / Monospace)")
+		setTxt(lblSampConsolas, "   1 2 3 4 5 6 7 8 9 10  •  Пн Вт Ср Чт Пт Сб Вс  •  Ноябрь 2026")
+
+		setTxt(rbFontTreb, "✒️ Trebuchet MS Bold (Design Elegance)")
+		setTxt(lblSampTreb, "   1 2 3 4 5 6 7 8 9 10  •  Пн Вт Ср Чт Пт Сб Вс  •  Ноябрь 2026")
+
+		setTxt(lblSecScale, "🔍 Масштаб и размер календаря:")
+		setTxt(rbFontNormal, "Стандартный (1.0x)")
+		setTxt(rbFontLarge, "Крупный (2.0x, Рекомендуется)")
+		setTxt(rbFontHuge, "Очень крупный (2.5x)")
+
+		setTxt(lblStatusInfo, "Готово. Нажмите «Применить сейчас», чтобы сразу сменить обои и календарь.")
+	} else {
+		setTxt(lblSecThemes, "🎨 Wallpaper Theme (Select desired photo style):")
+		setTxt(rbAll, "🎲 All Random (Mix of all themes)")
+		setTxt(rbAbstract, "🌀 Abstract & 3D Renders")
+		setTxt(rbWindows, "🪟 Windows Style (Fluent / 11)")
+		setTxt(rbLinux, "🐧 Linux Style (Arch / Minimal OS)")
+		setTxt(rbSpace, "🚀 Space & Galaxies (Nebula)")
+		setTxt(rbNature, "🌿 Nature & Landscapes")
+		setTxt(rbCars, "🏎️ Cars & Supercars")
+		setTxt(rbCity, "🌆 City & Architecture (Skylines)")
+		setTxt(rbCyberpunk, "⚡ Cyberpunk & Neon (Synthwave)")
+		setTxt(rbMinimal, "🖤 Minimalism & Dark AMOLED")
+		setTxt(rbAnimals, "🐾 Wildlife & Animals")
+		setTxt(rbAnime, "⛩️ Anime & Digital Scenery")
+
+		setTxt(lblSecInt, "⏱ Auto-Change Interval:")
+		setTxt(rb1h, "1 hour")
+		setTxt(rb3h, "3 hours (Recommended)")
+		setTxt(rb6h, "6 hours")
+		setTxt(rb24h, "24 hours (Daily)")
+
+		setTxt(lblSecFonts, "🔤 Calendar Font (With actual live font samples):")
+		setTxt(rbFontSegoe, "🔠 Segoe UI Bold (Windows Fluent)")
+		setTxt(lblSampSegoe, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026")
+
+		setTxt(rbFontBahn, "📐 Bahnschrift (Geometric Tech / DIN)")
+		setTxt(lblSampBahn, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026")
+
+		setTxt(rbFontDejavu, "🛡️ DejaVu Sans / Arial Bold (Universal)")
+		setTxt(lblSampDejavu, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026")
+
+		setTxt(rbFontConsolas, "💻 Consolas Bold (Cyber / Monospace)")
+		setTxt(lblSampConsolas, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026")
+
+		setTxt(rbFontTreb, "✒️ Trebuchet MS Bold (Design Elegance)")
+		setTxt(lblSampTreb, "   1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr Sa Su  •  Nov 2026")
+
+		setTxt(lblSecScale, "🔍 Calendar Scale and Size:")
+		setTxt(rbFontNormal, "Standard (1.0x)")
+		setTxt(rbFontLarge, "Large (2.0x, Recommended)")
+		setTxt(rbFontHuge, "Extra Large (2.5x)")
+
+		setTxt(lblStatusInfo, "Ready. Click 'Apply Now' to change wallpaper and calendar immediately.")
+	}
+
+	procInvalidateRect.Call(uintptr(hwndSettings), 0, 1)
+}
+
+func updatePreviewCard() {
+	if hwndPreviewBox == 0 {
+		return
+	}
+	fontName := "Segoe UI"
+	hFontToUse := hFontSegoe
+
+	readCurrentUISelections()
+
+	switch cfg.FontStyle {
+	case "bahn", "bahnschrift":
+		fontName = "Bahnschrift"
+		hFontToUse = hFontBahn
+	case "dejavu":
+		fontName = "DejaVu Sans"
+		hFontToUse = hFontDejavu
+	case "consolas":
+		fontName = "Consolas"
+		hFontToUse = hFontConsolas
+	case "trebuchet":
+		fontName = "Trebuchet MS"
+		hFontToUse = hFontTreb
+	default:
+		fontName = "Segoe UI"
+		hFontToUse = hFontSegoe
+	}
+
+	txt := fmt.Sprintf("  [ PREVIEW: %s ]  •  1 2 3 4 5 6 7 8 9 10  •  Mo Tu We Th Fr [Sa] [Su]\n  5 November 2026  •  Scale: %.1fx", fontName, cfg.FontSizeScale)
+	if isRu() {
+		txt = fmt.Sprintf("  [ ПРЕВЬЮ: %s ]  •  1 2 3 4 5 6 7 8 9 10  •  Пн Вт Ср Чт Пт [Сб] [Вс]\n  5 ноября 2026 г.  •  Масштаб: %.1fx", fontName, cfg.FontSizeScale)
+	}
+
+	procSetWindowTextW.Call(uintptr(hwndPreviewBox), uintptr(unsafe.Pointer(strPtr(txt))))
+	if hFontToUse != 0 {
+		procSendMessageW.Call(uintptr(hwndPreviewBox), WM_SETFONT, uintptr(hFontToUse), 1)
+	}
+	procInvalidateRect.Call(uintptr(hwndPreviewBox), 0, 1)
 }
 
 func isChecked(h syscall.Handle) bool {
@@ -835,7 +1178,7 @@ func isChecked(h syscall.Handle) bool {
 	return r == BST_CHECKED
 }
 
-func saveSettingsFromUI() {
+func readCurrentUISelections() {
 	if isChecked(rbAbstract) {
 		cfg.Theme = "abstract"
 	} else if isChecked(rbWindows) {
@@ -891,28 +1234,276 @@ func saveSettingsFromUI() {
 	} else {
 		cfg.FontSizeScale = 2.0
 	}
+}
 
-	saveConfig()
-	procDestroyWindow.Call(uintptr(hwndSettings))
-	hwndSettings = 0
+func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
+	hDC := uintptr(dis.HDC)
+	rc := dis.RcItem
+	isPressed := (dis.ItemState & 0x0001) != 0
 
-	go cycleWallpaper()
+	var btnText string
+	var bgCol, borderCol, textCol uint32
+	var hFont uintptr = uintptr(hUIFontBold)
+
+	switch dis.CtlID {
+	// Mode buttons
+	case 101: // Day
+		btnText = "☀️"
+		bgCol = rgb(230, 235, 245)
+		borderCol = rgb(180, 190, 210)
+		if cfg.ThemeMode == ThemeModeDay {
+			borderCol = rgb(255, 179, 0)
+			bgCol = rgb(255, 248, 225)
+		}
+		textCol = rgb(30, 30, 30)
+	case 102: // Evening (Graphite)
+		btnText = "⛅"
+		bgCol = rgb(60, 68, 84)
+		borderCol = rgb(90, 100, 120)
+		if cfg.ThemeMode == ThemeModeEvening {
+			borderCol = rgb(0, 230, 118) // Active green border
+			bgCol = rgb(75, 85, 105)
+		}
+		textCol = rgb(255, 255, 255)
+	case 103: // Night
+		btnText = "🌙"
+		bgCol = rgb(28, 30, 38)
+		borderCol = rgb(50, 55, 70)
+		if cfg.ThemeMode == ThemeModeNight {
+			borderCol = rgb(61, 90, 254)
+			bgCol = rgb(38, 42, 56)
+		}
+		textCol = rgb(255, 255, 255)
+
+	case 104: // EN
+		btnText = "EN"
+		bgCol = rgb(45, 52, 68)
+		borderCol = rgb(80, 90, 110)
+		if cfg.Lang == "en" {
+			borderCol = rgb(0, 230, 118)
+			bgCol = rgb(55, 68, 90)
+		}
+		textCol = rgb(255, 255, 255)
+	case 105: // RU
+		btnText = "RU"
+		bgCol = rgb(45, 52, 68)
+		borderCol = rgb(80, 90, 110)
+		if cfg.Lang == "ru" {
+			borderCol = rgb(0, 230, 118)
+			bgCol = rgb(55, 68, 90)
+		}
+		textCol = rgb(255, 255, 255)
+
+	// Bottom action buttons
+	case 601: // Apply Now (Emerald Green)
+		btnText = "⚡ Apply Now"
+		if isRu() {
+			btnText = "⚡ Применить"
+		}
+		bgCol = rgb(46, 125, 50)
+		borderCol = rgb(0, 230, 118)
+		textCol = rgb(255, 255, 255)
+
+	case 602: // Save & Close (GIN-VPN Amber Orange)
+		btnText = "💾 Save & Close"
+		if isRu() {
+			btnText = "💾 Сохранить"
+		}
+		bgCol = rgb(211, 84, 0)
+		borderCol = rgb(243, 156, 18)
+		textCol = rgb(255, 255, 255)
+
+	case 603: // Random Theme (Royal Purple)
+		btnText = "🎲 Random"
+		if isRu() {
+			btnText = "🎲 Случайно"
+		}
+		bgCol = rgb(123, 31, 162)
+		borderCol = rgb(186, 104, 200)
+		textCol = rgb(255, 255, 255)
+
+	case 604: // Close (Slate Gray)
+		btnText = "Close"
+		if isRu() {
+			btnText = "Закрыть"
+		}
+		bgCol = rgb(69, 90, 100)
+		borderCol = rgb(120, 144, 156)
+		textCol = rgb(240, 240, 240)
+	}
+
+	if isPressed {
+		rc.Left += 1
+		rc.Top += 1
+	}
+
+	// 1. Background
+	hBrush, _, _ := procCreateSolidBrush.Call(uintptr(bgCol))
+	procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), hBrush)
+	procDeleteObject.Call(hBrush)
+
+	// 2. Border
+	hPen, _, _ := procCreatePen.Call(0, 2, uintptr(borderCol))
+	oldPen, _, _ := procSelectObject.Call(hDC, hPen)
+	hNullBrush, _, _ := procGetStockObject.Call(5) // NULL_BRUSH
+	oldBrush, _, _ := procSelectObject.Call(hDC, hNullBrush)
+	procRectangle.Call(hDC, uintptr(rc.Left), uintptr(rc.Top), uintptr(rc.Right), uintptr(rc.Bottom))
+	procSelectObject.Call(hDC, oldPen)
+	procSelectObject.Call(hDC, oldBrush)
+	procDeleteObject.Call(hPen)
+
+	// 3. Text
+	procSetBkMode.Call(hDC, 1) // TRANSPARENT
+	procSetTextColor.Call(hDC, uintptr(textCol))
+	oldFont, _, _ := procSelectObject.Call(hDC, hFont)
+
+	pText := strPtr(btnText)
+	procDrawTextW.Call(hDC, uintptr(unsafe.Pointer(pText)), uintptr(len(syscall.StringToUTF16(btnText))-1), uintptr(unsafe.Pointer(&rc)), 0x0001|0x0004|0x0020) // DT_CENTER | DT_VCENTER | DT_SINGLELINE
+	procSelectObject.Call(hDC, oldFont)
+
+	return 1
 }
 
 func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
 	switch msg {
+	case WM_ERASEBKGND:
+		hDC := wParam
+		var rc RECT
+		procGetClientRect.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&rc)))
+		brush := hBrushEvening
+		if cfg.ThemeMode == ThemeModeDay {
+			brush = hBrushDay
+		} else if cfg.ThemeMode == ThemeModeNight {
+			brush = hBrushNight
+		}
+		procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), uintptr(brush))
+		return 1
+
+	case WM_CTLCOLORSTATIC:
+		hDC := wParam
+		procSetBkMode.Call(hDC, 1) // TRANSPARENT
+		hwndCtrl := syscall.Handle(lParam)
+
+		if hwndCtrl == hwndPreviewBox {
+			// Card style preview box
+			if cfg.ThemeMode == ThemeModeDay {
+				procSetTextColor.Call(hDC, uintptr(rgb(20, 24, 32)))
+				return uintptr(hBrushDay)
+			}
+			procSetTextColor.Call(hDC, uintptr(rgb(255, 230, 0))) // Vibrant preview text
+			return uintptr(hBrushNight)
+		}
+
+		if cfg.ThemeMode == ThemeModeDay {
+			procSetTextColor.Call(hDC, uintptr(rgb(30, 35, 45)))
+			return uintptr(hBrushDay)
+		} else if cfg.ThemeMode == ThemeModeNight {
+			procSetTextColor.Call(hDC, uintptr(rgb(225, 230, 240)))
+			return uintptr(hBrushNight)
+		}
+		// Evening
+		procSetTextColor.Call(hDC, uintptr(rgb(240, 242, 245)))
+		return uintptr(hBrushEvening)
+
+	case WM_DRAWITEM:
+		dis := (*DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
+		if dis != nil {
+			return drawCustomButton(dis)
+		}
+		return 0
+
 	case WM_COMMAND:
-		switch wParam {
-		case 501:
-			saveSettingsFromUI()
+		id := int(wParam & 0xFFFF)
+		switch id {
+		case 101: // Day Theme
+			cfg.ThemeMode = ThemeModeDay
+			saveConfig()
+			procInvalidateRect.Call(uintptr(hwnd), 0, 1)
 			return 0
-		case 502:
-			procDestroyWindow.Call(uintptr(hwnd))
+		case 102: // Evening Theme
+			cfg.ThemeMode = ThemeModeEvening
+			saveConfig()
+			procInvalidateRect.Call(uintptr(hwnd), 0, 1)
+			return 0
+		case 103: // Night Theme
+			cfg.ThemeMode = ThemeModeNight
+			saveConfig()
+			procInvalidateRect.Call(uintptr(hwnd), 0, 1)
+			return 0
+
+		case 104: // Language EN
+			cfg.Lang = "en"
+			saveConfig()
+			updateTexts()
+			updatePreviewCard()
+			return 0
+		case 105: // Language RU
+			cfg.Lang = "ru"
+			saveConfig()
+			updateTexts()
+			updatePreviewCard()
+			return 0
+
+		case 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212:
+			readCurrentUISelections()
+			updatePreviewCard()
+			return 0
+
+		case 401, 402, 403, 404, 405: // Font Selection
+			readCurrentUISelections()
+			updatePreviewCard()
+			return 0
+
+		case 421, 422, 423: // Scale Selection
+			readCurrentUISelections()
+			updatePreviewCard()
+			return 0
+
+		case 601: // ⚡ Apply Now (Instant Desktop Update without closing!)
+			readCurrentUISelections()
+			saveConfig()
+			updatePreviewCard()
+			stTxt := "✓ Applying wallpaper and calendar..."
+			if isRu() {
+				stTxt = "✓ Применение обоев и календаря на рабочем столе..."
+			}
+			procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(stTxt))))
+			go func() {
+				cycleWallpaper()
+				time.Sleep(500 * time.Millisecond)
+				doneTxt := "✓ Successfully applied to desktop!"
+				if isRu() {
+					doneTxt = "✓ Обои и календарь успешно обновлены на рабочем столе!"
+				}
+				procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(doneTxt))))
+			}()
+			return 0
+
+		case 602: // 💾 Save & Close
+			readCurrentUISelections()
+			saveConfig()
+			procDestroyWindow.Call(uintptr(hwndSettings))
+			hwndSettings = 0
+			go cycleWallpaper()
+			return 0
+
+		case 603: // 🎲 Random Theme
+			allThemes := []string{"abstract", "windows", "linux", "space", "nature", "cars", "city", "cyberpunk", "minimalism", "animals", "anime"}
+			cfg.Theme = allThemes[rand.Intn(len(allThemes))]
+			selectCurrentThemeRadio()
+			saveConfig()
+			updatePreviewCard()
+			go cycleWallpaper()
+			return 0
+
+		case 604: // Close
+			procDestroyWindow.Call(uintptr(hwndSettings))
 			hwndSettings = 0
 			return 0
 		}
+
 	case WM_CLOSE:
-		procDestroyWindow.Call(uintptr(hwnd))
+		procDestroyWindow.Call(uintptr(hwndSettings))
 		hwndSettings = 0
 		return 0
 	}
@@ -936,6 +1527,9 @@ func wndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
 
 	case WM_COMMAND:
 		switch wParam {
+		case IDM_VERSION_CHECK:
+			pUrl := strPtr("https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper")
+			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(pUrl)), 0, 0, 1)
 		case IDM_CHANGE_NOW:
 			go cycleWallpaper()
 		case IDM_SETTINGS:
@@ -943,8 +1537,7 @@ func wndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
 		case IDM_OPEN_DIR:
 			exePath, _ := os.Executable()
 			dir := filepath.Dir(exePath)
-			procShellExecute := shell32.NewProc("ShellExecuteW")
-			procShellExecute.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(dir))), 0, 0, 1)
+			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr(dir))), 0, 0, 1)
 		case IDM_EXIT:
 			procShell_NotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 			procPostQuitMessage.Call(0)
@@ -1030,7 +1623,7 @@ func main() {
 	nid.UCallbackMessage = WM_TRAYICON
 	nid.HIcon = hIconApp
 
-	tip, _ := syscall.UTF16FromString("GIN-Wallpaper-Calend v007")
+	tip, _ := syscall.UTF16FromString("GIN-Wallpaper-Calend v008")
 	for i := 0; i < len(tip) && i < 127; i++ {
 		nid.SzTip[i] = tip[i]
 	}
