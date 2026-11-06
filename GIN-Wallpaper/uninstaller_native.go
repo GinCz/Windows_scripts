@@ -53,13 +53,21 @@ func isRussianLocale() bool {
 	return false
 }
 
-func runSelfAsAdmin() {
+func runSelfAsAdmin(args ...string) {
 	exe, _ := os.Executable()
-	cwd, _ := os.Getwd()
+	cwd := os.TempDir()
 	vPtr, _ := syscall.UTF16PtrFromString("runas")
 	fPtr, _ := syscall.UTF16PtrFromString(exe)
 	dPtr, _ := syscall.UTF16PtrFromString(cwd)
-	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(fPtr)), 0, uintptr(unsafe.Pointer(dPtr)), 1)
+	var pPtr *uint16
+	if len(args) > 0 {
+		var argStr string
+		for _, a := range args {
+			argStr += fmt.Sprintf(`"%s" `, a)
+		}
+		pPtr, _ = syscall.UTF16PtrFromString(argStr)
+	}
+	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(fPtr)), uintptr(unsafe.Pointer(pPtr)), uintptr(unsafe.Pointer(dPtr)), 1)
 }
 
 func isAdmin() bool {
@@ -69,28 +77,89 @@ func isAdmin() bool {
 
 func main() {
 	if !isAdmin() {
-		runSelfAsAdmin()
+		runSelfAsAdmin(os.Args[1:]...)
 		return
 	}
 
 	ru := isRussianLocale()
 	title := "GIN-Wallpaper-Calend — Uninstall"
-	q := "Are you sure you want to completely remove GIN-Wallpaper-Calend?\n\nThis will terminate the program and delete all installed files."
 	doneMsg := "GIN-Wallpaper-Calend has been successfully removed."
 	if ru {
 		title = "GIN-Wallpaper-Calend — Удаление программы"
-		q = "Вы действительно хотите полностью удалить GIN-Wallpaper-Calend?\n\nПрограмма будет закрыта, а все её файлы и ярлыки удалены."
 		doneMsg = "GIN-Wallpaper-Calend был успешно удалён."
+	}
+
+	// ── Phase 2: Running from %TEMP% as external cleanup agent ─────────────────
+	if len(os.Args) >= 3 && os.Args[1] == "--cleanup" {
+		targetDir := os.Args[2]
+
+		// Wait for parent Uninstall.exe in targetDir to exit
+		time.Sleep(1200 * time.Millisecond)
+
+		// Terminate any lingering wallpaper processes
+		exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe").Run()
+		exec.Command("taskkill", "/F", "/IM", "pythonw.exe").Run()
+
+		// Robust wipe loop: delete all files and directory with retries
+		for i := 0; i < 15; i++ {
+			// 1. Force delete all files inside targetDir individually
+			if files, err := os.ReadDir(targetDir); err == nil {
+				for _, f := range files {
+					filePath := filepath.Join(targetDir, f.Name())
+					os.Chmod(filePath, 0666)
+					os.Remove(filePath)
+				}
+			}
+
+			// 2. Remove directory
+			if err := os.RemoveAll(targetDir); err == nil {
+				if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+					break
+				}
+			}
+
+			// 3. Command line forced deletion fallback
+			cmdDel := exec.Command("cmd.exe", "/C", fmt.Sprintf(`del /F /Q /A "%s\*.*" & rd /S /Q "%s"`, targetDir, targetDir))
+			cmdDel.Dir = os.TempDir()
+			cmdDel.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+			cmdDel.Run()
+
+			if _, err := os.Stat(targetDir); os.IsNotExist(err) {
+				break
+			}
+			time.Sleep(400 * time.Millisecond)
+		}
+
+		// Also clean AppData cache
+		appData := filepath.Join(os.Getenv("APPDATA"), "GIN-Wallpaper-Calend")
+		os.RemoveAll(appData)
+
+		// Schedule self-delete of this temp executable
+		selfExe, _ := os.Executable()
+		selfDelCmd := fmt.Sprintf(`ping 127.0.0.1 -n 3 >nul & del /F /Q "%s"`, selfExe)
+		cDel := exec.Command("cmd.exe", "/C", selfDelCmd)
+		cDel.Dir = os.TempDir()
+		cDel.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		cDel.Start()
+
+		msgBox(title, doneMsg, MB_OK|MB_ICONINFO)
+		return
+	}
+
+	// ── Phase 1: User launched Uninstall.exe ────────────────────────────────────
+	q := "Are you sure you want to completely remove GIN-Wallpaper-Calend?\n\nThis will terminate the program and delete all installed files."
+	if ru {
+		q = "Вы действительно хотите полностью удалить GIN-Wallpaper-Calend?\n\nПрограмма будет закрыта, а все её файлы и ярлыки удалены."
 	}
 
 	if msgBox(title, q, MB_YESNO|MB_ICONWARN) != IDYES {
 		return
 	}
 
-	// 1. Force kill processes
+	// 1. Force kill active wallpaper processes
 	exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe").Run()
 	exec.Command("taskkill", "/F", "/IM", "pythonw.exe").Run()
-	time.Sleep(600 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// 2. Remove registry keys
 	exec.Command("reg", "delete", `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`, "/f").Run()
@@ -110,10 +179,26 @@ func main() {
 	startMenu := filepath.Join(os.Getenv("APPDATA"), `Microsoft\Windows\Start Menu\Programs\GIN-Wallpaper-Calend.lnk`)
 	os.Remove(startMenu)
 
-	// 4. Deferred cleanup without batch files (runs in %TEMP% so Program Files is not locked)
+	// 4. Copy self to %TEMP% to unlock installation directory
 	exe, _ := os.Executable()
 	instDir := filepath.Dir(exe)
-	cleanerCmd := fmt.Sprintf(`ping 127.0.0.1 -n 3 >nul & taskkill /F /IM GIN-Wallpaper-Calend.exe >nul 2>&1 & taskkill /F /IM Uninstall.exe >nul 2>&1 & rd /S /Q "%s"`, instDir)
+	tempUninst := filepath.Join(os.TempDir(), fmt.Sprintf("GIN-Wallpaper_Uninstall_%d.exe", time.Now().Unix()))
+
+	data, err := os.ReadFile(exe)
+	if err == nil {
+		if err := os.WriteFile(tempUninst, data, 0755); err == nil {
+			cmd := exec.Command(tempUninst, "--cleanup", instDir)
+			cmd.Dir = os.TempDir()
+			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+			if err := cmd.Start(); err == nil {
+				// Exit phase 1 immediately so targetDir's Uninstall.exe is unlocked!
+				os.Exit(0)
+			}
+		}
+	}
+
+	// Fallback if copy to temp failed: deferred cmd cleanup
+	cleanerCmd := fmt.Sprintf(`ping 127.0.0.1 -n 3 >nul & taskkill /F /IM GIN-Wallpaper-Calend.exe >nul 2>&1 & del /F /Q /A "%s\*.*" & rd /S /Q "%s"`, instDir, instDir)
 	cmd := exec.Command("cmd.exe", "/C", cleanerCmd)
 	cmd.Dir = os.TempDir()
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
