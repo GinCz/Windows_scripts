@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -103,7 +104,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v026"
+	AppVersion = "v027"
 
 	SS_CENTER = 0x00000001
 
@@ -347,8 +348,9 @@ var (
 	btnScaleCompact, btnScaleModerate, btnScaleStandard, btnScaleLarge syscall.Handle
 
 	// Action buttons (Bottom)
-	btnApply, btnSave, btnRandom, btnClose syscall.Handle
-	btnFooterAuthor, btnFooterUpdate      syscall.Handle
+	btnApply, btnSave, btnRandom, btnClose, btnDownload syscall.Handle
+	btnFooterAuthor, btnFooterUpdate                    syscall.Handle
+	lastActiveTheme                                     string = "wallpaper"
 
 	origCheckboxProc uintptr
 	footerUpdateText string
@@ -504,6 +506,7 @@ type WallhavenResp struct {
 }
 
 type ThemeSearchSpec struct {
+	ThemeName  string
 	Query      string
 	Categories string // "100" = General, "001" = People, "010" = Anime, "111" = Mix
 }
@@ -512,37 +515,36 @@ func getSingleThemeSpec(theme string) ThemeSearchSpec {
 	switch theme {
 	case "3d_abstract", "abstract", "fractal":
 		queries := []string{"3d render", "fractal", "abstract 3d", "texture 3d"}
-		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "3d_abstract", Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "flowers":
 		queries := []string{"flowers", "roses", "blossom", "floral"}
-		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "flowers", Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "ocean":
 		queries := []string{"ocean", "sea waves", "beach sunset", "tropical coast"}
-		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "ocean", Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "space":
-		return ThemeSearchSpec{Query: "space", Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "space", Query: "space", Categories: "100"}
 	case "nature":
-		return ThemeSearchSpec{Query: "nature", Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "nature", Query: "nature", Categories: "100"}
 	case "animals":
-		return ThemeSearchSpec{Query: "wildlife", Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "animals", Query: "wildlife", Categories: "100"}
 	case "cars":
 		queries := []string{"supercar", "sports car", "luxury supercar", "hypercar"}
-		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "cars", Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "trucks_jeeps", "trucks_offroad", "trucks", "jeeps", "offroad":
 		queries := []string{"truck", "pickup truck", "jeep", "lorry", "off-road jeep", "SUV"}
-		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "trucks_jeeps", Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "girls", "portraits", "women", "models", "fashion":
-		// Strictly People category (categories=001) and SFW (purity=100) - guarantees 100% human fashion/models, 0 trees, 0 anime!
 		queries := []string{"model", "fashion model", "portrait", "beauty portrait", "glamour model", "fashion photography"}
-		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "001"}
+		return ThemeSearchSpec{ThemeName: "girls", Query: queries[rand.Intn(len(queries))], Categories: "001"}
 	case "city":
-		return ThemeSearchSpec{Query: "city", Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "city", Query: "city", Categories: "100"}
 	case "cyberpunk":
-		return ThemeSearchSpec{Query: "cyberpunk", Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "cyberpunk", Query: "cyberpunk", Categories: "100"}
 	case "minimalism":
-		return ThemeSearchSpec{Query: "minimalism", Categories: "100"}
+		return ThemeSearchSpec{ThemeName: "minimalism", Query: "minimalism", Categories: "100"}
 	case "anime":
-		return ThemeSearchSpec{Query: "anime", Categories: "010"}
+		return ThemeSearchSpec{ThemeName: "anime", Query: "anime", Categories: "010"}
 	default:
 		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_jeeps", "girls", "city", "cyberpunk", "minimalism", "anime"}
 		return getSingleThemeSpec(all[rand.Intn(len(all))])
@@ -551,12 +553,84 @@ func getSingleThemeSpec(theme string) ThemeSearchSpec {
 
 func getThemeSpec() ThemeSearchSpec {
 	selected := cfg.Themes
+	var spec ThemeSearchSpec
 	if len(selected) == 0 || (len(selected) == 1 && selected[0] == "all") {
 		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_jeeps", "girls", "city", "cyberpunk", "minimalism", "anime"}
-		return getSingleThemeSpec(all[rand.Intn(len(all))])
+		spec = getSingleThemeSpec(all[rand.Intn(len(all))])
+	} else {
+		choice := selected[rand.Intn(len(selected))]
+		spec = getSingleThemeSpec(choice)
 	}
-	choice := selected[rand.Intn(len(selected))]
-	return getSingleThemeSpec(choice)
+	lastActiveTheme = spec.ThemeName
+	return spec
+}
+
+func getWindowsPicturesDir() string {
+	home, err := os.UserHomeDir()
+	if err == nil {
+		pic := filepath.Join(home, "Pictures")
+		if fi, err := os.Stat(pic); err == nil && fi.IsDir() {
+			return pic
+		}
+	}
+	userProf := os.Getenv("USERPROFILE")
+	if userProf != "" {
+		pic := filepath.Join(userProf, "Pictures")
+		if err := os.MkdirAll(pic, 0755); err == nil {
+			return pic
+		}
+	}
+	oneDrive := os.Getenv("OneDrive")
+	if oneDrive != "" {
+		pic := filepath.Join(oneDrive, "Pictures")
+		if fi, err := os.Stat(pic); err == nil && fi.IsDir() {
+			return pic
+		}
+	}
+	return `C:\Users\Public\Pictures`
+}
+
+func saveCurrentWallpaperToPictures() (string, error) {
+	picsDir := getWindowsPicturesDir()
+	if err := os.MkdirAll(picsDir, 0755); err != nil {
+		return "", err
+	}
+
+	catName := lastActiveTheme
+	if catName == "" {
+		catName = "wallpaper"
+	}
+
+	maxIdx := 0
+	pattern := fmt.Sprintf("%s_*.jpg", catName)
+	matches, _ := filepath.Glob(filepath.Join(picsDir, pattern))
+	for _, m := range matches {
+		base := filepath.Base(m)
+		ext := filepath.Ext(base)
+		nameWithoutExt := strings.TrimSuffix(base, ext)
+		parts := strings.Split(nameWithoutExt, "_")
+		if len(parts) >= 2 {
+			numStr := parts[len(parts)-1]
+			if n, err := strconv.Atoi(numStr); err == nil && n > maxIdx {
+				maxIdx = n
+			}
+		}
+	}
+	newFileName := fmt.Sprintf("%s_%03d.jpg", catName, maxIdx+1)
+	destPath := filepath.Join(picsDir, newFileName)
+
+	srcPath := filepath.Join(appDataDir, "current_clean.jpg")
+	if _, err := os.Stat(srcPath); err != nil {
+		srcPath = filepath.Join(appDataDir, lastWallFile)
+	}
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return "", err
+	}
+	if err := os.WriteFile(destPath, data, 0644); err != nil {
+		return "", err
+	}
+	return newFileName, nil
 }
 
 func makeRandomSeed(n int) string {
@@ -1126,6 +1200,13 @@ func cycleWallpaper() {
 	// 1. Scale/crop UHD image exactly to user's screen resolution
 	screenImg := fitAndScaleToScreen(rawImg, w, h)
 
+	// Save clean wallpaper without calendar for Download feature
+	cleanPath := filepath.Join(appDataDir, "current_clean.jpg")
+	if fClean, err := os.Create(cleanPath); err == nil {
+		jpeg.Encode(fClean, screenImg, &jpeg.Options{Quality: 98})
+		fClean.Close()
+	}
+
 	// 2. Render calendar onto the top-right corner of the scaled screen image
 	finalImg := renderCalendarOverlay(screenImg)
 
@@ -1662,10 +1743,13 @@ func createControls(parent syscall.Handle) {
 	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 621, 820, 1, parent, 55))
 
 	// Status Info Label
-	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 629, 780, 20, parent, 505))
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 627, 640, 20, parent, 505))
 	if hUIFontSm != 0 {
 		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
 	}
+
+	// Download Button (compact, saves active desktop wallpaper to user's Pictures)
+	btnDownload = syscall.Handle(createCtrl(btnClass, "📥 Download", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 675, 623, 110, 26, parent, 607))
 
 	// Bottom Action Buttons (Y = 654, Height = 42)
 	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 654, 182, 42, parent, 601))
@@ -2437,6 +2521,28 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			textCol = rgb(145, 205, 255)
 		}
 		hFont = uintptr(hUIFontBold)
+
+	case 607: // Download Button
+		btnText = "📥 Download"
+		if isCs() {
+			btnText = "📥 Stáhnout"
+		} else if isRu() {
+			btnText = "📥 Скачать"
+		}
+		if cfg.ThemeMode == ThemeModeDay {
+			bgCol = rgb(235, 245, 240)
+			borderCol = rgb(46, 125, 50)
+			textCol = rgb(30, 100, 40)
+		} else if cfg.ThemeMode == ThemeModeNight {
+			bgCol = rgb(24, 38, 30)
+			borderCol = rgb(0, 200, 100)
+			textCol = rgb(0, 230, 118)
+		} else {
+			bgCol = rgb(38, 55, 48)
+			borderCol = rgb(0, 230, 118)
+			textCol = rgb(180, 255, 200)
+		}
+		hFont = uintptr(hUIFontBold)
 	}
 
 	if isPressed {
@@ -2809,6 +2915,28 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 
 		case 606: // Footer Author GitHub Button
 			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("https://github.com/GinCz"))), 0, 0, 1)
+			return 0
+
+		case 607: // 📥 Download current wallpaper to Pictures folder
+			fileName, err := saveCurrentWallpaperToPictures()
+			if err == nil {
+				msg := fmt.Sprintf("✓ Saved to Pictures: %s", fileName)
+				if isRu() {
+					msg = fmt.Sprintf("✓ Сохранено в Изображения: %s", fileName)
+				} else if isCs() {
+					msg = fmt.Sprintf("✓ Uloženo do Obrázky: %s", fileName)
+				}
+				procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(msg))))
+				playSoftChime()
+			} else {
+				msg := "⚠️ Failed to save wallpaper"
+				if isRu() {
+					msg = "⚠️ Ошибка сохранения обоев"
+				} else if isCs() {
+					msg = "⚠️ Chyba při ukládání tapety"
+				}
+				procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(msg))))
+			}
 			return 0
 		}
 

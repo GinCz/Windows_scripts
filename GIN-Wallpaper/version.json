@@ -1,17 +1,18 @@
 {
-  "version": "v026",
+  "version": "v027",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v026_Setup.exe",
-  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Anti-duplication history sliding window, randomized seed query, strictly People category categories=001 for Girls/Models with zero trees, category renamed to Trucks & Jeeps with ultra-precise vehicle tags)",
+  "installer": "GIN-Wallpaper-Calend_v027_Setup.exe",
+  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Added 📥 Download button to save active wallpaper to Pictures folder as <category>_001.jpg, official Wallhaven API 4K integration, anti-duplication history sliding window, 14 categories with precision Trucks & Jeeps and Girls/Models)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v026_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v027_Setup.exe",
   "features": [
+    "Added '📥 Download' button in settings to save active wallpaper directly into Windows Pictures folder as <category>_001.jpg, <category>_002.jpg",
     "Anti-Duplication History Cache: keeps sliding window of the last 100 wallpaper IDs with random 6-char seed on every search, eliminating duplicates",
-    "Girls, Models & Fashion precision: fixed Wallhaven categories=001 (People category) SFW purity=100, eliminating random tree fallbacks",
-    "Trucks & Jeeps precision: renamed category from Trucks & 4x4 Off-Road to Trucks & Jeeps (truck, pickup, jeep, lorry, off-road jeep) with 100% vehicle accuracy",
-    "Clean top bar layout with dashes, RU/EN/CS order, compact sound button, and widened font column 2",
-    "Ultra-low ~1.5-2 MB RAM idle footprint and minimal silent installer"
+    "Official Wallhaven 4K API source: downloads pristine UHD/4K (3-15 MB) wallpapers with strict SFW purity=100",
+    "Girls, Models & Fashion precision: fixed Wallhaven categories=001 (People category) with 115,000+ real portraits and 0 trees",
+    "Trucks & Jeeps precision: dedicated category for trucks, pickups, jeeps, lorries, off-road jeeps with 100% vehicle accuracy",
+    "Full trilingual EN/CS/RU localization, minimal installer, silent uninstaller, and ~1.5-2 MB idle RAM consumption"
   ]
 }
