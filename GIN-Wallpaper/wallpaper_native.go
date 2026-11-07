@@ -19,6 +19,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -65,6 +66,8 @@ var (
 	procSendMessageW          = user32.NewProc("SendMessageW")
 	procLoadImageW            = user32.NewProc("LoadImageW")
 	procGetModuleHandleW      = kernel32.NewProc("GetModuleHandleW")
+	procSetProcessWorkingSetSize = kernel32.NewProc("SetProcessWorkingSetSize")
+	procGetCurrentProcess        = kernel32.NewProc("GetCurrentProcess")
 	procShellExecuteW         = shell32.NewProc("ShellExecuteW")
 	procSetWindowTextW        = user32.NewProc("SetWindowTextW")
 	procGetClientRect         = user32.NewProc("GetClientRect")
@@ -100,7 +103,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v020"
+	AppVersion = "v021"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -1044,6 +1047,19 @@ func cycleWallpaper() {
 		setWallpaperWin(outPath)
 		playSoftChime()
 	}
+	rawImg = nil
+	screenImg = nil
+	finalImg = nil
+	trimMemory()
+}
+
+func trimMemory() {
+	runtime.GC()
+	debug.FreeOSMemory()
+	h, _, _ := procGetCurrentProcess.Call()
+	if h != 0 {
+		procSetProcessWorkingSetSize.Call(h, ^uintptr(0), ^uintptr(0))
+	}
 }
 
 func showContextMenu(hwnd syscall.Handle) {
@@ -1149,6 +1165,7 @@ func triggerCheckForUpdates(manual bool) {
 				procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
 			}
 		}
+		trimMemory()
 	}()
 }
 
@@ -2529,6 +2546,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		case 604: // Close
 			procDestroyWindow.Call(uintptr(hwndSettings))
 			hwndSettings = 0
+			go trimMemory()
 			return 0
 
 		case 605: // Footer Update Button
@@ -2543,6 +2561,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 	case WM_CLOSE:
 		procDestroyWindow.Call(uintptr(hwndSettings))
 		hwndSettings = 0
+		go trimMemory()
 		return 0
 	}
 	ret, _, _ := procDefWindowProcW.Call(uintptr(hwnd), uintptr(msg), wParam, lParam)

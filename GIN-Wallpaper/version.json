@@ -1,16 +1,17 @@
 {
-  "version": "v020",
+  "version": "v021",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v020_Setup.exe",
-  "description": "Умные обои с календарём для Windows 10/11 (замена шрифта №16 на гармоничный и пропорциональный Calibri Bold с полной поддержкой чешского, русского и английского языков, 16 каллиграфических и графических шрифтов, 4K UHD обои с Wallhaven и Picsum)",
+  "installer": "GIN-Wallpaper-Calend_v021_Setup.exe",
+  "description": "Умные обои с календарём для Windows 10/11 (глубокая оптимизация памяти: нативный сброс Working Set через WinAPI SetProcessWorkingSetSize и debug.FreeOSMemory снижает фоновое потребление ОЗУ до ~1.5–2 МБ в простое, 16 каллиграфических и графических шрифтов, 4K UHD обои с Wallhaven и Picsum)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v020_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v021_Setup.exe",
   "features": [
-    "Замена шрифта №16 с Gabriola на Calibri Bold: идеальная оптическая высота символов (x-height), сбалансированные пропорции в списке и на календаре рабочего стола",
-    "100% поддержка чешского (ě, š, č, ř, ž, ý, á, í, é, ů, ú, ť, ď, ň), русского и английского языков во всех 16 шрифтах",
-    "Полностью тихое автоматическое обновление из контекстного меню трея и из окна настроек: ноль всплывающих окон, автоматический перезапуск и сигнал готовности «бип-бип»",
-    "Настоящее сквозное зачёркивание тем при «Все подряд» через нативный сабклассинг GDI, сочная изумрудно-зелёная подсветка активных кнопок интервалов и масштаба"
+    "Глубокая оптимизация памяти (Variant A): нативный тримминг памяти через WinAPI SetProcessWorkingSetSize и runtime/debug.FreeOSMemory снижает размер процесса в Диспетчере задач с 10 МБ до ~1.5–2 МБ в простое",
+    "Мгновенный сброс буферов после смены обоев: полное освобождение 33 МБ несжатых RGBA-пикселей 4K UHD и немедленный возврат памяти в систему",
+    "Экономия памяти при закрытии окна настроек и после фоновой проверки обновлений",
+    "16 гармоничных шрифтов с 100% поддержкой чешского, русского и английского языков (включая Calibri Bold, Palatino Linotype, Franklin Gothic, Segoe Print)",
+    "Бесшовное тихое фоновое обновление без окон с приятным звуковым сигналом готовности «бип-бип»"
   ]
 }
