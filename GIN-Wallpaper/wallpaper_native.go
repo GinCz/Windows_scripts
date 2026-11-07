@@ -100,7 +100,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v019"
+	AppVersion = "v020"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -329,12 +329,12 @@ var (
 
 	// Radio buttons - Font styles (12 fonts in 2 columns, single-line format)
 	rbFontSegoe, rbFontBahn, rbFontArial, rbFontVerdana, rbFontGeorgia, rbFontCorbel, rbFontPalatino, rbFontFranklin syscall.Handle
-	rbFontConsolas, rbFontTreb, rbFontCambria, rbFontGothic, rbFontCandara, rbFontConstantia, rbFontSegoePrint, rbFontGabriola syscall.Handle
+	rbFontConsolas, rbFontTreb, rbFontCambria, rbFontGothic, rbFontCandara, rbFontConstantia, rbFontSegoePrint, rbFontCalibri syscall.Handle
 
 	hFontPalatino   syscall.Handle
 	hFontFranklin   syscall.Handle
 	hFontSegoePrint syscall.Handle
-	hFontGabriola   syscall.Handle
+	hFontCalibri   syscall.Handle
 
 	// Buttons - Font scale (4 buttons: Compact, Moderate, Standard, Large with font size sample)
 	btnScaleCompact, btnScaleModerate, btnScaleStandard, btnScaleLarge syscall.Handle
@@ -670,8 +670,11 @@ func getFontForStyle(style string) *truetype.Font {
 		if _, err := os.Stat(fontFile); err != nil {
 			fontFile = filepath.Join(fontsDir, "segoepr.ttf")
 		}
-	case "gabriola":
-		fontFile = filepath.Join(fontsDir, "gabriola.ttf")
+	case "calibri":
+		fontFile = filepath.Join(fontsDir, "calibrib.ttf")
+		if _, err := os.Stat(fontFile); err != nil {
+			fontFile = filepath.Join(fontsDir, "calibri.ttf")
+		}
 	default:
 		fontFile = filepath.Join(fontsDir, "segoeuib.ttf")
 	}
@@ -1272,8 +1275,8 @@ func initFonts() {
 	if hFontSegoePrint == 0 {
 		hFontSegoePrint = makeFont("Segoe Print", 700)
 	}
-	if hFontGabriola == 0 {
-		hFontGabriola = makeFont("Gabriola", 700)
+	if hFontCalibri == 0 {
+		hFontCalibri = makeFont("Calibri", 700)
 	}
 
 	// Big Live Preview Font (22pt Bold)
@@ -1483,8 +1486,8 @@ func createControls(parent syscall.Handle) {
 	rbFontSegoePrint = createRadio("15. Segoe Print Bold", 415, 478, 375, 24, parent, 415, false)
 	procSendMessageW.Call(uintptr(rbFontSegoePrint), WM_SETFONT, uintptr(hFontSegoePrint), 1)
 
-	rbFontGabriola = createRadio("16. Gabriola", 415, 503, 375, 24, parent, 416, false)
-	procSendMessageW.Call(uintptr(rbFontGabriola), WM_SETFONT, uintptr(hFontGabriola), 1)
+	rbFontCalibri = createRadio("16. Calibri Bold", 415, 503, 375, 24, parent, 416, false)
+	procSendMessageW.Call(uintptr(rbFontCalibri), WM_SETFONT, uintptr(hFontCalibri), 1)
 
 	selectCurrentFontRadio()
 
@@ -1765,8 +1768,8 @@ func selectCurrentFontRadio() {
 		procSendMessageW.Call(uintptr(rbFontConstantia), BM_SETCHECK, BST_CHECKED, 0)
 	case "segoeprint":
 		procSendMessageW.Call(uintptr(rbFontSegoePrint), BM_SETCHECK, BST_CHECKED, 0)
-	case "gabriola":
-		procSendMessageW.Call(uintptr(rbFontGabriola), BM_SETCHECK, BST_CHECKED, 0)
+	case "calibri":
+		procSendMessageW.Call(uintptr(rbFontCalibri), BM_SETCHECK, BST_CHECKED, 0)
 	default:
 		procSendMessageW.Call(uintptr(rbFontSegoe), BM_SETCHECK, BST_CHECKED, 0)
 	}
@@ -1827,7 +1830,7 @@ func updateTexts() {
 		setTxt(rbFontCandara, fmt.Sprintf("13. Candara Bold - %s", sampDate))
 		setTxt(rbFontConstantia, fmt.Sprintf("14. Constantia Bold - %s", sampDate))
 		setTxt(rbFontSegoePrint, fmt.Sprintf("15. Segoe Print - %s", sampDate))
-		setTxt(rbFontGabriola, fmt.Sprintf("16. Gabriola - %s", sampDate))
+		setTxt(rbFontCalibri, fmt.Sprintf("16. Calibri Bold - %s", sampDate))
 
 		setTxt(lblSecScale, "🔍 Масштаб и размер календаря:")
 		setTxt(lblStatusInfo, "Готово. Нажмите «Применить сейчас», чтобы сразу сменить обои и календарь.")
@@ -1863,7 +1866,7 @@ func updateTexts() {
 		setTxt(rbFontCandara, fmt.Sprintf("13. Candara Bold - %s", sampDate))
 		setTxt(rbFontConstantia, fmt.Sprintf("14. Constantia Bold - %s", sampDate))
 		setTxt(rbFontSegoePrint, fmt.Sprintf("15. Segoe Print - %s", sampDate))
-		setTxt(rbFontGabriola, fmt.Sprintf("16. Gabriola - %s", sampDate))
+		setTxt(rbFontCalibri, fmt.Sprintf("16. Calibri Bold - %s", sampDate))
 
 		setTxt(lblSecScale, "🔍 Calendar Scale and Size:")
 
@@ -1933,8 +1936,8 @@ func readCurrentUISelections() {
 		cfg.FontStyle = "constantia"
 	} else if isChecked(rbFontSegoePrint) {
 		cfg.FontStyle = "segoeprint"
-	} else if isChecked(rbFontGabriola) {
-		cfg.FontStyle = "gabriola"
+	} else if isChecked(rbFontCalibri) {
+		cfg.FontStyle = "calibri"
 	} else {
 		cfg.FontStyle = "segoe"
 	}
@@ -2452,7 +2455,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 				{413, rbFontCandara, "candara"},
 				{414, rbFontConstantia, "constantia"},
 				{415, rbFontSegoePrint, "segoeprint"},
-				{416, rbFontGabriola, "gabriola"},
+				{416, rbFontCalibri, "calibri"},
 			}
 			for _, fr := range fontRadios {
 				if fr.id == uintptr(id) {
