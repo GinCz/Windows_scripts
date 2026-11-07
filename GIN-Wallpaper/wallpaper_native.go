@@ -103,7 +103,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v021"
+	AppVersion = "v022"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -873,16 +873,17 @@ const (
 )
 
 var (
-	chimeWAVBytes []byte
-	beepBeepWAVBytes []byte
+	chimeWAVBytes      []byte
+	updateDropWAVBytes []byte
+	suppressNextChime  bool
 )
 
 func initAudioBuffers() {
 	if len(chimeWAVBytes) == 0 {
 		chimeWAVBytes = generateChimeWAV()
 	}
-	if len(beepBeepWAVBytes) == 0 {
-		beepBeepWAVBytes = generateBeepBeepWAV()
+	if len(updateDropWAVBytes) == 0 {
+		updateDropWAVBytes = generateUpdateDropWAV()
 	}
 }
 
@@ -926,37 +927,55 @@ func generateChimeWAV() []byte {
 	return buildWAV16Mono(sampleRate, samples, maxVal, 6000)
 }
 
-// Generates an upbeat double beep-beep signal for silent auto-update
-func generateBeepBeepWAV() []byte {
+// Generates an extra-soft, warm, quiet double water-bubble / drop ("буль-буль" / "бум-бум")
+func generateUpdateDropWAV() []byte {
 	sampleRate := 22050
-	duration := 0.45
+	duration := 0.60
 	totalSamples := int(float64(sampleRate) * duration)
 	samples := make([]float64, totalSamples)
-	beeps := []struct {
-		freq, start, dur, vol float64
+
+	// Two gentle, low-mid acoustic water bloops:
+	// Bloop 1: 0.00s, starts at ~220Hz (A3) gently rising to ~270Hz (soft round bubble)
+	// Bloop 2: 0.16s, starts at ~293Hz (D4) gently rising to ~360Hz (warm second bubble)
+	drops := []struct {
+		startFreq, endFreq float64
+		startSec, durSec   float64
+		vol                float64
 	}{
-		{880.0, 0.00, 0.12, 0.35},
-		{1174.66, 0.16, 0.18, 0.38},
+		{220.0, 275.0, 0.00, 0.24, 0.45},
+		{293.66, 360.0, 0.15, 0.32, 0.50},
 	}
-	for _, b := range beeps {
-		sIdx := int(b.start * float64(sampleRate))
-		eIdx := int((b.start + b.dur) * float64(sampleRate))
+
+	for _, d := range drops {
+		sIdx := int(d.startSec * float64(sampleRate))
+		eIdx := int((d.startSec + d.durSec) * float64(sampleRate))
 		if eIdx > totalSamples {
 			eIdx = totalSamples
 		}
-		for i := sIdx; i < eIdx; i++ {
-			t := float64(i-sIdx) / float64(sampleRate)
-			attack := t / 0.008
+		numS := eIdx - sIdx
+		phase := 0.0
+		for i := 0; i < numS; i++ {
+			t := float64(i) / float64(sampleRate)
+			progress := t / d.durSec
+
+			// Organic bubble pitch curve: smooth sine ease-in
+			currentFreq := d.startFreq + (d.endFreq-d.startFreq)*math.Sin(progress*math.Pi*0.5)
+			phase += 2.0 * math.Pi * currentFreq / float64(sampleRate)
+
+			// Velvet smooth attack: 28ms without any sharp clicks
+			attack := t / 0.028
 			if attack > 1.0 {
 				attack = 1.0
 			}
-			decay := (b.dur - t) / b.dur
-			if decay < 0.0 {
-				decay = 0.0
-			}
-			samples[i] = math.Sin(2.0*math.Pi*b.freq*t) * attack * decay * b.vol
+			// Warm exponential decay
+			decay := math.Exp(-progress * 5.5)
+
+			// Sine wave with subtle 15% second harmonic for warm organic resonance
+			waveform := math.Sin(phase) + 0.15*math.Sin(2.0*phase)
+			samples[sIdx+i] += waveform * attack * decay * d.vol
 		}
 	}
+
 	maxVal := 0.0
 	for _, s := range samples {
 		if math.Abs(s) > maxVal {
@@ -966,7 +985,8 @@ func generateBeepBeepWAV() []byte {
 	if maxVal == 0.0 {
 		maxVal = 1.0
 	}
-	return buildWAV16Mono(sampleRate, samples, maxVal, 24000)
+	// Identical soft, quiet volume level to the chime (6000 instead of 24000)
+	return buildWAV16Mono(sampleRate, samples, maxVal, 6000)
 }
 
 func buildWAV16Mono(sampleRate int, samples []float64, maxVal float64, scaleAmp float64) []byte {
@@ -1005,14 +1025,16 @@ func playSoftChime() {
 	}()
 }
 
-func playUpdateBeepBeep() {
+func playUpdateSoftDrop() {
 	if cfg.SoundMuted {
 		return
 	}
-	initAudioBuffers()
-	if len(beepBeepWAVBytes) > 0 {
-		procPlaySoundW.Call(uintptr(unsafe.Pointer(&beepBeepWAVBytes[0])), 0, uintptr(SND_MEMORY|SND_SYNC|SND_NODEFAULT))
-	}
+	go func() {
+		initAudioBuffers()
+		if len(updateDropWAVBytes) > 0 {
+			procPlaySoundW.Call(uintptr(unsafe.Pointer(&updateDropWAVBytes[0])), 0, uintptr(SND_MEMORY|SND_SYNC|SND_NODEFAULT))
+		}
+	}()
 }
 
 func cycleWallpaper() {
@@ -1045,7 +1067,11 @@ func cycleWallpaper() {
 		f.Close()
 		ensureWallpaperStyleRegistry()
 		setWallpaperWin(outPath)
-		playSoftChime()
+		if !suppressNextChime {
+			playSoftChime()
+		} else {
+			suppressNextChime = false
+		}
 	}
 	rawImg = nil
 	screenImg = nil
@@ -1148,7 +1174,6 @@ func triggerCheckForUpdates(manual bool) {
 				footerUpdateText = updMsg
 				procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
 			}
-			playUpdateBeepBeep()
 			downloadAndApplyUpdate(info.DownloadURL, info.Installer)
 		} else if manual {
 			// Up to date -> Display directly inside the button without popups!
@@ -2649,7 +2674,8 @@ func main() {
 		}
 	}
 	if isPostUpdate {
-		playUpdateBeepBeep()
+		suppressNextChime = true
+		playUpdateSoftDrop()
 	}
 
 	var err error

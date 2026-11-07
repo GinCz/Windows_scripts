@@ -1,17 +1,17 @@
 {
-  "version": "v021",
+  "version": "v022",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v021_Setup.exe",
-  "description": "Умные обои с календарём для Windows 10/11 (глубокая оптимизация памяти: нативный сброс Working Set через WinAPI SetProcessWorkingSetSize и debug.FreeOSMemory снижает фоновое потребление ОЗУ до ~1.5–2 МБ в простое, 16 каллиграфических и графических шрифтов, 4K UHD обои с Wallhaven и Picsum)",
+  "installer": "GIN-Wallpaper-Calend_v022_Setup.exe",
+  "description": "Умные обои с календарём для Windows 10/11 (новый мягкий бархатный двойной звук «буль-буль» при успешном обновлении программы вместо резкого сигнала, тихое фоновое обновление без всплывающих окон, оптимизация ОЗУ ~1.5–2 МБ в простое, 16 каллиграфических и графических шрифтов, 4K UHD обои)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v021_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v022_Setup.exe",
   "features": [
-    "Глубокая оптимизация памяти (Variant A): нативный тримминг памяти через WinAPI SetProcessWorkingSetSize и runtime/debug.FreeOSMemory снижает размер процесса в Диспетчере задач с 10 МБ до ~1.5–2 МБ в простое",
-    "Мгновенный сброс буферов после смены обоев: полное освобождение 33 МБ несжатых RGBA-пикселей 4K UHD и немедленный возврат памяти в систему",
-    "Экономия памяти при закрытии окна настроек и после фоновой проверки обновлений",
+    "Новый нежный и мягкий двойной звук «буль-буль» / «бум-бум» после завершения обновления: плавный органичный тон низкой тональности (220-360 Гц) с мягкой атакой (28 мс) и комфортной громкостью без резких частот",
+    "Исключены дублирующие и преждевременные звуки: мягкий сигнал играет строго один раз после успешного перезапуска обновлённой программы",
+    "Глубокая оптимизация памяти (Variant A): нативный тримминг памяти через WinAPI SetProcessWorkingSetSize и runtime/debug.FreeOSMemory держит процесс в пределах ~1.5–2 МБ в простое",
     "16 гармоничных шрифтов с 100% поддержкой чешского, русского и английского языков (включая Calibri Bold, Palatino Linotype, Franklin Gothic, Segoe Print)",
-    "Бесшовное тихое фоновое обновление без окон с приятным звуковым сигналом готовности «бип-бип»"
+    "Бесшовное тихое фоновое обновление из трея без модальных окон"
   ]
 }
