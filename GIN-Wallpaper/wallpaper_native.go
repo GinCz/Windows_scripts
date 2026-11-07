@@ -103,7 +103,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v022"
+	AppVersion = "v023"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -320,7 +320,7 @@ var (
 
 	// Top Bar Buttons
 	btnModeDay, btnModeEvening, btnModeNight syscall.Handle
-	btnLangEN, btnLangRU                     syscall.Handle
+	btnLangEN, btnLangRU, btnLangCS          syscall.Handle
 	btnSound                                 syscall.Handle
 
 	// Checkboxes - Themes (12)
@@ -351,10 +351,13 @@ var (
 
 	ruMonths = []string{"", "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"}
 	enMonths = []string{"", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
+	csMonths = []string{"", "ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince"}
 	ruDays   = []string{"Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"}
 	enDays   = []string{"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"}
+	csDays   = []string{"Po", "Út", "St", "Čt", "Pá", "So", "Ne"}
 	ruFullDays = []string{"Воскресенье", "Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"}
 	enFullDays = []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+	csFullDays = []string{"Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"}
 )
 
 func strPtr(s string) *uint16 {
@@ -368,6 +371,10 @@ func rgb(r, g, b uint32) uint32 {
 
 func isRu() bool {
 	return cfg.Lang == "ru"
+}
+
+func isCs() bool {
+	return cfg.Lang == "cs"
 }
 
 func loadConfig() {
@@ -771,7 +778,9 @@ func drawCalendar(rgba *image.RGBA, now time.Time, userScale float64) {
 
 	// Title
 	var title string
-	if isRu() {
+	if isCs() {
+		title = fmt.Sprintf("%d. %s %d", now.Day(), csMonths[int(now.Month())], now.Year())
+	} else if isRu() {
 		title = fmt.Sprintf("%d %s %d г.", now.Day(), ruMonths[int(now.Month())], now.Year())
 	} else {
 		title = fmt.Sprintf("%d %s %d", now.Day(), enMonths[int(now.Month())], now.Year())
@@ -793,7 +802,9 @@ func drawCalendar(rgba *image.RGBA, now time.Time, userScale float64) {
 	whiteWeekday := color.RGBA{220, 225, 235, 255}
 
 	daysHeader := enDays
-	if isRu() {
+	if isCs() {
+		daysHeader = csDays
+	} else if isRu() {
 		daysHeader = ruDays
 	}
 
@@ -1105,7 +1116,13 @@ func showContextMenu(hwnd syscall.Handle) {
 	// 5. Exit
 	mExit := "❌ Exit"
 
-	if isRu() {
+	if isCs() {
+		mChange = "🔄 Změnit tapetu"
+		mSettings = "⚙️ Nastavení"
+		mOpen = "📁 Otevřít složku programu"
+		mVer = fmt.Sprintf("ℹ️ %s (Zkontrolovat aktualizace)", AppVersion)
+		mExit = "❌ Konec"
+	} else if isRu() {
 		mChange = "🔄 Сменить обои"
 		mSettings = "⚙️ Настройки"
 		mOpen = "📁 Открыть папку программы"
@@ -1132,7 +1149,9 @@ func triggerCheckForUpdates(manual bool) {
 	go func() {
 		if manual && btnFooterUpdate != 0 {
 			chkMsg := "⏳ Checking..."
-			if isRu() {
+			if isCs() {
+				chkMsg = "⏳ Kontrola..."
+			} else if isRu() {
 				chkMsg = "⏳ Проверка..."
 			}
 			footerUpdateText = chkMsg
@@ -1145,7 +1164,9 @@ func triggerCheckForUpdates(manual bool) {
 		if err != nil {
 			if manual && btnFooterUpdate != 0 {
 				errMsg := "❌ Connection Error"
-				if isRu() {
+				if isCs() {
+					errMsg = "❌ Chyba sítě"
+				} else if isRu() {
 					errMsg = "❌ Ошибка сети"
 				}
 				footerUpdateText = errMsg
@@ -1168,7 +1189,9 @@ func triggerCheckForUpdates(manual bool) {
 			// Update available -> Instant silent background install without ANY popups!
 			if manual && btnFooterUpdate != 0 {
 				updMsg := fmt.Sprintf("🚀 Updating to %s...", remoteVer)
-				if isRu() {
+				if isCs() {
+					updMsg = fmt.Sprintf("🚀 Aktualizace na %s...", remoteVer)
+				} else if isRu() {
 					updMsg = fmt.Sprintf("🚀 Загрузка %s...", remoteVer)
 				}
 				footerUpdateText = updMsg
@@ -1178,7 +1201,9 @@ func triggerCheckForUpdates(manual bool) {
 		} else if manual {
 			// Up to date -> Display directly inside the button without popups!
 			okMsg := fmt.Sprintf("✔️ Up to date (%s)", AppVersion)
-			if isRu() {
+			if isCs() {
+				okMsg = fmt.Sprintf("✔️ Aktuální verze (%s)", AppVersion)
+			} else if isRu() {
 				okMsg = fmt.Sprintf("✔️ Актуальная версия (%s)", AppVersion)
 			}
 			footerUpdateText = okMsg
@@ -1429,10 +1454,11 @@ func createControls(parent syscall.Handle) {
 	btnModeEvening = syscall.Handle(createCtrl(btnClass, "⛅", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 377, 10, 38, 30, parent, 102))
 	btnModeNight = syscall.Handle(createCtrl(btnClass, "🌙", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 419, 10, 38, 30, parent, 103))
 
-	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 471, 10, 46, 30, parent, 104))
-	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 521, 10, 46, 30, parent, 105))
+	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 460, 10, 42, 30, parent, 104))
+	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 506, 10, 42, 30, parent, 105))
+	btnLangCS = syscall.Handle(createCtrl(btnClass, "CS", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 552, 10, 42, 30, parent, 107))
 
-	btnSound = syscall.Handle(createCtrl(btnClass, "🔊 Sound ON", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 581, 10, 202, 30, parent, 106))
+	btnSound = syscall.Handle(createCtrl(btnClass, "🔊 Sound ON", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 604, 10, 180, 30, parent, 106))
 
 	// Divider 1: Above Themes (Full Width)
 	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 46, 820, 1, parent, 51))
@@ -1588,7 +1614,9 @@ func getTodaySampleString() string {
 	mIdx := int(now.Month())
 	yr := now.Year()
 
-	if isRu() {
+	if isCs() {
+		return fmt.Sprintf("%s, %d. %s %d", csFullDays[wDay], mDay, csMonths[mIdx], yr)
+	} else if isRu() {
 		return fmt.Sprintf("%s, %d %s %d", ruFullDays[wDay], mDay, ruMonths[mIdx], yr)
 	}
 	return fmt.Sprintf("%s, %s %d, %d", enFullDays[wDay], enMonths[mIdx], mDay, yr)
@@ -1831,19 +1859,58 @@ func selectCurrentScaleRadio() {
 
 func updateTexts() {
 	ru := isRu()
+	cs := isCs()
 	setTxt := func(h syscall.Handle, txt string) {
 		procSetWindowTextW.Call(uintptr(h), uintptr(unsafe.Pointer(strPtr(txt))))
 	}
 
 	wTitle := fmt.Sprintf("GIN-Wallpaper-Calend %s — Settings & Themes", AppVersion)
-	if ru {
+	if cs {
+		wTitle = fmt.Sprintf("GIN-Wallpaper-Calend %s — Nastavení a Témata", AppVersion)
+	} else if ru {
 		wTitle = fmt.Sprintf("GIN-Wallpaper-Calend %s — Настройки и Темы", AppVersion)
 	}
 	procSetWindowTextW.Call(uintptr(hwndSettings), uintptr(unsafe.Pointer(strPtr(wTitle))))
 
 	sampDate := getTodaySampleString()
 
-	if ru {
+	if cs {
+		setTxt(lblSecThemes, "🎨 Témata tapet (vyberte několik nebo „Vše náhodně“):")
+		setTxt(cbAll, "🎲 Vše náhodně (Mix všech témat)")
+		setTxt(cb3DAbstract, "🔮 3D Rendery, Textury, Fraktály a Abstrakce")
+		setTxt(cbFlowers, "🌸 Květiny a flóra")
+		setTxt(cbOcean, "🌊 Oceán, moře a vlny")
+		setTxt(cbSpace, "🚀 Vesmír a galaxie (Mlhoviny)")
+		setTxt(cbNature, "🌿 Příroda a krajiny")
+		setTxt(cbCars, "🏎️ Auta a supersporty")
+		setTxt(cbCity, "🌆 Města a architektura (Panorama)")
+		setTxt(cbCyberpunk, "⚡ Cyberpunk a neon (Synthwave)")
+		setTxt(cbMinimal, "🖤 Minimalismus a Dark AMOLED")
+		setTxt(cbAnimals, "🐾 Zvířata a divoká příroda")
+		setTxt(cbAnime, "⛩️ Anime a digitální scenérie")
+
+		setTxt(lblSecInt, "⏱ Interval automatické změny tapety:")
+		setTxt(lblSecFonts, "🔤 Výběr písma kalendáře (16 možností ve 2 sloupcích):")
+		setTxt(rbFontSegoe, fmt.Sprintf("1. Segoe UI Bold - %s", sampDate))
+		setTxt(rbFontBahn, fmt.Sprintf("2. Bahnschrift - %s", sampDate))
+		setTxt(rbFontArial, fmt.Sprintf("3. Arial - %s", sampDate))
+		setTxt(rbFontVerdana, fmt.Sprintf("4. Verdana - %s", sampDate))
+		setTxt(rbFontGeorgia, fmt.Sprintf("5. Georgia Bold - %s", sampDate))
+		setTxt(rbFontCorbel, fmt.Sprintf("6. Corbel Bold - %s", sampDate))
+		setTxt(rbFontPalatino, fmt.Sprintf("7. Palatino Linotype - %s", sampDate))
+		setTxt(rbFontFranklin, fmt.Sprintf("8. Franklin Gothic - %s", sampDate))
+		setTxt(rbFontConsolas, fmt.Sprintf("9. Consolas Bold - %s", sampDate))
+		setTxt(rbFontTreb, fmt.Sprintf("10. Trebuchet MS Bold - %s", sampDate))
+		setTxt(rbFontCambria, fmt.Sprintf("11. Cambria Bold - %s", sampDate))
+		setTxt(rbFontGothic, fmt.Sprintf("12. Century Gothic Bold - %s", sampDate))
+		setTxt(rbFontCandara, fmt.Sprintf("13. Candara Bold - %s", sampDate))
+		setTxt(rbFontConstantia, fmt.Sprintf("14. Constantia Bold - %s", sampDate))
+		setTxt(rbFontSegoePrint, fmt.Sprintf("15. Segoe Print - %s", sampDate))
+		setTxt(rbFontCalibri, fmt.Sprintf("16. Calibri Bold - %s", sampDate))
+
+		setTxt(lblSecScale, "🔍 Měřítko a velikost kalendáře:")
+		setTxt(lblStatusInfo, "Připraveno. Klikněte na „Použít nyní“ pro okamžitou změnu tapety a kalendáře.")
+	} else if ru {
 		setTxt(lblSecThemes, "🎨 Тематика обоев (выберите несколько или «Все подряд»):")
 		setTxt(cbAll, "🎲 Все подряд (Случайный микс)")
 		setTxt(cb3DAbstract, "🔮 3D Рендеры, Фактуры, Фракталы, Абстракция")
@@ -2045,11 +2112,22 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			bgCol = rgb(55, 68, 90)
 		}
 		textCol = rgb(255, 255, 255)
+	case 107:
+		btnText = "CS"
+		bgCol = rgb(45, 52, 68)
+		borderCol = rgb(80, 90, 110)
+		if cfg.Lang == "cs" {
+			borderCol = rgb(0, 230, 118)
+			bgCol = rgb(55, 68, 90)
+		}
+		textCol = rgb(255, 255, 255)
 
 	case 106: // Sound Toggle
 		if !cfg.SoundMuted {
 			btnText = "🔊 Sound ON"
-			if isRu() {
+			if isCs() {
+				btnText = "🔊 Se zvukem"
+			} else if isRu() {
 				btnText = "🔊 Со звуком"
 			}
 			bgCol = rgb(45, 52, 68)
@@ -2057,7 +2135,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			textCol = rgb(255, 255, 255)
 		} else {
 			btnText = "🔇 Sound OFF"
-			if isRu() {
+			if isCs() {
+				btnText = "🔇 Bez zvuku"
+			} else if isRu() {
 				btnText = "🔇 Без звука"
 			}
 			bgCol = rgb(38, 42, 52)
@@ -2073,25 +2153,33 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		case 301:
 			targetHours = 1
 			btnText = "1 hour"
-			if isRu() {
+			if isCs() {
+				btnText = "1 hodina"
+			} else if isRu() {
 				btnText = "1 час"
 			}
 		case 302:
 			targetHours = 3
 			btnText = "3 hours"
-			if isRu() {
+			if isCs() {
+				btnText = "3 hodiny"
+			} else if isRu() {
 				btnText = "3 часа"
 			}
 		case 303:
 			targetHours = 6
 			btnText = "6 hours"
-			if isRu() {
+			if isCs() {
+				btnText = "6 hodin"
+			} else if isRu() {
 				btnText = "6 часов"
 			}
 		case 304:
 			targetHours = 24
 			btnText = "Once a day"
-			if isRu() {
+			if isCs() {
+				btnText = "Jednou denně"
+			} else if isRu() {
 				btnText = "Раз в сутки"
 			}
 		}
@@ -2114,28 +2202,36 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		switch dis.CtlID {
 		case 451:
 			btnText = "Compact"
-			if isRu() {
+			if isCs() {
+				btnText = "Kompaktní"
+			} else if isRu() {
 				btnText = "Компактный"
 			}
 			hFont = uintptr(hFontScale1)
 			isSelected = (cfg.FontSizeScale <= 1.5)
 		case 452:
 			btnText = "Moderate"
-			if isRu() {
+			if isCs() {
+				btnText = "Střední"
+			} else if isRu() {
 				btnText = "Умеренный"
 			}
 			hFont = uintptr(hFontScale2)
 			isSelected = (cfg.FontSizeScale > 1.5 && cfg.FontSizeScale <= 1.85)
 		case 453:
 			btnText = "Standard"
-			if isRu() {
+			if isCs() {
+				btnText = "Standardní"
+			} else if isRu() {
 				btnText = "Стандартный"
 			}
 			hFont = uintptr(hFontScale3)
 			isSelected = (cfg.FontSizeScale > 1.85 && cfg.FontSizeScale <= 2.1)
 		case 454:
 			btnText = "Large"
-			if isRu() {
+			if isCs() {
+				btnText = "Velký"
+			} else if isRu() {
 				btnText = "Крупный"
 			}
 			hFont = uintptr(hFontScale4)
@@ -2156,7 +2252,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 	// Bottom action buttons
 	case 601:
 		btnText = "⚡ Apply Now"
-		if isRu() {
+		if isCs() {
+			btnText = "⚡ Použít nyní"
+		} else if isRu() {
 			btnText = "⚡ Применить"
 		}
 		bgCol = rgb(46, 125, 50)
@@ -2165,7 +2263,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 
 	case 602:
 		btnText = "💾 Save & Close"
-		if isRu() {
+		if isCs() {
+			btnText = "💾 Uložit a zavřít"
+		} else if isRu() {
 			btnText = "💾 Сохранить"
 		}
 		bgCol = rgb(211, 84, 0)
@@ -2174,7 +2274,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 
 	case 603:
 		btnText = "🎲 Random"
-		if isRu() {
+		if isCs() {
+			btnText = "🎲 Náhodně"
+		} else if isRu() {
 			btnText = "🎲 Случайно"
 		}
 		bgCol = rgb(123, 31, 162)
@@ -2183,7 +2285,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 
 	case 604:
 		btnText = "Close"
-		if isRu() {
+		if isCs() {
+			btnText = "Zavřít"
+		} else if isRu() {
 			btnText = "Закрыть"
 		}
 		bgCol = rgb(69, 90, 100)
@@ -2195,7 +2299,9 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			btnText = footerUpdateText
 		} else {
 			btnText = fmt.Sprintf("%s (update)", AppVersion)
-			if isRu() {
+			if isCs() {
+				btnText = fmt.Sprintf("%s (aktualizovat)", AppVersion)
+			} else if isRu() {
 				btnText = fmt.Sprintf("%s (обновить)", AppVersion)
 			}
 		}
@@ -2417,6 +2523,12 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			updateTexts()
 			updatePreviewCard()
 			return 0
+		case 107: // Language CS
+			cfg.Lang = "cs"
+			saveConfig()
+			updateTexts()
+			updatePreviewCard()
+			return 0
 
 		case 106: // Toggle Sound
 			cfg.SoundMuted = !cfg.SoundMuted
@@ -2535,14 +2647,18 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			readCurrentUISelections()
 			saveConfig()
 			stTxt := "✓ Downloading 4K wallpaper and rendering calendar..."
-			if isRu() {
+			if isCs() {
+				stTxt = "✓ Stahování 4K tapety a vykreslování kalendáře..."
+			} else if isRu() {
 				stTxt = "✓ Загрузка 4K UHD обоев и отрисовка календаря..."
 			}
 			procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(stTxt))))
 			go func() {
 				cycleWallpaper()
 				doneTxt := "✓ Successfully applied to desktop!"
-				if isRu() {
+				if isCs() {
+					doneTxt = "✓ 4K Tapeta a kalendář byly úspěšně nastaveny!"
+				} else if isRu() {
 					doneTxt = "✓ 4K Обои и календарь успешно установлены!"
 				}
 				procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(doneTxt))))

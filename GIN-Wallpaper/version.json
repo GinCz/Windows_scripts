@@ -1,17 +1,17 @@
 {
-  "version": "v022",
+  "version": "v023",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v022_Setup.exe",
-  "description": "Умные обои с календарём для Windows 10/11 (новый мягкий бархатный двойной звук «буль-буль» при успешном обновлении программы вместо резкого сигнала, тихое фоновое обновление без всплывающих окон, оптимизация ОЗУ ~1.5–2 МБ в простое, 16 каллиграфических и графических шрифтов, 4K UHD обои)",
+  "installer": "GIN-Wallpaper-Calend_v023_Setup.exe",
+  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (English by default, added Czech language support alongside English and Russian, ultra-minimal English-only installer dialog, completely silent uninstaller)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v022_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v023_Setup.exe",
   "features": [
-    "Новый нежный и мягкий двойной звук «буль-буль» / «бум-бум» после завершения обновления: плавный органичный тон низкой тональности (220-360 Гц) с мягкой атакой (28 мс) и комфортной громкостью без резких частот",
-    "Исключены дублирующие и преждевременные звуки: мягкий сигнал играет строго один раз после успешного перезапуска обновлённой программы",
-    "Глубокая оптимизация памяти (Variant A): нативный тримминг памяти через WinAPI SetProcessWorkingSetSize и runtime/debug.FreeOSMemory держит процесс в пределах ~1.5–2 МБ в простое",
-    "16 гармоничных шрифтов с 100% поддержкой чешского, русского и английского языков (включая Calibri Bold, Palatino Linotype, Franklin Gothic, Segoe Print)",
-    "Бесшовное тихое фоновое обновление из трея без модальных окон"
+    "English language by default for fresh installations",
+    "Full trilingual support: English (EN), Czech (CS / Čeština), Russian (RU) across all menus, calendar overlays, settings, and buttons",
+    "Minimal installer dialog in pure English: 'GIN-Wallpaper-Calend - Install?' with OK/Cancel buttons",
+    "Completely silent uninstallation: removes all binaries, autostart, shortcuts from desktop and Start menu with 0 popups",
+    "Soft organic double-drop bubble sound on update completion, ultra-low idle RAM footprint ~1.5-2 MB via WinAPI SetProcessWorkingSetSize"
   ]
 }

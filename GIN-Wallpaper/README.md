@@ -1,44 +1,41 @@
-# 🖼 GIN-Wallpaper-Calend v022
+# 🖼 GIN-Wallpaper-Calend v023
 
-> **Умные обои с русским календарём для Windows** — ультралёгкий автономный трей-апплет с установщиком  
-> **Автор:** [GinCz / Vladimir Bulantsev ↗](https://github.com/GinCz)  
-> **Репозиторий:** [Windows_scripts/GIN-Wallpaper ↗](https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper)  
-> **Лицензия:** MIT
-
----
-
-## 🚀 Быстрый старт — Установка
-
-**Скачать установщик:**  
-[`GIN-Wallpaper-Calend_v022_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v022_Setup.exe)
-
-> **Запустить** → подтвердить установку → ✅ Готово! (100% автономный бинарник, Python не требуется).
+> **Smart Desktop Wallpaper with Calendar for Windows** — lightweight native tray applet with installer  
+> **Author:** [GinCz / Vladimir Bulantsev ↗](https://github.com/GinCz)  
+> **Repository:** [Windows_scripts/GIN-Wallpaper ↗](https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper)  
+> **License:** MIT
 
 ---
 
-## ✨ Возможности v022
+## 🚀 Quick Start — Installation
 
-| Функция | Описание |
+**Download Installer:**  
+[`GIN-Wallpaper-Calend_v023_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v023_Setup.exe)
+
+> **Run** → confirm `GIN-Wallpaper-Calend - Install?` [OK] → ✅ Done! (100% standalone native binary, no Python or external dependencies required).
+
+---
+
+## ✨ What's New in v023
+
+| Feature | Description |
 |---|---|
-| 💧 Мягкий бархатный звук «буль-буль» | Нежный, органичный низкочастотный двойной сигнал (220–360 Гц) после завершения обновления с плавной атакой (28 мс) и мягким спадом взамен резкого писка |
-| 📉 Сверхнизкое потребление ОЗУ (~1.5–2 МБ) | Нативный тримминг памяти через WinAPI `SetProcessWorkingSetSize` и `debug.FreeOSMemory`. Снижение занимаемой памяти в Диспетчере задач до рекордных ~1.5–2 МБ в простое |
-| 🧹 Мгновенный сброс 4K буферов | После распаковки 33 МБ несжатых пикселей 4K UHD обоев и применения к рабочему столу буферы картинок моментально обнуляются и память возвращается операционной системе |
-| ⚡ Тихое обновление без окон | Автоматическое обновление из трея и настроек без единого всплывающего окна (MessageBox). Завершение процессов, тихое обновление поверх и перезапуск |
-| 👤 Запуск от обычного пользователя | Программа после обновления запускается не от Администратора, а от стандартного интерактивного пользователя через Windows Explorer |
-| 🔤 16 Шрифтов (включая Calibri Bold) | 16 выразительных графических и каллиграфических шрифтов, включая Calibri Bold, Palatino Linotype, Franklin Gothic Medium, Segoe Print |
-| 🇨🇿🇷🇺🇬🇧 Полная языковая поддержка | Все 16 шрифтов проверены на 100% поддержку чешского (`ě, š, č, ř, ž, ý, á, í, é, ů`), русского и английского языков |
-| 🟩 Зелёный фон активных кнопок | Выбранная кнопка интервала и масштаба светится насыщенным зелёным фоном (`#2E7D32`), как кнопка «Применить» |
-| 🚫 Зачёркивание тем при «Все подряд» | Нативное GDI-зачёркивание названий категорий без теней и артефактов |
-| 🧊 Объёмный 3D-стиль кнопок | Световые и теневые фаски с эффектом физического нажатия |
+| 🌐 English Default + Czech (Čeština) | Program defaults to English (`EN`) out-of-the-box, with full trilingual support across the entire interface: **English, Czech (Čeština), and Russian** (including calendar days/months, settings window, tray context menu, button labels, and system tooltips) |
+| 🪟 Minimal English-Only Installer | Ultra-clean, concise English prompt upon installation: `GIN-Wallpaper-Calend - Install?` [OK] [Cancel]. Zero cluttered text, zero Russian dialogs |
+| 🧹 Completely Silent Uninstallation | Running uninstaller terminates processes, cleans all shortcuts from desktop and Start menu, wipes registry and files with **0 modal popups** |
+| 💧 Gentle Velvet Bloop Sound | Soft acoustic low-frequency double bubble sound (220–360 Hz) upon successful silent auto-update |
+| 📉 Ultra-Low RAM Footprint (~1.5–2 MB) | Native WinAPI memory trimming (`SetProcessWorkingSetSize` + `debug.FreeOSMemory`) keeps idle process at ~1.5–2 MB |
+| 🔤 16 Fonts | 16 expressive typographic styles with verified 100% Czech (`ě, š, č, ř, ž, ý, á, í, é, ů, ú, ť, ď, ň`), Russian, and English character support |
+| 🧊 3D UI & Emerald Green Active States | 3D-beveled button surfaces with active state highlighting |
 
 ---
 
-## 📋 Таблица версий
+## 📋 Version History
 
-| Версия | Дата | Изменения |
+| Version | Date | Changes |
 |---|---|---|
-| **v022** | **2026-11-07** | **Замена резкого звука обновления на нежный низкочастотный бархатный двойной сигнал («буль-буль» / «бум-бум», 220–360 Гц, плавная атака 28 мс, комфортная громкость level 6000), исключение дублирующих и преждевременных сигналов, звук звучит строго один раз после успешного перезапуска обновлённой программы** |
-| v021 | 2026-11-07 | Глубокая оптимизация потребления памяти (Variant A): интеграция WinAPI `SetProcessWorkingSetSize` и `runtime/debug.FreeOSMemory`, сброс пиковых 4K RGBA-буферов после рендеринга, снижение потребления RAM в Диспетчере задач с 10 МБ до ~1.5–2 МБ в режиме ожидания |
-| v020 | 2026-11-07 | Замена шрифта №16 на Calibri Bold (гармоничная оптическая высота и пропорции в интерфейсе и на рабочем столе), подтвержденная 100% поддержка чешского, русского и английского во всех 16 шрифтах, детальная архитектура 4K UHD обоев с Wallhaven/Picsum |
-| v019 | 2026-11-07 | Полностью тихое бесшовное обновление без модальных окон (из трея и настроек), запуск от обычного пользователя через explorer, двойной звуковой сигнал («бип-бип») при старте после обновления, 16 шрифтов с подтвержденной поддержкой чешского, русского и английского (Palatino, Franklin Gothic, Segoe Print, Gabriola) |
-| v018 | 2026-11-07 | Нативное зачёркивание тем при «Все подряд», зелёный фон выбранных кнопок интервала и масштаба, объёмные 3D-кнопки, сверхмягкий звук, раздельные нижние кнопки |
+| **v023** | **2026-11-07** | **English by default, added full Czech (Čeština) language support across UI, calendar overlay and tray menu; minimal English-only installer dialog ('GIN-Wallpaper-Calend - Install?'); completely silent uninstaller with 0 popups** |
+| v022 | 2026-11-07 | Soft organic double bloop sound (220–360 Hz) on update completion, removed premature audio triggers |
+| v021 | 2026-11-07 | Deep memory optimization (Variant A): WinAPI `SetProcessWorkingSetSize` and `debug.FreeOSMemory`, idle RAM drops to ~1.5–2 MB |
+| v020 | 2026-11-07 | Font #16 replaced with Calibri Bold, verified Czech/Russian/English diacritics support |
+| v019 | 2026-11-07 | Fully silent background auto-update without popups |

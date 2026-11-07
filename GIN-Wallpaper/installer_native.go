@@ -13,9 +13,24 @@ import (
 )
 
 var (
+	user32            = syscall.NewLazyDLL("user32.dll")
 	shell32           = syscall.NewLazyDLL("shell32.dll")
+	procMessageBoxW   = user32.NewProc("MessageBoxW")
 	procShellExecuteW = shell32.NewProc("ShellExecuteW")
 )
+
+const (
+	MB_OKCANCEL     = 0x00000001
+	MB_ICONQUESTION = 0x00000020
+	IDOK            = 1
+)
+
+func msgBox(title, text string, style uint) int {
+	tPtr, _ := syscall.UTF16PtrFromString(text)
+	cPtr, _ := syscall.UTF16PtrFromString(title)
+	r, _, _ := procMessageBoxW.Call(0, uintptr(unsafe.Pointer(tPtr)), uintptr(unsafe.Pointer(cPtr)), uintptr(style))
+	return int(r)
+}
 
 //go:embed GIN-Wallpaper-Calend.exe
 var embeddedRunnerEXE []byte
@@ -26,14 +41,17 @@ var embeddedUninstEXE []byte
 //go:embed app.ico
 var embeddedAppICO []byte
 
-func runSelfAsAdmin() {
+func runSelfAsAdmin(args ...string) {
 	exe, _ := os.Executable()
 	cwd, _ := os.Getwd()
 	vPtr, _ := syscall.UTF16PtrFromString("runas")
 	fPtr, _ := syscall.UTF16PtrFromString(exe)
 	dPtr, _ := syscall.UTF16PtrFromString(cwd)
-	args := strings.Join(os.Args[1:], " ")
-	aPtr, _ := syscall.UTF16PtrFromString(args)
+	var argStr string
+	if len(args) > 0 {
+		argStr = strings.Join(args, " ")
+	}
+	aPtr, _ := syscall.UTF16PtrFromString(argStr)
 	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(fPtr)), uintptr(unsafe.Pointer(aPtr)), uintptr(unsafe.Pointer(dPtr)), 1)
 }
 
@@ -77,8 +95,33 @@ if (Test-Path $sm) {
 }
 
 func main() {
+	isSilent := false
+	isConfirmed := false
+
+	for _, a := range os.Args[1:] {
+		al := strings.ToLower(a)
+		if al == "/silent" || al == "--silent" || al == "-silent" || al == "/s" || al == "--updated" || al == "/updated" {
+			isSilent = true
+		}
+		if al == "--confirmed" || al == "-confirmed" {
+			isConfirmed = true
+		}
+	}
+
+	// English minimal prompt: "GIN-Wallpaper-Calend - Install?" [OK] [Cancel]
+	if !isSilent && !isConfirmed {
+		if msgBox("GIN-Wallpaper-Calend", "GIN-Wallpaper-Calend - Install?", MB_OKCANCEL|MB_ICONQUESTION) != IDOK {
+			return
+		}
+		isConfirmed = true
+	}
+
 	if !isAdmin() {
-		runSelfAsAdmin()
+		args := []string{"--confirmed"}
+		if isSilent {
+			args = append(args, "/SILENT")
+		}
+		runSelfAsAdmin(args...)
 		return
 	}
 
@@ -115,12 +158,12 @@ func main() {
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v022 — Умные обои с календарём"
+	dispName := "GIN-Wallpaper-Calend v023"
 	cmdReg1 := exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f")
 	cmdReg1.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg1.Run()
 
-	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v022", "/f")
+	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v023", "/f")
 	cmdReg2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg2.Run()
 
@@ -153,7 +196,7 @@ func main() {
 	// 8. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with custom ICO
 	createShortcutsSafe(mainExe, targetDir, icoDest)
 
-	// 9. Launch immediately! (Zero popups, proven direct launch from v018)
+	// 9. Launch immediately! (Zero popups, proven direct launch)
 	cmdLaunch := exec.Command(mainExe, "--updated")
 	cmdLaunch.Dir = targetDir
 	cmdLaunch.Start()

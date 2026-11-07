@@ -1,8 +1,8 @@
 1 ICON "app.ico"
 
 1 VERSIONINFO
-FILEVERSION 0,22,0,0
-PRODUCTVERSION 0,22,0,0
+FILEVERSION 0,23,0,0
+PRODUCTVERSION 0,23,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -14,13 +14,13 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "VladiMIR+AI"
-            VALUE "FileDescription", "GIN-Wallpaper-Calend_v022"
-            VALUE "FileVersion", "v022"
+            VALUE "FileDescription", "GIN-Wallpaper-Calend_v023"
+            VALUE "FileVersion", "v023"
             VALUE "InternalName", "GIN-Wallpaper-Calend"
             VALUE "LegalCopyright", "VladiMIR+AI"
             VALUE "OriginalFilename", "GIN-Wallpaper-Calend.exe"
-            VALUE "ProductName", "GIN-Wallpaper-Calend_v022"
-            VALUE "ProductVersion", "v022"
+            VALUE "ProductName", "GIN-Wallpaper-Calend_v023"
+            VALUE "ProductVersion", "v023"
         END
     END
     BLOCK "VarFileInfo"
