@@ -1,18 +1,19 @@
 {
-  "version": "v027",
+  "version": "v028",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v027_Setup.exe",
-  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Added 📥 Download button to save active wallpaper to Pictures folder as <category>_001.jpg, official Wallhaven API 4K integration, anti-duplication history sliding window, 14 categories with precision Trucks & Jeeps and Girls/Models)",
+  "installer": "GIN-Wallpaper-Calend_v028_Setup.exe",
+  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Custom Pictures folder auto-detection e.g. D:\\docs\\Pictures, clickable status notification to open and highlight file in Explorer, 📥 Download button, official Wallhaven API 4K integration)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v027_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v028_Setup.exe",
   "features": [
-    "Added '📥 Download' button in settings to save active wallpaper directly into Windows Pictures folder as <category>_001.jpg, <category>_002.jpg",
-    "Anti-Duplication History Cache: keeps sliding window of the last 100 wallpaper IDs with random 6-char seed on every search, eliminating duplicates",
-    "Official Wallhaven 4K API source: downloads pristine UHD/4K (3-15 MB) wallpapers with strict SFW purity=100",
-    "Girls, Models & Fashion precision: fixed Wallhaven categories=001 (People category) with 115,000+ real portraits and 0 trees",
-    "Trucks & Jeeps precision: dedicated category for trucks, pickups, jeeps, lorries, off-road jeeps with 100% vehicle accuracy",
+    "Custom & Relocated Pictures Directory: auto-detects D:\\docs\\Pictures, Windows Registry User Shell Folders (My Pictures and Personal/Documents), and Shell SHGetFolderPathW APIs",
+    "Clickable Status Link: clicking '✓ Сохранено в Pictures: <file>' instantly opens Windows Explorer and highlights the newly saved image (/select,<path>)",
+    "Interactive UI Feedback: status turns into a bright link color with IDC_HAND mouse cursor upon saving",
+    "📥 Download button in settings: saves current 4K UHD wallpaper without calendar overlay into <category>_001.jpg sequence",
+    "Anti-Duplication History Cache: sliding window of the last 100 wallpaper IDs with random seed on every search",
+    "Official Wallhaven 4K API source with 14 curated categories (Trucks & Jeeps, Girls/Fashion portraits, 3D, Nature, etc.)",
     "Full trilingual EN/CS/RU localization, minimal installer, silent uninstaller, and ~1.5-2 MB idle RAM consumption"
   ]
 }

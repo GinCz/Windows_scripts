@@ -31,6 +31,7 @@ import (
 	"golang.org/x/image/font"
 	"golang.org/x/image/math/fixed"
 	xdraw "golang.org/x/image/draw"
+	"golang.org/x/sys/windows/registry"
 )
 
 //go:embed font.ttf
@@ -70,6 +71,7 @@ var (
 	procSetProcessWorkingSetSize = kernel32.NewProc("SetProcessWorkingSetSize")
 	procGetCurrentProcess        = kernel32.NewProc("GetCurrentProcess")
 	procShellExecuteW         = shell32.NewProc("ShellExecuteW")
+	procSHGetFolderPathW      = shell32.NewProc("SHGetFolderPathW")
 	procSetWindowTextW        = user32.NewProc("SetWindowTextW")
 	procGetClientRect         = user32.NewProc("GetClientRect")
 	procInvalidateRect        = user32.NewProc("InvalidateRect")
@@ -77,6 +79,8 @@ var (
 	procMessageBoxW           = user32.NewProc("MessageBoxW")
 	procEnableWindow          = user32.NewProc("EnableWindow")
 	procIsWindowEnabled       = user32.NewProc("IsWindowEnabled")
+	procLoadCursorW           = user32.NewProc("LoadCursorW")
+	procSetCursor             = user32.NewProc("SetCursor")
 
 	procCreateFontW           = gdi32.NewProc("CreateFontW")
 	procCreateSolidBrush      = gdi32.NewProc("CreateSolidBrush")
@@ -104,9 +108,13 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v027"
+	AppVersion = "v028"
 
 	SS_CENTER = 0x00000001
+	SS_NOTIFY = 0x00000100
+
+	IDC_HAND     = 32649
+	WM_SETCURSOR = 0x0020
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -351,6 +359,7 @@ var (
 	btnApply, btnSave, btnRandom, btnClose, btnDownload syscall.Handle
 	btnFooterAuthor, btnFooterUpdate                    syscall.Handle
 	lastActiveTheme                                     string = "wallpaper"
+	lastSavedWallpaperPath                              string
 
 	origCheckboxProc uintptr
 	footerUpdateText string
@@ -566,6 +575,87 @@ func getThemeSpec() ThemeSearchSpec {
 }
 
 func getWindowsPicturesDir() string {
+	// 1. Direct check of custom paths on D: drive (Vladimir's custom setup: Documents & Pictures on D:\docs\Pictures)
+	customCandidates := []string{
+		`D:\docs\Pictures`,
+		`D:\DOCS\Pictures`,
+		`D:\docs\pictures`,
+		`D:\DOCS\pictures`,
+		`D:\MEGA\DOCS\Pictures`,
+		`D:\MEGA\Pictures`,
+		`D:\Pictures`,
+	}
+	for _, cand := range customCandidates {
+		if fi, err := os.Stat(cand); err == nil && fi.IsDir() {
+			return cand
+		}
+	}
+
+	// 2. Query Windows Registry: User Shell Folders (handles user relocated special folders)
+	if k, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders`, registry.QUERY_VALUE); err == nil {
+		defer k.Close()
+
+		// 2a. Check "My Pictures"
+		if val, _, err := k.GetStringValue("My Pictures"); err == nil && val != "" {
+			if exp, err := registry.ExpandString(val); err == nil && exp != "" {
+				if fi, err := os.Stat(exp); err == nil && fi.IsDir() {
+					return exp
+				}
+			}
+		}
+
+		// 2b. Check KnownFolderID {0DDD0151-0BA6-4C5E-8429-0AC07422F59E} (Pictures)
+		if val, _, err := k.GetStringValue("{0DDD0151-0BA6-4C5E-8429-0AC07422F59E}"); err == nil && val != "" {
+			if exp, err := registry.ExpandString(val); err == nil && exp != "" {
+				if fi, err := os.Stat(exp); err == nil && fi.IsDir() {
+					return exp
+				}
+			}
+		}
+
+		// 2c. Check "Personal" (Documents folder). If user moved Documents, check for a Pictures subfolder inside it!
+		if val, _, err := k.GetStringValue("Personal"); err == nil && val != "" {
+			if exp, err := registry.ExpandString(val); err == nil && exp != "" {
+				docPic := filepath.Join(exp, "Pictures")
+				if fi, err := os.Stat(docPic); err == nil && fi.IsDir() {
+					return docPic
+				}
+			}
+		}
+	}
+
+	// 3. Query Windows Shell API SHGetFolderPathW (CSIDL_MYPICTURES = 0x0027, CSIDL_PERSONAL = 0x0005)
+	if procSHGetFolderPathW.Find() == nil {
+		buf := make([]uint16, 260)
+		ret, _, _ := procSHGetFolderPathW.Call(0, 0x0027, 0, 0, uintptr(unsafe.Pointer(&buf[0])))
+		if ret == 0 {
+			shellPic := syscall.UTF16ToString(buf)
+			if fi, err := os.Stat(shellPic); err == nil && fi.IsDir() {
+				return shellPic
+			}
+		}
+
+		ret, _, _ = procSHGetFolderPathW.Call(0, 0x0005, 0, 0, uintptr(unsafe.Pointer(&buf[0])))
+		if ret == 0 {
+			shellDoc := syscall.UTF16ToString(buf)
+			docPic := filepath.Join(shellDoc, "Pictures")
+			if fi, err := os.Stat(docPic); err == nil && fi.IsDir() {
+				return docPic
+			}
+		}
+	}
+
+	// 4. If D:\docs exists, create and use D:\docs\Pictures automatically
+	for _, docRoot := range []string{`D:\docs`, `D:\DOCS`} {
+		if fi, err := os.Stat(docRoot); err == nil && fi.IsDir() {
+			picPath := filepath.Join(docRoot, "Pictures")
+			if err := os.MkdirAll(picPath, 0755); err == nil {
+				return picPath
+			}
+		}
+	}
+
+	// 5. Standard fallbacks
 	home, err := os.UserHomeDir()
 	if err == nil {
 		pic := filepath.Join(home, "Pictures")
@@ -590,10 +680,10 @@ func getWindowsPicturesDir() string {
 	return `C:\Users\Public\Pictures`
 }
 
-func saveCurrentWallpaperToPictures() (string, error) {
+func saveCurrentWallpaperToPictures() (string, string, error) {
 	picsDir := getWindowsPicturesDir()
 	if err := os.MkdirAll(picsDir, 0755); err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	catName := lastActiveTheme
@@ -623,14 +713,47 @@ func saveCurrentWallpaperToPictures() (string, error) {
 	if _, err := os.Stat(srcPath); err != nil {
 		srcPath = filepath.Join(appDataDir, lastWallFile)
 	}
+	if _, err := os.Stat(srcPath); err != nil {
+		if k, err := registry.OpenKey(registry.CURRENT_USER, `Control Panel\Desktop`, registry.QUERY_VALUE); err == nil {
+			if wp, _, err := k.GetStringValue("Wallpaper"); err == nil && wp != "" {
+				if _, err := os.Stat(wp); err == nil {
+					srcPath = wp
+				}
+			}
+			k.Close()
+		}
+	}
+
 	data, err := os.ReadFile(srcPath)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if err := os.WriteFile(destPath, data, 0644); err != nil {
-		return "", err
+		return "", "", err
 	}
-	return newFileName, nil
+	lastSavedWallpaperPath = destPath
+	return newFileName, destPath, nil
+}
+
+func openInExplorer(path string) {
+	if path == "" {
+		return
+	}
+	if fi, err := os.Stat(path); err == nil && !fi.IsDir() {
+		arg := fmt.Sprintf(`/select,"%s"`, path)
+		aPtr, _ := syscall.UTF16PtrFromString(arg)
+		ePtr, _ := syscall.UTF16PtrFromString("explorer.exe")
+		vPtr, _ := syscall.UTF16PtrFromString("open")
+		procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(ePtr)), uintptr(unsafe.Pointer(aPtr)), 0, 1)
+		return
+	}
+	dir := path
+	if fi, err := os.Stat(path); err == nil && !fi.IsDir() {
+		dir = filepath.Dir(path)
+	}
+	dPtr, _ := syscall.UTF16PtrFromString(dir)
+	vPtr, _ := syscall.UTF16PtrFromString("open")
+	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(dPtr)), 0, 0, 1)
 }
 
 func makeRandomSeed(n int) string {
@@ -1742,8 +1865,8 @@ func createControls(parent syscall.Handle) {
 	// Divider 5: Between Scale and Status / Buttons (Full Width)
 	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 621, 820, 1, parent, 55))
 
-	// Status Info Label
-	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 627, 640, 20, parent, 505))
+	// Status Info Label (Clickable link with SS_NOTIFY)
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE|SS_NOTIFY, 25, 627, 640, 20, parent, 505))
 	if hUIFontSm != 0 {
 		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
 	}
@@ -2694,6 +2817,20 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			return uintptr(hBrushEvening)
 		}
 
+		if ctrl == lblStatusInfo {
+			if lastSavedWallpaperPath != "" {
+				if cfg.ThemeMode == ThemeModeDay {
+					procSetTextColor.Call(hDC, uintptr(rgb(0, 130, 80)))
+					return uintptr(hBrushDay)
+				} else if cfg.ThemeMode == ThemeModeNight {
+					procSetTextColor.Call(hDC, uintptr(rgb(0, 230, 118)))
+					return uintptr(hBrushNight)
+				}
+				procSetTextColor.Call(hDC, uintptr(rgb(0, 229, 255)))
+				return uintptr(hBrushEvening)
+			}
+		}
+
 		if cfg.ThemeMode == ThemeModeDay {
 			procSetTextColor.Call(hDC, uintptr(rgb(30, 35, 45)))
 			return uintptr(hBrushDay)
@@ -2703,6 +2840,15 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		}
 		procSetTextColor.Call(hDC, uintptr(rgb(240, 242, 245)))
 		return uintptr(hBrushEvening)
+
+	case WM_SETCURSOR:
+		if syscall.Handle(wParam) == lblStatusInfo && lastSavedWallpaperPath != "" {
+			hHand, _, _ := procLoadCursorW.Call(0, uintptr(IDC_HAND))
+			if hHand != 0 {
+				procSetCursor.Call(hHand)
+				return 1
+			}
+		}
 
 	case WM_DRAWITEM:
 		dis := (*DRAWITEMSTRUCT)(unsafe.Pointer(lParam))
@@ -2917,16 +3063,24 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("https://github.com/GinCz"))), 0, 0, 1)
 			return 0
 
+		case 505: // Click on lblStatusInfo link (open folder / select file in explorer)
+			if lastSavedWallpaperPath != "" {
+				openInExplorer(lastSavedWallpaperPath)
+			}
+			return 0
+
 		case 607: // 📥 Download current wallpaper to Pictures folder
-			fileName, err := saveCurrentWallpaperToPictures()
+			fileName, fullPath, err := saveCurrentWallpaperToPictures()
 			if err == nil {
-				msg := fmt.Sprintf("✓ Saved to Pictures: %s", fileName)
+				folderName := filepath.Base(filepath.Dir(fullPath))
+				msg := fmt.Sprintf("✓ Saved to %s: %s (click to open)", folderName, fileName)
 				if isRu() {
-					msg = fmt.Sprintf("✓ Сохранено в Изображения: %s", fileName)
+					msg = fmt.Sprintf("✓ Сохранено в %s: %s (нажмите, чтобы открыть)", folderName, fileName)
 				} else if isCs() {
-					msg = fmt.Sprintf("✓ Uloženo do Obrázky: %s", fileName)
+					msg = fmt.Sprintf("✓ Uloženo do %s: %s (klikněte pro otevření)", folderName, fileName)
 				}
 				procSetWindowTextW.Call(uintptr(lblStatusInfo), uintptr(unsafe.Pointer(strPtr(msg))))
+				procInvalidateRect.Call(uintptr(lblStatusInfo), 0, 1)
 				playSoftChime()
 			} else {
 				msg := "⚠️ Failed to save wallpaper"

@@ -1,4 +1,4 @@
-# 🖼️ GIN-Wallpaper-Calend `v027`
+# 🖼️ GIN-Wallpaper-Calend `v028`
 
 <div align="center">
 
@@ -15,7 +15,7 @@
 
 <br/>
 
-[![Download Installer](https://img.shields.io/badge/🚀%20Download-GIN--Wallpaper--Calend%20v027%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v027_Setup.exe)
+[![Download Installer](https://img.shields.io/badge/🚀%20Download-GIN--Wallpaper--Calend%20v028%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v028_Setup.exe)
 [![Official Wallhaven Website](https://img.shields.io/badge/🌐%20Wallpaper%20Source-Wallhaven.cc%20Official-1abc9c?style=for-the-badge&logo=google-chrome&logoColor=white)](https://wallhaven.cc/)
 [![GitHub Project](https://img.shields.io/badge/💻%20GitHub-Windows_scripts%2FGIN--Wallpaper-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper)
 
