@@ -103,7 +103,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v025"
+	AppVersion = "v026"
 
 	SS_CENTER = 0x00000001
 
@@ -174,14 +174,15 @@ const (
 )
 
 type Config struct {
-	Themes        []string `json:"themes"`
-	Theme         string   `json:"theme,omitempty"`
-	IntervalHours int      `json:"interval_hours"`
-	FontSizeScale float64  `json:"font_size_scale"`
-	FontStyle     string   `json:"font_style"`
-	ThemeMode     int      `json:"theme_mode"`
-	Lang          string   `json:"lang"`
-	SoundMuted    bool     `json:"sound_muted"`
+	Themes           []string `json:"themes"`
+	Theme            string   `json:"theme,omitempty"`
+	IntervalHours    int      `json:"interval_hours"`
+	FontSizeScale    float64  `json:"font_size_scale"`
+	FontStyle        string   `json:"font_style"`
+	ThemeMode        int      `json:"theme_mode"`
+	Lang             string   `json:"lang"`
+	SoundMuted       bool     `json:"sound_muted"`
+	RecentWallpapers []string `json:"recent_wallpapers,omitempty"`
 }
 
 type RemoteVersionInfo struct {
@@ -328,7 +329,7 @@ var (
 
 	// Checkboxes - Themes (14)
 	cbAll, cb3DAbstract, cbFlowers, cbOcean, cbSpace, cbNature, cbAnimals syscall.Handle
-	cbCars, cbTrucksOffroad, cbGirls, cbCity, cbCyberpunk, cbMinimal, cbAnime syscall.Handle
+	cbCars, cbTrucksJeeps, cbGirls, cbCity, cbCyberpunk, cbMinimal, cbAnime syscall.Handle
 
 	// Buttons - Intervals (4 buttons matching bottom action buttons style)
 	btnInt1h, btnInt3h, btnInt6h, btnInt24h syscall.Handle
@@ -492,78 +493,164 @@ func ensureWallpaperStyleRegistry() {
 	exec.Command("reg", "add", `HKCU\Control Panel\Desktop`, "/v", "TileWallpaper", "/t", "REG_SZ", "/d", "0", "/f").Run()
 }
 
-type WallhavenResp struct {
-	Data []struct {
-		Path       string `json:"path"`
-		Resolution string `json:"resolution"`
-	} `json:"data"`
+type WallhavenItem struct {
+	ID         string `json:"id"`
+	Path       string `json:"path"`
+	Resolution string `json:"resolution"`
 }
 
-func getSingleThemeQuery(theme string) string {
+type WallhavenResp struct {
+	Data []WallhavenItem `json:"data"`
+}
+
+type ThemeSearchSpec struct {
+	Query      string
+	Categories string // "100" = General, "001" = People, "010" = Anime, "111" = Mix
+}
+
+func getSingleThemeSpec(theme string) ThemeSearchSpec {
 	switch theme {
 	case "3d_abstract", "abstract", "fractal":
 		queries := []string{"3d render", "fractal", "abstract 3d", "texture 3d"}
-		return queries[rand.Intn(len(queries))]
+		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "flowers":
 		queries := []string{"flowers", "roses", "blossom", "floral"}
-		return queries[rand.Intn(len(queries))]
+		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "ocean":
 		queries := []string{"ocean", "sea waves", "beach sunset", "tropical coast"}
-		return queries[rand.Intn(len(queries))]
+		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "space":
-		return "space"
+		return ThemeSearchSpec{Query: "space", Categories: "100"}
 	case "nature":
-		return "nature"
+		return ThemeSearchSpec{Query: "nature", Categories: "100"}
 	case "animals":
-		return "wildlife"
+		return ThemeSearchSpec{Query: "wildlife", Categories: "100"}
 	case "cars":
 		queries := []string{"supercar", "sports car", "luxury supercar", "hypercar"}
-		return queries[rand.Intn(len(queries))]
-	case "trucks_offroad", "trucks", "offroad":
-		queries := []string{"truck", "semi truck", "off-road 4x4", "suv off-road", "pickup truck", "overland vehicle"}
-		return queries[rand.Intn(len(queries))]
+		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
+	case "trucks_jeeps", "trucks_offroad", "trucks", "jeeps", "offroad":
+		queries := []string{"truck", "pickup truck", "jeep", "lorry", "off-road jeep", "SUV"}
+		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "100"}
 	case "girls", "portraits", "women", "models", "fashion":
-		queries := []string{"fashion model woman", "fashion photography woman", "high fashion portrait", "aesthetic model portrait", "beauty fashion editorial", "glamour portrait woman"}
-		return queries[rand.Intn(len(queries))]
+		// Strictly People category (categories=001) and SFW (purity=100) - guarantees 100% human fashion/models, 0 trees, 0 anime!
+		queries := []string{"model", "fashion model", "portrait", "beauty portrait", "glamour model", "fashion photography"}
+		return ThemeSearchSpec{Query: queries[rand.Intn(len(queries))], Categories: "001"}
 	case "city":
-		return "city"
+		return ThemeSearchSpec{Query: "city", Categories: "100"}
 	case "cyberpunk":
-		return "cyberpunk"
+		return ThemeSearchSpec{Query: "cyberpunk", Categories: "100"}
 	case "minimalism":
-		return "minimalism"
+		return ThemeSearchSpec{Query: "minimalism", Categories: "100"}
 	case "anime":
-		return "anime"
+		return ThemeSearchSpec{Query: "anime", Categories: "010"}
 	default:
-		all := []string{"3d render", "fractal", "abstract 3d", "flowers", "ocean", "space", "nature", "wildlife", "supercar", "motorcycle", "off-road 4x4", "portrait woman", "city", "cyberpunk", "minimalism", "anime"}
-		return all[rand.Intn(len(all))]
+		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_jeeps", "girls", "city", "cyberpunk", "minimalism", "anime"}
+		return getSingleThemeSpec(all[rand.Intn(len(all))])
 	}
 }
 
-func getThemeQuery() string {
+func getThemeSpec() ThemeSearchSpec {
 	selected := cfg.Themes
 	if len(selected) == 0 || (len(selected) == 1 && selected[0] == "all") {
-		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_offroad", "girls", "city", "cyberpunk", "minimalism", "anime"}
-		return getSingleThemeQuery(all[rand.Intn(len(all))])
+		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_jeeps", "girls", "city", "cyberpunk", "minimalism", "anime"}
+		return getSingleThemeSpec(all[rand.Intn(len(all))])
 	}
 	choice := selected[rand.Intn(len(selected))]
-	return getSingleThemeQuery(choice)
+	return getSingleThemeSpec(choice)
+}
+
+func makeRandomSeed(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 func downloadRandomWallpaper(w, h int) (image.Image, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
-	themeQuery := getThemeQuery()
+	spec := getThemeSpec()
 
-	// Stage 1: Wallhaven 4K UHD Query (3840x2160 minimum)
-	wallhavenUrl := fmt.Sprintf("https://wallhaven.cc/api/v1/search?q=%s&atleast=3840x2160&sorting=random&purity=100",
-		url.QueryEscape(themeQuery))
-	resp, err := client.Get(wallhavenUrl)
-	if err == nil && resp.StatusCode == http.StatusOK {
+	recentMap := make(map[string]bool)
+	for _, id := range cfg.RecentWallpapers {
+		recentMap[id] = true
+	}
+
+	// Try at 2560x1440 first, then 1920x1080 with dynamic random seed on every call
+	resolutions := []string{"2560x1440", "1920x1080"}
+	for _, res := range resolutions {
+		seed := makeRandomSeed(6)
+		wallhavenUrl := fmt.Sprintf("https://wallhaven.cc/api/v1/search?q=%s&categories=%s&atleast=%s&sorting=random&seed=%s&purity=100",
+			url.QueryEscape(spec.Query), spec.Categories, res, seed)
+
+		resp, err := client.Get(wallhavenUrl)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			var whResp WallhavenResp
+			if json.NewDecoder(resp.Body).Decode(&whResp) == nil && len(whResp.Data) > 0 {
+				resp.Body.Close()
+
+				// Anti-duplication: select unseen candidates
+				var candidates []WallhavenItem
+				for _, item := range whResp.Data {
+					if !recentMap[item.ID] {
+						candidates = append(candidates, item)
+					}
+				}
+				if len(candidates) == 0 {
+					candidates = whResp.Data
+				}
+
+				rand.Shuffle(len(candidates), func(i, j int) {
+					candidates[i], candidates[j] = candidates[j], candidates[i]
+				})
+
+				for _, picked := range candidates {
+					imgResp, err := client.Get(picked.Path)
+					if err == nil && imgResp.StatusCode == http.StatusOK {
+						img, _, err := image.Decode(imgResp.Body)
+						imgResp.Body.Close()
+						if err == nil {
+							// Record in recent history (last 100)
+							cfg.RecentWallpapers = append(cfg.RecentWallpapers, picked.ID)
+							if len(cfg.RecentWallpapers) > 100 {
+								cfg.RecentWallpapers = cfg.RecentWallpapers[len(cfg.RecentWallpapers)-100:]
+							}
+							saveConfig()
+							return img, nil
+						}
+					}
+				}
+			} else {
+				resp.Body.Close()
+			}
+		}
+	}
+
+	// Guaranteed broad fallback of the SAME category (NO random trees from picsum!)
+	broadQuery := "nature"
+	broadCat := "100"
+	if spec.Categories == "001" {
+		broadQuery = "women"
+		broadCat = "001"
+	} else if spec.Categories == "010" {
+		broadQuery = "anime"
+		broadCat = "010"
+	} else if spec.Query == "truck" || spec.Query == "jeep" || spec.Query == "pickup truck" || spec.Query == "lorry" {
+		broadQuery = "truck"
+		broadCat = "100"
+	}
+
+	seed := makeRandomSeed(6)
+	fbUrl := fmt.Sprintf("https://wallhaven.cc/api/v1/search?q=%s&categories=%s&atleast=1920x1080&sorting=random&seed=%s&purity=100",
+		url.QueryEscape(broadQuery), broadCat, seed)
+	respFb, err := client.Get(fbUrl)
+	if err == nil && respFb.StatusCode == http.StatusOK {
 		var whResp WallhavenResp
-		if json.NewDecoder(resp.Body).Decode(&whResp) == nil && len(whResp.Data) > 0 {
-			resp.Body.Close()
+		if json.NewDecoder(respFb.Body).Decode(&whResp) == nil && len(whResp.Data) > 0 {
+			respFb.Body.Close()
 			idx := rand.Intn(len(whResp.Data))
-			imgUrl := whResp.Data[idx].Path
-			imgResp, err := client.Get(imgUrl)
+			imgResp, err := client.Get(whResp.Data[idx].Path)
 			if err == nil && imgResp.StatusCode == http.StatusOK {
 				defer imgResp.Body.Close()
 				if img, _, err := image.Decode(imgResp.Body); err == nil {
@@ -571,43 +658,11 @@ func downloadRandomWallpaper(w, h int) (image.Image, error) {
 				}
 			}
 		} else {
-			resp.Body.Close()
+			respFb.Body.Close()
 		}
 	}
 
-	// Fallback to 2560x1440 if Wallhaven 4K search returns 0 results
-	wallhavenUrl2 := fmt.Sprintf("https://wallhaven.cc/api/v1/search?q=%s&atleast=2560x1440&sorting=random&purity=100",
-		url.QueryEscape(themeQuery))
-	resp2, err := client.Get(wallhavenUrl2)
-	if err == nil && resp2.StatusCode == http.StatusOK {
-		var whResp WallhavenResp
-		if json.NewDecoder(resp2.Body).Decode(&whResp) == nil && len(whResp.Data) > 0 {
-			resp2.Body.Close()
-			idx := rand.Intn(len(whResp.Data))
-			imgUrl := whResp.Data[idx].Path
-			imgResp, err := client.Get(imgUrl)
-			if err == nil && imgResp.StatusCode == http.StatusOK {
-				defer imgResp.Body.Close()
-				if img, _, err := image.Decode(imgResp.Body); err == nil {
-					return img, nil
-				}
-			}
-		} else {
-			resp2.Body.Close()
-		}
-	}
-
-	// Stage 2: Picsum Fallback at Native 4K UHD (3840x2160)
-	picsumUrl := "https://picsum.photos/3840/2160"
-	respPic, err := client.Get(picsumUrl)
-	if err == nil && respPic.StatusCode == http.StatusOK {
-		defer respPic.Body.Close()
-		if img, _, err := image.Decode(respPic.Body); err == nil {
-			return img, nil
-		}
-	}
-
-	// Stage 3: Emergency procedural wallpaper (Rich dark blue-violet gradient)
+	// Emergency procedural wallpaper
 	fallbackImg := image.NewRGBA(image.Rect(0, 0, w, h))
 	for y := 0; y < h; y++ {
 		ratio := float64(y) / float64(h)
@@ -1504,7 +1559,7 @@ func createControls(parent syscall.Handle) {
 
 	// Column 2
 	cbCars = createCheckbox("🏎️ Cars & Supercars", 380, 74, 380, 20, parent, 207)
-	cbTrucksOffroad = createCheckbox("🚛 Trucks & 4x4 Off-Road", 380, 94, 380, 20, parent, 213)
+	cbTrucksJeeps = createCheckbox("🚛 Trucks & Jeeps", 380, 94, 380, 20, parent, 213)
 	cbGirls = createCheckbox("👗 Girls: Models & Fashion", 380, 114, 380, 20, parent, 214)
 	cbCity = createCheckbox("🌆 City & Architecture", 380, 134, 380, 20, parent, 208)
 	cbCyberpunk = createCheckbox("⚡ Cyberpunk & Neon", 380, 154, 380, 20, parent, 209)
@@ -1707,7 +1762,7 @@ func getIndividualThemeCheckboxes() []ThemeCheckboxInfo {
 		{206, cbNature, "nature"},
 		{211, cbAnimals, "animals"},
 		{207, cbCars, "cars"},
-		{213, cbTrucksOffroad, "trucks_offroad"},
+		{213, cbTrucksJeeps, "trucks_jeeps"},
 		{214, cbGirls, "girls"},
 		{208, cbCity, "city"},
 		{209, cbCyberpunk, "cyberpunk"},
@@ -1718,7 +1773,7 @@ func getIndividualThemeCheckboxes() []ThemeCheckboxInfo {
 
 func isThemeCheckbox(h syscall.Handle) bool {
 	return h == cb3DAbstract || h == cbFlowers || h == cbOcean || h == cbSpace ||
-		h == cbNature || h == cbAnimals || h == cbCars || h == cbTrucksOffroad ||
+		h == cbNature || h == cbAnimals || h == cbCars || h == cbTrucksJeeps ||
 		h == cbGirls || h == cbCity || h == cbCyberpunk || h == cbMinimal || h == cbAnime
 }
 
@@ -1807,6 +1862,9 @@ func selectCurrentThemeCheckboxes() {
 			activeMap[t] = true
 			if t == "abstract" || t == "fractal" || t == "windows" {
 				activeMap["3d_abstract"] = true
+			}
+			if t == "trucks_offroad" || t == "trucks" || t == "jeeps" || t == "offroad" {
+				activeMap["trucks_jeeps"] = true
 			}
 		}
 		anyChecked := false
@@ -1921,7 +1979,7 @@ func updateTexts() {
 		setTxt(cbNature, "🌿 Příroda a krajiny")
 		setTxt(cbAnimals, "🐾 Zvířata a divoká příroda")
 		setTxt(cbCars, "🏎️ Auta a Supersporty")
-		setTxt(cbTrucksOffroad, "🚛 Nákladní auta a Off-Road")
+		setTxt(cbTrucksJeeps, "🚛 Nákladní auta a Jeepy")
 		setTxt(cbGirls, "👗 Dívky: Modelky a Móda")
 		setTxt(cbCity, "🌆 Města a architektura (Panorama)")
 		setTxt(cbCyberpunk, "⚡ Cyberpunk a neon (Synthwave)")
@@ -1959,7 +2017,7 @@ func updateTexts() {
 		setTxt(cbNature, "🌿 Природа и пейзажи")
 		setTxt(cbAnimals, "🐾 Животные и Дикая природа")
 		setTxt(cbCars, "🏎️ Автомобили и Суперкары")
-		setTxt(cbTrucksOffroad, "🚛 Грузовики и Внедорожники")
+		setTxt(cbTrucksJeeps, "🚛 Грузовики и Джипы")
 		setTxt(cbGirls, "👗 Девушки: Модели и Мода")
 		setTxt(cbCity, "🌆 Города и Архитектура (Skylines)")
 		setTxt(cbCyberpunk, "⚡ Киберпанк и Неон (Synthwave)")
@@ -1997,7 +2055,7 @@ func updateTexts() {
 		setTxt(cbNature, "🌿 Nature & Landscapes")
 		setTxt(cbAnimals, "🐾 Wildlife & Animals")
 		setTxt(cbCars, "🏎️ Cars & Supercars")
-		setTxt(cbTrucksOffroad, "🚛 Trucks & 4x4 Off-Road")
+		setTxt(cbTrucksJeeps, "🚛 Trucks & Jeeps")
 		setTxt(cbGirls, "👗 Girls: Models & Fashion")
 		setTxt(cbCity, "🌆 City & Architecture (Skylines)")
 		setTxt(cbCyberpunk, "⚡ Cyberpunk & Neon (Synthwave)")
@@ -2729,7 +2787,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			return 0
 
 		case 603: // 🎲 Random Theme
-			allThemes := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_offroad", "girls", "city", "cyberpunk", "minimalism", "anime"}
+			allThemes := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_jeeps", "girls", "city", "cyberpunk", "minimalism", "anime"}
 			rnd := allThemes[rand.Intn(len(allThemes))]
 			cfg.Themes = []string{rnd}
 			cfg.Theme = rnd
