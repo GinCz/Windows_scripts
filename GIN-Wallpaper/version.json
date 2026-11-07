@@ -1,18 +1,17 @@
 {
-  "version": "v024",
+  "version": "v025",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v024_Setup.exe",
-  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Added Motorcycles to Cars, added new Truck & 4x4 Off-Road category, added Girls & Aesthetic Portraits SFW category, 14 categories total, trilingual EN/CS/RU, ultra-minimal installer)",
+  "installer": "GIN-Wallpaper-Calend_v025_Setup.exe",
+  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Clean top bar with horizontal dashes, RU/EN/CS order, compact sound button, wider 2nd font column for zero text clipping, Cars & Supercars kept, Trucks & Off-Road and aesthetic Girls: Models & Fashion categories)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v024_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v025_Setup.exe",
   "features": [
-    "Expanded Cars category to 'Cars & Motorcycles' (supercars, sports cars, motorcycles, superbikes, custom choppers)",
-    "Added brand-new 'Trucks & 4x4 Off-Road' category (semi-trucks, big rigs, off-road 4x4, SUVs, overland vehicles)",
-    "Added brand-new 'Girls & Aesthetic Portraits' category strictly SFW / 100% safe (fashion models, beauty portraiture, aesthetic female portraits with zero vulgarity)",
-    "Full trilingual localization across all 14 categories: English (EN default), Czech (CS), and Russian (RU)",
-    "Minimal English-only installer ('GIN-Wallpaper-Calend - Install?') and completely silent uninstaller (0 popups)",
-    "Soft organic double-drop bubble chime on update completion and ~1.5-2 MB idle RAM consumption"
+    "Clean top bar layout: Day/Night buttons separated from languages by dash, RU/EN/CS language order, and separated from sound button by dash with ~1mm spacing",
+    "Compact sound toggle button (reduced from 180px to 140px width)",
+    "Reduced gap between font columns by ~5 mm and expanded Column 2 width to 420px so Century Gothic Bold and long date samples never truncate",
+    "Kept 'Cars & Supercars' category, added 'Trucks & 4x4 Off-Road' and non-vulgar aesthetic 'Girls: Models & Fashion' (purity=100 SFW)",
+    "Full trilingual EN/CS/RU localization, minimal installer, silent uninstaller, and ~1.5-2 MB idle RAM consumption"
   ]
 }

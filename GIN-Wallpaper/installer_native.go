@@ -158,12 +158,12 @@ func main() {
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v024"
+	dispName := "GIN-Wallpaper-Calend v025"
 	cmdReg1 := exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f")
 	cmdReg1.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg1.Run()
 
-	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v024", "/f")
+	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v025", "/f")
 	cmdReg2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg2.Run()
 

@@ -103,7 +103,9 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v024"
+	AppVersion = "v025"
+
+	SS_CENTER = 0x00000001
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -318,9 +320,10 @@ var (
 	lblStatusInfo  syscall.Handle
 	hwndPreviewBox syscall.Handle
 
-	// Top Bar Buttons
+	// Top Bar Buttons & Separators
 	btnModeDay, btnModeEvening, btnModeNight syscall.Handle
-	btnLangEN, btnLangRU, btnLangCS          syscall.Handle
+	lblSep1, lblSep2                         syscall.Handle
+	btnLangRU, btnLangEN, btnLangCS          syscall.Handle
 	btnSound                                 syscall.Handle
 
 	// Checkboxes - Themes (14)
@@ -514,13 +517,13 @@ func getSingleThemeQuery(theme string) string {
 	case "animals":
 		return "wildlife"
 	case "cars":
-		queries := []string{"supercar", "sports car", "motorcycle", "sportbike", "custom chopper"}
+		queries := []string{"supercar", "sports car", "luxury supercar", "hypercar"}
 		return queries[rand.Intn(len(queries))]
 	case "trucks_offroad", "trucks", "offroad":
 		queries := []string{"truck", "semi truck", "off-road 4x4", "suv off-road", "pickup truck", "overland vehicle"}
 		return queries[rand.Intn(len(queries))]
-	case "girls", "portraits", "women":
-		queries := []string{"portrait woman", "aesthetic portrait woman", "fashion model woman", "beauty portrait", "girl portrait aesthetic"}
+	case "girls", "portraits", "women", "models", "fashion":
+		queries := []string{"fashion model woman", "fashion photography woman", "high fashion portrait", "aesthetic model portrait", "beauty fashion editorial", "glamour portrait woman"}
 		return queries[rand.Intn(len(queries))]
 	case "city":
 		return "city"
@@ -1456,16 +1459,30 @@ func createControls(parent syscall.Handle) {
 		procSendMessageW.Call(uintptr(lblTitle), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	// Header Mode Buttons: Day, Evening, Night, EN, RU, Sound Toggle
-	btnModeDay = syscall.Handle(createCtrl(btnClass, "☀️", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 335, 10, 38, 30, parent, 101))
-	btnModeEvening = syscall.Handle(createCtrl(btnClass, "⛅", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 377, 10, 38, 30, parent, 102))
-	btnModeNight = syscall.Handle(createCtrl(btnClass, "🌙", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 419, 10, 38, 30, parent, 103))
+	// Header Mode Buttons: Day, Evening, Night
+	btnModeDay = syscall.Handle(createCtrl(btnClass, "☀️", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 330, 10, 36, 28, parent, 101))
+	btnModeEvening = syscall.Handle(createCtrl(btnClass, "⛅", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 368, 10, 36, 28, parent, 102))
+	btnModeNight = syscall.Handle(createCtrl(btnClass, "🌙", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 406, 10, 36, 28, parent, 103))
 
-	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 460, 10, 42, 30, parent, 104))
-	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 506, 10, 42, 30, parent, 105))
-	btnLangCS = syscall.Handle(createCtrl(btnClass, "CS", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 552, 10, 42, 30, parent, 107))
+	// Separator 1: Dash with 1mm (~4px) space
+	lblSep1 = syscall.Handle(createCtrl(staticClass, "—", WS_CHILD|WS_VISIBLE|SS_CENTER, 446, 14, 14, 20, parent, 15))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblSep1), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
 
-	btnSound = syscall.Handle(createCtrl(btnClass, "🔊 Sound ON", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 604, 10, 180, 30, parent, 106))
+	// Language Buttons in order RU, EN, CS:
+	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 464, 10, 38, 28, parent, 105))
+	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 506, 10, 38, 28, parent, 104))
+	btnLangCS = syscall.Handle(createCtrl(btnClass, "CS", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 548, 10, 38, 28, parent, 107))
+
+	// Separator 2: Dash with 1mm (~4px) space
+	lblSep2 = syscall.Handle(createCtrl(staticClass, "—", WS_CHILD|WS_VISIBLE|SS_CENTER, 590, 14, 14, 20, parent, 16))
+	if hUIFontBold != 0 {
+		procSendMessageW.Call(uintptr(lblSep2), WM_SETFONT, uintptr(hUIFontBold), 1)
+	}
+
+	// Sound Toggle Button (reduced width: 140px)
+	btnSound = syscall.Handle(createCtrl(btnClass, "🔊 Sound ON", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 608, 10, 140, 28, parent, 106))
 
 	// Divider 1: Above Themes (Full Width)
 	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 46, 820, 1, parent, 51))
@@ -1486,9 +1503,9 @@ func createControls(parent syscall.Handle) {
 	cbAnimals = createCheckbox("🐾 Wildlife & Animals", 30, 194, 340, 20, parent, 211)
 
 	// Column 2
-	cbCars = createCheckbox("🏎️ Cars & Motorcycles", 380, 74, 380, 20, parent, 207)
+	cbCars = createCheckbox("🏎️ Cars & Supercars", 380, 74, 380, 20, parent, 207)
 	cbTrucksOffroad = createCheckbox("🚛 Trucks & 4x4 Off-Road", 380, 94, 380, 20, parent, 213)
-	cbGirls = createCheckbox("💃 Girls & Aesthetic Portraits (SFW)", 380, 114, 380, 20, parent, 214)
+	cbGirls = createCheckbox("👗 Girls: Models & Fashion", 380, 114, 380, 20, parent, 214)
 	cbCity = createCheckbox("🌆 City & Architecture", 380, 134, 380, 20, parent, 208)
 	cbCyberpunk = createCheckbox("⚡ Cyberpunk & Neon", 380, 154, 380, 20, parent, 209)
 	cbMinimal = createCheckbox("🖤 Minimalism & Dark AMOLED", 380, 174, 380, 20, parent, 210)
@@ -1519,54 +1536,55 @@ func createControls(parent syscall.Handle) {
 		procSendMessageW.Call(uintptr(lblSecFonts), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	// Column 1 (Left): Fonts 1 to 8 (X = 25, W = 375)
-	rbFontSegoe = createRadio("1. Segoe UI Bold", 25, 328, 375, 24, parent, 401, true) // WS_GROUP start
+	// Column 1 (Left): Fonts 1 to 8 (X = 20, W = 355)
+	rbFontSegoe = createRadio("1. Segoe UI Bold", 20, 328, 355, 24, parent, 401, true) // WS_GROUP start
 	procSendMessageW.Call(uintptr(rbFontSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
 
-	rbFontBahn = createRadio("2. Bahnschrift", 25, 353, 375, 24, parent, 402, false)
+	rbFontBahn = createRadio("2. Bahnschrift", 20, 353, 355, 24, parent, 402, false)
 	procSendMessageW.Call(uintptr(rbFontBahn), WM_SETFONT, uintptr(hFontBahn), 1)
 
-	rbFontArial = createRadio("3. Arial", 25, 378, 375, 24, parent, 403, false)
+	rbFontArial = createRadio("3. Arial", 20, 378, 355, 24, parent, 403, false)
 	procSendMessageW.Call(uintptr(rbFontArial), WM_SETFONT, uintptr(hFontArial), 1)
 
-	rbFontVerdana = createRadio("4. Verdana", 25, 403, 375, 24, parent, 404, false)
+	rbFontVerdana = createRadio("4. Verdana", 20, 403, 355, 24, parent, 404, false)
 	procSendMessageW.Call(uintptr(rbFontVerdana), WM_SETFONT, uintptr(hFontVerdana), 1)
 
-	rbFontGeorgia = createRadio("5. Georgia Bold", 25, 428, 375, 24, parent, 405, false)
+	rbFontGeorgia = createRadio("5. Georgia Bold", 20, 428, 355, 24, parent, 405, false)
 	procSendMessageW.Call(uintptr(rbFontGeorgia), WM_SETFONT, uintptr(hFontGeorgia), 1)
 
-	rbFontCorbel = createRadio("6. Corbel Bold", 25, 453, 375, 24, parent, 406, false)
+	rbFontCorbel = createRadio("6. Corbel Bold", 20, 453, 355, 24, parent, 406, false)
 	procSendMessageW.Call(uintptr(rbFontCorbel), WM_SETFONT, uintptr(hFontCorbel), 1)
 
-	rbFontPalatino = createRadio("7. Palatino Linotype Bold", 25, 478, 375, 24, parent, 407, false)
+	rbFontPalatino = createRadio("7. Palatino Linotype Bold", 20, 478, 355, 24, parent, 407, false)
 	procSendMessageW.Call(uintptr(rbFontPalatino), WM_SETFONT, uintptr(hFontPalatino), 1)
 
-	rbFontFranklin = createRadio("8. Franklin Gothic Medium", 25, 503, 375, 24, parent, 408, false)
+	rbFontFranklin = createRadio("8. Franklin Gothic Medium", 20, 503, 355, 24, parent, 408, false)
 	procSendMessageW.Call(uintptr(rbFontFranklin), WM_SETFONT, uintptr(hFontFranklin), 1)
 
-	// Column 2 (Right): Fonts 9 to 16 (X = 415, W = 375)
-	rbFontConsolas = createRadio("9. Consolas Bold", 415, 328, 375, 24, parent, 409, false)
+	// Column 2 (Right): Fonts 9 to 16 (X = 385, W = 420 - shifted left by ~25px and widened to 420px for zero clipping)
+	rbFontConsolas = createRadio("9. Consolas Bold", 385, 328, 420, 24, parent, 409, false)
 	procSendMessageW.Call(uintptr(rbFontConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
 
-	rbFontTreb = createRadio("10. Trebuchet MS Bold", 415, 353, 375, 24, parent, 410, false)
+	rbFontTreb = createRadio("10. Trebuchet MS Bold", 385, 353, 420, 24, parent, 410, false)
 	procSendMessageW.Call(uintptr(rbFontTreb), WM_SETFONT, uintptr(hFontTreb), 1)
 
-	rbFontCambria = createRadio("11. Cambria Bold", 415, 378, 375, 24, parent, 411, false)
+	rbFontCambria = createRadio("11. Cambria Bold", 385, 378, 420, 24, parent, 411, false)
 	procSendMessageW.Call(uintptr(rbFontCambria), WM_SETFONT, uintptr(hFontCambria), 1)
 
-	rbFontGothic = createRadio("12. Century Gothic Bold", 415, 403, 375, 24, parent, 412, false)
+	rbFontGothic = createRadio("12. Century Gothic Bold", 385, 403, 420, 24, parent, 412, false)
 	procSendMessageW.Call(uintptr(rbFontGothic), WM_SETFONT, uintptr(hFontGothic), 1)
 
-	rbFontCandara = createRadio("13. Candara Bold", 415, 428, 375, 24, parent, 413, false)
+	rbFontCandara = createRadio("13. Candara Bold", 385, 428, 420, 24, parent, 413, false)
 	procSendMessageW.Call(uintptr(rbFontCandara), WM_SETFONT, uintptr(hFontCandara), 1)
 
-	rbFontConstantia = createRadio("14. Constantia Bold", 415, 453, 375, 24, parent, 414, false)
+	rbFontConstantia = createRadio("14. Constantia Bold", 385, 453, 420, 24, parent, 414, false)
 	procSendMessageW.Call(uintptr(rbFontConstantia), WM_SETFONT, uintptr(hFontConstantia), 1)
 
-	rbFontSegoePrint = createRadio("15. Segoe Print Bold", 415, 478, 375, 24, parent, 415, false)
+	rbFontSegoePrint = createRadio("15. Segoe Print Bold", 385, 478, 420, 24, parent, 415, false)
 	procSendMessageW.Call(uintptr(rbFontSegoePrint), WM_SETFONT, uintptr(hFontSegoePrint), 1)
 
-	rbFontCalibri = createRadio("16. Calibri Bold", 415, 503, 375, 24, parent, 416, false)
+	rbFontCalibri = createRadio("16. Calibri Bold", 385, 503, 420, 24, parent, 416, false)
+	procSendMessageW.Call(uintptr(rbFontCalibri), WM_SETFONT, uintptr(hFontCalibri), 1)
 	procSendMessageW.Call(uintptr(rbFontCalibri), WM_SETFONT, uintptr(hFontCalibri), 1)
 
 	selectCurrentFontRadio()
@@ -1883,6 +1901,14 @@ func updateTexts() {
 	}
 	procSetWindowTextW.Call(uintptr(hwndSettings), uintptr(unsafe.Pointer(strPtr(wTitle))))
 
+	titleText := fmt.Sprintf("GIN-Wallpaper-Calend by VladiMIR+AI [%s]", AppVersion)
+	if cs {
+		titleText = fmt.Sprintf("GIN-Wallpaper-Calend od VladiMIR+AI [%s]", AppVersion)
+	} else if ru {
+		titleText = fmt.Sprintf("GIN-Wallpaper-Calend от VladiMIR+AI [%s]", AppVersion)
+	}
+	setTxt(lblTitle, titleText)
+
 	sampDate := getTodaySampleString()
 
 	if cs {
@@ -1894,9 +1920,9 @@ func updateTexts() {
 		setTxt(cbSpace, "🚀 Vesmír a galaxie (Mlhoviny)")
 		setTxt(cbNature, "🌿 Příroda a krajiny")
 		setTxt(cbAnimals, "🐾 Zvířata a divoká příroda")
-		setTxt(cbCars, "🏎️ Auta a Motocykly")
-		setTxt(cbTrucksOffroad, "🚛 Nákladní auta a Off-Road 4x4")
-		setTxt(cbGirls, "💃 Dívky a Portréty (Estetika SFW)")
+		setTxt(cbCars, "🏎️ Auta a Supersporty")
+		setTxt(cbTrucksOffroad, "🚛 Nákladní auta a Off-Road")
+		setTxt(cbGirls, "👗 Dívky: Modelky a Móda")
 		setTxt(cbCity, "🌆 Města a architektura (Panorama)")
 		setTxt(cbCyberpunk, "⚡ Cyberpunk a neon (Synthwave)")
 		setTxt(cbMinimal, "🖤 Minimalismus a Dark AMOLED")
@@ -1932,9 +1958,9 @@ func updateTexts() {
 		setTxt(cbSpace, "🚀 Космос и Галактики (Nebula)")
 		setTxt(cbNature, "🌿 Природа и пейзажи")
 		setTxt(cbAnimals, "🐾 Животные и Дикая природа")
-		setTxt(cbCars, "🏎️ Автомобили и Мотоциклы")
-		setTxt(cbTrucksOffroad, "🚛 Грузовики и Внедорожники 4x4")
-		setTxt(cbGirls, "💃 Девушки и Портреты (Эстетика SFW)")
+		setTxt(cbCars, "🏎️ Автомобили и Суперкары")
+		setTxt(cbTrucksOffroad, "🚛 Грузовики и Внедорожники")
+		setTxt(cbGirls, "👗 Девушки: Модели и Мода")
 		setTxt(cbCity, "🌆 Города и Архитектура (Skylines)")
 		setTxt(cbCyberpunk, "⚡ Киберпанк и Неон (Synthwave)")
 		setTxt(cbMinimal, "🖤 Минимализм и Dark AMOLED")
@@ -1970,9 +1996,9 @@ func updateTexts() {
 		setTxt(cbSpace, "🚀 Space & Galaxies (Nebula)")
 		setTxt(cbNature, "🌿 Nature & Landscapes")
 		setTxt(cbAnimals, "🐾 Wildlife & Animals")
-		setTxt(cbCars, "🏎️ Cars & Motorcycles")
+		setTxt(cbCars, "🏎️ Cars & Supercars")
 		setTxt(cbTrucksOffroad, "🚛 Trucks & 4x4 Off-Road")
-		setTxt(cbGirls, "💃 Girls & Aesthetic Portraits (SFW)")
+		setTxt(cbGirls, "👗 Girls: Models & Fashion")
 		setTxt(cbCity, "🌆 City & Architecture (Skylines)")
 		setTxt(cbCyberpunk, "⚡ Cyberpunk & Neon (Synthwave)")
 		setTxt(cbMinimal, "🖤 Minimalism & Dark AMOLED")
@@ -2467,6 +2493,18 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		}
 
 		procSetBkMode.Call(hDC, 1)
+
+		if ctrl == lblSep1 || ctrl == lblSep2 {
+			procSetTextColor.Call(hDC, uintptr(rgb(120, 140, 165)))
+			if cfg.ThemeMode == ThemeModeDay {
+				procSetTextColor.Call(hDC, uintptr(rgb(160, 170, 185)))
+				return uintptr(hBrushDay)
+			} else if cfg.ThemeMode == ThemeModeNight {
+				procSetTextColor.Call(hDC, uintptr(rgb(90, 100, 115)))
+				return uintptr(hBrushNight)
+			}
+			return uintptr(hBrushEvening)
+		}
 
 		if isChecked(cbAll) && isThemeCheckbox(ctrl) {
 			if cfg.ThemeMode == ThemeModeDay {
