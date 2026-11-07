@@ -84,10 +84,23 @@ var (
 	procCreatePen             = gdi32.NewProc("CreatePen")
 	procRectangle             = gdi32.NewProc("Rectangle")
 	procGetStockObject        = gdi32.NewProc("GetStockObject")
+	procSetWindowLongPtrW     = user32.NewProc("SetWindowLongPtrW")
+	procCallWindowProcW       = user32.NewProc("CallWindowProcW")
+	procGetWindowTextW        = user32.NewProc("GetWindowTextW")
+	procGetTextExtentPoint32W = gdi32.NewProc("GetTextExtentPoint32W")
+	procMoveToEx              = gdi32.NewProc("MoveToEx")
+	procLineTo                = gdi32.NewProc("LineTo")
+	procGetDC                 = user32.NewProc("GetDC")
+	procReleaseDC             = user32.NewProc("ReleaseDC")
 )
 
+type SIZE struct {
+	CX int32
+	CY int32
+}
+
 const (
-	AppVersion = "v017"
+	AppVersion = "v018"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -322,7 +335,11 @@ var (
 	btnScaleCompact, btnScaleModerate, btnScaleStandard, btnScaleLarge syscall.Handle
 
 	// Action buttons (Bottom)
-	btnApply, btnSave, btnRandom, btnClose, btnFooterVer syscall.Handle
+	btnApply, btnSave, btnRandom, btnClose syscall.Handle
+	btnFooterAuthor, btnFooterUpdate      syscall.Handle
+
+	origCheckboxProc uintptr
+	footerUpdateText string
 
 	ruMonths = []string{"", "января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"}
 	enMonths = []string{"", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
@@ -844,31 +861,30 @@ func initAudioBuffers() {
 	}
 }
 
-// Generates a soft magical celestial chord chime (E maj9 harp arpeggio)
+// Generates an extra-soft, warm, quiet celestial shimmer (peaceful velvet bells)
 func generateChimeWAV() []byte {
 	sampleRate := 22050
-	duration := 1.3
+	duration := 1.2
 	totalSamples := int(float64(sampleRate) * duration)
 	notes := []struct {
 		freq, start, decay, vol float64
 	}{
-		{659.25, 0.00, 1.0, 0.28},
-		{830.61, 0.05, 1.1, 0.26},
-		{987.77, 0.10, 1.2, 0.24},
-		{1244.51, 0.15, 1.1, 0.22},
-		{1479.98, 0.20, 1.0, 0.18},
+		{369.99, 0.00, 1.1, 0.20}, // F#4
+		{466.16, 0.06, 1.2, 0.18}, // A#4
+		{554.37, 0.12, 1.3, 0.16}, // C#5
+		{698.46, 0.18, 1.4, 0.14}, // F5
 	}
 	samples := make([]float64, totalSamples)
 	for _, n := range notes {
 		sIdx := int(n.start * float64(sampleRate))
 		for i := sIdx; i < totalSamples; i++ {
 			t := float64(i-sIdx) / float64(sampleRate)
-			attack := t / 0.015
+			attack := t / 0.040
 			if attack > 1.0 {
 				attack = 1.0
 			}
-			env := attack * math.Exp(-t*(3.5/n.decay))
-			val := math.Sin(2.0*math.Pi*n.freq*t) + 0.2*math.Sin(4.0*math.Pi*n.freq*t)
+			env := attack * math.Exp(-t*(3.2/n.decay))
+			val := math.Sin(2.0*math.Pi*n.freq*t)
 			samples[i] += val * env * n.vol
 		}
 	}
@@ -881,7 +897,8 @@ func generateChimeWAV() []byte {
 	if maxVal == 0.0 {
 		maxVal = 1.0
 	}
-	return buildWAV16Mono(sampleRate, samples, maxVal, 22000)
+	// Gentle, quiet scale amplitude (6000 instead of 22000)
+	return buildWAV16Mono(sampleRate, samples, maxVal, 6000)
 }
 
 // Generates an upbeat double beep-beep signal for silent auto-update
@@ -1049,18 +1066,29 @@ func showContextMenu(hwnd syscall.Handle) {
 
 func triggerCheckForUpdates(manual bool) {
 	go func() {
-		url := "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/version.json"
+		if manual && btnFooterUpdate != 0 {
+			chkMsg := "⏳ Checking..."
+			if isRu() {
+				chkMsg = "⏳ Проверка..."
+			}
+			footerUpdateText = chkMsg
+			procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
+		}
+
+		url := fmt.Sprintf("https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/version.json?t=%d", time.Now().UnixNano())
 		client := &http.Client{Timeout: 8 * time.Second}
 		resp, err := client.Get(url)
 		if err != nil {
-			if manual {
-				t := "Update Check"
-				m := "Unable to connect to update server. Please check your internet connection."
+			if manual && btnFooterUpdate != 0 {
+				errMsg := "❌ Connection Error"
 				if isRu() {
-					t = "Проверка обновлений"
-					m = "Не удалось подключиться к серверу обновлений. Проверьте интернет-соединение."
+					errMsg = "❌ Ошибка сети"
 				}
-				procMessageBoxW.Call(0, uintptr(unsafe.Pointer(strPtr(m))), uintptr(unsafe.Pointer(strPtr(t))), MB_OK|MB_ICONWARN)
+				footerUpdateText = errMsg
+				procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
+				time.Sleep(3 * time.Second)
+				footerUpdateText = ""
+				procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
 			}
 			return
 		}
@@ -1073,31 +1101,31 @@ func triggerCheckForUpdates(manual bool) {
 
 		remoteVer := strings.TrimSpace(info.Version)
 		if remoteVer != "" && remoteVer != AppVersion {
-			if !manual {
-				// Fully automated 2-hour silent update with upbeat double-beep signal!
-				playUpdateBeepBeep()
-				downloadAndApplyUpdate(info.DownloadURL, info.Installer)
-				return
+			// Update available -> Instant silent background install without ANY popups!
+			if manual && btnFooterUpdate != 0 {
+				updMsg := fmt.Sprintf("🚀 Updating to %s...", remoteVer)
+				if isRu() {
+					updMsg = fmt.Sprintf("🚀 Загрузка %s...", remoteVer)
+				}
+				footerUpdateText = updMsg
+				procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
 			}
-			t := "GIN-Wallpaper-Calend — Update Available"
-			m := fmt.Sprintf("A new version is available: %s (current: %s).\n\nDo you want to download and install it now?", remoteVer, AppVersion)
-			if isRu() {
-				t = "GIN-Wallpaper-Calend — Доступно обновление"
-				m = fmt.Sprintf("Доступна новая версия: %s (текущая: %s).\n\nСкачать и установить обновление прямо сейчас?", remoteVer, AppVersion)
-			}
-			r, _, _ := procMessageBoxW.Call(0, uintptr(unsafe.Pointer(strPtr(m))), uintptr(unsafe.Pointer(strPtr(t))), MB_YESNO|MB_ICONINFO)
-			if int(r) == IDYES {
-				playUpdateBeepBeep()
-				downloadAndApplyUpdate(info.DownloadURL, info.Installer)
-			}
+			playUpdateBeepBeep()
+			downloadAndApplyUpdate(info.DownloadURL, info.Installer)
 		} else if manual {
-			t := "GIN-Wallpaper-Calend — Up to Date"
-			m := fmt.Sprintf("✅ You have the latest version installed (%s).", AppVersion)
+			// Up to date -> Display directly inside the button without popups!
+			okMsg := fmt.Sprintf("✔️ Up to date (%s)", AppVersion)
 			if isRu() {
-				t = "GIN-Wallpaper-Calend — Обновление"
-				m = fmt.Sprintf("✅ У вас установлена самая актуальная версия (%s).", AppVersion)
+				okMsg = fmt.Sprintf("✔️ Актуальная версия (%s)", AppVersion)
 			}
-			procMessageBoxW.Call(0, uintptr(unsafe.Pointer(strPtr(m))), uintptr(unsafe.Pointer(strPtr(t))), MB_OK|MB_ICONINFO)
+			footerUpdateText = okMsg
+			procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
+			playSoftChime()
+			time.Sleep(4 * time.Second)
+			footerUpdateText = ""
+			if btnFooterUpdate != 0 {
+				procInvalidateRect.Call(uintptr(btnFooterUpdate), 0, 1)
+			}
 		}
 	}()
 }
@@ -1119,6 +1147,13 @@ func downloadAndApplyUpdate(downUrl, installerName string) {
 	}
 	io.Copy(out, resp.Body)
 	out.Close()
+
+	// Cleanly hide settings window and remove tray icon before starting installer
+	if hwndSettings != 0 {
+		procDestroyWindow.Call(uintptr(hwndSettings))
+		hwndSettings = 0
+	}
+	procShell_NotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 
 	cmd := exec.Command(tmpExe)
 	cmd.Start()
@@ -1439,8 +1474,20 @@ func createControls(parent syscall.Handle) {
 	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 604, 182, 42, parent, 603))
 	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 604, 182, 42, parent, 604))
 
-	// Centered Bottom Footer Version & Update Button (Y = 656, Width = 380, Height = 30)
-	btnFooterVer = syscall.Handle(createCtrl(btnClass, "VladiMIR + AI | v017 | (update)", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 220, 656, 380, 30, parent, 605))
+	// Bottom Footer: Separated Author & Update Buttons (Y = 654, Height = 36)
+	btnFooterAuthor = syscall.Handle(createCtrl(btnClass, "⭐ VladiMIR + AI", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 25, 654, 374, 36, parent, 606))
+	btnFooterUpdate = syscall.Handle(createCtrl(btnClass, fmt.Sprintf("%s (update)", AppVersion), WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 409, 654, 374, 36, parent, 605))
+
+	// Subclass individual checkboxes for crisp 100% GDI strikethrough lines
+	if origCheckboxProc == 0 {
+		cbProc := syscall.NewCallback(themeCheckboxWndProc)
+		for _, it := range getIndividualThemeCheckboxes() {
+			p, _, _ := procSetWindowLongPtrW.Call(uintptr(it.h), uintptr(uint64(0xFFFFFFFFFFFFFFFC)), cbProc) // GWLP_WNDPROC = -4
+			if p != 0 && origCheckboxProc == 0 {
+				origCheckboxProc = p
+			}
+		}
+	}
 }
 
 func getTodaySampleString() string {
@@ -1525,6 +1572,49 @@ func isThemeCheckbox(h syscall.Handle) bool {
 	return h == cb3DAbstract || h == cbFlowers || h == cbOcean || h == cbSpace ||
 		h == cbNature || h == cbCars || h == cbCity || h == cbCyberpunk ||
 		h == cbMinimal || h == cbAnimals || h == cbAnime
+}
+
+func themeCheckboxWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
+	ret, _, _ := procCallWindowProcW.Call(origCheckboxProc, uintptr(hwnd), uintptr(msg), wParam, lParam)
+
+	if msg == 0x000F && isChecked(cbAll) { // WM_PAINT = 0x000F
+		hDC, _, _ := procGetDC.Call(uintptr(hwnd))
+		if hDC != 0 {
+			var rc RECT
+			procGetClientRect.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&rc)))
+
+			buf := make([]uint16, 256)
+			tLen, _, _ := procGetWindowTextW.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&buf[0])), 256)
+			textWidth := int32(0)
+			if tLen > 0 {
+				var sz SIZE
+				oldFont, _, _ := procSelectObject.Call(hDC, uintptr(hUIFont))
+				procGetTextExtentPoint32W.Call(hDC, uintptr(unsafe.Pointer(&buf[0])), tLen, uintptr(unsafe.Pointer(&sz)))
+				procSelectObject.Call(hDC, oldFont)
+				textWidth = sz.CX
+			}
+			if textWidth <= 0 || textWidth > rc.Right-24 {
+				textWidth = rc.Right - 26
+			}
+
+			midY := (rc.Top + rc.Bottom) / 2
+			lineCol := rgb(140, 150, 165)
+			if cfg.ThemeMode == ThemeModeDay {
+				lineCol = rgb(150, 155, 165)
+			} else if cfg.ThemeMode == ThemeModeNight {
+				lineCol = rgb(115, 125, 140)
+			}
+
+			hPen, _, _ := procCreatePen.Call(0, 1, uintptr(lineCol))
+			oldPen, _, _ := procSelectObject.Call(hDC, hPen)
+			procMoveToEx.Call(hDC, 20, uintptr(midY), 0)
+			procLineTo.Call(hDC, uintptr(22+textWidth), uintptr(midY))
+			procSelectObject.Call(hDC, oldPen)
+			procDeleteObject.Call(hPen)
+			procReleaseDC.Call(uintptr(hwnd), hDC)
+		}
+	}
+	return ret
 }
 
 func updateThemeCheckboxesState() {
@@ -1861,7 +1951,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 		hFont = uintptr(hUIFontBold)
 
-	// Section 2: Intervals (4 buttons, same size & gray color as Close button)
+	// Section 2: Intervals (Selected button glows rich green matching Apply button!)
 	case 301, 302, 303, 304:
 		var targetHours int
 		switch dis.CtlID {
@@ -1892,7 +1982,8 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 		if cfg.IntervalHours == targetHours {
-			bgCol = rgb(80, 105, 118)
+			// Rich green background like Apply button!
+			bgCol = rgb(46, 125, 50)
 			borderCol = rgb(0, 230, 118)
 			textCol = rgb(255, 255, 255)
 		} else {
@@ -1902,7 +1993,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 		hFont = uintptr(hUIFontBold)
 
-	// Section 4: Scale (4 buttons: Compact, Moderate, Standard, Large with font size sample)
+	// Section 4: Scale (Selected button glows rich green matching Apply button!)
 	case 451, 452, 453, 454:
 		var isSelected bool
 		switch dis.CtlID {
@@ -1937,7 +2028,8 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		}
 
 		if isSelected {
-			bgCol = rgb(80, 105, 118)
+			// Rich green background like Apply button!
+			bgCol = rgb(46, 125, 50)
 			borderCol = rgb(0, 230, 118)
 			textCol = rgb(255, 255, 255)
 		} else {
@@ -1983,10 +2075,14 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 		borderCol = rgb(120, 144, 156)
 		textCol = rgb(240, 240, 240)
 
-	case 605:
-		btnText = fmt.Sprintf("VladiMIR + AI | %s | (update)", AppVersion)
-		if isRu() {
-			btnText = fmt.Sprintf("VladiMIR + AI | %s | (обновить)", AppVersion)
+	case 605: // Footer Update Button
+		if footerUpdateText != "" {
+			btnText = footerUpdateText
+		} else {
+			btnText = fmt.Sprintf("%s (update)", AppVersion)
+			if isRu() {
+				btnText = fmt.Sprintf("%s (обновить)", AppVersion)
+			}
 		}
 		if cfg.ThemeMode == ThemeModeDay {
 			bgCol = rgb(235, 240, 250)
@@ -2001,7 +2097,24 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			borderCol = rgb(80, 95, 120)
 			textCol = rgb(129, 212, 250)
 		}
-		hFont = uintptr(hUIFontSm)
+		hFont = uintptr(hUIFontBold)
+
+	case 606: // Footer Author GitHub Button
+		btnText = "⭐ VladiMIR + AI"
+		if cfg.ThemeMode == ThemeModeDay {
+			bgCol = rgb(240, 244, 252)
+			borderCol = rgb(185, 200, 225)
+			textCol = rgb(25, 95, 195)
+		} else if cfg.ThemeMode == ThemeModeNight {
+			bgCol = rgb(32, 38, 52)
+			borderCol = rgb(70, 90, 125)
+			textCol = rgb(135, 195, 255)
+		} else {
+			bgCol = rgb(50, 60, 78)
+			borderCol = rgb(90, 110, 140)
+			textCol = rgb(145, 205, 255)
+		}
+		hFont = uintptr(hUIFontBold)
 	}
 
 	if isPressed {
@@ -2013,6 +2126,7 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 	procFillRect.Call(hDC, uintptr(unsafe.Pointer(&rc)), hBrush)
 	procDeleteObject.Call(hBrush)
 
+	// Outer border
 	hPen, _, _ := procCreatePen.Call(0, 2, uintptr(borderCol))
 	oldPen, _, _ := procSelectObject.Call(hDC, hPen)
 	hNullBrush, _, _ := procGetStockObject.Call(5)
@@ -2021,6 +2135,43 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 	procSelectObject.Call(hDC, oldPen)
 	procSelectObject.Call(hDC, oldBrush)
 	procDeleteObject.Call(hPen)
+
+	// Volumetric 3D Bevel (Inner Highlight on top/left, Shadow on bottom/right)
+	clampCol := func(v int) int {
+		if v < 0 { return 0 }
+		if v > 255 { return 255 }
+		return v
+	}
+	shiftColor := func(c uint32, amt int) uint32 {
+		r := clampCol(int(c&0xFF) + amt)
+		g := clampCol(int((c>>8)&0xFF) + amt)
+		b := clampCol(int((c>>16)&0xFF) + amt)
+		return uint32(r | (g << 8) | (b << 16))
+	}
+
+	hiColor := shiftColor(bgCol, 36)
+	shColor := shiftColor(bgCol, -36)
+	if isPressed {
+		hiColor, shColor = shColor, hiColor
+	}
+
+	hPenHi, _, _ := procCreatePen.Call(0, 1, uintptr(hiColor))
+	oldPenHi, _, _ := procSelectObject.Call(hDC, hPenHi)
+	procMoveToEx.Call(hDC, uintptr(rc.Left+2), uintptr(rc.Top+2), 0)
+	procLineTo.Call(hDC, uintptr(rc.Right-2), uintptr(rc.Top+2))
+	procMoveToEx.Call(hDC, uintptr(rc.Left+2), uintptr(rc.Top+2), 0)
+	procLineTo.Call(hDC, uintptr(rc.Left+2), uintptr(rc.Bottom-2))
+	procSelectObject.Call(hDC, oldPenHi)
+	procDeleteObject.Call(hPenHi)
+
+	hPenSh, _, _ := procCreatePen.Call(0, 1, uintptr(shColor))
+	oldPenSh, _, _ := procSelectObject.Call(hDC, hPenSh)
+	procMoveToEx.Call(hDC, uintptr(rc.Left+2), uintptr(rc.Bottom-3), 0)
+	procLineTo.Call(hDC, uintptr(rc.Right-2), uintptr(rc.Bottom-3))
+	procMoveToEx.Call(hDC, uintptr(rc.Right-3), uintptr(rc.Top+2), 0)
+	procLineTo.Call(hDC, uintptr(rc.Right-3), uintptr(rc.Bottom-2))
+	procSelectObject.Call(hDC, oldPenSh)
+	procDeleteObject.Call(hPenSh)
 
 	procSetBkMode.Call(hDC, 1)
 	procSetTextColor.Call(hDC, uintptr(textCol))
@@ -2303,8 +2454,12 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			hwndSettings = 0
 			return 0
 
-		case 605: // Footer Check for updates button
+		case 605: // Footer Update Button
 			triggerCheckForUpdates(true)
+			return 0
+
+		case 606: // Footer Author GitHub Button
+			procShellExecuteW.Call(0, uintptr(unsafe.Pointer(strPtr("open"))), uintptr(unsafe.Pointer(strPtr("https://github.com/GinCz"))), 0, 0, 1)
 			return 0
 		}
 

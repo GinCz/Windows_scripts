@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 	"unsafe"
@@ -68,7 +69,9 @@ func runSelfAsAdmin() {
 	vPtr, _ := syscall.UTF16PtrFromString("runas")
 	fPtr, _ := syscall.UTF16PtrFromString(exe)
 	dPtr, _ := syscall.UTF16PtrFromString(cwd)
-	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(fPtr)), 0, uintptr(unsafe.Pointer(dPtr)), 1)
+	args := strings.Join(os.Args[1:], " ")
+	aPtr, _ := syscall.UTF16PtrFromString(args)
+	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(fPtr)), uintptr(unsafe.Pointer(aPtr)), uintptr(unsafe.Pointer(dPtr)), 1)
 }
 
 func isAdmin() bool {
@@ -116,16 +119,27 @@ func main() {
 		return
 	}
 
-	ru := isRussianLocale()
-	title := "GIN-Wallpaper-Calend v017 — Setup"
-	qInstall := "Install GIN-Wallpaper-Calend v017 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
-	if ru {
-		title = "GIN-Wallpaper-Calend v017 — Установка"
-		qInstall = "Установить GIN-Wallpaper-Calend v017 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+	isSilent := false
+	for _, a := range os.Args[1:] {
+		low := strings.ToLower(a)
+		if low == "/s" || low == "/silent" || low == "/verysilent" || low == "-s" || low == "--silent" {
+			isSilent = true
+			break
+		}
 	}
 
-	if msgBox(title, qInstall, MB_YESNO|MB_ICONINFO) != IDYES {
-		return
+	ru := isRussianLocale()
+	title := "GIN-Wallpaper-Calend v018 — Setup"
+	qInstall := "Install GIN-Wallpaper-Calend v018 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+	if ru {
+		title = "GIN-Wallpaper-Calend v018 — Установка"
+		qInstall = "Установить GIN-Wallpaper-Calend v018 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+	}
+
+	if !isSilent {
+		if msgBox(title, qInstall, MB_YESNO|MB_ICONINFO) != IDYES {
+			return
+		}
 	}
 
 	// Terminate previous running instances
@@ -158,12 +172,12 @@ func main() {
 
 	// 4. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v017 — Smart Wallpaper with Calendar"
+	dispName := "GIN-Wallpaper-Calend v018 — Smart Wallpaper with Calendar"
 	if ru {
-		dispName = "GIN-Wallpaper-Calend v017 — Умные обои с календарём"
+		dispName = "GIN-Wallpaper-Calend v018 — Умные обои с календарём"
 	}
 	exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v017", "/f").Run()
+	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v018", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, icoDest), "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "InstallLocation", "/t", "REG_SZ", "/d", targetDir, "/f").Run()
@@ -182,9 +196,11 @@ func main() {
 	cmd.Dir = targetDir
 	cmd.Start()
 
-	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v017 is now running in your system tray (bottom-right near clock).\nRight click the tray icon for Settings, fonts and wallpaper themes."
-	if ru {
-		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v017 запущен в системном трее (в правом нижнем углу возле часов).\nКликните правой кнопкой мыши по иконке для открытия Настроек, выбора шрифтов и тематики обоев."
+	if !isSilent {
+		successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v018 is now running in your system tray (bottom-right near clock).\nRight click the tray icon for Settings, fonts and wallpaper themes."
+		if ru {
+			successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v018 запущен в системном трее (в правом нижнем углу возле часов).\nКликните правой кнопкой мыши по иконке для открытия Настроек, выбора шрифтов и тематики обоев."
+		}
+		msgBox(title, successMsg, MB_OK|MB_ICONINFO)
 	}
-	msgBox(title, successMsg, MB_OK|MB_ICONINFO)
 }
