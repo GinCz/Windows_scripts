@@ -117,11 +117,11 @@ func main() {
 	}
 
 	ru := isRussianLocale()
-	title := "GIN-Wallpaper-Calend v016 — Setup"
-	qInstall := "Install GIN-Wallpaper-Calend v016 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+	title := "GIN-Wallpaper-Calend v017 — Setup"
+	qInstall := "Install GIN-Wallpaper-Calend v017 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
 	if ru {
-		title = "GIN-Wallpaper-Calend v016 — Установка"
-		qInstall = "Установить GIN-Wallpaper-Calend v016 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
+		title = "GIN-Wallpaper-Calend v017 — Установка"
+		qInstall = "Установить GIN-Wallpaper-Calend v017 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
 	}
 
 	if msgBox(title, qInstall, MB_YESNO|MB_ICONINFO) != IDYES {
@@ -158,12 +158,12 @@ func main() {
 
 	// 4. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v016 — Smart Wallpaper with Calendar"
+	dispName := "GIN-Wallpaper-Calend v017 — Smart Wallpaper with Calendar"
 	if ru {
-		dispName = "GIN-Wallpaper-Calend v016 — Умные обои с календарём"
+		dispName = "GIN-Wallpaper-Calend v017 — Умные обои с календарём"
 	}
 	exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v016", "/f").Run()
+	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v017", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, icoDest), "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "InstallLocation", "/t", "REG_SZ", "/d", targetDir, "/f").Run()
@@ -182,9 +182,9 @@ func main() {
 	cmd.Dir = targetDir
 	cmd.Start()
 
-	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v016 is now running in your system tray (bottom-right near clock).\nRight click the tray icon for Settings, fonts and wallpaper themes."
+	successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v017 is now running in your system tray (bottom-right near clock).\nRight click the tray icon for Settings, fonts and wallpaper themes."
 	if ru {
-		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v016 запущен в системном трее (в правом нижнем углу возле часов).\nКликните правой кнопкой мыши по иконке для открытия Настроек, выбора шрифтов и тематики обоев."
+		successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v017 запущен в системном трее (в правом нижнем углу возле часов).\nКликните правой кнопкой мыши по иконке для открытия Настроек, выбора шрифтов и тематики обоев."
 	}
 	msgBox(title, successMsg, MB_OK|MB_ICONINFO)
 }

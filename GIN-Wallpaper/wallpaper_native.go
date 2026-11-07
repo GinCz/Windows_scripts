@@ -87,7 +87,7 @@ var (
 )
 
 const (
-	AppVersion = "v016"
+	AppVersion = "v017"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -163,6 +163,7 @@ type Config struct {
 	FontStyle     string   `json:"font_style"`
 	ThemeMode     int      `json:"theme_mode"`
 	Lang          string   `json:"lang"`
+	SoundMuted    bool     `json:"sound_muted"`
 }
 
 type RemoteVersionInfo struct {
@@ -279,6 +280,11 @@ var (
 	hFontCandara    syscall.Handle
 	hFontConstantia syscall.Handle
 	hFontBigPrev    syscall.Handle
+	hUIFontStrike   syscall.Handle
+	hFontScale1     syscall.Handle
+	hFontScale2     syscall.Handle
+	hFontScale3     syscall.Handle
+	hFontScale4     syscall.Handle
 
 	// Section Dividers (Thin neat horizontal lines)
 	divThemes   syscall.Handle
@@ -299,20 +305,21 @@ var (
 	// Top Bar Buttons
 	btnModeDay, btnModeEvening, btnModeNight syscall.Handle
 	btnLangEN, btnLangRU                     syscall.Handle
+	btnSound                                 syscall.Handle
 
 	// Checkboxes - Themes (12)
 	cbAll, cb3DAbstract, cbFlowers, cbOcean, cbSpace, cbNature syscall.Handle
 	cbCars, cbCity, cbCyberpunk, cbMinimal, cbAnimals, cbAnime syscall.Handle
 
-	// Radio buttons - Intervals (4)
-	rb1h, rb3h, rb6h, rb24h syscall.Handle
+	// Buttons - Intervals (4 buttons matching bottom action buttons style)
+	btnInt1h, btnInt3h, btnInt6h, btnInt24h syscall.Handle
 
 	// Radio buttons - Font styles (12 fonts in 2 columns, single-line format)
 	rbFontSegoe, rbFontBahn, rbFontArial, rbFontVerdana, rbFontGeorgia, rbFontCorbel syscall.Handle
 	rbFontConsolas, rbFontTreb, rbFontCambria, rbFontGothic, rbFontCandara, rbFontConstantia syscall.Handle
 
-	// Radio buttons - Font scale (5 variants: 1.4x, 1.7x, 2.0x, 2.25x, 2.8x)
-	rbFontScale1, rbFontScale2, rbFontScale3, rbFontScale4, rbFontScale5 syscall.Handle
+	// Buttons - Font scale (4 buttons: Compact, Moderate, Standard, Large with font size sample)
+	btnScaleCompact, btnScaleModerate, btnScaleStandard, btnScaleLarge syscall.Handle
 
 	// Action buttons (Bottom)
 	btnApply, btnSave, btnRandom, btnClose, btnFooterVer syscall.Handle
@@ -945,6 +952,9 @@ func buildWAV16Mono(sampleRate int, samples []float64, maxVal float64, scaleAmp 
 }
 
 func playSoftChime() {
+	if cfg.SoundMuted {
+		return
+	}
 	go func() {
 		initAudioBuffers()
 		if len(chimeWAVBytes) > 0 {
@@ -954,6 +964,9 @@ func playSoftChime() {
 }
 
 func playUpdateBeepBeep() {
+	if cfg.SoundMuted {
+		return
+	}
 	initAudioBuffers()
 	if len(beepBeepWAVBytes) > 0 {
 		procPlaySoundW.Call(uintptr(unsafe.Pointer(&beepBeepWAVBytes[0])), 0, uintptr(SND_MEMORY|SND_SYNC|SND_NODEFAULT))
@@ -1202,6 +1215,30 @@ func initFonts() {
 		h, _, _ := procCreateFontW.Call(uintptr(24), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
 		hFontBigPrev = syscall.Handle(h)
 	}
+
+	// Strikethrough Font for disabled/inactive themes (Segoe UI 17px with StrikeOut=1)
+	if hUIFontStrike == 0 {
+		hFS, _, _ := procCreateFontW.Call(uintptr(17), 0, 0, 0, 400, 0, 0, 1, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
+		hUIFontStrike = syscall.Handle(hFS)
+	}
+
+	// Scale Button Sample Fonts (4 distinct sizes)
+	if hFontScale1 == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(14), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
+		hFontScale1 = syscall.Handle(h)
+	}
+	if hFontScale2 == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(17), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
+		hFontScale2 = syscall.Handle(h)
+	}
+	if hFontScale3 == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(20), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
+		hFontScale3 = syscall.Handle(h)
+	}
+	if hFontScale4 == 0 {
+		h, _, _ := procCreateFontW.Call(uintptr(24), 0, 0, 0, 700, 0, 0, 0, 1, 0, 0, 0, 0, uintptr(unsafe.Pointer(strPtr("Segoe UI"))))
+		hFontScale4 = syscall.Handle(h)
+	}
 }
 
 func createSettingsWindow() {
@@ -1215,7 +1252,7 @@ func createSettingsWindow() {
 	initFonts()
 
 	screenW, screenH := getRealScreenResolution()
-	winW, winH := 820, 710
+	winW, winH := 820, 740
 	posX := 50
 	posY := 20
 	if posX+winW > screenW {
@@ -1266,26 +1303,28 @@ func createControls(parent syscall.Handle) {
 	btnClass := strPtr("BUTTON")
 	staticClass := strPtr("STATIC")
 
-	// 1. Top Header bar: Title on Left, Themes & Languages on Right
+	// 1. Top Header bar: Title on Left, Themes & Languages & Sound on Right
 	titleText := fmt.Sprintf("GIN-Wallpaper-Calend от VladiMIR+AI [%s]", AppVersion)
-	lblTitle = syscall.Handle(createCtrl(staticClass, titleText, WS_CHILD|WS_VISIBLE, 20, 14, 350, 26, parent, 10))
+	lblTitle = syscall.Handle(createCtrl(staticClass, titleText, WS_CHILD|WS_VISIBLE, 20, 12, 310, 26, parent, 10))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblTitle), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	// Header Mode Buttons: Day, Evening, Night, EN, RU
-	btnModeDay = syscall.Handle(createCtrl(btnClass, "☀️", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 410, 10, 42, 30, parent, 101))
-	btnModeEvening = syscall.Handle(createCtrl(btnClass, "⛅", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 456, 10, 42, 30, parent, 102))
-	btnModeNight = syscall.Handle(createCtrl(btnClass, "🌙", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 502, 10, 42, 30, parent, 103))
+	// Header Mode Buttons: Day, Evening, Night, EN, RU, Sound Toggle
+	btnModeDay = syscall.Handle(createCtrl(btnClass, "☀️", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 335, 10, 38, 30, parent, 101))
+	btnModeEvening = syscall.Handle(createCtrl(btnClass, "⛅", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 377, 10, 38, 30, parent, 102))
+	btnModeNight = syscall.Handle(createCtrl(btnClass, "🌙", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 419, 10, 38, 30, parent, 103))
 
-	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 565, 10, 52, 30, parent, 104))
-	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 622, 10, 52, 30, parent, 105))
+	btnLangEN = syscall.Handle(createCtrl(btnClass, "EN", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 471, 10, 46, 30, parent, 104))
+	btnLangRU = syscall.Handle(createCtrl(btnClass, "RU", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 521, 10, 46, 30, parent, 105))
+
+	btnSound = syscall.Handle(createCtrl(btnClass, "🔊 Sound ON", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 581, 10, 202, 30, parent, 106))
 
 	// Divider 1: Above Themes (Full Width)
-	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 46, 760, 1, parent, 51))
+	divThemes = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 46, 820, 1, parent, 51))
 
 	// Section 1: Themes (12 Checkboxes in 2 columns: All Random + 11 Categories)
-	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Themes / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 54, 680, 20, parent, 11))
+	lblSecThemes = syscall.Handle(createCtrl(staticClass, "🎨 Wallpaper Themes / Тематика обоев:", WS_CHILD|WS_VISIBLE, 20, 54, 780, 20, parent, 11))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecThemes), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
@@ -1309,104 +1348,99 @@ func createControls(parent syscall.Handle) {
 	selectCurrentThemeCheckboxes()
 
 	// Divider 2: Between Themes and Intervals (Full Width)
-	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 214, 760, 1, parent, 52))
+	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 214, 820, 1, parent, 52))
 
-	// Section 2: Intervals
-	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 222, 680, 20, parent, 12))
+	// Section 2: Intervals (4 Buttons: 1 hour, 3 hours, 6 hours, Once a day - exactly matching action buttons style)
+	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 222, 780, 20, parent, 12))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecInt), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rb1h = createRadio("1 hour", 30, 244, 120, 22, parent, 301, true) // WS_GROUP start
-	rb3h = createRadio("3 hours (Recommended)", 160, 244, 200, 22, parent, 302, false)
-	rb6h = createRadio("6 hours", 370, 244, 120, 22, parent, 303, false)
-	rb24h = createRadio("24 hours (Daily)", 510, 244, 150, 22, parent, 304, false)
-
-	selectCurrentIntervalRadio()
+	btnInt1h = syscall.Handle(createCtrl(btnClass, "1 hour", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 246, 182, 40, parent, 301))
+	btnInt3h = syscall.Handle(createCtrl(btnClass, "3 hours", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 246, 182, 40, parent, 302))
+	btnInt6h = syscall.Handle(createCtrl(btnClass, "6 hours", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 246, 182, 40, parent, 303))
+	btnInt24h = syscall.Handle(createCtrl(btnClass, "Once a day", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 246, 182, 40, parent, 304))
 
 	// Divider 3: Between Intervals and Fonts (Full Width)
-	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 274, 820, 1, parent, 53))
+	divFonts = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 296, 820, 1, parent, 53))
 
 	// Section 3: Fonts (12 Distinct Choices in 2 Columns, Single-Line with Date Sample)
-	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options):", WS_CHILD|WS_VISIBLE, 20, 282, 780, 20, parent, 13))
+	lblSecFonts = syscall.Handle(createCtrl(staticClass, "🔤 Calendar Font Choices (12 Options):", WS_CHILD|WS_VISIBLE, 20, 304, 780, 20, parent, 13))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecFonts), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
 	// Column 1 (Left): Fonts 1 to 6 (X = 25, W = 375)
-	rbFontSegoe = createRadio("1. Segoe UI Bold", 25, 304, 375, 24, parent, 401, true) // WS_GROUP start
+	rbFontSegoe = createRadio("1. Segoe UI Bold", 25, 328, 375, 24, parent, 401, true) // WS_GROUP start
 	procSendMessageW.Call(uintptr(rbFontSegoe), WM_SETFONT, uintptr(hFontSegoe), 1)
 
-	rbFontBahn = createRadio("2. Bahnschrift", 25, 329, 375, 24, parent, 402, false)
+	rbFontBahn = createRadio("2. Bahnschrift", 25, 353, 375, 24, parent, 402, false)
 	procSendMessageW.Call(uintptr(rbFontBahn), WM_SETFONT, uintptr(hFontBahn), 1)
 
-	rbFontArial = createRadio("3. Arial", 25, 354, 375, 24, parent, 403, false)
+	rbFontArial = createRadio("3. Arial", 25, 378, 375, 24, parent, 403, false)
 	procSendMessageW.Call(uintptr(rbFontArial), WM_SETFONT, uintptr(hFontArial), 1)
 
-	rbFontVerdana = createRadio("4. Verdana", 25, 379, 375, 24, parent, 404, false)
+	rbFontVerdana = createRadio("4. Verdana", 25, 403, 375, 24, parent, 404, false)
 	procSendMessageW.Call(uintptr(rbFontVerdana), WM_SETFONT, uintptr(hFontVerdana), 1)
 
-	rbFontGeorgia = createRadio("5. Georgia Bold", 25, 404, 375, 24, parent, 405, false)
+	rbFontGeorgia = createRadio("5. Georgia Bold", 25, 428, 375, 24, parent, 405, false)
 	procSendMessageW.Call(uintptr(rbFontGeorgia), WM_SETFONT, uintptr(hFontGeorgia), 1)
 
-	rbFontCorbel = createRadio("6. Corbel Bold", 25, 429, 375, 24, parent, 406, false)
+	rbFontCorbel = createRadio("6. Corbel Bold", 25, 453, 375, 24, parent, 406, false)
 	procSendMessageW.Call(uintptr(rbFontCorbel), WM_SETFONT, uintptr(hFontCorbel), 1)
 
 	// Column 2 (Right): Fonts 7 to 12 (X = 415, W = 375)
-	rbFontConsolas = createRadio("7. Consolas Bold", 415, 304, 375, 24, parent, 407, false)
+	rbFontConsolas = createRadio("7. Consolas Bold", 415, 328, 375, 24, parent, 407, false)
 	procSendMessageW.Call(uintptr(rbFontConsolas), WM_SETFONT, uintptr(hFontConsolas), 1)
 
-	rbFontTreb = createRadio("8. Trebuchet MS Bold", 415, 329, 375, 24, parent, 408, false)
+	rbFontTreb = createRadio("8. Trebuchet MS Bold", 415, 353, 375, 24, parent, 408, false)
 	procSendMessageW.Call(uintptr(rbFontTreb), WM_SETFONT, uintptr(hFontTreb), 1)
 
-	rbFontCambria = createRadio("9. Cambria Bold", 415, 354, 375, 24, parent, 409, false)
+	rbFontCambria = createRadio("9. Cambria Bold", 415, 378, 375, 24, parent, 409, false)
 	procSendMessageW.Call(uintptr(rbFontCambria), WM_SETFONT, uintptr(hFontCambria), 1)
 
-	rbFontGothic = createRadio("10. Century Gothic Bold", 415, 379, 375, 24, parent, 410, false)
+	rbFontGothic = createRadio("10. Century Gothic Bold", 415, 403, 375, 24, parent, 410, false)
 	procSendMessageW.Call(uintptr(rbFontGothic), WM_SETFONT, uintptr(hFontGothic), 1)
 
-	rbFontCandara = createRadio("11. Candara Bold", 415, 404, 375, 24, parent, 411, false)
+	rbFontCandara = createRadio("11. Candara Bold", 415, 428, 375, 24, parent, 411, false)
 	procSendMessageW.Call(uintptr(rbFontCandara), WM_SETFONT, uintptr(hFontCandara), 1)
 
-	rbFontConstantia = createRadio("12. Constantia Bold", 415, 429, 375, 24, parent, 412, false)
+	rbFontConstantia = createRadio("12. Constantia Bold", 415, 453, 375, 24, parent, 412, false)
 	procSendMessageW.Call(uintptr(rbFontConstantia), WM_SETFONT, uintptr(hFontConstantia), 1)
 
 	selectCurrentFontRadio()
 
 	// Divider 4: Between Fonts and Scale (Full Width)
-	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 460, 820, 1, parent, 54))
+	divScale = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 487, 820, 1, parent, 54))
 
-	// Section 4: Scale (5 options)
-	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 468, 780, 20, parent, 14))
+	// Section 4: Scale (4 buttons: Compact, Moderate, Standard, Large with font size samples)
+	lblSecScale = syscall.Handle(createCtrl(staticClass, "🔍 Calendar Scale / Размер календаря:", WS_CHILD|WS_VISIBLE, 20, 495, 780, 20, parent, 14))
 	if hUIFontBold != 0 {
 		procSendMessageW.Call(uintptr(lblSecScale), WM_SETFONT, uintptr(hUIFontBold), 1)
 	}
 
-	rbFontScale1 = createRadio("Compact (1.4x)", 25, 492, 145, 22, parent, 451, true) // WS_GROUP start
-	rbFontScale2 = createRadio("Medium (1.7x)", 175, 492, 145, 22, parent, 452, false)
-	rbFontScale3 = createRadio("Standard (2.0x)", 325, 492, 165, 22, parent, 453, false)
-	rbFontScale4 = createRadio("Large (2.25x)", 495, 492, 150, 22, parent, 454, false)
-	rbFontScale5 = createRadio("Huge (2.8x)", 650, 492, 145, 22, parent, 455, false)
-
-	selectCurrentScaleRadio()
+	btnScaleCompact = syscall.Handle(createCtrl(btnClass, "Compact", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 519, 182, 42, parent, 451))
+	btnScaleModerate = syscall.Handle(createCtrl(btnClass, "Moderate", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 519, 182, 42, parent, 452))
+	btnScaleStandard = syscall.Handle(createCtrl(btnClass, "Standard", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 519, 182, 42, parent, 453))
+	btnScaleLarge = syscall.Handle(createCtrl(btnClass, "Large", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 519, 182, 42, parent, 454))
 
 	// Divider 5: Between Scale and Status / Buttons (Full Width)
-	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 524, 820, 1, parent, 55))
+	divBottom = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 571, 820, 1, parent, 55))
 
 	// Status Info Label
-	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 532, 780, 20, parent, 505))
+	lblStatusInfo = syscall.Handle(createCtrl(staticClass, "Ready. Click 'Apply Now' to change desktop wallpaper immediately.", WS_CHILD|WS_VISIBLE, 25, 579, 780, 20, parent, 505))
 	if hUIFontSm != 0 {
 		procSendMessageW.Call(uintptr(lblStatusInfo), WM_SETFONT, uintptr(hUIFontSm), 1)
 	}
 
-	// Bottom Action Buttons (Y = 560, Height = 42)
-	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 560, 182, 42, parent, 601))
-	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 560, 182, 42, parent, 602))
-	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 560, 182, 42, parent, 603))
-	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 560, 182, 42, parent, 604))
+	// Bottom Action Buttons (Y = 604, Height = 42)
+	btnApply = syscall.Handle(createCtrl(btnClass, "⚡ Apply Now", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_GROUP|WS_TABSTOP, 25, 604, 182, 42, parent, 601))
+	btnSave = syscall.Handle(createCtrl(btnClass, "💾 Save & Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 217, 604, 182, 42, parent, 602))
+	btnRandom = syscall.Handle(createCtrl(btnClass, "🎲 Random Theme", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 409, 604, 182, 42, parent, 603))
+	btnClose = syscall.Handle(createCtrl(btnClass, "Close", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW, 601, 604, 182, 42, parent, 604))
 
-	// Centered Bottom Footer Version & Update Button (Y = 618, Width = 380, Height = 30)
-	btnFooterVer = syscall.Handle(createCtrl(btnClass, "VladiMIR + AI | v016 | (обновить)", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 220, 618, 380, 30, parent, 605))
+	// Centered Bottom Footer Version & Update Button (Y = 656, Width = 380, Height = 30)
+	btnFooterVer = syscall.Handle(createCtrl(btnClass, "VladiMIR + AI | v017 | (update)", WS_CHILD|WS_VISIBLE|BS_OWNERDRAW|WS_TABSTOP, 220, 656, 380, 30, parent, 605))
 }
 
 func getTodaySampleString() string {
@@ -1487,13 +1521,21 @@ func getIndividualThemeCheckboxes() []ThemeCheckboxInfo {
 	}
 }
 
+func isThemeCheckbox(h syscall.Handle) bool {
+	return h == cb3DAbstract || h == cbFlowers || h == cbOcean || h == cbSpace ||
+		h == cbNature || h == cbCars || h == cbCity || h == cbCyberpunk ||
+		h == cbMinimal || h == cbAnimals || h == cbAnime
+}
+
 func updateThemeCheckboxesState() {
 	allChecked := isChecked(cbAll)
 	items := getIndividualThemeCheckboxes()
 	for _, it := range items {
-		enableCtrl(it.h, !allChecked)
 		if allChecked {
 			procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_UNCHECKED, 0)
+			procSendMessageW.Call(uintptr(it.h), WM_SETFONT, uintptr(hUIFontStrike), 1)
+		} else {
+			procSendMessageW.Call(uintptr(it.h), WM_SETFONT, uintptr(hUIFont), 1)
 		}
 		procInvalidateRect.Call(uintptr(it.h), 0, 1)
 	}
@@ -1517,7 +1559,7 @@ func selectCurrentThemeCheckboxes() {
 		procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_CHECKED, 0)
 		for _, it := range items {
 			procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_UNCHECKED, 0)
-			enableCtrl(it.h, false)
+			procSendMessageW.Call(uintptr(it.h), WM_SETFONT, uintptr(hUIFontStrike), 1)
 			procInvalidateRect.Call(uintptr(it.h), 0, 1)
 		}
 	} else {
@@ -1531,7 +1573,7 @@ func selectCurrentThemeCheckboxes() {
 		}
 		anyChecked := false
 		for _, it := range items {
-			enableCtrl(it.h, true)
+			procSendMessageW.Call(uintptr(it.h), WM_SETFONT, uintptr(hUIFont), 1)
 			if activeMap[it.th] {
 				procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_CHECKED, 0)
 				anyChecked = true
@@ -1543,7 +1585,8 @@ func selectCurrentThemeCheckboxes() {
 		if !anyChecked {
 			procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_CHECKED, 0)
 			for _, it := range items {
-				enableCtrl(it.h, false)
+				procSendMessageW.Call(uintptr(it.h), BM_SETCHECK, BST_UNCHECKED, 0)
+				procSendMessageW.Call(uintptr(it.h), WM_SETFONT, uintptr(hUIFontStrike), 1)
 				procInvalidateRect.Call(uintptr(it.h), 0, 1)
 			}
 		}
@@ -1551,15 +1594,11 @@ func selectCurrentThemeCheckboxes() {
 }
 
 func selectCurrentIntervalRadio() {
-	switch cfg.IntervalHours {
-	case 1:
-		procSendMessageW.Call(uintptr(rb1h), BM_SETCHECK, BST_CHECKED, 0)
-	case 6:
-		procSendMessageW.Call(uintptr(rb6h), BM_SETCHECK, BST_CHECKED, 0)
-	case 24:
-		procSendMessageW.Call(uintptr(rb24h), BM_SETCHECK, BST_CHECKED, 0)
-	default:
-		procSendMessageW.Call(uintptr(rb3h), BM_SETCHECK, BST_CHECKED, 0)
+	if btnInt1h != 0 {
+		procInvalidateRect.Call(uintptr(btnInt1h), 0, 1)
+		procInvalidateRect.Call(uintptr(btnInt3h), 0, 1)
+		procInvalidateRect.Call(uintptr(btnInt6h), 0, 1)
+		procInvalidateRect.Call(uintptr(btnInt24h), 0, 1)
 	}
 }
 
@@ -1593,16 +1632,11 @@ func selectCurrentFontRadio() {
 }
 
 func selectCurrentScaleRadio() {
-	if cfg.FontSizeScale <= 1.5 {
-		procSendMessageW.Call(uintptr(rbFontScale1), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale <= 1.85 {
-		procSendMessageW.Call(uintptr(rbFontScale2), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale >= 2.6 {
-		procSendMessageW.Call(uintptr(rbFontScale5), BM_SETCHECK, BST_CHECKED, 0)
-	} else if cfg.FontSizeScale >= 2.1 {
-		procSendMessageW.Call(uintptr(rbFontScale4), BM_SETCHECK, BST_CHECKED, 0)
-	} else {
-		procSendMessageW.Call(uintptr(rbFontScale3), BM_SETCHECK, BST_CHECKED, 0)
+	if btnScaleCompact != 0 {
+		procInvalidateRect.Call(uintptr(btnScaleCompact), 0, 1)
+		procInvalidateRect.Call(uintptr(btnScaleModerate), 0, 1)
+		procInvalidateRect.Call(uintptr(btnScaleStandard), 0, 1)
+		procInvalidateRect.Call(uintptr(btnScaleLarge), 0, 1)
 	}
 }
 
@@ -1636,11 +1670,6 @@ func updateTexts() {
 		setTxt(cbAnime, "⛩️ Аниме и Цифровой Арт")
 
 		setTxt(lblSecInt, "⏱ Интервал автоматической смены обоев:")
-		setTxt(rb1h, "1 час")
-		setTxt(rb3h, "3 часа (Оптимально)")
-		setTxt(rb6h, "6 часов")
-		setTxt(rb24h, "1 раз в сутки")
-
 		setTxt(lblSecFonts, "🔤 Выбор шрифта календаря (12 вариантов в 2 столбика):")
 		setTxt(rbFontSegoe, fmt.Sprintf("1. Segoe UI Bold - %s", sampDate))
 		setTxt(rbFontBahn, fmt.Sprintf("2. Bahnschrift - %s", sampDate))
@@ -1656,12 +1685,6 @@ func updateTexts() {
 		setTxt(rbFontConstantia, fmt.Sprintf("12. Constantia Bold - %s", sampDate))
 
 		setTxt(lblSecScale, "🔍 Масштаб и размер календаря:")
-		setTxt(rbFontScale1, "Компактный (1.4x)")
-		setTxt(rbFontScale2, "Умеренный (1.7x)")
-		setTxt(rbFontScale3, "Стандартный (2.0x, Оптимально)")
-		setTxt(rbFontScale4, "Крупный (2.25x)")
-		setTxt(rbFontScale5, "Очень крупный (2.8x)")
-
 		setTxt(lblStatusInfo, "Готово. Нажмите «Применить сейчас», чтобы сразу сменить обои и календарь.")
 	} else {
 		setTxt(lblSecThemes, "🎨 Wallpaper Themes (Check multiple or 'All Random'):")
@@ -1679,11 +1702,6 @@ func updateTexts() {
 		setTxt(cbAnime, "⛩️ Anime & Digital Scenery")
 
 		setTxt(lblSecInt, "⏱ Auto-Change Interval:")
-		setTxt(rb1h, "1 hour")
-		setTxt(rb3h, "3 hours (Recommended)")
-		setTxt(rb6h, "6 hours")
-		setTxt(rb24h, "24 hours (Daily)")
-
 		setTxt(lblSecFonts, "🔤 Calendar Font Choices (12 Options in 2 Columns):")
 		setTxt(rbFontSegoe, fmt.Sprintf("1. Segoe UI Bold - %s", sampDate))
 		setTxt(rbFontBahn, fmt.Sprintf("2. Bahnschrift - %s", sampDate))
@@ -1699,11 +1717,6 @@ func updateTexts() {
 		setTxt(rbFontConstantia, fmt.Sprintf("12. Constantia Bold - %s", sampDate))
 
 		setTxt(lblSecScale, "🔍 Calendar Scale and Size:")
-		setTxt(rbFontScale1, "Compact (1.4x)")
-		setTxt(rbFontScale2, "Medium (1.7x)")
-		setTxt(rbFontScale3, "Standard (2.0x, Optimal)")
-		setTxt(rbFontScale4, "Large (2.25x)")
-		setTxt(rbFontScale5, "Extra Large (2.8x)")
 
 		setTxt(lblStatusInfo, "Ready. Click 'Apply Now' to change wallpaper and calendar immediately.")
 	}
@@ -1743,16 +1756,6 @@ func readCurrentUISelections() {
 		}
 	}
 
-	if isChecked(rb1h) {
-		cfg.IntervalHours = 1
-	} else if isChecked(rb6h) {
-		cfg.IntervalHours = 6
-	} else if isChecked(rb24h) {
-		cfg.IntervalHours = 24
-	} else {
-		cfg.IntervalHours = 3
-	}
-
 	if isChecked(rbFontBahn) {
 		cfg.FontStyle = "bahnschrift"
 	} else if isChecked(rbFontArial) {
@@ -1777,18 +1780,6 @@ func readCurrentUISelections() {
 		cfg.FontStyle = "constantia"
 	} else {
 		cfg.FontStyle = "segoe"
-	}
-
-	if isChecked(rbFontScale1) {
-		cfg.FontSizeScale = 1.4
-	} else if isChecked(rbFontScale2) {
-		cfg.FontSizeScale = 1.7
-	} else if isChecked(rbFontScale4) {
-		cfg.FontSizeScale = 2.25
-	} else if isChecked(rbFontScale5) {
-		cfg.FontSizeScale = 2.8
-	} else {
-		cfg.FontSizeScale = 2.0
 	}
 }
 
@@ -1849,6 +1840,111 @@ func drawCustomButton(dis *DRAWITEMSTRUCT) uintptr {
 			bgCol = rgb(55, 68, 90)
 		}
 		textCol = rgb(255, 255, 255)
+
+	case 106: // Sound Toggle
+		if !cfg.SoundMuted {
+			btnText = "🔊 Sound ON"
+			if isRu() {
+				btnText = "🔊 Со звуком"
+			}
+			bgCol = rgb(45, 52, 68)
+			borderCol = rgb(0, 230, 118)
+			textCol = rgb(255, 255, 255)
+		} else {
+			btnText = "🔇 Sound OFF"
+			if isRu() {
+				btnText = "🔇 Без звука"
+			}
+			bgCol = rgb(38, 42, 52)
+			borderCol = rgb(120, 130, 145)
+			textCol = rgb(175, 185, 200)
+		}
+		hFont = uintptr(hUIFontBold)
+
+	// Section 2: Intervals (4 buttons, same size & gray color as Close button)
+	case 301, 302, 303, 304:
+		var targetHours int
+		switch dis.CtlID {
+		case 301:
+			targetHours = 1
+			btnText = "1 hour"
+			if isRu() {
+				btnText = "1 час"
+			}
+		case 302:
+			targetHours = 3
+			btnText = "3 hours"
+			if isRu() {
+				btnText = "3 часа"
+			}
+		case 303:
+			targetHours = 6
+			btnText = "6 hours"
+			if isRu() {
+				btnText = "6 часов"
+			}
+		case 304:
+			targetHours = 24
+			btnText = "Once a day"
+			if isRu() {
+				btnText = "Раз в сутки"
+			}
+		}
+
+		if cfg.IntervalHours == targetHours {
+			bgCol = rgb(80, 105, 118)
+			borderCol = rgb(0, 230, 118)
+			textCol = rgb(255, 255, 255)
+		} else {
+			bgCol = rgb(69, 90, 100)
+			borderCol = rgb(120, 144, 156)
+			textCol = rgb(240, 240, 240)
+		}
+		hFont = uintptr(hUIFontBold)
+
+	// Section 4: Scale (4 buttons: Compact, Moderate, Standard, Large with font size sample)
+	case 451, 452, 453, 454:
+		var isSelected bool
+		switch dis.CtlID {
+		case 451:
+			btnText = "Compact"
+			if isRu() {
+				btnText = "Компактный"
+			}
+			hFont = uintptr(hFontScale1)
+			isSelected = (cfg.FontSizeScale <= 1.5)
+		case 452:
+			btnText = "Moderate"
+			if isRu() {
+				btnText = "Умеренный"
+			}
+			hFont = uintptr(hFontScale2)
+			isSelected = (cfg.FontSizeScale > 1.5 && cfg.FontSizeScale <= 1.85)
+		case 453:
+			btnText = "Standard"
+			if isRu() {
+				btnText = "Стандартный"
+			}
+			hFont = uintptr(hFontScale3)
+			isSelected = (cfg.FontSizeScale > 1.85 && cfg.FontSizeScale <= 2.1)
+		case 454:
+			btnText = "Large"
+			if isRu() {
+				btnText = "Крупный"
+			}
+			hFont = uintptr(hFontScale4)
+			isSelected = (cfg.FontSizeScale > 2.1)
+		}
+
+		if isSelected {
+			bgCol = rgb(80, 105, 118)
+			borderCol = rgb(0, 230, 118)
+			textCol = rgb(255, 255, 255)
+		} else {
+			bgCol = rgb(69, 90, 100)
+			borderCol = rgb(120, 144, 156)
+			textCol = rgb(240, 240, 240)
+		}
 
 	// Bottom action buttons
 	case 601:
@@ -1963,9 +2059,9 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		}
 		drawHLine(46)  // 1. Above Themes
 		drawHLine(214) // 2. Between Themes and Intervals
-		drawHLine(274) // 3. Between Intervals and Fonts
-		drawHLine(460) // 4. Between Fonts and Scale
-		drawHLine(524) // 5. Between Scale and Status / Buttons
+		drawHLine(296) // 3. Between Intervals and Fonts
+		drawHLine(487) // 4. Between Fonts and Scale
+		drawHLine(571) // 5. Between Scale and Status / Buttons
 		return 1
 
 	case WM_CTLCOLORSTATIC, WM_CTLCOLORBTN:
@@ -1982,6 +2078,18 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 		}
 
 		procSetBkMode.Call(hDC, 1)
+
+		if isChecked(cbAll) && isThemeCheckbox(ctrl) {
+			if cfg.ThemeMode == ThemeModeDay {
+				procSetTextColor.Call(hDC, uintptr(rgb(145, 150, 160)))
+				return uintptr(hBrushDay)
+			} else if cfg.ThemeMode == ThemeModeNight {
+				procSetTextColor.Call(hDC, uintptr(rgb(105, 115, 130)))
+				return uintptr(hBrushNight)
+			}
+			procSetTextColor.Call(hDC, uintptr(rgb(135, 145, 160)))
+			return uintptr(hBrushEvening)
+		}
 
 		if !isEnabled(ctrl) {
 			if cfg.ThemeMode == ThemeModeDay {
@@ -2044,6 +2152,15 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			updatePreviewCard()
 			return 0
 
+		case 106: // Toggle Sound
+			cfg.SoundMuted = !cfg.SoundMuted
+			saveConfig()
+			procInvalidateRect.Call(uintptr(btnSound), 0, 1)
+			if !cfg.SoundMuted {
+				playSoftChime()
+			}
+			return 0
+
 		case 201: // cbAll clicked
 			if isChecked(cbAll) {
 				cfg.Themes = []string{"all"}
@@ -2055,8 +2172,9 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 
 		case 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212: // Individual theme checkbox clicked
 			if isChecked(cbAll) {
-				procSendMessageW.Call(uintptr(cbAll), BM_SETCHECK, BST_UNCHECKED, 0)
-				updateThemeCheckboxesState()
+				// While "All Random" is selected, individual categories cannot be checked
+				procSendMessageW.Call(uintptr(lParam), BM_SETCHECK, BST_UNCHECKED, 0)
+				return 0
 			}
 			var selected []string
 			items := getIndividualThemeCheckboxes()
@@ -2078,25 +2196,21 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			return 0
 
 		case 301, 302, 303, 304:
-			intRadios := []struct {
-				id  uintptr
-				h   syscall.Handle
-				val int
-			}{
-				{301, rb1h, 1},
-				{302, rb3h, 3},
-				{303, rb6h, 6},
-				{304, rb24h, 24},
-			}
-			for _, ir := range intRadios {
-				if ir.id == uintptr(id) {
-					procSendMessageW.Call(uintptr(ir.h), BM_SETCHECK, BST_CHECKED, 0)
-					cfg.IntervalHours = ir.val
-				} else {
-					procSendMessageW.Call(uintptr(ir.h), BM_SETCHECK, BST_UNCHECKED, 0)
-				}
+			switch id {
+			case 301:
+				cfg.IntervalHours = 1
+			case 302:
+				cfg.IntervalHours = 3
+			case 303:
+				cfg.IntervalHours = 6
+			case 304:
+				cfg.IntervalHours = 24
 			}
 			saveConfig()
+			procInvalidateRect.Call(uintptr(btnInt1h), 0, 1)
+			procInvalidateRect.Call(uintptr(btnInt3h), 0, 1)
+			procInvalidateRect.Call(uintptr(btnInt6h), 0, 1)
+			procInvalidateRect.Call(uintptr(btnInt24h), 0, 1)
 			return 0
 
 		case 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412:
@@ -2129,27 +2243,22 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			saveConfig()
 			return 0
 
-		case 451, 452, 453, 454, 455:
-			scaleRadios := []struct {
-				id  uintptr
-				h   syscall.Handle
-				val float64
-			}{
-				{451, rbFontScale1, 1.4},
-				{452, rbFontScale2, 1.7},
-				{453, rbFontScale3, 2.0},
-				{454, rbFontScale4, 2.25},
-				{455, rbFontScale5, 2.8},
-			}
-			for _, sr := range scaleRadios {
-				if sr.id == uintptr(id) {
-					procSendMessageW.Call(uintptr(sr.h), BM_SETCHECK, BST_CHECKED, 0)
-					cfg.FontSizeScale = sr.val
-				} else {
-					procSendMessageW.Call(uintptr(sr.h), BM_SETCHECK, BST_UNCHECKED, 0)
-				}
+		case 451, 452, 453, 454:
+			switch id {
+			case 451:
+				cfg.FontSizeScale = 1.4
+			case 452:
+				cfg.FontSizeScale = 1.7
+			case 453:
+				cfg.FontSizeScale = 2.0
+			case 454:
+				cfg.FontSizeScale = 2.25
 			}
 			saveConfig()
+			procInvalidateRect.Call(uintptr(btnScaleCompact), 0, 1)
+			procInvalidateRect.Call(uintptr(btnScaleModerate), 0, 1)
+			procInvalidateRect.Call(uintptr(btnScaleStandard), 0, 1)
+			procInvalidateRect.Call(uintptr(btnScaleLarge), 0, 1)
 			return 0
 
 		case 601: // ⚡ Apply Now (Instant Desktop Update without closing!)
