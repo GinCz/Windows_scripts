@@ -15,6 +15,7 @@ import (
 var (
 	shell32           = syscall.NewLazyDLL("shell32.dll")
 	procShellExecuteW = shell32.NewProc("ShellExecuteW")
+	procIsUserAnAdmin = shell32.NewProc("IsUserAnAdmin")
 )
 
 //go:embed GIN-Wallpaper-Calend.exe
@@ -25,6 +26,12 @@ var embeddedUninstEXE []byte
 
 //go:embed app.ico
 var embeddedAppICO []byte
+
+func runQuiet(name string, args ...string) {
+	cmd := exec.Command(name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.Run()
+}
 
 func runSelfAsAdmin() {
 	exe, _ := os.Executable()
@@ -38,8 +45,8 @@ func runSelfAsAdmin() {
 }
 
 func isAdmin() bool {
-	_, err := os.Open(`\\.\PHYSICALDRIVE0`)
-	return err == nil
+	r, _, _ := procIsUserAnAdmin.Call()
+	return r != 0
 }
 
 func createShortcutsSafe(targetExe, workDir, icoPath string) {
@@ -71,38 +78,17 @@ if (Test-Path $sm) {
 }
 `, targetExe, workDir, icoPath, targetExe, workDir, icoPath)
 
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	cmd.Run()
-}
-
-func launchDeElevated(exePath string) {
-	workDir := filepath.Dir(exePath)
-	psScript := fmt.Sprintf(`
-try {
-    $s = New-Object -ComObject Shell.Application
-    $s.ShellExecute('%s', '--updated', '%s', 'open', 1)
-} catch {
-    Start-Process -FilePath '%s' -ArgumentList '--updated' -WorkingDirectory '%s'
-}
-`, exePath, workDir, exePath, workDir)
-
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-	if err := cmd.Run(); err != nil {
-		// Fallback to explorer.exe
-		exec.Command("explorer.exe", exePath).Start()
-	}
+	runQuiet("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
 }
 
 func writeFileWithRetry(dest string, data []byte, perm os.FileMode) error {
 	var err error
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 15; i++ {
 		err = os.WriteFile(dest, data, perm)
 		if err == nil {
 			return nil
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(150 * time.Millisecond)
 	}
 	return err
 }
@@ -113,10 +99,10 @@ func main() {
 		return
 	}
 
-	// 1. Forcefully kill previous running instances of GIN-Wallpaper-Calend
-	exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe").Run()
-	exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper*").Run()
-	time.Sleep(500 * time.Millisecond)
+	// 1. Forcefully kill previous running instances quietly (no console window)
+	runQuiet("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe")
+	runQuiet("taskkill", "/F", "/IM", "GIN-Wallpaper*")
+	time.Sleep(400 * time.Millisecond)
 
 	// 2. Target installation directory
 	targetDir := `C:\Program Files\GIN-Wallpaper-Calend`
@@ -146,21 +132,23 @@ func main() {
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
 	dispName := "GIN-Wallpaper-Calend v020 — Умные обои с календарём"
-	exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v020", "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, icoDest), "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "InstallLocation", "/t", "REG_SZ", "/d", targetDir, "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "UninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, uninstExe), "/f").Run()
-	exec.Command("reg", "add", regPath, "/v", "QuietUninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, uninstExe), "/f").Run()
+	runQuiet("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f")
+	runQuiet("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v020", "/f")
+	runQuiet("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f")
+	runQuiet("reg", "add", regPath, "/v", "DisplayIcon", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s",0`, icoDest), "/f")
+	runQuiet("reg", "add", regPath, "/v", "InstallLocation", "/t", "REG_SZ", "/d", targetDir, "/f")
+	runQuiet("reg", "add", regPath, "/v", "UninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, uninstExe), "/f")
+	runQuiet("reg", "add", regPath, "/v", "QuietUninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, uninstExe), "/f")
 
 	// 7. Autostart directly via native GIN-Wallpaper-Calend.exe
 	runKey := `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
-	exec.Command("reg", "add", runKey, "/v", "GIN-Wallpaper-Calend", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, mainExe), "/f").Run()
+	runQuiet("reg", "add", runKey, "/v", "GIN-Wallpaper-Calend", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, mainExe), "/f")
 
 	// 8. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with custom ICO
 	createShortcutsSafe(mainExe, targetDir, icoDest)
 
-	// 9. Launch immediately as non-elevated user with --updated (zero popups, plays beep-beep and cycles wallpaper)
-	launchDeElevated(mainExe)
+	// 9. Launch immediately! (Standard direct execution, rock-solid, zero popups)
+	cmd := exec.Command(mainExe, "--updated")
+	cmd.Dir = targetDir
+	cmd.Start()
 }
