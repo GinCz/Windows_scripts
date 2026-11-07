@@ -497,7 +497,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть публичный репозиторий GitHub"/>
+            <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть главную страницу GitHub (https://github.com/GinCz/)"/>
             <Button x:Name="BtnUpdate" Grid.Column="1" Content="v003 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
@@ -671,8 +671,9 @@ $controls["BtnLangEN"].Add_Click({ Update-Language "EN" })
 $controls["BtnLangCS"].Add_Click({ Update-Language "CS" })
 
 # Wire Footer Links
+// github.com/GinCz/
 $controls["LnkAuthor"].Add_MouseLeftButtonUp({
-    try { [System.Diagnostics.Process]::Start("https://github.com/GinCz/Windows_scripts") } catch {}
+    try { [System.Diagnostics.Process]::Start("https://github.com/GinCz/") } catch {}
 })
 
 # ------------------------------------------------------------------------------

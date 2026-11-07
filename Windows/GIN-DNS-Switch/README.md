@@ -1,6 +1,7 @@
 # 🌐 GIN-DNS-Switch (v003)
 
-> **Автор:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI (`VladiMIR + AI`)  
+> **Автор:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz/)) & AI (`VladiMIR + AI`)  
+> **Главная страница автора:** [https://github.com/GinCz/](https://github.com/GinCz/)  
 > **Репозиторий:** [GitHub: Windows_scripts ↗](https://github.com/GinCz/Windows_scripts)  
 > **Каталог установки:** `C:\Program Files\GIN-DNS-Switch\`  
 > **Лицензия:** Freeware (Пожизненно бесплатно)

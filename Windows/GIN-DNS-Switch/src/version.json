@@ -8,6 +8,7 @@
     "GIN-DNS-Switch_v001.cmd"
   ],
   "author": "Vladimir Bulantsev (GinCz) & AI",
+  "author_github": "https://github.com/GinCz/",
   "license": "Freeware",
   "github_repo": "https://github.com/GinCz/Windows_scripts",
   "github_path": "Windows/GIN-DNS-Switch/",
