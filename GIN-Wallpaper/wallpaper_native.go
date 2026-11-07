@@ -103,7 +103,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v023"
+	AppVersion = "v024"
 
 	SPI_SETDESKWALLPAPER = 0x0014
 	SPIF_UPDATEINIFILE   = 0x0001
@@ -323,9 +323,9 @@ var (
 	btnLangEN, btnLangRU, btnLangCS          syscall.Handle
 	btnSound                                 syscall.Handle
 
-	// Checkboxes - Themes (12)
-	cbAll, cb3DAbstract, cbFlowers, cbOcean, cbSpace, cbNature syscall.Handle
-	cbCars, cbCity, cbCyberpunk, cbMinimal, cbAnimals, cbAnime syscall.Handle
+	// Checkboxes - Themes (14)
+	cbAll, cb3DAbstract, cbFlowers, cbOcean, cbSpace, cbNature, cbAnimals syscall.Handle
+	cbCars, cbTrucksOffroad, cbGirls, cbCity, cbCyberpunk, cbMinimal, cbAnime syscall.Handle
 
 	// Buttons - Intervals (4 buttons matching bottom action buttons style)
 	btnInt1h, btnInt3h, btnInt6h, btnInt24h syscall.Handle
@@ -511,20 +511,27 @@ func getSingleThemeQuery(theme string) string {
 		return "space"
 	case "nature":
 		return "nature"
+	case "animals":
+		return "wildlife"
 	case "cars":
-		return "supercar"
+		queries := []string{"supercar", "sports car", "motorcycle", "sportbike", "custom chopper"}
+		return queries[rand.Intn(len(queries))]
+	case "trucks_offroad", "trucks", "offroad":
+		queries := []string{"truck", "semi truck", "off-road 4x4", "suv off-road", "pickup truck", "overland vehicle"}
+		return queries[rand.Intn(len(queries))]
+	case "girls", "portraits", "women":
+		queries := []string{"portrait woman", "aesthetic portrait woman", "fashion model woman", "beauty portrait", "girl portrait aesthetic"}
+		return queries[rand.Intn(len(queries))]
 	case "city":
 		return "city"
 	case "cyberpunk":
 		return "cyberpunk"
 	case "minimalism":
 		return "minimalism"
-	case "animals":
-		return "wildlife"
 	case "anime":
 		return "anime"
 	default:
-		all := []string{"3d render", "fractal", "abstract 3d", "flowers", "ocean", "space", "nature", "supercar", "city", "cyberpunk", "minimalism", "wildlife", "anime"}
+		all := []string{"3d render", "fractal", "abstract 3d", "flowers", "ocean", "space", "nature", "wildlife", "supercar", "motorcycle", "off-road 4x4", "portrait woman", "city", "cyberpunk", "minimalism", "anime"}
 		return all[rand.Intn(len(all))]
 	}
 }
@@ -532,7 +539,7 @@ func getSingleThemeQuery(theme string) string {
 func getThemeQuery() string {
 	selected := cfg.Themes
 	if len(selected) == 0 || (len(selected) == 1 && selected[0] == "all") {
-		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "cars", "city", "cyberpunk", "minimalism", "animals", "anime"}
+		all := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_offroad", "girls", "city", "cyberpunk", "minimalism", "anime"}
 		return getSingleThemeQuery(all[rand.Intn(len(all))])
 	}
 	choice := selected[rand.Intn(len(selected))]
@@ -1470,25 +1477,27 @@ func createControls(parent syscall.Handle) {
 	}
 
 	// Column 1
-	cbAll = createCheckbox("🎲 All Random (Mix)", 30, 76, 330, 20, parent, 201)
-	cb3DAbstract = createCheckbox("🔮 3D Renders, Textures, Fractals & Abstract", 30, 98, 330, 20, parent, 202)
-	cbFlowers = createCheckbox("🌸 Flowers & Blossom", 30, 120, 330, 20, parent, 203)
-	cbOcean = createCheckbox("🌊 Ocean, Sea & Waves", 30, 142, 330, 20, parent, 204)
-	cbSpace = createCheckbox("🚀 Space & Galaxies (Nebula)", 30, 164, 330, 20, parent, 205)
-	cbNature = createCheckbox("🌿 Nature & Landscapes", 30, 186, 330, 20, parent, 206)
+	cbAll = createCheckbox("🎲 All Random (Mix)", 30, 74, 340, 20, parent, 201)
+	cb3DAbstract = createCheckbox("🔮 3D Renders, Textures & Abstract", 30, 94, 340, 20, parent, 202)
+	cbFlowers = createCheckbox("🌸 Flowers & Blossom", 30, 114, 340, 20, parent, 203)
+	cbOcean = createCheckbox("🌊 Ocean, Sea & Waves", 30, 134, 340, 20, parent, 204)
+	cbSpace = createCheckbox("🚀 Space & Galaxies (Nebula)", 30, 154, 340, 20, parent, 205)
+	cbNature = createCheckbox("🌿 Nature & Landscapes", 30, 174, 340, 20, parent, 206)
+	cbAnimals = createCheckbox("🐾 Wildlife & Animals", 30, 194, 340, 20, parent, 211)
 
 	// Column 2
-	cbCars = createCheckbox("🏎️ Cars & Supercars", 370, 76, 330, 20, parent, 207)
-	cbCity = createCheckbox("🌆 City & Architecture", 370, 98, 330, 20, parent, 208)
-	cbCyberpunk = createCheckbox("⚡ Cyberpunk & Neon", 370, 120, 330, 20, parent, 209)
-	cbMinimal = createCheckbox("🖤 Minimalism & Dark AMOLED", 370, 142, 330, 20, parent, 210)
-	cbAnimals = createCheckbox("🐾 Wildlife & Animals", 370, 164, 330, 20, parent, 211)
-	cbAnime = createCheckbox("⛩️ Anime & Digital Scenery", 370, 186, 330, 20, parent, 212)
+	cbCars = createCheckbox("🏎️ Cars & Motorcycles", 380, 74, 380, 20, parent, 207)
+	cbTrucksOffroad = createCheckbox("🚛 Trucks & 4x4 Off-Road", 380, 94, 380, 20, parent, 213)
+	cbGirls = createCheckbox("💃 Girls & Aesthetic Portraits (SFW)", 380, 114, 380, 20, parent, 214)
+	cbCity = createCheckbox("🌆 City & Architecture", 380, 134, 380, 20, parent, 208)
+	cbCyberpunk = createCheckbox("⚡ Cyberpunk & Neon", 380, 154, 380, 20, parent, 209)
+	cbMinimal = createCheckbox("🖤 Minimalism & Dark AMOLED", 380, 174, 380, 20, parent, 210)
+	cbAnime = createCheckbox("⛩️ Anime & Digital Scenery", 380, 194, 380, 20, parent, 212)
 
 	selectCurrentThemeCheckboxes()
 
 	// Divider 2: Between Themes and Intervals (Full Width)
-	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 214, 820, 1, parent, 52))
+	divInterval = syscall.Handle(createCtrl(staticClass, "", WS_CHILD|WS_VISIBLE, 0, 218, 820, 1, parent, 52))
 
 	// Section 2: Intervals (4 Buttons: 1 hour, 3 hours, 6 hours, Once a day - exactly matching action buttons style)
 	lblSecInt = syscall.Handle(createCtrl(staticClass, "⏱ Auto-Change Interval / Интервал смены:", WS_CHILD|WS_VISIBLE, 20, 222, 780, 20, parent, 12))
@@ -1678,19 +1687,21 @@ func getIndividualThemeCheckboxes() []ThemeCheckboxInfo {
 		{204, cbOcean, "ocean"},
 		{205, cbSpace, "space"},
 		{206, cbNature, "nature"},
+		{211, cbAnimals, "animals"},
 		{207, cbCars, "cars"},
+		{213, cbTrucksOffroad, "trucks_offroad"},
+		{214, cbGirls, "girls"},
 		{208, cbCity, "city"},
 		{209, cbCyberpunk, "cyberpunk"},
 		{210, cbMinimal, "minimalism"},
-		{211, cbAnimals, "animals"},
 		{212, cbAnime, "anime"},
 	}
 }
 
 func isThemeCheckbox(h syscall.Handle) bool {
 	return h == cb3DAbstract || h == cbFlowers || h == cbOcean || h == cbSpace ||
-		h == cbNature || h == cbCars || h == cbCity || h == cbCyberpunk ||
-		h == cbMinimal || h == cbAnimals || h == cbAnime
+		h == cbNature || h == cbAnimals || h == cbCars || h == cbTrucksOffroad ||
+		h == cbGirls || h == cbCity || h == cbCyberpunk || h == cbMinimal || h == cbAnime
 }
 
 func themeCheckboxWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
@@ -1877,16 +1888,18 @@ func updateTexts() {
 	if cs {
 		setTxt(lblSecThemes, "🎨 Témata tapet (vyberte několik nebo „Vše náhodně“):")
 		setTxt(cbAll, "🎲 Vše náhodně (Mix všech témat)")
-		setTxt(cb3DAbstract, "🔮 3D Rendery, Textury, Fraktály a Abstrakce")
+		setTxt(cb3DAbstract, "🔮 3D Rendery, Textury a Abstrakce")
 		setTxt(cbFlowers, "🌸 Květiny a flóra")
 		setTxt(cbOcean, "🌊 Oceán, moře a vlny")
 		setTxt(cbSpace, "🚀 Vesmír a galaxie (Mlhoviny)")
 		setTxt(cbNature, "🌿 Příroda a krajiny")
-		setTxt(cbCars, "🏎️ Auta a supersporty")
+		setTxt(cbAnimals, "🐾 Zvířata a divoká příroda")
+		setTxt(cbCars, "🏎️ Auta a Motocykly")
+		setTxt(cbTrucksOffroad, "🚛 Nákladní auta a Off-Road 4x4")
+		setTxt(cbGirls, "💃 Dívky a Portréty (Estetika SFW)")
 		setTxt(cbCity, "🌆 Města a architektura (Panorama)")
 		setTxt(cbCyberpunk, "⚡ Cyberpunk a neon (Synthwave)")
 		setTxt(cbMinimal, "🖤 Minimalismus a Dark AMOLED")
-		setTxt(cbAnimals, "🐾 Zvířata a divoká příroda")
 		setTxt(cbAnime, "⛩️ Anime a digitální scenérie")
 
 		setTxt(lblSecInt, "⏱ Interval automatické změny tapety:")
@@ -1913,16 +1926,18 @@ func updateTexts() {
 	} else if ru {
 		setTxt(lblSecThemes, "🎨 Тематика обоев (выберите несколько или «Все подряд»):")
 		setTxt(cbAll, "🎲 Все подряд (Случайный микс)")
-		setTxt(cb3DAbstract, "🔮 3D Рендеры, Фактуры, Фракталы, Абстракция")
+		setTxt(cb3DAbstract, "🔮 3D Рендеры, Фактуры и Абстракция")
 		setTxt(cbFlowers, "🌸 Цветы и ботаника")
 		setTxt(cbOcean, "🌊 Океан, море и побережье")
 		setTxt(cbSpace, "🚀 Космос и Галактики (Nebula)")
 		setTxt(cbNature, "🌿 Природа и пейзажи")
-		setTxt(cbCars, "🏎️ Автомобили и Суперкары")
+		setTxt(cbAnimals, "🐾 Животные и Дикая природа")
+		setTxt(cbCars, "🏎️ Автомобили и Мотоциклы")
+		setTxt(cbTrucksOffroad, "🚛 Грузовики и Внедорожники 4x4")
+		setTxt(cbGirls, "💃 Девушки и Портреты (Эстетика SFW)")
 		setTxt(cbCity, "🌆 Города и Архитектура (Skylines)")
 		setTxt(cbCyberpunk, "⚡ Киберпанк и Неон (Synthwave)")
 		setTxt(cbMinimal, "🖤 Минимализм и Dark AMOLED")
-		setTxt(cbAnimals, "🐾 Животные и Дикая природа")
 		setTxt(cbAnime, "⛩️ Аниме и Цифровой Арт")
 
 		setTxt(lblSecInt, "⏱ Интервал автоматической смены обоев:")
@@ -1949,16 +1964,18 @@ func updateTexts() {
 	} else {
 		setTxt(lblSecThemes, "🎨 Wallpaper Themes (Check multiple or 'All Random'):")
 		setTxt(cbAll, "🎲 All Random (Mix of all themes)")
-		setTxt(cb3DAbstract, "🔮 3D Renders, Textures, Fractals & Abstract")
+		setTxt(cb3DAbstract, "🔮 3D Renders, Textures & Abstract")
 		setTxt(cbFlowers, "🌸 Flowers & Blossom")
 		setTxt(cbOcean, "🌊 Ocean, Sea & Waves")
 		setTxt(cbSpace, "🚀 Space & Galaxies (Nebula)")
 		setTxt(cbNature, "🌿 Nature & Landscapes")
-		setTxt(cbCars, "🏎️ Cars & Supercars")
+		setTxt(cbAnimals, "🐾 Wildlife & Animals")
+		setTxt(cbCars, "🏎️ Cars & Motorcycles")
+		setTxt(cbTrucksOffroad, "🚛 Trucks & 4x4 Off-Road")
+		setTxt(cbGirls, "💃 Girls & Aesthetic Portraits (SFW)")
 		setTxt(cbCity, "🌆 City & Architecture (Skylines)")
 		setTxt(cbCyberpunk, "⚡ Cyberpunk & Neon (Synthwave)")
 		setTxt(cbMinimal, "🖤 Minimalism & Dark AMOLED")
-		setTxt(cbAnimals, "🐾 Wildlife & Animals")
 		setTxt(cbAnime, "⛩️ Anime & Digital Scenery")
 
 		setTxt(lblSecInt, "⏱ Auto-Change Interval:")
@@ -2548,7 +2565,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			saveConfig()
 			return 0
 
-		case 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212: // Individual theme checkbox clicked
+		case 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214: // Individual theme checkbox clicked
 			if isChecked(cbAll) {
 				// While "All Random" is selected, individual categories cannot be checked
 				procSendMessageW.Call(uintptr(lParam), BM_SETCHECK, BST_UNCHECKED, 0)
@@ -2674,7 +2691,7 @@ func settingsWndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) ui
 			return 0
 
 		case 603: // 🎲 Random Theme
-			allThemes := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "cars", "city", "cyberpunk", "minimalism", "animals", "anime"}
+			allThemes := []string{"3d_abstract", "flowers", "ocean", "space", "nature", "animals", "cars", "trucks_offroad", "girls", "city", "cyberpunk", "minimalism", "anime"}
 			rnd := allThemes[rand.Intn(len(allThemes))]
 			cfg.Themes = []string{rnd}
 			cfg.Theme = rnd

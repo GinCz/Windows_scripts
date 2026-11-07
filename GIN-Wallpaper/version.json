@@ -1,17 +1,18 @@
 {
-  "version": "v023",
+  "version": "v024",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v023_Setup.exe",
-  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (English by default, added Czech language support alongside English and Russian, ultra-minimal English-only installer dialog, completely silent uninstaller)",
+  "installer": "GIN-Wallpaper-Calend_v024_Setup.exe",
+  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Added Motorcycles to Cars, added new Truck & 4x4 Off-Road category, added Girls & Aesthetic Portraits SFW category, 14 categories total, trilingual EN/CS/RU, ultra-minimal installer)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
   "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v023_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v024_Setup.exe",
   "features": [
-    "English language by default for fresh installations",
-    "Full trilingual support: English (EN), Czech (CS / Čeština), Russian (RU) across all menus, calendar overlays, settings, and buttons",
-    "Minimal installer dialog in pure English: 'GIN-Wallpaper-Calend - Install?' with OK/Cancel buttons",
-    "Completely silent uninstallation: removes all binaries, autostart, shortcuts from desktop and Start menu with 0 popups",
-    "Soft organic double-drop bubble sound on update completion, ultra-low idle RAM footprint ~1.5-2 MB via WinAPI SetProcessWorkingSetSize"
+    "Expanded Cars category to 'Cars & Motorcycles' (supercars, sports cars, motorcycles, superbikes, custom choppers)",
+    "Added brand-new 'Trucks & 4x4 Off-Road' category (semi-trucks, big rigs, off-road 4x4, SUVs, overland vehicles)",
+    "Added brand-new 'Girls & Aesthetic Portraits' category strictly SFW / 100% safe (fashion models, beauty portraiture, aesthetic female portraits with zero vulgarity)",
+    "Full trilingual localization across all 14 categories: English (EN default), Czech (CS), and Russian (RU)",
+    "Minimal English-only installer ('GIN-Wallpaper-Calend - Install?') and completely silent uninstaller (0 popups)",
+    "Soft organic double-drop bubble chime on update completion and ~1.5-2 MB idle RAM consumption"
   ]
 }
