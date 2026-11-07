@@ -39,7 +39,7 @@ var embeddedICO []byte
 //go:embed version.json
 var embeddedVersion []byte
 
-//go:embed Uninstall.cmd
+//go:embed Uninstall.exe
 var embeddedUninstall []byte
 
 func runSelfAsAdmin() {
@@ -114,10 +114,10 @@ func main() {
 	}
 
 	cmdDest := filepath.Join(targetDir, "GIN-DNS-Switch.cmd")
-	cmdVDest := filepath.Join(targetDir, "GIN-DNS-Switch_v001.cmd")
+	cmdVDest := filepath.Join(targetDir, "GIN-DNS-Switch_v004.cmd")
 	icoDest := filepath.Join(targetDir, "app.ico")
 	verDest := filepath.Join(targetDir, "version.json")
-	uninstDest := filepath.Join(targetDir, "Uninstall.cmd")
+	uninstDest := filepath.Join(targetDir, "Uninstall.exe")
 
 	os.WriteFile(cmdDest, embeddedCMD, 0755)
 	os.WriteFile(cmdVDest, embeddedCMD, 0755)
@@ -130,7 +130,7 @@ func main() {
 	// Register in Windows Programs & Features
 	regCmd := fmt.Sprintf(`
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayName" /t REG_SZ /d "GIN-DNS-Switch" /f
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayVersion" /t REG_SZ /d "v001" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayVersion" /t REG_SZ /d "v004" /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "Publisher" /t REG_SZ /d "Vladimir Bulantsev (GinCz) & AI" /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayIcon" /t REG_SZ /d "%s" /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "UninstallString" /t REG_SZ /d "\"%s\"" /f
@@ -140,6 +140,6 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch
 	cmdReg.Run()
 
 	if !isSilent {
-		msgBox("GIN-DNS-Switch", "GIN-DNS-Switch v001 успешно установлен!\nЯрлык добавлен на Рабочий стол.", MB_OK|MB_ICONINFO)
+		msgBox("GIN-DNS-Switch", "GIN-DNS-Switch v004 успешно установлен!\nЯрлык добавлен на Рабочий стол.", MB_OK|MB_ICONINFO)
 	}
 }

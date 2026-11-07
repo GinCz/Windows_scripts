@@ -1,8 +1,9 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v003",
-  "updated_at": "2026-11-07",
+  "current_version": "v004",
+  "updated_at": "2026-11-08",
   "active_versions": [
+    "GIN-DNS-Switch_v004.cmd",
     "GIN-DNS-Switch_v003.cmd",
     "GIN-DNS-Switch_v002.cmd",
     "GIN-DNS-Switch_v001.cmd"
@@ -83,34 +84,13 @@
       "color": "pink",
       "badge": "SAFE KIDS 18+",
       "type": "family_safe"
-    },
-    {
-      "id": "cloudflare",
-      "name_ru": "Cloudflare 1.1.1.1 (Приватность и Скорость)",
-      "name_en": "Cloudflare 1.1.1.1 (Privacy & Speed)",
-      "name_cs": "Cloudflare 1.1.1.1 (Soukromí a Rychlost)",
-      "dns_ipv4": ["1.1.1.1", "1.0.0.1"],
-      "dns_ipv6": ["2606:4700:4700::1111", "2606:4700:4700::1001"],
-      "color": "cyan",
-      "badge": "PURE PRIVACY",
-      "type": "privacy"
     }
   ],
   "changelog": [
     {
-      "version": "v003",
-      "date": "2026-11-07",
-      "changes": "Major Release v003: 1) Added silent 1-click in-app auto-updater with signature 'two bubbles' (два булька) sound and seamless reload; 2) Expanded to 7 professional DNS profiles: AdGuard (Green), Google+Cloudflare (Blue), ISP DHCP (Red), Yandex.DNS (Amber - Russian certs/Gosuslugi/Sber), Quad9 Security (Purple - Malware block), Family DNS (Pink - 18+ child safe), Cloudflare 1.1.1.1 (Cyan - Privacy); 3) Scrollable dark UI with pure white vector SVG icons and color-coded badges."
-    },
-    {
-      "version": "v002",
-      "date": "2026-11-07",
-      "changes": "UI & Architecture Overhaul: 100% white vector icons, 3-card layout."
-    },
-    {
-      "version": "v001",
-      "date": "2026-11-07",
-      "changes": "Initial release."
+      "version": "v004",
+      "date": "2026-11-08",
+      "changes": "Critical Reliability & Architecture Release v004: 1) Rewrote DNS applying engine to Triple-Engine architecture (WMI SetDNSServerSearchOrder + NetTCPIP Set-DnsClientServerAddress + Netsh direct interface bind) ensuring 100% reliable DNS writes on USB Realtek GbE, PCI, and Wi-Fi adapters; 2) Enforced in-process PowerShell UAC Administrator role check; 3) Upgraded Update Button logic: checks version.json, displays persistent green checkmark '✔ У вас последняя версия (v004)' without closing if already up-to-date; 4) Replaced Uninstall.cmd with native compiled Uninstall.exe (Go self-elevating temp-spawning uninstaller like GIN-Wallpaper); 5) Removed redundant Cloudflare 1.1.1.1 profile (consolidated to 6 clean profiles); 6) Enforced versioned installer naming convention: GIN-DNS-Switch_v004_Setup.exe."
     }
   ]
 }

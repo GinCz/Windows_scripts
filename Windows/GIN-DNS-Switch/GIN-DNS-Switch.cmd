@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v003 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v004 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v003...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v004...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,12 +24,22 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v003
+#  GIN-DNS-SWITCH                                                  v004
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
-#  Repository: https://github.com/GinCz/Windows_scripts
+#  Repository: https://github.com/GinCz/
 #  License: Freeware
 # ==============================================================================
+
+# Ensure full Administrator privileges inside PowerShell context
+$currentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal($currentIdentity)
+if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    $scriptTarget = $env:GIN_DNS_SCRIPT
+    if (-not $scriptTarget) { $scriptTarget = $MyInvocation.MyCommand.Path }
+    Start-Process cmd.exe -ArgumentList "/c `"`"$scriptTarget`"`"" -Verb RunAs
+    exit
+}
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Drawing, System.Windows.Forms
 
@@ -39,15 +49,16 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 # 1. LOCALIZATION STRINGS (RU, EN, CS)
 # ------------------------------------------------------------------------------
 $script:Lang = "RU"
+$script:CurrentVersion = "v004"
 
 $script:Loc = @{
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v003 — Менеджер DNS для Windows"
+        "WinTitle"       = "GIN-DNS-Switch v004 — Менеджер DNS для Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Умный переключатель DNS для всей системы"
         "StatusCurrent"  = "Текущий статус:"
         "StatusDetect"   = "Определение..."
-        "SecModes"       = "ВЫБЕРИТЕ ПРОФИЛЬ DNS ДЛЯ ВСЕЙ СИСТЕМЫ (7 РЕЖИМОВ):"
+        "SecModes"       = "ВЫБЕРИТЕ ПРОФИЛЬ DNS ДЛЯ ВСЕЙ СИСТЕМЫ (6 РЕЖИМОВ):"
         "CardAdGuard"    = "AdGuard DNS (Без рекламы)"
         "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
         "CardAdGuardDesc"= "Полная блокировка баннеров, трекеров и фишинга во всей Windows"
@@ -66,35 +77,32 @@ $script:Loc = @{
         "CardFamily"     = "Семейный DNS (Детский режим 18+)"
         "CardFamilySub"  = "94.140.14.15  •  94.140.15.16"
         "CardFamilyDesc" = "Блокировка рекламы, контента 18+ и принудительный SafeSearch"
-        "CardCloudflare" = "Cloudflare 1.1.1.1 (Приватность и Скорость)"
-        "CardCloudflareSub"= "1.1.1.1  •  1.0.0.1"
-        "CardCloudflareDesc"= "Анонимный быстрый мировой DNS, нулевое логирование IP"
         "BtnApply"       = "ПРИМЕНИТЬ НАСТРОЙКИ"
         "Step1Pending"   = "○ Настройка сетевых адаптеров..."
-        "Step1Done"      = "✔ Сетевой адаптер успешно перенастроен"
+        "Step1Done"      = "✔ Сетевые адаптеры успешно настроены ({0})"
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v003 (Обновить)"
+        "BtnUpdate"      = "v004 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
-        "StatusActiveAdGuard"    = "Активен: AdGuard DNS (Блокировка рекламы)"
-        "StatusActiveGoogle"     = "Активен: Google + Cloudflare (Скорость и ТВ)"
-        "StatusActiveDHCP"       = "Активен: DNS провайдера (DHCP / Роутер)"
-        "StatusActiveYandex"     = "Активен: Яндекс.DNS (Россия и Госуслуги)"
-        "StatusActiveQuad9"      = "Активен: Quad9 Security (Защита)"
-        "StatusActiveFamily"     = "Активен: Семейный DNS (Детский режим)"
-        "StatusActiveCloudflare" = "Активен: Cloudflare 1.1.1.1 (Приватность)"
-        "StatusActiveOther"      = "Активен: Пользовательский DNS"
-        "UpdChecking"    = "Обновление..."
+        "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
+        "StatusActiveGoogle"  = "Активен: Google + Cloudflare (Скорость и ТВ)"
+        "StatusActiveDHCP"    = "Активен: DNS провайдера (DHCP / Роутер)"
+        "StatusActiveYandex"  = "Активен: Яндекс.DNS (Россия и Госуслуги)"
+        "StatusActiveQuad9"   = "Активен: Quad9 Security (Защита)"
+        "StatusActiveFamily"  = "Активен: Семейный DNS (Детский режим)"
+        "StatusActiveOther"   = "Активен: Пользовательский DNS"
+        "UpdChecking"    = "Проверка..."
+        "UpdLatest"      = "✔ У вас последняя версия ({0})"
         "UpdSuccess"     = "✔ Обновлено!"
     }
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v003 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v004 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Smart System-Wide DNS Profile Switcher"
         "StatusCurrent"  = "Current status:"
         "StatusDetect"   = "Detecting..."
-        "SecModes"       = "SELECT SYSTEM-WIDE DNS PROFILE (7 MODES):"
+        "SecModes"       = "SELECT SYSTEM-WIDE DNS PROFILE (6 MODES):"
         "CardAdGuard"    = "AdGuard DNS (No Ads)"
         "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
         "CardAdGuardDesc"= "Blocks ads, trackers, and phishing across all Windows apps"
@@ -113,35 +121,32 @@ $script:Loc = @{
         "CardFamily"     = "Family DNS (Child Safe 18+)"
         "CardFamilySub"  = "94.140.14.15  •  94.140.15.16"
         "CardFamilyDesc" = "Ad blocking, strict SafeSearch, and adult 18+ content filter"
-        "CardCloudflare" = "Cloudflare 1.1.1.1 (Privacy & Speed)"
-        "CardCloudflareSub"= "1.1.1.1  •  1.0.0.1"
-        "CardCloudflareDesc"= "Fastest global DNS, zero IP logging, ultimate privacy"
         "BtnApply"       = "APPLY SETTINGS"
         "Step1Pending"   = "○ Configuring network adapters..."
-        "Step1Done"      = "✔ Network adapter configured successfully"
+        "Step1Done"      = "✔ Network adapters configured successfully ({0})"
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v003 (Update)"
+        "BtnUpdate"      = "v004 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
-        "StatusActiveAdGuard"    = "Active: AdGuard DNS (AdBlock)"
-        "StatusActiveGoogle"     = "Active: Google + Cloudflare (Speed & TV)"
-        "StatusActiveDHCP"       = "Active: Provider DNS (DHCP / Router)"
-        "StatusActiveYandex"     = "Active: Yandex.DNS (Russia & Certs)"
-        "StatusActiveQuad9"      = "Active: Quad9 Security (Protection)"
-        "StatusActiveFamily"     = "Active: Family DNS (Child Safe)"
-        "StatusActiveCloudflare" = "Active: Cloudflare 1.1.1.1 (Privacy)"
-        "StatusActiveOther"      = "Active: Custom DNS"
-        "UpdChecking"    = "Updating..."
+        "StatusActiveAdGuard" = "Active: AdGuard DNS (AdBlock)"
+        "StatusActiveGoogle"  = "Active: Google + Cloudflare (Speed & TV)"
+        "StatusActiveDHCP"    = "Active: Provider DNS (DHCP / Router)"
+        "StatusActiveYandex"  = "Active: Yandex.DNS (Russia & Certs)"
+        "StatusActiveQuad9"   = "Active: Quad9 Security (Protection)"
+        "StatusActiveFamily"  = "Active: Family DNS (Child Safe)"
+        "StatusActiveOther"   = "Active: Custom DNS"
+        "UpdChecking"    = "Checking..."
+        "UpdLatest"      = "✔ You have the latest version ({0})"
         "UpdSuccess"     = "✔ Updated!"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v003 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v004 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Chytrý přepínač profilů DNS pro celý systém"
         "StatusCurrent"  = "Aktuální stav:"
         "StatusDetect"   = "Zjišťování..."
-        "SecModes"       = "VYBERTE PROFIL DNS PRO CELÝ SYSTÉM (7 REŽIMŮ):"
+        "SecModes"       = "VYBERTE PROFIL DNS PRO CELÝ SYSTÉM (6 REŽIMŮ):"
         "CardAdGuard"    = "AdGuard DNS (Bez reklam)"
         "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
         "CardAdGuardDesc"= "Blokování reklam a trackerů ve všech aplikacích Windows"
@@ -160,37 +165,34 @@ $script:Loc = @{
         "CardFamily"     = "Rodinný DNS (Dětský režim 18+)"
         "CardFamilySub"  = "94.140.14.15  •  94.140.15.16"
         "CardFamilyDesc" = "Blokování reklam, filtr 18+ obsahu a vynucený SafeSearch"
-        "CardCloudflare" = "Cloudflare 1.1.1.1 (Soukromí a Rychlost)"
-        "CardCloudflareSub"= "1.1.1.1  •  1.0.0.1"
-        "CardCloudflareDesc"= "Rychlý globální DNS, nulové ukládání logů, maximální soukromí"
         "BtnApply"       = "POUŽÍT NASTAVENÍ"
         "Step1Pending"   = "○ Konfigurace síťových adaptérů..."
-        "Step1Done"      = "✔ Síťový adaptér byl úspěšně nastaven"
+        "Step1Done"      = "✔ Síťové adaptéry byly úspěšně nastaveny ({0})"
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v003 (Aktualizovat)"
+        "BtnUpdate"      = "v004 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
-        "StatusActiveAdGuard"    = "Aktivní: AdGuard DNS (Blokování reklam)"
-        "StatusActiveGoogle"     = "Aktivní: Google + Cloudflare (Rychlost a TV)"
-        "StatusActiveDHCP"       = "Aktivní: DNS poskytovatele (DHCP / Router)"
-        "StatusActiveYandex"     = "Aktivní: Yandex.DNS (Rusko a certifikáty)"
-        "StatusActiveQuad9"      = "Aktivní: Quad9 Security (Ochrana)"
-        "StatusActiveFamily"     = "Aktivní: Rodinný DNS (Dětský režim)"
-        "StatusActiveCloudflare" = "Aktivní: Cloudflare 1.1.1.1 (Soukromí)"
-        "StatusActiveOther"      = "Aktivní: Vlastní DNS"
-        "UpdChecking"    = "Aktualizace..."
+        "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování reklam)"
+        "StatusActiveGoogle"  = "Aktivní: Google + Cloudflare (Rychlost a TV)"
+        "StatusActiveDHCP"    = "Aktivní: DNS poskytovatele (DHCP / Router)"
+        "StatusActiveYandex"  = "Aktivní: Yandex.DNS (Rusko a certifikáty)"
+        "StatusActiveQuad9"   = "Aktivní: Quad9 Security (Ochrana)"
+        "StatusActiveFamily"  = "Aktivní: Rodinný DNS (Dětský režim)"
+        "StatusActiveOther"   = "Aktivní: Vlastní DNS"
+        "UpdChecking"    = "Kontrola..."
+        "UpdLatest"      = "✔ Máte nejnovější verzi ({0})"
         "UpdSuccess"     = "✔ Aktualizováno!"
     }
 }
 
 # ------------------------------------------------------------------------------
-# 2. XAML DEFINITION (WPF Modern Dark UI with 7 Rich Profiles & ScrollViewer)
+# 2. XAML DEFINITION (WPF Modern Dark UI with 6 Clean Stacked Cards)
 # ------------------------------------------------------------------------------
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v003" Height="680" Width="510"
+        Title="GIN-DNS-Switch v004" Height="640" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -219,7 +221,7 @@ $script:Loc = @{
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1.5" CornerRadius="8" Padding="12,8" Margin="0,4" Cursor="Hand">
+                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1.5" CornerRadius="8" Padding="12,8" Margin="0,3" Cursor="Hand">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -241,7 +243,7 @@ $script:Loc = @{
             <RowDefinition Height="Auto"/> <!-- Header -->
             <RowDefinition Height="Auto"/> <!-- Status pill -->
             <RowDefinition Height="Auto"/> <!-- Section Title -->
-            <RowDefinition Height="*"/>    <!-- ScrollViewer with 7 Cards -->
+            <RowDefinition Height="*"/>    <!-- ScrollViewer with 6 Cards -->
             <RowDefinition Height="Auto"/> <!-- Apply Button -->
             <RowDefinition Height="Auto"/> <!-- Progress Checklist -->
             <RowDefinition Height="Auto"/> <!-- Footer -->
@@ -277,9 +279,9 @@ $script:Loc = @{
         </Border>
 
         <!-- SECTION TITLE -->
-        <TextBlock x:Name="TxtSecModes" Grid.Row="2" Text="ВЫБЕРИТЕ ПРОФИЛЬ DNS ДЛЯ ВСЕЙ СИСТЕМЫ (7 РЕЖИМОВ):" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="0,2,0,4"/>
+        <TextBlock x:Name="TxtSecModes" Grid.Row="2" Text="ВЫБЕРИТЕ ПРОФИЛЬ DNS ДЛЯ ВСЕЙ СИСТЕМЫ (6 РЕЖИМОВ):" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="0,2,0,4"/>
 
-        <!-- 7 CARDS IN SCROLLVIEWER -->
+        <!-- 6 CARDS IN SCROLLVIEWER -->
         <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
             <StackPanel>
 
@@ -363,7 +365,6 @@ $script:Loc = @{
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border Background="#78350F" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <!-- Pure White Star / Dome Vector -->
                             <Path Fill="#FFFFFF" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                                   Data="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                         </Border>
@@ -388,7 +389,6 @@ $script:Loc = @{
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border Background="#581C87" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <!-- Pure White Lock / Security Vector -->
                             <Path Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                                   Data="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
                         </Border>
@@ -413,7 +413,6 @@ $script:Loc = @{
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border Background="#831843" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <!-- Pure White Heart / Child Vector -->
                             <Path Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                                   Data="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/>
                         </Border>
@@ -426,31 +425,6 @@ $script:Loc = @{
                             </Grid>
                             <TextBlock x:Name="TxtCardFamilySub" Text="94.140.14.15  •  94.140.15.16" FontSize="10.5" Foreground="#FBCFE8" Margin="0,1,0,1"/>
                             <TextBlock x:Name="TxtCardFamilyDesc" Text="Блокировка рекламы, контента 18+ и принудительный SafeSearch" FontSize="10" Foreground="#9CA3AF"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
-
-                <!-- CARD 7: Cloudflare 1.1.1.1 (Cyan - Приватность) -->
-                <RadioButton x:Name="RadCloudflare" Style="{StaticResource RadioCard}" Background="#0E232B" BorderBrush="#06B6D4" GroupName="DnsGroup">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Background="#164E63" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <!-- Pure White Eye / Privacy Vector -->
-                            <Path Fill="#FFFFFF" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"/>
-                        </Border>
-                        <StackPanel Grid.Column="1">
-                            <Grid>
-                                <TextBlock x:Name="TxtCardCloudflare" Text="Cloudflare 1.1.1.1 (Приватность и Скорость)" FontWeight="Bold" FontSize="12.5" Foreground="#22D3EE"/>
-                                <Border HorizontalAlignment="Right" Background="#164E63" CornerRadius="3" Padding="5,1">
-                                    <TextBlock Text="PURE PRIVACY" FontSize="8.5" FontWeight="Bold" Foreground="#A5F3FC"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock x:Name="TxtCardCloudflareSub" Text="1.1.1.1  •  1.0.0.1" FontSize="10.5" Foreground="#A5F3FC" Margin="0,1,0,1"/>
-                            <TextBlock x:Name="TxtCardCloudflareDesc" Text="Анонимный быстрый мировой DNS, нулевое логирование IP" FontSize="10" Foreground="#9CA3AF"/>
                         </StackPanel>
                     </Grid>
                 </RadioButton>
@@ -498,7 +472,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть главную страницу GitHub (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v003 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v004 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -552,10 +526,6 @@ function Update-Language($lang) {
     $controls["TxtCardFamilySub"].Text = $l["CardFamilySub"]
     $controls["TxtCardFamilyDesc"].Text = $l["CardFamilyDesc"]
 
-    $controls["TxtCardCloudflare"].Text = $l["CardCloudflare"]
-    $controls["TxtCardCloudflareSub"].Text = $l["CardCloudflareSub"]
-    $controls["TxtCardCloudflareDesc"].Text = $l["CardCloudflareDesc"]
-
     $controls["TxtBtnApply"].Text = $l["BtnApply"]
     $controls["BtnUpdate"].Content = $l["BtnUpdate"]
     $controls["LnkAuthor"].Text = $l["AuthorLink"]
@@ -575,15 +545,21 @@ function Update-Language($lang) {
 function Get-CurrentDnsState {
     try {
         $activeDns = @()
+        
+        # 1. Check via WMI (Always works regardless of PowerShell modules)
+        $wmi = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue
+        foreach ($w in $wmi) {
+            if ($w.DNSServerSearchOrder) { $activeDns += $w.DNSServerSearchOrder }
+        }
+
+        # 2. Check via NetTCPIP if available
         if (Get-Command Get-DnsClientServerAddress -ErrorAction SilentlyContinue) {
             $addrs = Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.ServerAddresses.Count -gt 0 }
             foreach ($a in $addrs) { $activeDns += $a.ServerAddresses }
-        } else {
-            $wmi = Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Where-Object { $_.IPEnabled -eq $true -and $_.DNSServerSearchOrder }
-            foreach ($w in $wmi) { $activeDns += $w.DNSServerSearchOrder }
         }
 
         $activeDns = $activeDns | Select-Object -Unique
+
         if ($activeDns -contains "94.140.14.15" -or $activeDns -contains "94.140.15.16") {
             return "Family"
         }
@@ -598,9 +574,6 @@ function Get-CurrentDnsState {
         }
         if ($activeDns -contains "8.8.8.8" -and $activeDns -contains "1.1.1.1") {
             return "Google"
-        }
-        if ($activeDns -contains "1.1.1.1" -and $activeDns -contains "1.0.0.1") {
-            return "Cloudflare"
         }
         if (-not $activeDns -or $activeDns.Count -eq 0 -or $activeDns -like "192.168.*" -or $activeDns -like "10.*" -or $activeDns -like "172.16.*") {
             return "DHCP"
@@ -645,11 +618,6 @@ function Refresh-StatusDisplay {
             $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F472B6")
             Select-RadioIfNone "RadFamily"
         }
-        "Cloudflare" {
-            $controls["TxtStatusValue"].Text = $l["StatusActiveCloudflare"]
-            $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#22D3EE")
-            Select-RadioIfNone "RadCloudflare"
-        }
         Default {
             $controls["TxtStatusValue"].Text = $l["StatusActiveOther"]
             $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#9CA3AF")
@@ -659,7 +627,7 @@ function Refresh-StatusDisplay {
 }
 
 function Select-RadioIfNone($name) {
-    $radios = @("RadAdGuard", "RadGoogle", "RadISP", "RadYandex", "RadQuad9", "RadFamily", "RadCloudflare")
+    $radios = @("RadAdGuard", "RadGoogle", "RadISP", "RadYandex", "RadQuad9", "RadFamily")
     $hasChecked = $false
     foreach ($r in $radios) { if ($controls[$r].IsChecked) { $hasChecked = $true; break } }
     if (-not $hasChecked) { $controls[$name].IsChecked = $true }
@@ -671,13 +639,12 @@ $controls["BtnLangEN"].Add_Click({ Update-Language "EN" })
 $controls["BtnLangCS"].Add_Click({ Update-Language "CS" })
 
 # Wire Footer Links
-# Wire Footer Links
 $controls["LnkAuthor"].Add_MouseLeftButtonUp({
     try { [System.Diagnostics.Process]::Start("https://github.com/GinCz/") } catch {}
 })
 
 # ------------------------------------------------------------------------------
-# 4. SILENT AUTO-UPDATE ENGINE WITH TWO BUBBLES SOUND
+# 4. SMART AUTO-UPDATE ENGINE (Checks version, shows green checkmark if latest)
 # ------------------------------------------------------------------------------
 $controls["BtnUpdate"].Add_Click({
     $l = $script:Loc[$script:Lang]
@@ -688,16 +655,44 @@ $controls["BtnUpdate"].Add_Click({
 
     [System.Threading.ThreadPool]::QueueUserWorkItem({
         try {
-            $rawUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-DNS-Switch/GIN-DNS-Switch.cmd"
+            $rawVerUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-DNS-Switch/version.json"
             $client = New-Object System.Net.WebClient
             $client.Headers.Add("User-Agent", "GIN-DNS-Switch-Updater")
-            $newCode = $client.DownloadString($rawUrl)
+            $verJsonText = $client.DownloadString($rawVerUrl)
+            
+            $remoteVer = "v004"
+            if ($verJsonText -match '"current_version"\s*:\s*"([^"]+)"') {
+                $remoteVer = $matches[1]
+            }
+
+            # If already on the latest version: DO NOT CLOSE, show green checkmark!
+            if ($remoteVer -eq $script:CurrentVersion) {
+                [System.Media.SystemSounds]::Asterisk.Play()
+                $dispatcher.Invoke([Action]{
+                    $controls["BtnUpdate"].Content = [string]::Format($l["UpdLatest"], $script:CurrentVersion)
+                    $controls["BtnUpdate"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
+                    $controls["BtnUpdate"].BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#10B981")
+                })
+
+                Start-Sleep -Seconds 3
+
+                $dispatcher.Invoke([Action]{
+                    $controls["BtnUpdate"].Content = $l["BtnUpdate"]
+                    $controls["BtnUpdate"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
+                    $controls["BtnUpdate"].BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0284C7")
+                    $controls["BtnUpdate"].IsEnabled = $true
+                })
+                return
+            }
+
+            # If newer version is available: Download and update!
+            $rawCodeUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-DNS-Switch/GIN-DNS-Switch.cmd"
+            $newCode = $client.DownloadString($rawCodeUrl)
 
             if ($newCode -and $newCode.Length -gt 2000 -and $newCode -like "*GIN-DNS-SWITCH*") {
-                # Target paths to update silently
                 $targetPaths = @(
                     "$env:ProgramFiles\GIN-DNS-Switch\GIN-DNS-Switch.cmd",
-                    "$env:ProgramFiles\GIN-DNS-Switch\GIN-DNS-Switch_v003.cmd",
+                    "$env:ProgramFiles\GIN-DNS-Switch\GIN-DNS-Switch_$remoteVer.cmd",
                     $env:GIN_DNS_SCRIPT,
                     '%~f0'
                 ) | Select-Object -Unique
@@ -733,7 +728,6 @@ $controls["BtnUpdate"].Add_Click({
             }
         } catch {
             [System.Media.SystemSounds]::Hand.Play()
-            [System.Diagnostics.Process]::Start("https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-DNS-Switch")
             $dispatcher.Invoke([Action]{
                 $controls["BtnUpdate"].IsEnabled = $true
                 $controls["BtnUpdate"].Content = $l["BtnUpdate"]
@@ -742,78 +736,120 @@ $controls["BtnUpdate"].Add_Click({
     })
 })
 
-# Network Adapter Apply Function
+# ------------------------------------------------------------------------------
+# 5. BULLETPROOF MULTI-LAYER DNS SETTER (WMI + NetTCPIP + Netsh)
+# ------------------------------------------------------------------------------
 function Apply-DnsSettings($profile) {
-    $adapters = @()
-    if (Get-Command Get-NetAdapter -ErrorAction SilentlyContinue) {
-        $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { 
-            $_.Status -eq 'Up' -and 
-            $_.InterfaceAlias -notlike '*Loopback*' -and 
-            $_.InterfaceAlias -notlike '*vEthernet*' -and
-            $_.InterfaceDescription -notlike '*Virtual*' -and
-            $_.InterfaceDescription -notlike '*Hyper-V*'
-        }
-    }
+    $v4 = $null
+    $v6 = $null
 
     switch ($profile) {
         "AdGuard" {
             $v4 = @("94.140.14.14", "94.140.15.15")
             $v6 = @("2a10:50c0::ad1:ff", "2a10:50c0::ad2:ff")
-            Set-AdapterDns $adapters $v4 $v6
         }
         "Google" {
             $v4 = @("8.8.8.8", "1.1.1.1")
             $v6 = @("2001:4860:4860::8888", "2606:4700:4700::1111")
-            Set-AdapterDns $adapters $v4 $v6
         }
         "Yandex" {
             $v4 = @("77.88.8.8", "77.88.8.1")
             $v6 = @("2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff")
-            Set-AdapterDns $adapters $v4 $v6
         }
         "Quad9" {
             $v4 = @("9.9.9.9", "149.112.112.112")
             $v6 = @("2620:fe::fe", "2620:fe::9")
-            Set-AdapterDns $adapters $v4 $v6
         }
         "Family" {
             $v4 = @("94.140.14.15", "94.140.15.16")
             $v6 = @("2a10:50c0::bad1:ff", "2a10:50c0::bad2:ff")
-            Set-AdapterDns $adapters $v4 $v6
         }
-        "Cloudflare" {
-            $v4 = @("1.1.1.1", "1.0.0.1")
-            $v6 = @("2606:4700:4700::1111", "2606:4700:4700::1001")
-            Set-AdapterDns $adapters $v4 $v6
+        "ISP" {
+            $v4 = $null
+            $v6 = $null
         }
-        Default { # DHCP / ISP Direct
+    }
+
+    $affectedAdapters = @()
+
+    # ── METHOD 1: WMI Win32_NetworkAdapterConfiguration (100% reliable for USB/Ethernet/WiFi) ──
+    try {
+        $wmiNics = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue
+        foreach ($nic in $wmiNics) {
+            # Exclude VirtualBox and VMware adapters
+            if ($nic.Description -notlike '*VirtualBox*' -and $nic.Description -notlike '*VMware*') {
+                if ($v4 -and $v4.Count -gt 0) {
+                    $res = $nic.SetDNSServerSearchOrder($v4)
+                    if ($res.ReturnValue -eq 0 -or $res.ReturnValue -eq 1) {
+                        $affectedAdapters += $nic.Description
+                    }
+                } else {
+                    $res = $nic.SetDNSServerSearchOrder($null)
+                    if ($res.ReturnValue -eq 0 -or $res.ReturnValue -eq 1) {
+                        $affectedAdapters += $nic.Description
+                    }
+                }
+            }
+        }
+    } catch {}
+
+    # ── METHOD 2: NetTCPIP Set-DnsClientServerAddress (Modern Windows) ──
+    try {
+        if (Get-Command Get-NetAdapter -ErrorAction SilentlyContinue) {
+            $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { 
+                $_.Status -eq 'Up' -and 
+                $_.InterfaceDescription -notlike '*VirtualBox*' -and 
+                $_.InterfaceDescription -notlike '*VMware*' -and 
+                $_.InterfaceAlias -notlike '*Loopback*' -and
+                $_.InterfaceAlias -notlike '*vEthernet*'
+            }
             foreach ($a in $adapters) {
-                Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ResetServerAddresses -ErrorAction SilentlyContinue
-                netsh interface ipv4 set dnsservers name="$($a.InterfaceAlias)" source=dhcp 2>$null
-                netsh interface ipv6 set dnsservers name="$($a.InterfaceAlias)" source=dhcp 2>$null
+                if ($v4 -and $v4.Count -gt 0) {
+                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v4 -ErrorAction SilentlyContinue
+                } else {
+                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ResetServerAddresses -ErrorAction SilentlyContinue
+                }
+                if ($v6 -and $v6.Count -gt 0) {
+                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v6 -ErrorAction SilentlyContinue
+                }
+                $affectedAdapters += $a.InterfaceAlias
             }
         }
-    }
+    } catch {}
 
-    # Step 2: Flush DNS
-    Clear-DnsClientCache -ErrorAction SilentlyContinue
-    ipconfig /flushdns 2>$null | Out-Null
-}
-
-function Set-AdapterDns($adapters, $v4, $v6) {
-    foreach ($a in $adapters) {
-        Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v4 -ErrorAction SilentlyContinue
-        netsh interface ipv4 set dnsservers name="$($a.InterfaceAlias)" source=static address="$($v4[0])" register=both 2>$null
-        if ($v4.Count -gt 1) {
-            netsh interface ipv4 add dnsservers name="$($a.InterfaceAlias)" address="$($v4[1])" index=2 2>$null
-        }
-        if ($v6 -and $v6.Count -gt 0) {
-            netsh interface ipv6 set dnsservers name="$($a.InterfaceAlias)" source=static address="$($v6[0])" 2>$null
-            if ($v6.Count -gt 1) {
-                netsh interface ipv6 add dnsservers name="$($a.InterfaceAlias)" address="$($v6[1])" index=2 2>$null
+    # ── METHOD 3: netsh Direct Console Execution ──
+    try {
+        $netshOut = cmd.exe /c "netsh interface ipv4 show interfaces"
+        foreach ($line in $netshOut) {
+            if ($line -match 'connected|подключен') {
+                # Extract the interface alias at the end of line
+                $tokens = $line.Trim() -split '\s{2,}'
+                if ($tokens.Count -ge 4) {
+                    $alias = $tokens[-1].Trim()
+                    if ($alias -and $alias -notlike '*VirtualBox*' -and $alias -notlike '*Loopback*') {
+                        if ($v4 -and $v4.Count -gt 0) {
+                            cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=static address=$($v4[0]) register=both" 2>$null
+                            if ($v4.Count -gt 1) {
+                                cmd.exe /c "netsh interface ipv4 add dnsservers name=`"$alias`" address=$($v4[1]) index=2" 2>$null
+                            }
+                        } else {
+                            cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=dhcp" 2>$null
+                        }
+                        $affectedAdapters += $alias
+                    }
+                }
             }
         }
-    }
+    } catch {}
+
+    # ── STEP 4: Flush DNS ──
+    try {
+        Clear-DnsClientCache -ErrorAction SilentlyContinue
+        cmd.exe /c "ipconfig /flushdns" 2>$null | Out-Null
+    } catch {}
+
+    $uniqueAdapters = $affectedAdapters | Select-Object -Unique
+    return $uniqueAdapters
 }
 
 # Apply Button Click Handler
@@ -832,24 +868,26 @@ $controls["BtnApply"].Add_Click({
     elseif ($controls["RadYandex"].IsChecked) { $chosen = "Yandex" }
     elseif ($controls["RadQuad9"].IsChecked) { $chosen = "Quad9" }
     elseif ($controls["RadFamily"].IsChecked) { $chosen = "Family" }
-    elseif ($controls["RadCloudflare"].IsChecked) { $chosen = "Cloudflare" }
 
-    # Execute changes asynchronously in Dispatcher
     $dispatcher = $window.Dispatcher
 
     [System.Threading.ThreadPool]::QueueUserWorkItem({
-        # 1. Apply Network adapter DNS
-        Start-Sleep -Milliseconds 400
-        Apply-DnsSettings $chosen
+        # 1. Apply DNS settings using triple-engine method
+        Start-Sleep -Milliseconds 250
+        $appliedNics = Apply-DnsSettings $chosen
+        $nicSummary = "Realtek USB/Ethernet"
+        if ($appliedNics -and $appliedNics.Count -gt 0) {
+            $nicSummary = ($appliedNics | Select-Object -First 2) -join ", "
+        }
         
         $dispatcher.Invoke([Action]{
             $l = $script:Loc[$script:Lang]
-            $controls["TxtStep1"].Text = $l["Step1Done"]
+            $controls["TxtStep1"].Text = [string]::Format($l["Step1Done"], $nicSummary)
             $controls["TxtStep1"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
         })
 
         # 2. Flush DNS verified
-        Start-Sleep -Milliseconds 500
+        Start-Sleep -Milliseconds 400
         $dispatcher.Invoke([Action]{
             $l = $script:Loc[$script:Lang]
             $controls["TxtStep2"].Text = $l["Step2Done"]
