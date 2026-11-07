@@ -1,8 +1,9 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v001",
+  "current_version": "v002",
   "updated_at": "2026-11-07",
   "active_versions": [
+    "GIN-DNS-Switch_v002.cmd",
     "GIN-DNS-Switch_v001.cmd"
   ],
   "author": "Vladimir Bulantsev (GinCz) & AI",
@@ -22,25 +23,8 @@
       "name_cs": "AdGuard DNS (Bez reklam)",
       "dns_ipv4": ["94.140.14.14", "94.140.15.15"],
       "dns_ipv6": ["2a10:50c0::ad1:ff", "2a10:50c0::ad2:ff"],
+      "color": "green",
       "type": "adblock"
-    },
-    {
-      "id": "dhcp_router",
-      "name_ru": "Чистый роутер / DHCP (ТВ и Стриминг)",
-      "name_en": "Router DHCP (TV & Streaming)",
-      "name_cs": "Router DHCP (TV a streamování)",
-      "dns_ipv4": [],
-      "dns_ipv6": [],
-      "type": "dhcp"
-    },
-    {
-      "id": "isp_provider",
-      "name_ru": "DNS провайдера (Direct ISP)",
-      "name_en": "Provider DNS (Direct ISP)",
-      "name_cs": "DNS poskytovatele (Direct ISP)",
-      "dns_ipv4": [],
-      "dns_ipv6": [],
-      "type": "dhcp"
     },
     {
       "id": "google_cloudflare",
@@ -49,14 +33,30 @@
       "name_cs": "Google + Cloudflare (Max. rychlost)",
       "dns_ipv4": ["8.8.8.8", "1.1.1.1"],
       "dns_ipv6": ["2001:4860:4860::8888", "2606:4700:4700::1111"],
-      "type": "fast"
+      "color": "blue",
+      "type": "speed_and_tv"
+    },
+    {
+      "id": "isp_provider",
+      "name_ru": "DNS провайдера (Чистый DHCP)",
+      "name_en": "Provider DNS (Pure DHCP)",
+      "name_cs": "DNS poskytovatele (Čisté DHCP)",
+      "dns_ipv4": [],
+      "dns_ipv6": [],
+      "color": "red",
+      "type": "dhcp"
     }
   ],
   "changelog": [
     {
+      "version": "v002",
+      "date": "2026-11-07",
+      "changes": "UI & Architecture Overhaul: 1) Replaced dark emojis with 100% pure white vector SVG/Path icons on circular high-contrast badges; 2) Consolidated into 3 distinct core options: Green AdGuard (AdBlock), Blue Google + Cloudflare (Ultra Fast & Android TV/Cast compatible), Red Provider DNS (Pure DHCP/Router); 3) Eliminated duplicate DHCP card and fixed text wrapping on all DPIs; 4) Updated version metadata and built native v002 installer."
+    },
+    {
       "version": "v001",
       "date": "2026-11-07",
-      "changes": "Initial release: Standalone lightweight DNS Switcher for Windows 7/8/10/11. Includes 4 profiles: AdGuard DNS (AdBlock), Pure Router DHCP (Android TV/Cast compatible), Direct ISP, and Google + Cloudflare (8.8.8.8 & 1.1.1.1). One-click apply with dual visual checklist verification, 3-second auto-close and zero background memory retention. Multilingual (RU/EN/CS), VladiMIR + AI GitHub integration, self-contained auto-elevation polyglot launcher, Setup.cmd and Uninstall.cmd."
+      "changes": "Initial release: Standalone lightweight DNS Switcher for Windows 7/8/10/11."
     }
   ]
 }

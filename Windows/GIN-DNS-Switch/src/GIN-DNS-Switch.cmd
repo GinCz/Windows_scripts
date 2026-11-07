@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v001 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v002 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v001...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v002...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v001
+#  GIN-DNS-SWITCH                                                  v002
 #  Smart 1-Click DNS Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/Windows_scripts
@@ -42,113 +42,101 @@ $script:Lang = "RU"
 
 $script:Loc = @{
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v001 — Менеджер DNS"
+        "WinTitle"       = "GIN-DNS-Switch v002 — Менеджер DNS"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Умный переключатель сетевых профилей DNS"
         "StatusCurrent"  = "Текущий статус:"
         "StatusDetect"   = "Определение..."
-        "SecQuick"       = "БЫСТРЫЙ ВЫБОР (ОСНОВНЫЕ РЕЖИМЫ)"
+        "SecModes"       = "ВЫБЕРИТЕ РЕЖИМ DNS ДЛЯ ВСЕЙ СИСТЕМЫ"
         "CardAdGuard"    = "AdGuard DNS (Без рекламы)"
         "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
-        "CardAdGuardDesc"= "Блокировка баннеров, трекеров и фишинга на уровне DNS"
-        "CardRouter"     = "Роутер DHCP (ТВ и Стриминг)"
-        "CardRouterSub"  = "Автоматический шлюз (Родной DNS)"
-        "CardRouterDesc" = "100% поддержка Google Cast, Android TV, интернет-банков"
-        "SecAlt"         = "ДОПОЛНИТЕЛЬНЫЕ РЕЖИМЫ"
-        "CardISP"        = "DNS провайдера (Direct ISP)"
-        "CardISPSub"     = "Прямой шлюз провайдера"
-        "CardISPDesc"    = "Сброс сторонних DNS, полный доступ к ресурсам оператора"
+        "CardAdGuardDesc"= "Блокировка баннеров, трекеров и фишинга во всех программах"
         "CardGoogle"     = "Google + Cloudflare (Макс. скорость)"
         "CardGoogleSub"  = "8.8.8.8  •  1.1.1.1"
-        "CardGoogleDesc" = "Ультра-быстрый пинг, без цензуры, ТВ и Cast работают"
+        "CardGoogleDesc" = "Ультра-скорость, Google Cast, трансляция на ТВ и банки"
+        "CardISP"        = "DNS провайдера (Чистый DHCP)"
+        "CardISPSub"     = "Автоматический шлюз роутера"
+        "CardISPDesc"    = "Сброс сторонних DNS, прямой доступ к сети оператора"
         "BtnApply"       = "ПРИМЕНИТЬ НАСТРОЙКИ"
         "Step1Pending"   = "○ Настройка сетевых адаптеров..."
         "Step1Done"      = "✔ Сетевой адаптер успешно перенастроен"
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v001 (Обновить)"
+        "BtnUpdate"      = "v002 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
-        "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка)"
-        "StatusActiveDHCP"    = "Активен: DHCP / Роутер (Авто)"
-        "StatusActiveGoogle"  = "Активен: Google + Cloudflare"
+        "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
+        "StatusActiveDHCP"    = "Активен: DNS провайдера (DHCP / Роутер)"
+        "StatusActiveGoogle"  = "Активен: Google + Cloudflare (Скорость и ТВ)"
         "StatusActiveOther"   = "Активен: Пользовательский DNS"
     }
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v001 — DNS Profile Manager"
+        "WinTitle"       = "GIN-DNS-Switch v002 — DNS Profile Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Smart 1-Click DNS Profile Switcher"
         "StatusCurrent"  = "Current status:"
         "StatusDetect"   = "Detecting..."
-        "SecQuick"       = "QUICK SELECTION (PRIMARY MODES)"
+        "SecModes"       = "SELECT SYSTEM-WIDE DNS MODE"
         "CardAdGuard"    = "AdGuard DNS (No Ads)"
         "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
-        "CardAdGuardDesc"= "Blocks ads, trackers, and malicious phishing domains"
-        "CardRouter"     = "Router DHCP (TV & Streaming)"
-        "CardRouterSub"  = "Automatic Gateway (Default DNS)"
-        "CardRouterDesc" = "100% compatibility with Google Cast, Android TV & Banks"
-        "SecAlt"         = "ALTERNATE MODES"
-        "CardISP"        = "Provider DNS (Direct ISP)"
-        "CardISPSub"     = "Direct ISP Gateway"
-        "CardISPDesc"    = "Reset third-party DNS, full access to ISP portals"
+        "CardAdGuardDesc"= "Blocks ads, trackers, and phishing across all Windows apps"
         "CardGoogle"     = "Google + Cloudflare (Ultra Fast)"
         "CardGoogleSub"  = "8.8.8.8  •  1.1.1.1"
-        "CardGoogleDesc" = "Ultra-low latency, uncensored, TV & Cast compatible"
+        "CardGoogleDesc" = "Ultra-low latency, Google Cast, Android TV & Banking OK"
+        "CardISP"        = "Provider DNS (Pure DHCP)"
+        "CardISPSub"     = "Automatic Router Gateway"
+        "CardISPDesc"    = "Reset third-party DNS, full access to ISP network"
         "BtnApply"       = "APPLY SETTINGS"
         "Step1Pending"   = "○ Configuring network adapters..."
         "Step1Done"      = "✔ Network adapter configured successfully"
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v001 (Update)"
+        "BtnUpdate"      = "v002 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Active: AdGuard DNS (AdBlock)"
-        "StatusActiveDHCP"    = "Active: DHCP / Router (Auto)"
-        "StatusActiveGoogle"  = "Active: Google + Cloudflare"
+        "StatusActiveDHCP"    = "Active: Provider DNS (DHCP / Router)"
+        "StatusActiveGoogle"  = "Active: Google + Cloudflare (Speed & TV)"
         "StatusActiveOther"   = "Active: Custom DNS"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v001 — Správce DNS"
+        "WinTitle"       = "GIN-DNS-Switch v002 — Správce DNS"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Chytrý přepínač profilů DNS na 1 kliknutí"
         "StatusCurrent"  = "Aktuální stav:"
         "StatusDetect"   = "Zjišťování..."
-        "SecQuick"       = "RYCHLÝ VÝBĚR (HLAVNÍ REŽIMY)"
+        "SecModes"       = "VYBERTE REŽIM DNS PRO CELÝ SYSTÉM"
         "CardAdGuard"    = "AdGuard DNS (Bez reklam)"
         "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
-        "CardAdGuardDesc"= "Blokování reklam, sledovacích skriptů a phishingu"
-        "CardRouter"     = "Router DHCP (TV a streamování)"
-        "CardRouterSub"  = "Automatická brána (Výchozí DNS)"
-        "CardRouterDesc" = "100% kompatibilita s Android TV, Google Cast a bankami"
-        "SecAlt"         = "DALŠÍ REŽIMY"
-        "CardISP"        = "DNS poskytovatele (Direct ISP)"
-        "CardISPSub"     = "Přímá brána poskytovatele"
-        "CardISPDesc"    = "Reset cizích DNS, plný přístup k místním službám"
+        "CardAdGuardDesc"= "Blokování reklam a trackerů ve všech aplikacích Windows"
         "CardGoogle"     = "Google + Cloudflare (Max. rychlost)"
         "CardGoogleSub"  = "8.8.8.8  •  1.1.1.1"
-        "CardGoogleDesc" = "Ultra nízká odezva, bez cenzury, TV i Cast fungují"
+        "CardGoogleDesc" = "Ultra nízká odezva, Google Cast, Android TV i banky"
+        "CardISP"        = "DNS poskytovatele (Čisté DHCP)"
+        "CardISPSub"     = "Automatická brána routeru"
+        "CardISPDesc"    = "Reset cizích DNS, přímý přístup k síti operátora"
         "BtnApply"       = "POUŽÍT NASTAVENÍ"
         "Step1Pending"   = "○ Konfigurace síťových adaptérů..."
         "Step1Done"      = "✔ Síťový adaptér byl úspěšně nastaven"
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v001 (Aktualizovat)"
+        "BtnUpdate"      = "v002 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
-        "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování)"
-        "StatusActiveDHCP"    = "Aktivní: DHCP / Router (Auto)"
-        "StatusActiveGoogle"  = "Aktivní: Google + Cloudflare"
+        "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování reklam)"
+        "StatusActiveDHCP"    = "Aktivní: DNS poskytovatele (DHCP / Router)"
+        "StatusActiveGoogle"  = "Aktivní: Google + Cloudflare (Rychlost a TV)"
         "StatusActiveOther"   = "Aktivní: Vlastní DNS"
     }
 }
 
 # ------------------------------------------------------------------------------
-# 2. XAML DEFINITION (WPF Modern Dark UI)
+# 2. XAML DEFINITION (WPF Modern Dark UI with Pure White Vector Icons)
 # ------------------------------------------------------------------------------
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v001" Height="580" Width="490"
+        Title="GIN-DNS-Switch v002" Height="550" Width="490"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -177,16 +165,15 @@ $script:Loc = @{
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="#2D3142" BorderThickness="1.5" CornerRadius="8" Padding="12,10" Margin="0,4" Cursor="Hand">
+                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1.5" CornerRadius="8" Padding="14,10" Margin="0,5" Cursor="Hand">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#4B5563"/>
+                                <Setter TargetName="CardBorder" Property="Opacity" Value="0.95"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="#3B82F6"/>
-                                <Setter TargetName="CardBorder" Property="Background" Value="#1C2438"/>
+                                <Setter TargetName="CardBorder" Property="BorderThickness" Value="2"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -198,10 +185,9 @@ $script:Loc = @{
     <Grid Margin="18,14,18,14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header -->
-            <RowDefinition Height="Auto"/> <!-- Status bar -->
-            <RowDefinition Height="Auto"/> <!-- Quick Section -->
-            <RowDefinition Height="Auto"/> <!-- Separator -->
-            <RowDefinition Height="Auto"/> <!-- Alt Section -->
+            <RowDefinition Height="Auto"/> <!-- Status pill -->
+            <RowDefinition Height="Auto"/> <!-- Section Title -->
+            <RowDefinition Height="Auto"/> <!-- 3 Stacked Cards -->
             <RowDefinition Height="Auto"/> <!-- Apply Button -->
             <RowDefinition Height="Auto"/> <!-- Progress Checklist -->
             <RowDefinition Height="*"/>    <!-- Spacer -->
@@ -226,7 +212,7 @@ $script:Loc = @{
         </Grid>
 
         <!-- CURRENT STATUS PILL -->
-        <Border Grid.Row="1" Background="#1A1C26" BorderBrush="#2D3142" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,10,0,10">
+        <Border Grid.Row="1" Background="#1A1C26" BorderBrush="#2D3142" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,10,0,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -237,91 +223,91 @@ $script:Loc = @{
             </Grid>
         </Border>
 
-        <!-- SECTION 1: QUICK MODES -->
-        <StackPanel Grid.Row="2">
-            <TextBlock x:Name="TxtSecQuick" Text="БЫСТРЫЙ ВЫБОР (ОСНОВНЫЕ РЕЖИМЫ)" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
-            
-            <!-- Card 1: AdGuard (Green) -->
-            <RadioButton x:Name="RadAdGuard" Style="{StaticResource RadioCard}" Background="#12251F" GroupName="DnsGroup">
+        <!-- SECTION TITLE -->
+        <TextBlock x:Name="TxtSecModes" Grid.Row="2" Text="ВЫБЕРИТЕ РЕЖИМ DNS ДЛЯ ВСЕЙ СИСТЕМЫ" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,2,0,4"/>
+
+        <!-- 3 CARDS STACK -->
+        <StackPanel Grid.Row="3">
+
+            <!-- CARD 1: AdGuard (Green) -->
+            <RadioButton x:Name="RadAdGuard" Style="{StaticResource RadioCard}" Background="#0F241C" BorderBrush="#10B981" GroupName="DnsGroup">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="🛡️" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <!-- Pure White Vector Shield Icon -->
+                    <Border Background="#164E38" CornerRadius="20" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Path Fill="#FFFFFF" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z"/>
+                    </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardAdGuard" Text="AdGuard DNS (Без рекламы)" FontWeight="Bold" FontSize="13" Foreground="#10B981"/>
+                            <TextBlock x:Name="TxtCardAdGuard" Text="AdGuard DNS (Без рекламы)" FontWeight="Bold" FontSize="13" Foreground="#34D399"/>
                             <Border HorizontalAlignment="Right" Background="#064E3B" CornerRadius="3" Padding="6,1">
-                                <TextBlock Text="BLOCK ADS" FontSize="9" FontWeight="Bold" Foreground="#34D399"/>
+                                <TextBlock Text="BLOCK ADS" FontSize="9" FontWeight="Bold" Foreground="#6EE7B7"/>
                             </Border>
                         </Grid>
-                        <TextBlock x:Name="TxtCardAdGuardSub" Text="94.140.14.14  •  94.140.15.15" FontSize="11" Foreground="#6EE7B7" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardAdGuardDesc" Text="Блокировка баннеров, трекеров и фишинга" FontSize="10.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardAdGuardSub" Text="94.140.14.14  •  94.140.15.15" FontSize="11" Foreground="#A7F3D0" Margin="0,1,0,1"/>
+                        <TextBlock x:Name="TxtCardAdGuardDesc" Text="Блокировка баннеров, трекеров и фишинга во всех программах" FontSize="10.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
 
-            <!-- Card 2: Router DHCP (Cyan) -->
-            <RadioButton x:Name="RadRouter" Style="{StaticResource RadioCard}" Background="#162338" GroupName="DnsGroup">
+            <!-- CARD 2: Google + Cloudflare (Blue) -->
+            <RadioButton x:Name="RadGoogle" Style="{StaticResource RadioCard}" Background="#122036" BorderBrush="#3B82F6" GroupName="DnsGroup">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="📺" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <!-- Pure White Vector Lightning / Speed Icon -->
+                    <Border Background="#1E3A8A" CornerRadius="20" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Path Fill="#FFFFFF" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M7 2v11h3v9l7-12h-4l4-8z"/>
+                    </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardRouter" Text="Роутер DHCP (ТВ и Стриминг)" FontWeight="Bold" FontSize="13" Foreground="#38BDF8"/>
-                            <Border HorizontalAlignment="Right" Background="#0C4A6E" CornerRadius="3" Padding="6,1">
-                                <TextBlock Text="TV &amp; CAST" FontSize="9" FontWeight="Bold" Foreground="#7DD3FC"/>
+                            <TextBlock x:Name="TxtCardGoogle" Text="Google + Cloudflare (Макс. скорость)" FontWeight="Bold" FontSize="13" Foreground="#60A5FA"/>
+                            <Border HorizontalAlignment="Right" Background="#1E3A8A" CornerRadius="3" Padding="6,1">
+                                <TextBlock Text="ULTRA FAST &amp; TV" FontSize="9" FontWeight="Bold" Foreground="#93C5FD"/>
                             </Border>
                         </Grid>
-                        <TextBlock x:Name="TxtCardRouterSub" Text="Автоматический шлюз (Родной DNS)" FontSize="11" Foreground="#7DD3FC" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardRouterDesc" Text="100% поддержка Google Cast, Android TV, интернет-банков" FontSize="10.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardGoogleSub" Text="8.8.8.8  •  1.1.1.1" FontSize="11" Foreground="#BAE6FD" Margin="0,1,0,1"/>
+                        <TextBlock x:Name="TxtCardGoogleDesc" Text="Ультра-скорость, Google Cast, трансляция на ТВ и банки" FontSize="10.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
-        </StackPanel>
 
-        <!-- SEPARATOR -->
-        <Separator Grid.Row="3" Background="#262A38" Margin="0,8,0,8"/>
-
-        <!-- SECTION 2: ALTERNATE MODES -->
-        <StackPanel Grid.Row="4">
-            <TextBlock x:Name="TxtSecAlt" Text="ДОПОЛНИТЕЛЬНЫЕ РЕЖИМЫ" FontSize="10.5" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4"/>
-
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="8"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Card 3: Direct ISP (Red/Coral) -->
-                <RadioButton x:Name="RadISP" Grid.Column="0" Style="{StaticResource RadioCard}" Background="#261719" GroupName="DnsGroup">
-                    <StackPanel>
-                        <TextBlock Text="🔴" FontSize="14" Margin="0,0,0,2"/>
-                        <TextBlock x:Name="TxtCardISP" Text="DNS провайдера" FontWeight="Bold" FontSize="11.5" Foreground="#F87171"/>
-                        <TextBlock x:Name="TxtCardISPSub" Text="Прямой ISP" FontSize="10" Foreground="#FCA5A5" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardISPDesc" Text="Сброс сторонних DNS" FontSize="9.5" Foreground="#9CA3AF" TextWrapping="Wrap"/>
+            <!-- CARD 3: DNS провайдера (Red) -->
+            <RadioButton x:Name="RadISP" Style="{StaticResource RadioCard}" Background="#251316" BorderBrush="#EF4444" GroupName="DnsGroup">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Pure White Vector Globe / Router Icon -->
+                    <Border Background="#7F1D1D" CornerRadius="20" Width="38" Height="38" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Path Fill="#FFFFFF" Width="18" Height="18" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </Border>
+                    <StackPanel Grid.Column="1">
+                        <Grid>
+                            <TextBlock x:Name="TxtCardISP" Text="DNS провайдера (Чистый DHCP)" FontWeight="Bold" FontSize="13" Foreground="#F87171"/>
+                            <Border HorizontalAlignment="Right" Background="#5F1010" CornerRadius="3" Padding="6,1">
+                                <TextBlock Text="ISP DIRECT" FontSize="9" FontWeight="Bold" Foreground="#FCA5A5"/>
+                            </Border>
+                        </Grid>
+                        <TextBlock x:Name="TxtCardISPSub" Text="Автоматический шлюз роутера" FontSize="11" Foreground="#FECDD3" Margin="0,1,0,1"/>
+                        <TextBlock x:Name="TxtCardISPDesc" Text="Сброс сторонних DNS, прямой доступ к сети оператора" FontSize="10.5" Foreground="#9CA3AF"/>
                     </StackPanel>
-                </RadioButton>
+                </Grid>
+            </RadioButton>
 
-                <!-- Card 4: Google + Cloudflare (Green Speed) -->
-                <RadioButton x:Name="RadGoogle" Grid.Column="2" Style="{StaticResource RadioCard}" Background="#14261C" GroupName="DnsGroup">
-                    <StackPanel>
-                        <TextBlock Text="⚡" FontSize="14" Margin="0,0,0,2"/>
-                        <TextBlock x:Name="TxtCardGoogle" Text="Google + Cloudflare" FontWeight="Bold" FontSize="11.5" Foreground="#4ADE80"/>
-                        <TextBlock x:Name="TxtCardGoogleSub" Text="8.8.8.8 • 1.1.1.1" FontSize="10" Foreground="#86EFAC" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardGoogleDesc" Text="Макс. скорость, ТВ OK" FontSize="9.5" Foreground="#9CA3AF" TextWrapping="Wrap"/>
-                    </StackPanel>
-                </RadioButton>
-            </Grid>
         </StackPanel>
 
         <!-- APPLY BUTTON -->
-        <Button x:Name="BtnApply" Grid.Row="5" Margin="0,12,0,0" Height="42" Background="#2563EB" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" Cursor="Hand">
+        <Button x:Name="BtnApply" Grid.Row="4" Margin="0,10,0,0" Height="42" Background="#2563EB" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" Cursor="Hand">
             <Button.Template>
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="BtnBorder" Background="{TemplateBinding Background}" CornerRadius="6">
@@ -345,7 +331,7 @@ $script:Loc = @{
         </Button>
 
         <!-- PROGRESS CHECKLIST -->
-        <Border x:Name="PanelProgress" Grid.Row="6" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,8,0,0" Visibility="Collapsed">
+        <Border x:Name="PanelProgress" Grid.Row="5" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,8,0,0" Visibility="Collapsed">
             <StackPanel>
                 <TextBlock x:Name="TxtStep1" Text="○ Настройка сетевых адаптеров..." FontSize="11" Foreground="#9CA3AF" Margin="0,1"/>
                 <TextBlock x:Name="TxtStep2" Text="○ Очистка кэша сопоставителя DNS..." FontSize="11" Foreground="#9CA3AF" Margin="0,1"/>
@@ -354,13 +340,13 @@ $script:Loc = @{
         </Border>
 
         <!-- FOOTER -->
-        <Grid Grid.Row="8" Margin="0,10,0,0">
+        <Grid Grid.Row="7" Margin="0,8,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть публичный репозиторий GitHub"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v001 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v002 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -388,20 +374,16 @@ function Update-Language($lang) {
     $controls["TxtHeaderTitle"].Text = $l["HeaderTitle"]
     $controls["TxtHeaderSub"].Text = $l["HeaderSub"]
     $controls["TxtStatusLabel"].Text = $l["StatusCurrent"]
-    $controls["TxtSecQuick"].Text = $l["SecQuick"]
+    $controls["TxtSecModes"].Text = $l["SecModes"]
     $controls["TxtCardAdGuard"].Text = $l["CardAdGuard"]
     $controls["TxtCardAdGuardSub"].Text = $l["CardAdGuardSub"]
     $controls["TxtCardAdGuardDesc"].Text = $l["CardAdGuardDesc"]
-    $controls["TxtCardRouter"].Text = $l["CardRouter"]
-    $controls["TxtCardRouterSub"].Text = $l["CardRouterSub"]
-    $controls["TxtCardRouterDesc"].Text = $l["CardRouterDesc"]
-    $controls["TxtSecAlt"].Text = $l["SecAlt"]
-    $controls["TxtCardISP"].Text = $l["CardISP"]
-    $controls["TxtCardISPSub"].Text = $l["CardISPSub"]
-    $controls["TxtCardISPDesc"].Text = $l["CardISPDesc"]
     $controls["TxtCardGoogle"].Text = $l["CardGoogle"]
     $controls["TxtCardGoogleSub"].Text = $l["CardGoogleSub"]
     $controls["TxtCardGoogleDesc"].Text = $l["CardGoogleDesc"]
+    $controls["TxtCardISP"].Text = $l["CardISP"]
+    $controls["TxtCardISPSub"].Text = $l["CardISPSub"]
+    $controls["TxtCardISPDesc"].Text = $l["CardISPDesc"]
     $controls["TxtBtnApply"].Text = $l["BtnApply"]
     $controls["BtnUpdate"].Content = $l["BtnUpdate"]
     $controls["LnkAuthor"].Text = $l["AuthorLink"]
@@ -452,29 +434,29 @@ function Refresh-StatusDisplay {
         "AdGuard" {
             $controls["TxtStatusValue"].Text = $l["StatusActiveAdGuard"]
             $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
-            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadRouter"].IsChecked -and -not $controls["RadISP"].IsChecked -and -not $controls["RadGoogle"].IsChecked) {
+            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadGoogle"].IsChecked -and -not $controls["RadISP"].IsChecked) {
                 $controls["RadAdGuard"].IsChecked = $true
             }
         }
         "Google" {
             $controls["TxtStatusValue"].Text = $l["StatusActiveGoogle"]
             $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#60A5FA")
-            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadRouter"].IsChecked -and -not $controls["RadISP"].IsChecked -and -not $controls["RadGoogle"].IsChecked) {
+            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadGoogle"].IsChecked -and -not $controls["RadISP"].IsChecked) {
                 $controls["RadGoogle"].IsChecked = $true
             }
         }
         "DHCP" {
             $controls["TxtStatusValue"].Text = $l["StatusActiveDHCP"]
-            $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
-            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadRouter"].IsChecked -and -not $controls["RadISP"].IsChecked -and -not $controls["RadGoogle"].IsChecked) {
-                $controls["RadRouter"].IsChecked = $true
+            $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#F87171")
+            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadGoogle"].IsChecked -and -not $controls["RadISP"].IsChecked) {
+                $controls["RadISP"].IsChecked = $true
             }
         }
         Default {
             $controls["TxtStatusValue"].Text = $l["StatusActiveOther"]
             $controls["TxtStatusValue"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#FBBF24")
-            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadRouter"].IsChecked -and -not $controls["RadISP"].IsChecked -and -not $controls["RadGoogle"].IsChecked) {
-                $controls["RadRouter"].IsChecked = $true
+            if (-not $controls["RadAdGuard"].IsChecked -and -not $controls["RadGoogle"].IsChecked -and -not $controls["RadISP"].IsChecked) {
+                $controls["RadISP"].IsChecked = $true
             }
         }
     }
@@ -532,7 +514,7 @@ function Apply-DnsSettings($profile) {
                 netsh interface ipv4 add dnsservers name="$($a.InterfaceAlias)" address="1.1.1.1" index=2 2>$null
             }
         }
-        Default { # DHCP / Router / ISP
+        Default { # DHCP / ISP Direct
             foreach ($a in $adapters) {
                 Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ResetServerAddresses -ErrorAction SilentlyContinue
                 netsh interface ipv4 set dnsservers name="$($a.InterfaceAlias)" source=dhcp 2>$null
@@ -555,11 +537,10 @@ $controls["BtnApply"].Add_Click({
     $controls["TxtStep2"].Text = $l["Step2Pending"]
 
     # Determine chosen profile
-    $chosen = "Router"
+    $chosen = "ISP"
     if ($controls["RadAdGuard"].IsChecked) { $chosen = "AdGuard" }
-    elseif ($controls["RadRouter"].IsChecked) { $chosen = "Router" }
-    elseif ($controls["RadISP"].IsChecked) { $chosen = "ISP" }
     elseif ($controls["RadGoogle"].IsChecked) { $chosen = "Google" }
+    elseif ($controls["RadISP"].IsChecked) { $chosen = "ISP" }
 
     # Execute changes asynchronously in Dispatcher
     $dispatcher = $window.Dispatcher
