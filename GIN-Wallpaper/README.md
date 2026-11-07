@@ -56,11 +56,13 @@ Unlike bulky Electron- or Chromium-based wallpaper apps that consume 150–350 M
 
 ---
 
-## ✨ Key Features in `v027`
+## ✨ Key Features in `v028`
 
 | Feature | Description |
 |---|---|
-| 📥 **Direct Download to Pictures** | Added a compact **`📥 Download`** button in Settings. Saves the currently active wallpaper directly into your Windows `Pictures` folder cleanly formatted as `<category>_001.jpg`, `<category>_002.jpg`, etc. |
+| 📂 **Smart Custom Pictures Auto-Detection** | Intelligently detects custom and relocated user Pictures folders (e.g. **`D:\docs\Pictures`**, `D:\DOCS\Pictures`), queries Windows Registry `User Shell Folders` (`My Pictures` and `Personal`), and Shell `SHGetFolderPathW` APIs. Auto-creates `Pictures` inside `D:\docs` if present. |
+| 🔗 **Clickable Status Link with File Highlight** | The download confirmation status `✓ Saved to Pictures: <file>` is an interactive link with an `IDC_HAND` hover cursor. Clicking it immediately opens Windows File Explorer and selects the saved image (`explorer.exe /select,<path>`). |
+| 📥 **Direct 4K Wallpaper Download** | Added a compact **`📥 Download`** button in Settings. Saves the pristine 4K UHD wallpaper (clean, without calendar HUD) into your Pictures folder sequentially numbered as `<category>_001.jpg`, `<category>_002.jpg`, etc. |
 | 🚫 **Anti-Duplication History Cache** | Remembers a sliding window of the last 100 downloaded wallpaper IDs and queries Wallhaven with dynamic 6-character random seeds, completely eliminating repeats. |
 | 🚙 **Trucks & Jeeps Precision** | Tuned category specifically for commercial trucks, pickups, Wranglers, 4x4 Jeeps, and big rigs with 100% vehicle accuracy. |
 | 👗 **Girls: Models & Fashion** | Locked to Wallhaven `categories=001` (People category) with 115,000+ real portraits and fashion photography. Zero random tree fallbacks. |
@@ -114,7 +116,7 @@ Left Column (Fonts 1–8):              Right Column (Fonts 9–16):
 
 ### Option 1: Standalone Installer (Recommended)
 
-1. Download [`GIN-Wallpaper-Calend_v027_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v027_Setup.exe).
+1. Download [`GIN-Wallpaper-Calend_v028_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v028_Setup.exe).
 2. Run the executable.
 3. Confirm the clean prompt: `GIN-Wallpaper-Calend - Install?` -> click **OK**.
 4. The application starts immediately, adds an icon to the system tray, registers Windows autostart, and places a desktop shortcut.
@@ -126,13 +128,10 @@ Requirements: Go 1.22+ and MinGW-w64 (`x86_64-w64-mingw32-windres`).
 ```bash
 # Clone the repository
 git clone https://github.com/GinCz/Windows_scripts.git
-cd Windows_scripts/GIN-Wallpaper
+cd Windows_scripts/GIN-Wallpaper/src
 
-# Compile Windows Resource File (icon and version metadata)
-x86_64-w64-mingw32-windres app_runner.rc -O coff -o rsrc.syso
-
-# Build Native Binary
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-H=windowsgui -s -w" -o GIN-Wallpaper-Calend.exe .
+# Build all binaries (Uninstall.exe, Runner, and Standalone Setup)
+./build_release.sh
 ```
 
 ---
