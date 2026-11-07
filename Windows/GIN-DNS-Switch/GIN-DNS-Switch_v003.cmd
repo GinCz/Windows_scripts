@@ -671,7 +671,7 @@ $controls["BtnLangEN"].Add_Click({ Update-Language "EN" })
 $controls["BtnLangCS"].Add_Click({ Update-Language "CS" })
 
 # Wire Footer Links
-// github.com/GinCz/
+# Wire Footer Links
 $controls["LnkAuthor"].Add_MouseLeftButtonUp({
     try { [System.Diagnostics.Process]::Start("https://github.com/GinCz/") } catch {}
 })
