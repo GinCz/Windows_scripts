@@ -13,21 +13,8 @@ import (
 )
 
 var (
-	user32             = syscall.NewLazyDLL("user32.dll")
-	kernel32           = syscall.NewLazyDLL("kernel32.dll")
-	shell32            = syscall.NewLazyDLL("shell32.dll")
-	procMessageBoxW    = user32.NewProc("MessageBoxW")
-	procGetLocaleInfoW = kernel32.NewProc("GetLocaleInfoW")
-	procShellExecuteW  = shell32.NewProc("ShellExecuteW")
-)
-
-const (
-	MB_OK                  = 0x00000000
-	MB_YESNO               = 0x00000004
-	MB_ICONINFO            = 0x00000040
-	IDYES                  = 6
-	LOCALE_USER_DEFAULT    = 0x0400
-	LOCALE_SISO639LANGNAME = 0x0059
+	shell32           = syscall.NewLazyDLL("shell32.dll")
+	procShellExecuteW = shell32.NewProc("ShellExecuteW")
 )
 
 //go:embed GIN-Wallpaper-Calend.exe
@@ -38,30 +25,6 @@ var embeddedUninstEXE []byte
 
 //go:embed app.ico
 var embeddedAppICO []byte
-
-func msgBox(title, text string, style uint) int {
-	tPtr, _ := syscall.UTF16PtrFromString(text)
-	cPtr, _ := syscall.UTF16PtrFromString(title)
-	ret, _, _ := procMessageBoxW.Call(0, uintptr(unsafe.Pointer(tPtr)), uintptr(unsafe.Pointer(cPtr)), uintptr(style))
-	return int(ret)
-}
-
-func isRussianLocale() bool {
-	buf := make([]uint16, 16)
-	ret, _, _ := procGetLocaleInfoW.Call(
-		uintptr(LOCALE_USER_DEFAULT),
-		uintptr(LOCALE_SISO639LANGNAME),
-		uintptr(unsafe.Pointer(&buf[0])),
-		uintptr(len(buf)),
-	)
-	if ret > 0 {
-		str := syscall.UTF16ToString(buf)
-		if str == "ru" || str == "be" || str == "uk" {
-			return true
-		}
-	}
-	return false
-}
 
 func runSelfAsAdmin() {
 	exe, _ := os.Executable()
@@ -113,69 +76,76 @@ if (Test-Path $sm) {
 	cmd.Run()
 }
 
+func launchDeElevated(exePath string) {
+	workDir := filepath.Dir(exePath)
+	psScript := fmt.Sprintf(`
+try {
+    $s = New-Object -ComObject Shell.Application
+    $s.ShellExecute('%s', '--updated', '%s', 'open', 1)
+} catch {
+    Start-Process -FilePath '%s' -ArgumentList '--updated' -WorkingDirectory '%s'
+}
+`, exePath, workDir, exePath, workDir)
+
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	if err := cmd.Run(); err != nil {
+		// Fallback to explorer.exe
+		exec.Command("explorer.exe", exePath).Start()
+	}
+}
+
+func writeFileWithRetry(dest string, data []byte, perm os.FileMode) error {
+	var err error
+	for i := 0; i < 10; i++ {
+		err = os.WriteFile(dest, data, perm)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	return err
+}
+
 func main() {
 	if !isAdmin() {
 		runSelfAsAdmin()
 		return
 	}
 
-	isSilent := false
-	for _, a := range os.Args[1:] {
-		low := strings.ToLower(a)
-		if low == "/s" || low == "/silent" || low == "/verysilent" || low == "-s" || low == "--silent" {
-			isSilent = true
-			break
-		}
-	}
-
-	ru := isRussianLocale()
-	title := "GIN-Wallpaper-Calend v020 — Setup"
-	qInstall := "Install GIN-Wallpaper-Calend v020 (Smart Wallpaper with Calendar)?\n\nTarget directory:\nC:\\Program Files\\GIN-Wallpaper-Calend"
-	if ru {
-		title = "GIN-Wallpaper-Calend v020 — Установка"
-		qInstall = "Установить GIN-Wallpaper-Calend v020 (Умные обои с календарём)?\n\nПапка установки:\nC:\\Program Files\\GIN-Wallpaper-Calend"
-	}
-
-	if !isSilent {
-		if msgBox(title, qInstall, MB_YESNO|MB_ICONINFO) != IDYES {
-			return
-		}
-	}
-
-	// Terminate previous running instances
+	// 1. Forcefully kill previous running instances of GIN-Wallpaper-Calend
 	exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe").Run()
-	time.Sleep(400 * time.Millisecond)
+	exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper*").Run()
+	time.Sleep(500 * time.Millisecond)
 
+	// 2. Target installation directory
 	targetDir := `C:\Program Files\GIN-Wallpaper-Calend`
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		targetDir = filepath.Join(os.Getenv("LOCALAPPDATA"), "GIN-Wallpaper-Calend")
 		os.MkdirAll(targetDir, 0755)
 	}
 
-	// 1. Write embedded high-res icon
+	// 3. Write embedded high-res icon
 	icoDest := filepath.Join(targetDir, "app.ico")
 	if len(embeddedAppICO) > 0 {
-		os.WriteFile(icoDest, embeddedAppICO, 0644)
+		writeFileWithRetry(icoDest, embeddedAppICO, 0644)
 	}
 
-	// 2. Write native runner EXE
+	// 4. Write native runner EXE
 	mainExe := filepath.Join(targetDir, "GIN-Wallpaper-Calend.exe")
 	if len(embeddedRunnerEXE) > 0 {
-		os.WriteFile(mainExe, embeddedRunnerEXE, 0755)
+		writeFileWithRetry(mainExe, embeddedRunnerEXE, 0755)
 	}
 
-	// 3. Write dedicated separate Uninstaller binary!
+	// 5. Write dedicated separate Uninstaller binary
 	uninstExe := filepath.Join(targetDir, "Uninstall.exe")
 	if len(embeddedUninstEXE) > 0 {
-		os.WriteFile(uninstExe, embeddedUninstEXE, 0755)
+		writeFileWithRetry(uninstExe, embeddedUninstEXE, 0755)
 	}
 
-	// 4. Register in Windows Programs & Features
+	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v020 — Smart Wallpaper with Calendar"
-	if ru {
-		dispName = "GIN-Wallpaper-Calend v020 — Умные обои с календарём"
-	}
+	dispName := "GIN-Wallpaper-Calend v020 — Умные обои с календарём"
 	exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v020", "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "Publisher", "/t", "REG_SZ", "/d", "VladiMIR+AI (Vladimir Bulantsev)", "/f").Run()
@@ -184,25 +154,13 @@ func main() {
 	exec.Command("reg", "add", regPath, "/v", "UninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, uninstExe), "/f").Run()
 	exec.Command("reg", "add", regPath, "/v", "QuietUninstallString", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, uninstExe), "/f").Run()
 
-	// 5. Autostart directly via native GIN-Wallpaper-Calend.exe
+	// 7. Autostart directly via native GIN-Wallpaper-Calend.exe
 	runKey := `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`
 	exec.Command("reg", "add", runKey, "/v", "GIN-Wallpaper-Calend", "/t", "REG_SZ", "/d", fmt.Sprintf(`"%s"`, mainExe), "/f").Run()
 
-	// 6. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with custom ICO!
+	// 8. Desktop and Start Menu Shortcuts pointing directly to GIN-Wallpaper-Calend.exe with custom ICO
 	createShortcutsSafe(mainExe, targetDir, icoDest)
 
-	// 7. Launch immediately!
-	if isSilent {
-		// Launch as normal interactive user via explorer without any popups!
-		exec.Command("explorer.exe", mainExe).Start()
-	} else {
-		cmd := exec.Command(mainExe)
-		cmd.Dir = targetDir
-		cmd.Start()
-		successMsg := "Installation completed successfully!\n\nGIN-Wallpaper-Calend v020 is now running in your system tray (bottom-right near clock).\nRight click the tray icon for Settings, fonts and wallpaper themes."
-		if ru {
-			successMsg = "Установка успешно завершена!\n\nGIN-Wallpaper-Calend v020 запущен в системном трее (в правом нижнем углу возле часов).\nКликните правой кнопкой мыши по иконке для открытия Настроек, выбора шрифтов и тематики обоев."
-		}
-		msgBox(title, successMsg, MB_OK|MB_ICONINFO)
-	}
+	// 9. Launch immediately as non-elevated user with --updated (zero popups, plays beep-beep and cycles wallpaper)
+	launchDeElevated(mainExe)
 }

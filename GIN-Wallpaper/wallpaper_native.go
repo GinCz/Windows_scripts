@@ -1177,8 +1177,11 @@ func downloadAndApplyUpdate(downUrl, installerName string) {
 	}
 	procShell_NotifyIconW.Call(NIM_DELETE, uintptr(unsafe.Pointer(&nid)))
 
-	cmd := exec.Command(tmpExe)
-	cmd.Start()
+	vPtr, _ := syscall.UTF16PtrFromString("runas")
+	fPtr, _ := syscall.UTF16PtrFromString(tmpExe)
+	aPtr, _ := syscall.UTF16PtrFromString("/SILENT")
+	dPtr, _ := syscall.UTF16PtrFromString(os.TempDir())
+	procShellExecuteW.Call(0, uintptr(unsafe.Pointer(vPtr)), uintptr(unsafe.Pointer(fPtr)), uintptr(unsafe.Pointer(aPtr)), uintptr(unsafe.Pointer(dPtr)), 1)
 	os.Exit(0)
 }
 
