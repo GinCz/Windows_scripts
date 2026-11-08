@@ -32,6 +32,7 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 | :--- | :---: | :--- | :--- | :--- |
 | 🎙️ **[GIN-Voice](Windows/GIN-Voice/)** | `v041` | [⬇️ **Download GIN-Voice.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice.exe) • [Setup](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice_Setup.exe) | Win 10/11 x64 | Ultra-fast multilingual voice-to-text, whisper AI code-switching engine |
 | 🔍 **[GIN-NetScan](Windows/GIN-NetScan/)** | `v002` | [⬇️ **Download GIN-NetScan.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetScan/GIN-NetScan.exe) | Win 10/11 x64/x86 | High-speed multi-threaded Win32 LAN host discovery & TCP port scanner |
+| 📊 **[GIN-NetSpeed](Windows/GIN-NetSpeed/)** | `v003` | [⬇️ **Download GIN-NetSpeed.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetSpeed/GIN-NetSpeed.exe) | Win 10/11 x64 | 100% Portable per-app bandwidth monitor, 15-min multi-app graph & Cloud Speed Benchmark |
 | 🛡️ **[GIN-VPN](Windows/GIN-VPN/)** | `v094` | [⬇️ **Download GIN-VPN.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe) • [Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_Installer.exe) | Win 10/11 x64 | Standalone Xray VLESS-Reality client with dynamic tray sentinel & killswitch |
 | 🎨 **[GIN-Wallpaper](GIN-Wallpaper/)** | `v012` | [⬇️ **Download GIN-Wallpaper.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend.exe) | Win 10/11 x64 | Dynamic desktop wallpaper switcher with live embedded calendar |
 | ⚡ **[GIN-Win-Optimizer](Windows/GIN-Win-Optimizer/)** | `v045` | [⬇️ **Download GIN-Win-Optimizer.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v045.cmd) | Win 10/11 / Server | Enterprise Windows debloater, telemetry disable, and RAM footprint optimizer |
@@ -53,6 +54,7 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 
 - [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
   - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](Windows/GIN-Voice/README.md)
+  - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](Windows/GIN-NetSpeed/README.md)
   - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
   - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](Windows/VPN/GIN-VPN/README.md)
   - [MEGA Drive — Universal Standalone Cloud Mount Engine](Windows/MEGA/README.md)
