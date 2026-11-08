@@ -41,7 +41,7 @@ $host = $_SERVER['HTTP_HOST'] ?? 'eco-seo.cz';
 $isEcoSeo = (stripos($host, 'eco-seo') !== false);
 $activeNode = $isEcoSeo ? 'eu' : 'ru';
 $serverName = $isEcoSeo ? 'EU / DE (222) — Germany (NetCup)' : 'RU (109) — Russia (FastVDS)';
-$pageTitle = "GIN-IP — IP & Speed Test (v018)";
+$pageTitle = "GIN-IP — IP & Speed Test (v019)";
 
 $action = $_GET['action'] ?? '';
 
@@ -116,13 +116,15 @@ if ($action === 'upload') {
     exit;
 }
 
-// Robust Multi-Source Geo Resolver
+// Robust Multi-Source Geo Resolver with PTR & AS-Name Detection
 function fetchGeoMultiSource($ip) {
     if (empty($ip) || $ip === '127.0.0.1') return null;
     
-    // 1. ip-api.com
+    $ptr = @gethostbyaddr($ip);
+    
+    // 1. ip-api.com (with asname, reverse)
     if (function_exists('curl_init')) {
-        $ch = curl_init("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,regionName,city,isp,org,as&lang=en");
+        $ch = curl_init("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,regionName,city,isp,org,as,asname,reverse&lang=en");
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 3,
@@ -133,12 +135,29 @@ function fetchGeoMultiSource($ip) {
         if ($raw) {
             $d = json_decode($raw, true);
             if (($d['status'] ?? '') === 'success' && !empty($d['country'])) {
+                $asname = $d['asname'] ?? '';
+                $reverse = $d['reverse'] ?? $ptr;
+                $rawIsp = $d['isp'] ?? ($d['org'] ?? 'Internet Provider');
+                $cleanIsp = $rawIsp;
+                
+                // Smart ISP Detection: detect INTERCONNECT, O2, Vodafone, etc.
+                if (stripos($reverse, 'interconnect.cz') !== false || stripos($asname, 'INTERCONNECT') !== false) {
+                    $cleanIsp = 'INTERCONNECT';
+                } elseif (stripos($reverse, 'o2.cz') !== false || stripos($asname, 'O2') !== false || stripos($rawIsp, 'O2') !== false) {
+                    $cleanIsp = 'O2 Czechia';
+                } elseif (stripos($reverse, 'vodafone.cz') !== false || stripos($asname, 'Vodafone') !== false) {
+                    $cleanIsp = 'Vodafone CZ';
+                } elseif (stripos($reverse, 't-mobile.cz') !== false || stripos($asname, 'T-Mobile') !== false) {
+                    $cleanIsp = 'T-Mobile CZ';
+                }
+                
                 return [
                     'country' => $d['country'],
                     'countryCode' => $d['countryCode'] ?? '',
                     'city' => $d['city'] ?? '',
                     'region' => $d['regionName'] ?? '',
-                    'isp' => $d['isp'] ?? ($d['org'] ?? 'Internet Provider')
+                    'isp' => $cleanIsp,
+                    'ptr' => $reverse
                 ];
             }
         }
@@ -157,12 +176,18 @@ function fetchGeoMultiSource($ip) {
         if ($raw) {
             $d = json_decode($raw, true);
             if (!empty($d['success']) && !empty($d['country'])) {
+                $rawIsp = $d['connection']['isp'] ?? ($d['connection']['org'] ?? 'Internet Provider');
+                $cleanIsp = $rawIsp;
+                if ($ptr && stripos($ptr, 'interconnect.cz') !== false) {
+                    $cleanIsp = 'INTERCONNECT';
+                }
                 return [
                     'country' => $d['country'],
                     'countryCode' => $d['country_code'] ?? '',
                     'city' => $d['city'] ?? '',
                     'region' => $d['region'] ?? '',
-                    'isp' => $d['connection']['isp'] ?? ($d['connection']['org'] ?? 'Internet Provider')
+                    'isp' => $cleanIsp,
+                    'ptr' => $ptr ?: ''
                 ];
             }
         }
@@ -651,7 +676,7 @@ if ($action === 'geo') {
 
     <!-- Centered Footer Signature in English -->
     <div class="footer-sig">
-        VladiMIR+AI ||| v018
+        VladiMIR+AI ||| v019
     </div>
 
 </div>
@@ -669,8 +694,7 @@ let detectedLocation = <?= json_encode(($geo['country'] ?: '') . (!empty($geo['c
 
 function getActiveServerTitle() {
     if (activeNode === 'auto') {
-        const ispClean = (detectedIsp && !detectedIsp.includes('Resolving')) ? detectedIsp : 'Internet Provider';
-        return `★ ${ispClean} (Optimal Nearest Node)`;
+        return `⚡ Cloudflare Edge — Prague / NIX.CZ (Multi-Stream)`;
     } else if (activeNode === 'eu') {
         return SERVER_NAME_EU;
     } else {
