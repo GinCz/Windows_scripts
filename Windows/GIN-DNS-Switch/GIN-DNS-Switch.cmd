@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v008 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v009 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v008...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v009...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v008
+#  GIN-DNS-SWITCH                                                  v009
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/Windows_scripts
@@ -49,11 +49,11 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 # 1. LOCALIZATION STRINGS (RU, EN, CS)
 # ------------------------------------------------------------------------------
 $script:Lang = "RU"
-$script:CurrentVersion = "v008"
+$script:CurrentVersion = "v009"
 
 $script:Loc = @{
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v008 — Менеджер DNS для Windows"
+        "WinTitle"       = "GIN-DNS-Switch v009 — Менеджер DNS для Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Переключатель DNS для Windows"
         "StatusCurrent"  = "Текущий статус:"
@@ -82,7 +82,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v008 (Обновить)"
+        "BtnUpdate"      = "v009 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
         "StatusActiveFamily"  = "Активен: Семейный AdGuard DNS (Детский 18+)"
@@ -97,7 +97,7 @@ $script:Loc = @{
         "UpdFail"        = "✖ Ошибка связи"
     }
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v008 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v009 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Windows DNS Switcher"
         "StatusCurrent"  = "Current status:"
@@ -126,7 +126,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v008 (Update)"
+        "BtnUpdate"      = "v009 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Active: AdGuard DNS (AdBlock)"
         "StatusActiveFamily"  = "Active: Family AdGuard DNS (Safe 18+)"
@@ -141,7 +141,7 @@ $script:Loc = @{
         "UpdFail"        = "✖ Connection error"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v008 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v009 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Přepínač DNS pro Windows"
         "StatusCurrent"  = "Aktuální stav:"
@@ -170,7 +170,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v008 (Aktualizovat)"
+        "BtnUpdate"      = "v009 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování reklam)"
         "StatusActiveFamily"  = "Aktivní: Rodinný AdGuard DNS (Bezpečný 18+)"
@@ -192,7 +192,7 @@ $script:Loc = @{
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v008" SizeToContent="Height" Width="510"
+        Title="GIN-DNS-Switch v009" SizeToContent="Height" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -428,11 +428,11 @@ $script:Loc = @{
 
         <!-- APPLY BUTTON & PROGRESS -->
         <StackPanel Grid.Row="3" Margin="0,6,0,0">
-            <Button x:Name="BtnApply" Background="#2563EB" BorderThickness="0" Height="36" Cursor="Hand">
+            <Button x:Name="BtnApply" Content="ПРИМЕНИТЬ НАСТРОЙКИ" Background="#2563EB" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12.5" Height="36" Cursor="Hand">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}" CornerRadius="7">
-                            <TextBlock x:Name="TxtBtnApply" Text="ПРИМЕНИТЬ НАСТРОЙКИ" FontWeight="Bold" FontSize="12.5" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                     </ControlTemplate>
                 </Button.Template>
@@ -455,7 +455,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть главную страницу GitHub (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v008 (Обновить)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v009 (Обновить)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -529,7 +529,8 @@ function Update-Language($lang) {
     $controls["TxtCardISPSub"].Text = $l["CardISPSub"]
     $controls["TxtCardISPDesc"].Text = $l["CardISPDesc"]
 
-    $controls["TxtBtnApply"].Text = $l["BtnApply"]
+    $controls["BtnApply"].Content = $l["BtnApply"]
+    if ($controls["TxtBtnApply"]) { $controls["TxtBtnApply"].Text = $l["BtnApply"] }
     $controls["BtnUpdate"].Content = $l["BtnUpdate"]
     $controls["LnkAuthor"].Text = $l["AuthorLink"]
 

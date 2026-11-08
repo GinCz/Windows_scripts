@@ -1,6 +1,6 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v008",
+  "current_version": "v009",
   "updated_at": "2026-11-08",
   "active_versions": [
     "GIN-DNS-Switch.cmd"
@@ -114,6 +114,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v009",
+      "date": "2026-11-08",
+      "changes": "Fix BtnApply template namescope bug: BtnApply content set via ContentPresenter instead of inaccessible internal TextBlock, eliminating RuntimeException property Text not found."
+    },
     {
       "version": "v008",
       "date": "2026-11-08",
