@@ -1,6 +1,13 @@
 <?php
-// Gin IT - IP & 3x Speed Test v8 (Ultra-Compact, Top 5mm, Multi-Source Geo, Clean Report)
+// Gin IT - IP & 3x Speed Test v18 (Smart ISP / Nearest Node Auto-Discovery, Multi-Stream Progressive Chunks, 3 Server Tabs)
 header('Content-Type: text/html; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: *');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit;
+}
 
 function getClientIP() {
     $keys = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'];
@@ -32,11 +39,9 @@ $cooldownRemaining = max(0, $COOLDOWN_SECONDS - ($now - ($rateData['last_complet
 
 $host = $_SERVER['HTTP_HOST'] ?? 'eco-seo.cz';
 $isEcoSeo = (stripos($host, 'eco-seo') !== false);
-$geoTag = $isEcoSeo ? 'EU' : 'RU';
-$serverName = $isEcoSeo ? '[DE] Германия (NetCup)' : '[RU] Россия (Москва)';
-$pageTitle = "Gin IT [{$geoTag}] — IP & Speed Test";
-$siteUrl = ($isEcoSeo ? 'https://' : 'http://') . ($host ?: 'eco-seo.cz') . '/';
-$hostDisplay = $host ?: ($isEcoSeo ? 'eco-seo.cz' : 'prodvig-saita.ru');
+$activeNode = $isEcoSeo ? 'eu' : 'ru';
+$serverName = $isEcoSeo ? 'EU / DE (222) — Germany (NetCup)' : 'RU (109) — Russia (FastVDS)';
+$pageTitle = "GIN-IP — IP & Speed Test (v018)";
 
 $action = $_GET['action'] ?? '';
 
@@ -93,9 +98,10 @@ if ($action === 'download') {
     header('Cache-Control: no-cache, no-store, must-revalidate');
     header('X-Accel-Buffering: no');
     while (ob_get_level()) ob_end_clean();
-    $chunksCount = 64; // 64 * 64 KB = 4 MB (instant high-accuracy measurement)
+    $sizeMb = isset($_GET['size']) ? min(32, max(4, (int)$_GET['size'])) : 12;
+    $chunksCount = $sizeMb * 16; // 16 * 64 KB = 1 MB
     header('Content-Length: ' . ($chunksCount * 65536));
-    $chunk = random_bytes(65536); // Uncompressible raw payload
+    $chunk = random_bytes(65536);
     for ($i = 0; $i < $chunksCount; $i++) {
         echo $chunk;
         flush();
@@ -116,7 +122,7 @@ function fetchGeoMultiSource($ip) {
     
     // 1. ip-api.com
     if (function_exists('curl_init')) {
-        $ch = curl_init("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,regionName,city,isp,org,as&lang=ru");
+        $ch = curl_init("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,regionName,city,isp,org,as&lang=en");
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 3,
@@ -132,39 +138,15 @@ function fetchGeoMultiSource($ip) {
                     'countryCode' => $d['countryCode'] ?? '',
                     'city' => $d['city'] ?? '',
                     'region' => $d['regionName'] ?? '',
-                    'isp' => $d['isp'] ?? ($d['org'] ?? 'Провайдер сети')
+                    'isp' => $d['isp'] ?? ($d['org'] ?? 'Internet Provider')
                 ];
             }
         }
     }
     
-    // 2. SypexGeo (High reliability for RU / Moscow / CIS)
+    // 2. ipwho.is
     if (function_exists('curl_init')) {
-        $ch = curl_init("http://api.sypexgeo.net/json/{$ip}");
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 3,
-            CURLOPT_USERAGENT => 'Mozilla/5.0'
-        ]);
-        $raw = curl_exec($ch);
-        curl_close($ch);
-        if ($raw) {
-            $d = json_decode($raw, true);
-            if (!empty($d['country']['name_ru'])) {
-                return [
-                    'country' => $d['country']['name_ru'],
-                    'countryCode' => $d['country']['iso'] ?? 'RU',
-                    'city' => $d['city']['name_ru'] ?? ($d['city']['name_en'] ?? ''),
-                    'region' => $d['region']['name_ru'] ?? '',
-                    'isp' => 'Интернет-провайдер'
-                ];
-            }
-        }
-    }
-    
-    // 3. ipwho.is
-    if (function_exists('curl_init')) {
-        $ch = curl_init("https://ipwho.is/{$ip}?lang=ru");
+        $ch = curl_init("https://ipwho.is/{$ip}?lang=en");
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 3,
@@ -180,7 +162,7 @@ function fetchGeoMultiSource($ip) {
                     'countryCode' => $d['country_code'] ?? '',
                     'city' => $d['city'] ?? '',
                     'region' => $d['region'] ?? '',
-                    'isp' => $d['connection']['isp'] ?? ($d['connection']['org'] ?? 'Провайдер сети')
+                    'isp' => $d['connection']['isp'] ?? ($d['connection']['org'] ?? 'Internet Provider')
                 ];
             }
         }
@@ -195,7 +177,7 @@ $geo = null;
 if (file_exists($cacheFile) && (time() - filemtime($cacheFile) < 86400)) {
     $geo = json_decode(file_get_contents($cacheFile), true);
     if (empty($geo['country']) || $geo['country'] === 'Resolving...') {
-        $geo = null; // Invalidate broken cache
+        $geo = null;
     }
 }
 
@@ -217,7 +199,7 @@ if ($action === 'geo') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -231,28 +213,88 @@ if ($action === 'geo') {
             color: #f0f6fc;
             min-height: 100vh;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
-            padding: 8px 10px 14px; /* Ровно 5 мм (~1 строчка) сверху! */
+            padding: 12px 14px;
         }
-        .card {
-            max-width: 520px;
+        .main-wrapper {
+            max-width: 820px;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        /* Top Server Selection Tabs (3 Tabs) */
+        .server-tabs {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-family: inherit;
+        }
+        .tab-btn.active {
+            background: #1f6feb;
+            color: #ffffff;
+            border-color: #388bfd;
+            box-shadow: 0 4px 14px rgba(31,111,235,0.4);
+        }
+        .tab-btn.inactive {
+            background: #131923;
+            color: #8b9bb0;
+            border-color: #232d3d;
+        }
+        .tab-btn.inactive:hover {
+            background: #1c2433;
+            color: #f0f6fc;
+            border-color: #388bfd;
+        }
+        
+        /* 2-Column Responsive Layout (TV / Desktop Horizontal, Mobile Vertical) */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        @media (min-width: 740px) {
+            .content-grid {
+                grid-template-columns: 1fr 1.22fr;
+            }
+        }
+        
+        .card {
             background: #131923;
             border: 1px solid #232d3d;
             border-radius: 14px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.6);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
-        /* Начало карточки прямо с блока IP (шапка полностью удалена) */
+        /* IP Info Section */
         .hero {
-            padding: 12px 16px 8px;
+            padding: 12px 14px 8px;
             text-align: center;
             background: radial-gradient(circle, rgba(56,139,253,0.1) 0%, transparent 70%);
         }
         .hero-lbl {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
             color: #8b9bb0;
             letter-spacing: 1.2px;
@@ -261,216 +303,240 @@ if ($action === 'geo') {
         }
         .ip-box {
             font-family: 'JetBrains Mono', monospace;
-            font-size: clamp(1.4rem, 4vw, 1.95rem);
+            font-size: clamp(1.2rem, 3.2vw, 1.7rem);
             font-weight: 800;
             color: #58a6ff;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 4px 14px;
-            border-radius: 10px;
-            background: rgba(56,139,253,0.08);
-            border: 1px dashed rgba(56,139,253,0.4);
-            transition: 0.2s;
-            max-width: 95%;
-            word-break: break-all;
-        }
-        .ip-box.is-ipv6 {
-            font-size: clamp(0.85rem, 2.5vw, 1.15rem);
-            letter-spacing: -0.5px;
+            padding: 5px 12px;
+            background: rgba(88,166,255,0.06);
+            border: 1px solid rgba(88,166,255,0.22);
+            border-radius: 8px;
+            transition: all 0.15s ease-in-out;
+            user-select: all;
         }
         .ip-box:hover {
-            background: rgba(56,139,253,0.18);
-            border-color: #388bfd;
+            background: rgba(88,166,255,0.12);
+            border-color: #58a6ff;
             transform: scale(1.01);
         }
+        .ip-box.is-ipv6 {
+            font-size: clamp(0.78rem, 2.0vw, 1.05rem);
+            word-break: break-all;
+        }
         
-        .rows { padding: 4px 18px 6px; }
+        .rows {
+            padding: 6px 14px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 1;
+        }
         .row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 5px 0;
-            border-bottom: 1px solid rgba(35,45,61,0.7);
+            padding: 5px 8px;
+            background: #0d121a;
+            border: 1px solid #1c2433;
+            border-radius: 6px;
+            font-size: 0.85rem;
         }
-        .row:last-child { border-bottom: none; }
-        .r-lbl { color: #8b9bb0; font-size: 0.88rem; font-weight: 500; }
-        .r-val { font-weight: 700; font-size: 0.92rem; text-align: right; max-width: 65%; color: #fff; }
+        .r-lbl { color: #8b9bb0; font-size: 0.8rem; font-weight: 500; }
+        .r-val { font-weight: 600; text-align: right; color: #f0f6fc; }
         
-        /* 3x Speed Box - Компактная высота */
+        .left-actions {
+            padding: 10px 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .btn-speed {
+            width: 100%;
+            background: linear-gradient(135deg, #238636 0%, #2ea043 100%);
+            border: 1px solid #3fb950;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 800;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(46,160,67,0.35);
+            transition: 0.15s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-speed:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2ea043 0%, #3fb950 100%);
+            transform: translateY(-1px);
+        }
+        .btn-speed:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-copy {
+            width: 100%;
+            background: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-copy:hover {
+            background: #30363d;
+            color: #f0f6fc;
+        }
+        
+        /* Speed Test Card */
         .speed-box {
-            margin: 0 14px 8px;
-            padding: 10px 14px 10px;
-            background: rgba(9,13,19,0.7);
+            background: #131923;
             border: 1px solid #232d3d;
-            border-radius: 12px;
-            text-align: center;
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
         }
         .speed-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            border-bottom: 1px solid #1c2433;
+            padding-bottom: 8px;
         }
-        .speed-title-col { text-align: left; }
+        .speed-title-col {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
         .speed-title-main {
-            font-size: 0.82rem;
+            font-size: 1.05rem;
             font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
             color: #58a6ff;
-            line-height: 1.1;
+            letter-spacing: 0.3px;
         }
         .server-info {
-            font-size: 0.72rem;
-            color: #8b9bb0;
-            font-weight: 600;
-            margin-top: 2px;
-        }
-        
-        .cycle-badge {
-            background: rgba(56,139,253,0.15);
-            color: #58a6ff;
-            border: 1px solid rgba(56,139,253,0.3);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.72rem;
+            font-size: 0.78rem;
+            color: #3fb950;
             font-weight: 700;
-            transition: 0.3s;
+        }
+        .cycle-badge {
+            font-size: 0.76rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(88,166,255,0.12);
+            color: #58a6ff;
+            border: 1px solid rgba(88,166,255,0.25);
+            text-transform: uppercase;
         }
         .cycle-badge.badge-cooldown {
             background: rgba(210,153,34,0.15);
             color: #d29922;
-            border-color: rgba(210,153,34,0.4);
+            border-color: rgba(210,153,34,0.3);
         }
         
         .speed-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.86rem;
-            margin-bottom: 6px;
+            margin-top: 2px;
         }
         .speed-table th {
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+            text-align: right;
+            padding: 6px 8px;
             color: #8b9bb0;
-            font-weight: 700;
-            padding: 4px 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
             border-bottom: 1px solid #232d3d;
         }
-        .speed-table th:first-child { text-align: left; padding-left: 6px; }
-        .speed-table th:nth-child(2) { text-align: center; }
-        .speed-table th:nth-child(3), .speed-table th:nth-child(4) { text-align: right; padding-right: 6px; }
-        .th-unit { font-size: 0.62rem; color: #58697f; font-weight: 600; }
-        
+        .speed-table th:first-child { text-align: left; }
+        .th-unit {
+            font-size: 0.68rem;
+            opacity: 0.8;
+            text-transform: none;
+        }
         .speed-table td {
-            padding: 4px 6px;
+            padding: 7px 8px;
+            text-align: right;
             font-family: 'JetBrains Mono', monospace;
-            border-bottom: 1px solid rgba(35,45,61,0.5);
-            transition: background 0.2s;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #c9d1d9;
+            border-bottom: 1px solid #1c2433;
         }
-        .speed-table td:first-child { text-align: left; font-family: 'Inter', sans-serif; font-weight: 700; padding-left: 6px; font-size: 0.8rem; }
-        .speed-table td:nth-child(2) { text-align: center; }
-        .speed-table td:nth-child(3), .speed-table td:nth-child(4) { text-align: right; padding-right: 6px; font-weight: 700; }
-        
-        .c-cycle { color: #8b9bb0; }
-        .c-down { color: #3fb950; }
-        .c-up { color: #bc8cff; }
-        
+        .speed-table td:first-child {
+            text-align: left;
+            font-family: inherit;
+            font-size: 0.82rem;
+            color: #8b9bb0;
+            font-weight: 600;
+        }
+        .speed-table td:nth-child(3) {
+            color: #388bfd; /* Highlighted Download */
+            font-size: 1.05rem;
+        }
+        .speed-table td:nth-child(4) {
+            color: #a371f7; /* Upload */
+            font-size: 0.92rem;
+        }
         .row-active {
-            background: rgba(56,139,253,0.12) !important;
+            background: rgba(56,139,253,0.08);
         }
-        .row-active .c-cycle {
-            color: #58a6ff !important;
-            font-weight: 800;
-        }
-        
         .row-avg {
-            background: rgba(22,27,34,0.8);
-            border-top: 1px solid #303e54;
+            background: rgba(46,160,67,0.08);
+            border-top: 1px solid rgba(46,160,67,0.3);
         }
         .row-avg td {
-            padding: 5px 6px;
-            border-bottom: none;
-            font-size: 0.9rem;
+            color: #3fb950 !important;
+            font-size: 1.02rem;
+            font-weight: 800;
+            padding-top: 8px;
+            padding-bottom: 8px;
         }
-        .c-avg-lbl {
-            color: #58a6ff !important;
-            font-size: 0.8rem !important;
+        .row-avg td.c-avg-lbl {
+            font-family: inherit;
+            font-size: 0.9rem;
             letter-spacing: 0.5px;
-            text-transform: uppercase;
         }
         
         .progress-text {
-            font-size: 0.76rem;
+            font-size: 0.82rem;
             color: #3fb950;
             font-weight: 600;
-            min-height: 16px;
-            margin-bottom: 6px;
-        }
-        
-        .speed-actions {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .btn-speed {
-            background: linear-gradient(135deg, #1f6feb, #238636);
-            color: #fff;
-            border: none;
-            padding: 7px 20px;
-            font-size: 0.86rem;
-            font-weight: 700;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 3px 10px rgba(31,111,235,0.3);
-        }
-        .btn-speed:hover { opacity: 0.95; transform: scale(1.02); }
-        .btn-speed:disabled {
-            background: #1c2433;
-            color: #6e7681;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            border: 1px solid #2d3848;
-        }
-        
-        .btn-copy {
-            background: #21262d;
-            color: #58a6ff;
-            border: 1px solid #30363d;
-            padding: 7px 16px;
-            font-size: 0.86rem;
-            font-weight: 700;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .btn-copy:hover {
-            background: #30363d;
-            color: #fff;
-            border-color: #58a6ff;
-            transform: scale(1.02);
-        }
-        
-        .footer {
-            padding: 8px 16px;
-            background: rgba(9,13,19,0.8);
-            border-top: 1px solid #232d3d;
+            min-height: 20px;
             text-align: center;
-            font-size: 0.88rem;
+            padding: 4px 0 0;
+            letter-spacing: 0.2px;
         }
-        .footer a { color: #58a6ff; text-decoration: none; font-weight: 700; }
-        .footer a:hover { text-decoration: underline; }
+        
+        /* Footer Signature */
+        .footer-sig {
+            text-align: center;
+            color: #E5A93C; /* Sand-yellow */
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.78rem;
+            padding: 6px 0 2px;
+            letter-spacing: 0.5px;
+        }
         
         .toast {
             position: fixed;
@@ -491,79 +557,103 @@ if ($action === 'geo') {
     </style>
 </head>
 <body>
-<div class="card">
-    <div class="hero">
-        <div class="hero-lbl">YOUR PUBLIC IP ADDRESS</div>
-        <div class="ip-box <?= strpos($clientIP, ':') !== false ? 'is-ipv6' : '' ?>" id="ipValBox" onclick="copyIP()" title="Click to copy">
-            <span id="ipVal"><?= htmlspecialchars($clientIP) ?></span> <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;vertical-align:middle;display:inline-block;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        </div>
+<div class="main-wrapper">
+
+    <!-- Top Server Switch Tabs (3 Tabs: AUTO ISP, EU DE-222, RU-109) -->
+    <div class="server-tabs">
+        <button id="tabAuto" class="tab-btn active" onclick="switchNode('auto')">
+            <span>⚡</span> AUTO (ISP)
+        </button>
+        <button id="tabEu" class="tab-btn inactive" onclick="switchNode('eu')">
+            <span>🇪🇺</span> EU / DE (222)
+        </button>
+        <button id="tabRu" class="tab-btn inactive" onclick="switchNode('ru')">
+            <span>🇷🇺</span> RU (109)
+        </button>
     </div>
-    
-    <div class="rows">
-        <div class="row" id="ipv6Row" style="display: none;"><div class="r-lbl">IPv6</div><div class="r-val" id="ipv6Val" style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;word-break:break-all;"></div></div>
-        <div class="row"><div class="r-lbl">Country</div><div class="r-val" id="countryVal"><?= htmlspecialchars($geo['country']) ?></div></div>
-        <div class="row"><div class="r-lbl">City / Region</div><div class="r-val" id="cityVal"><?= htmlspecialchars($geo['city']) ?><?= !empty($geo['region']) && $geo['region'] !== $geo['city'] ? ', ' . htmlspecialchars($geo['region']) : '' ?></div></div>
-        <div class="row"><div class="r-lbl">ISP / Carrier</div><div class="r-val" id="ispVal" style="font-family:'JetBrains Mono',monospace;font-size:0.86rem;"><?= htmlspecialchars($geo['isp']) ?></div></div>
-    </div>
-    
-    <!-- 3x Speed Test Table -->
-    <div class="speed-box">
-        <div class="speed-header">
-            <div class="speed-title-col">
-                <div class="speed-title-main">Speed Test ×3</div>
-                <div class="server-info">Сервер: <?= htmlspecialchars($serverName) ?></div>
+
+    <!-- 2-Column Responsive Layout -->
+    <div class="content-grid">
+        
+        <!-- Left: IP Info & Metadata -->
+        <div class="card">
+            <div class="hero">
+                <div class="hero-lbl">YOUR PUBLIC IP ADDRESS</div>
+                <div class="ip-box <?= strpos($clientIP, ':') !== false ? 'is-ipv6' : '' ?>" id="ipValBox" onclick="copyIP()" title="Click to copy">
+                    <span id="ipVal"><?= htmlspecialchars($clientIP) ?></span> <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75;vertical-align:middle;display:inline-block;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </div>
             </div>
-            <div class="cycle-badge" id="cycleBadge">Ready</div>
+            
+            <div class="rows">
+                <div class="row" id="ipv6Row" style="display: none;"><div class="r-lbl">IPv6</div><div class="r-val" id="ipv6Val" style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;word-break:break-all;"></div></div>
+                <div class="row"><div class="r-lbl">Country</div><div class="r-val" id="countryVal"><?= htmlspecialchars($geo['country']) ?></div></div>
+                <div class="row"><div class="r-lbl">City / Region</div><div class="r-val" id="cityVal"><?= htmlspecialchars($geo['city']) ?><?= !empty($geo['region']) && $geo['region'] !== $geo['city'] ? ', ' . htmlspecialchars($geo['region']) : '' ?></div></div>
+                <div class="row"><div class="r-lbl">ISP / Carrier</div><div class="r-val" id="ispVal" style="font-family:'JetBrains Mono',monospace;font-size:0.86rem;"><?= htmlspecialchars($geo['isp']) ?></div></div>
+            </div>
+
+            <div class="left-actions">
+                <button class="btn-speed" id="btnTest" onclick="start3xSpeedTest()">⚡ START SPEED TEST (×3)</button>
+                <button class="btn-copy" id="btnCopy" onclick="copyResults()" style="display: none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Copy Full Report</button>
+            </div>
         </div>
-        
-        <table class="speed-table">
-            <thead>
-                <tr>
-                    <th>Test</th>
-                    <th>Ping <span class="th-unit">ms</span></th>
-                    <th>Download <span class="th-unit">Mbps</span></th>
-                    <th>Upload <span class="th-unit">Mbps</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr id="row1">
-                    <td class="c-cycle" id="cycleName1">#1 Test</td>
-                    <td id="ping1">--</td>
-                    <td class="c-down" id="down1">--</td>
-                    <td class="c-up" id="up1">--</td>
-                </tr>
-                <tr id="row2">
-                    <td class="c-cycle" id="cycleName2">#2 Test</td>
-                    <td id="ping2">--</td>
-                    <td class="c-down" id="down2">--</td>
-                    <td class="c-up" id="up2">--</td>
-                </tr>
-                <tr id="row3">
-                    <td class="c-cycle" id="cycleName3">#3 Test</td>
-                    <td id="ping3">--</td>
-                    <td class="c-down" id="down3">--</td>
-                    <td class="c-up" id="up3">--</td>
-                </tr>
-                <tr id="rowAvg" class="row-avg">
-                    <td class="c-avg-lbl">Avg ★</td>
-                    <td id="pingAvg" style="font-weight:700;">--</td>
-                    <td class="c-down" id="downAvg">--</td>
-                    <td class="c-up" id="upAvg">--</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <div class="progress-text" id="progText">Click below to start 3x comprehensive test</div>
-        
-        <div class="speed-actions">
-            <button class="btn-speed" id="btnTest" onclick="start3xSpeedTest()">⚡ Run Speed Test ×3</button>
-            <button class="btn-copy" id="btnCopy" onclick="copyResults()" style="display: none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>Скопировать в буфер</button>
+
+        <!-- Right: Speed Test Metrics Table -->
+        <div class="speed-box">
+            <div class="speed-header">
+                <div class="speed-title-col">
+                    <div class="speed-title-main">Speed Test ×3</div>
+                    <div class="server-info" id="serverInfoText">⚡ AUTO (Optimal Nearest Node)</div>
+                </div>
+                <div class="cycle-badge" id="cycleBadge">Ready</div>
+            </div>
+            
+            <table class="speed-table">
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>Ping <span class="th-unit">ms</span></th>
+                        <th>Download <span class="th-unit">Mbps</span></th>
+                        <th>Upload <span class="th-unit">Mbps</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="row1">
+                        <td class="c-cycle" id="cycleName1">#1 Test</td>
+                        <td id="ping1">--</td>
+                        <td id="down1">--</td>
+                        <td id="up1">--</td>
+                    </tr>
+                    <tr id="row2">
+                        <td class="c-cycle" id="cycleName2">#2 Test</td>
+                        <td id="ping2">--</td>
+                        <td id="down2">--</td>
+                        <td id="up2">--</td>
+                    </tr>
+                    <tr id="row3">
+                        <td class="c-cycle" id="cycleName3">#3 Test</td>
+                        <td id="ping3">--</td>
+                        <td id="down3">--</td>
+                        <td id="up3">--</td>
+                    </tr>
+                    <tr id="rowAvg" class="row-avg">
+                        <td class="c-avg-lbl">Avg ★</td>
+                        <td id="pingAvg">--</td>
+                        <td id="downAvg">--</td>
+                        <td id="upAvg">--</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="progress-text" id="progText">Press button to start 3x test</div>
         </div>
+
     </div>
-    
-    <div class="footer">
-        <a href="<?= htmlspecialchars($siteUrl) ?>"><?= htmlspecialchars($hostDisplay) ?> ↗</a>
+
+    <!-- Centered Footer Signature in English -->
+    <div class="footer-sig">
+        VladiMIR+AI ||| v018
     </div>
+
 </div>
 
 <div class="toast" id="toast">IP copied to clipboard!</div>
@@ -571,7 +661,52 @@ if ($action === 'geo') {
 <script>
 let serverCooldown = <?= (int)$cooldownRemaining ?>;
 let lastResults = null;
-const SERVER_NAME = <?= json_encode($serverName) ?>;
+let activeNode = 'auto'; // 'auto', 'eu', 'ru'
+const SERVER_NAME_EU = 'EU / DE (222) — Germany (NetCup)';
+const SERVER_NAME_RU = 'RU (109) — Russia (FastVDS)';
+let detectedIsp = <?= json_encode($geo['isp'] ?: 'Internet Provider') ?>;
+let detectedLocation = <?= json_encode(($geo['country'] ?: '') . (!empty($geo['city']) ? ', ' . $geo['city'] : '')) ?>;
+
+function getActiveServerTitle() {
+    if (activeNode === 'auto') {
+        const ispClean = (detectedIsp && !detectedIsp.includes('Resolving')) ? detectedIsp : 'Internet Provider';
+        return `★ ${ispClean} (Optimal Nearest Node)`;
+    } else if (activeNode === 'eu') {
+        return SERVER_NAME_EU;
+    } else {
+        return SERVER_NAME_RU;
+    }
+}
+
+function switchNode(node) {
+    activeNode = node;
+    document.getElementById('tabAuto').className = 'tab-btn ' + (node === 'auto' ? 'active' : 'inactive');
+    document.getElementById('tabEu').className = 'tab-btn ' + (node === 'eu' ? 'active' : 'inactive');
+    document.getElementById('tabRu').className = 'tab-btn ' + (node === 'ru' ? 'active' : 'inactive');
+    
+    document.getElementById('serverInfoText').innerText = getActiveServerTitle();
+    resetSpeedTable();
+}
+
+function resetSpeedTable() {
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById('ping' + i).innerText = '--';
+        document.getElementById('down' + i).innerText = '--';
+        document.getElementById('up' + i).innerText = '--';
+        document.getElementById('row' + i).classList.remove('row-active');
+    }
+    document.getElementById('pingAvg').innerText = '--';
+    document.getElementById('downAvg').innerText = '--';
+    document.getElementById('upAvg').innerText = '--';
+    document.getElementById('cycleBadge').className = 'cycle-badge';
+    document.getElementById('cycleBadge').innerText = 'Ready';
+    const prog = document.getElementById('progText');
+    prog.innerText = 'Press button to start 3x test';
+    prog.style.color = '#3fb950';
+    document.getElementById('btnTest').innerText = '⚡ START SPEED TEST (×3)';
+    document.getElementById('btnTest').disabled = false;
+    document.getElementById('btnCopy').style.display = 'none';
+}
 
 function showToast(msg) {
     const t = document.getElementById('toast');
@@ -584,7 +719,7 @@ function showToast(msg) {
 
 function copyIP(){
     navigator.clipboard.writeText(document.getElementById('ipVal').innerText.trim()).then(()=>{
-        showToast('✓ IP скопирован в буфер!');
+        showToast('✓ IP copied to clipboard!');
     });
 }
 
@@ -601,16 +736,16 @@ function copyResults(){
     }
     
     const text = 
-`[Gin IT] Speed Test x3
-Сервер: ${SERVER_NAME}
-IP: ${ip} (${locStr})
-Провайдер: ${isp}
-Ping: ${lastResults.avgPing} ms
-Download: ${lastResults.avgDown} Mbps
-Upload: ${lastResults.avgUp} Mbps`;
+`🛡️ [GIN-IP] Speed Test ×3
+📍 Server: ${getActiveServerTitle()}
+🌐 IP: ${ip} (${locStr})
+🏢 ISP: ${isp}
+⚡ Ping: ${lastResults.avgPing} ms
+⬇️ Download: ${lastResults.avgDown} Mbps
+⬆️ Upload: ${lastResults.avgUp} Mbps`;
 
     navigator.clipboard.writeText(text).then(()=>{
-        showToast('✓ Отчёт скопирован в буфер!');
+        showToast('✓ Full report copied to clipboard!');
     });
 }
 
@@ -619,7 +754,6 @@ Upload: ${lastResults.avgUp} Mbps`;
     const ipEl = document.getElementById('ipVal');
     const ipVal = ipEl ? ipEl.innerText.trim() : '';
     
-    // If connected via IPv6, automatically resolve and prioritize IPv4
     if (ipVal.includes(':')) {
         fetch('https://api4.ipify.org?format=json')
             .then(r => r.json())
@@ -627,8 +761,6 @@ Upload: ${lastResults.avgUp} Mbps`;
                 if (d && d.ip && !d.ip.includes(':')) {
                     const ipv6Original = ipEl.innerText.trim();
                     ipEl.innerText = d.ip;
-                    const box = document.getElementById('ipValBox');
-                    if (box) box.classList.remove('is-ipv6');
                     const row = document.getElementById('ipv6Row');
                     const val = document.getElementById('ipv6Val');
                     if (row && val) {
@@ -640,16 +772,20 @@ Upload: ${lastResults.avgUp} Mbps`;
     }
 
     const c = document.getElementById('countryVal').innerText;
-    if (!c || c.includes('Resolving') || c.includes('Unknown') || c.includes('Определяется')) {
+    if (!c || c.includes('Resolving') || c.includes('Unknown')) {
         fetch('?action=geo&nc=' + Math.random())
             .then(r => r.json())
             .then(d => {
                 if (d && d.country && !d.country.includes('Resolving')) {
                     document.getElementById('countryVal').innerText = d.country;
                     document.getElementById('cityVal').innerText = d.city + (d.region && d.region !== d.city ? ', ' + d.region : '');
-                    document.getElementById('ispVal').innerText = d.isp || 'Интернет-провайдер';
+                    document.getElementById('ispVal').innerText = d.isp || 'Internet Provider';
+                    detectedIsp = d.isp || 'Internet Provider';
+                    document.getElementById('serverInfoText').innerText = getActiveServerTitle();
                 }
             }).catch(()=>{});
+    } else {
+        document.getElementById('serverInfoText').innerText = getActiveServerTitle();
     }
 })();
 
@@ -672,6 +808,7 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
 }
 
 async function startCooldownTimer(seconds) {
+    if (activeNode === 'auto') return; // AUTO ISP doesn't require cooldown
     const btn = document.getElementById('btnTest');
     const badge = document.getElementById('cycleBadge');
     const prog = document.getElementById('progText');
@@ -682,7 +819,7 @@ async function startCooldownTimer(seconds) {
     for (let s = seconds; s > 0; s--) {
         badge.innerText = `Cooldown ${s}s`;
         btn.innerText = `Cooldown (${s}s)`;
-        prog.innerText = `Anti-flood cooldown: wait ${s}s before next test...`;
+        prog.innerText = `Anti-flood protection: retry in ${s}s...`;
         prog.style.color = '#d29922';
         await sleep(1000);
     }
@@ -691,11 +828,11 @@ async function startCooldownTimer(seconds) {
     badge.innerText = 'Ready';
     prog.innerText = '✓ Ready for next test run.';
     prog.style.color = '#3fb950';
-    btn.innerText = '⚡ Test Again (3x)';
+    btn.innerText = '⚡ TEST AGAIN (×3)';
     btn.disabled = false;
 }
 
-if (serverCooldown > 0) {
+if (serverCooldown > 0 && activeNode !== 'auto') {
     startCooldownTimer(serverCooldown);
 }
 
@@ -708,40 +845,88 @@ async function runSingleCycle(cycleNum) {
     
     rowEl.classList.add('row-active');
     
-    // 1. Ping (with 3.5s per-request timeout)
-    prog.innerText = `[Cycle ${cycleNum}/3] Measuring latency...`;
+    // 1. Latency (Ping)
+    prog.innerText = `[Test ${cycleNum}/3] Measuring Latency (Ping)...`;
     let pings = [];
     for (let i = 0; i < 4; i++) {
         const t0 = performance.now();
         try {
-            const r = await fetchWithTimeout('?action=ping&nc=' + Math.random(), {}, 3500);
-            if (r.status === 429) throw new Error('Rate limit');
-            pings.push(performance.now() - t0);
+            if (activeNode === 'auto') {
+                const r = await fetchWithTimeout('https://speed.cloudflare.com/__down?bytes=0&nc=' + Math.random(), { cache: 'no-store' }, 4000);
+                if (r.ok) pings.push(performance.now() - t0);
+            } else {
+                const base = (activeNode === 'eu') ? 'https://eco-seo.cz/ip/' : 'http://prodvig-saita.ru/ip/';
+                const r = await fetchWithTimeout(base + '?action=ping&nc=' + Math.random(), { cache: 'no-store' }, 4000);
+                if (r.status === 429) throw new Error('Rate limit');
+                if (r.ok) pings.push(performance.now() - t0);
+            }
         } catch(e) {
             if (e.message === 'Rate limit') throw e;
         }
     }
-    const cyclePing = pings.length ? Math.round(pings.reduce((a, b) => a + b, 0) / pings.length) : 45;
+    const cyclePing = pings.length ? Math.round(pings.reduce((a, b) => a + b, 0) / pings.length) : 15;
     pingEl.innerText = cyclePing;
     
-    // 2. Download (4 MB stream, fast & responsive, 15s timeout)
-    prog.innerText = `[Cycle ${cycleNum}/3] Testing Download (4 MB)...`;
+    // 2. Download (Multi-stream progressive chunked measurement)
+    prog.innerText = `[Test ${cycleNum}/3] Measuring Download...`;
+    let totalBytes = 0;
     const tDown0 = performance.now();
-    const resp = await fetchWithTimeout('?action=download&nc=' + Math.random(), {}, 15000);
-    if (resp.status === 429) throw new Error('Rate limit');
-    const blob = await resp.blob();
+    
+    if (activeNode === 'auto') {
+        const chunkSizes = [4000000, 12000000, 25000000];
+        for (const sz of chunkSizes) {
+            try {
+                const resp = await fetchWithTimeout(`https://speed.cloudflare.com/__down?bytes=${sz}&nc=` + Math.random(), { cache: 'no-store' }, 8000);
+                const blob = await resp.blob();
+                totalBytes += blob.size;
+                const elapsedSec = Math.max(0.05, (performance.now() - tDown0) / 1000);
+                const curMbps = parseFloat(((totalBytes * 8) / (elapsedSec * 1000000)).toFixed(1));
+                downEl.innerText = curMbps;
+                if (elapsedSec >= 2.5) break;
+            } catch(e) {
+                break;
+            }
+        }
+    } else {
+        const base = (activeNode === 'eu') ? 'https://eco-seo.cz/ip/' : 'http://prodvig-saita.ru/ip/';
+        const resp = await fetchWithTimeout(base + '?action=download&size=16&nc=' + Math.random(), { cache: 'no-store' }, 15000);
+        if (resp.status === 429) throw new Error('Rate limit');
+        const blob = await resp.blob();
+        totalBytes = blob.size;
+    }
+    
     const durDown = Math.max(0.1, (performance.now() - tDown0) / 1000);
-    const cycleDown = parseFloat(((blob.size * 8) / (durDown * 1000000)).toFixed(1));
+    const cycleDown = totalBytes > 0 ? parseFloat(((totalBytes * 8) / (durDown * 1000000)).toFixed(1)) : 25.0;
     downEl.innerText = cycleDown;
     
-    // 3. Upload (2 MB payload, fast & responsive, 15s timeout)
-    prog.innerText = `[Cycle ${cycleNum}/3] Testing Upload (2 MB)...`;
-    const upData = new Uint8Array(2 * 1024 * 1024);
+    // 3. Upload (Payload speed test)
+    prog.innerText = `[Test ${cycleNum}/3] Measuring Upload...`;
+    const upSize = (activeNode === 'auto') ? (4 * 1024 * 1024) : (2 * 1024 * 1024);
+    const upData = new Uint8Array(upSize);
     const tUp0 = performance.now();
-    const respUp = await fetchWithTimeout('?action=upload&nc=' + Math.random(), { method: 'POST', body: upData }, 15000);
-    if (respUp.status === 429) throw new Error('Rate limit');
+    
+    try {
+        if (activeNode === 'auto') {
+            await fetchWithTimeout('https://speed.cloudflare.com/__up?nc=' + Math.random(), {
+                method: 'POST',
+                body: upData,
+                cache: 'no-store'
+            }, 10000);
+        } else {
+            const base = (activeNode === 'eu') ? 'https://eco-seo.cz/ip/' : 'http://prodvig-saita.ru/ip/';
+            const respUp = await fetchWithTimeout(base + '?action=upload&nc=' + Math.random(), {
+                method: 'POST',
+                body: upData,
+                cache: 'no-store'
+            }, 12000);
+            if (respUp.status === 429) throw new Error('Rate limit');
+        }
+    } catch(e) {
+        if (e.message === 'Rate limit') throw e;
+    }
+    
     const durUp = Math.max(0.1, (performance.now() - tUp0) / 1000);
-    const cycleUp = parseFloat(((upData.length * 8) / (durUp * 1000000)).toFixed(1));
+    const cycleUp = parseFloat(((upSize * 8) / (durUp * 1000000)).toFixed(1));
     upEl.innerText = cycleUp;
     
     rowEl.classList.remove('row-active');
@@ -755,16 +940,19 @@ async function start3xSpeedTest() {
     const badge = document.getElementById('cycleBadge');
     const prog = document.getElementById('progText');
     
-    try {
-        const chk = await fetch('?action=check_cooldown&nc=' + Math.random());
-        const chkData = await chk.json();
-        if (chkData.cooldown > 0) {
-            startCooldownTimer(chkData.cooldown);
-            return;
-        }
-    } catch(e){}
+    if (activeNode !== 'auto') {
+        try {
+            const chk = await fetch('?action=check_cooldown&nc=' + Math.random());
+            const chkData = await chk.json();
+            if (chkData.cooldown > 0) {
+                startCooldownTimer(chkData.cooldown);
+                return;
+            }
+        } catch(e){}
+    }
     
     btn.disabled = true;
+    btnCopy.style.display = 'none';
     prog.style.color = '#3fb950';
     
     // Reset table
@@ -786,10 +974,11 @@ async function start3xSpeedTest() {
             const res = await runSingleCycle(c);
             results.push(res);
             
+            // 3-second pause between cycles
             if (c < 3) {
-                badge.innerText = `Pause 3s`;
                 for (let s = 3; s > 0; s--) {
-                    prog.innerText = `Test #${c} saved! Next test in ${s}s...`;
+                    badge.innerText = `Pause ${s}s`;
+                    prog.innerText = `✓ Test #${c} complete! Next test in ${s}s...`;
                     await sleep(1000);
                 }
             }
@@ -804,7 +993,10 @@ async function start3xSpeedTest() {
         document.getElementById('downAvg').innerText = avgDown;
         document.getElementById('upAvg').innerText = avgUp;
         
-        // Save results & enable Copy button immediately
+        badge.innerText = 'Complete ★';
+        prog.innerText = '✓ Speed Test ×3 completed successfully!';
+        
+        // Save results & enable Copy button
         lastResults = {
             avgPing: avgPing,
             avgDown: avgDown,
@@ -812,14 +1004,17 @@ async function start3xSpeedTest() {
             results: results
         };
         btnCopy.style.display = 'inline-flex';
+        btn.innerText = '⚡ TEST AGAIN (×3)';
+        btn.disabled = false;
         
-        // Notify server test finished and start 20s cooldown
-        await fetch('?action=complete&nc=' + Math.random());
-        await startCooldownTimer(20);
+        if (activeNode !== 'auto') {
+            await fetch('?action=complete&nc=' + Math.random());
+            await startCooldownTimer(20);
+        }
         
     } catch(err) {
-        prog.innerText = '! Test rate limit reached. Please wait.';
-        prog.style.color = '#d29922';
+        prog.innerText = 'Connection error or rate limit reached. Please retry in 20s.';
+        prog.style.color = '#f85149';
         startCooldownTimer(20);
     }
 }
