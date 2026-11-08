@@ -1,6 +1,6 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v010",
+  "current_version": "v011",
   "updated_at": "2026-11-08",
   "active_versions": [
     "GIN-DNS-Switch.cmd"
@@ -114,6 +114,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v011",
+      "date": "2026-11-08",
+      "changes": "Fix BtnApply re-enabling bug: When opening adapter settings or switching DNS profile cards, cancel pending auto-close countdown immediately and re-enable Apply button, allowing continuous profile switching without restarting application; ensure strictly single versioned installer on Desktop."
+    },
     {
       "version": "v010",
       "date": "2026-11-08",

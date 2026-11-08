@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v010 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v011 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v010...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v011...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v010
+#  GIN-DNS-SWITCH                                                  v011
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/Windows_scripts
@@ -48,11 +48,11 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 # ------------------------------------------------------------------------------
 # 1. LOCALIZATION STRINGS (EN default, RU, CS)
 # ------------------------------------------------------------------------------
-$script:CurrentVersion = "v010"
+$script:CurrentVersion = "v011"
 
 $script:Loc = @{
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v010 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v011 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Windows DNS Switcher"
         "StatusCurrent"  = "Current status:"
@@ -81,7 +81,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v010 (Update)"
+        "BtnUpdate"      = "v011 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
         "AuthorTooltip"  = "GitHub page (https://github.com/GinCz/)"
         "BtnAdapter"     = "⚙ Adapter Settings ({0})"
@@ -99,7 +99,7 @@ $script:Loc = @{
         "UpdFail"        = "✖ Connection error"
     }
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v010 — Менеджер DNS для Windows"
+        "WinTitle"       = "GIN-DNS-Switch v011 — Менеджер DNS для Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Переключатель DNS для Windows"
         "StatusCurrent"  = "Текущий статус:"
@@ -128,7 +128,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v010 (Обновить)"
+        "BtnUpdate"      = "v011 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
         "AuthorTooltip"  = "Страница GitHub (https://github.com/GinCz/)"
         "BtnAdapter"     = "⚙ Настройки адаптера ({0})"
@@ -146,7 +146,7 @@ $script:Loc = @{
         "UpdFail"        = "✖ Ошибка связи"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v010 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v011 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Přepínač DNS pro Windows"
         "StatusCurrent"  = "Aktuální stav:"
@@ -175,7 +175,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v010 (Aktualizovat)"
+        "BtnUpdate"      = "v011 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
         "AuthorTooltip"  = "Stránka GitHub (https://github.com/GinCz/)"
         "BtnAdapter"     = "⚙ Nastavení adaptéru ({0})"
@@ -200,7 +200,7 @@ $script:Loc = @{
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v010" SizeToContent="Height" Width="510"
+        Title="GIN-DNS-Switch v011" SizeToContent="Height" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -469,7 +469,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="GitHub page (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v010 (Update)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v011 (Update)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -543,13 +543,27 @@ function Update-CardSelection {
     }
 }
 
-# Wire Radio Click Events for instant illumination
-$controls["RadAdGuard"].Add_Checked({ Update-CardSelection })
-$controls["RadFamily"].Add_Checked({ Update-CardSelection })
-$controls["RadGoogle"].Add_Checked({ Update-CardSelection })
-$controls["RadQuad9"].Add_Checked({ Update-CardSelection })
-$controls["RadYandex"].Add_Checked({ Update-CardSelection })
-$controls["RadISP"].Add_Checked({ Update-CardSelection })
+function On-CardSelectionChanged {
+    Update-CardSelection
+    $script:CountdownCancelled = $true
+    if ($controls["BtnApply"]) {
+        $controls["BtnApply"].IsEnabled = $true
+    }
+    if ($controls["TxtCountdown"]) {
+        $controls["TxtCountdown"].Text = ""
+    }
+    if ($controls["BtnOpenAdapter"]) {
+        $controls["BtnOpenAdapter"].Visibility = [System.Windows.Visibility]::Collapsed
+    }
+}
+
+# Wire Radio Click Events for instant illumination and re-enabling Apply
+$controls["RadAdGuard"].Add_Checked({ On-CardSelectionChanged })
+$controls["RadFamily"].Add_Checked({ On-CardSelectionChanged })
+$controls["RadGoogle"].Add_Checked({ On-CardSelectionChanged })
+$controls["RadQuad9"].Add_Checked({ On-CardSelectionChanged })
+$controls["RadYandex"].Add_Checked({ On-CardSelectionChanged })
+$controls["RadISP"].Add_Checked({ On-CardSelectionChanged })
 
 # ------------------------------------------------------------------------------
 # 5. LANGUAGE PERSISTENCE & SWITCHING
@@ -965,6 +979,9 @@ $controls["BtnOpenAdapter"].Add_Click({
     $controls["BtnOpenAdapter"].Foreground = New-Brush "#34D399"
     $controls["BtnOpenAdapter"].BorderBrush = New-Brush "#10B981"
     $controls["TxtCountdown"].Text = ""
+    if ($controls["BtnApply"]) {
+        $controls["BtnApply"].IsEnabled = $true
+    }
     Open-AdapterProperties $script:ActiveAdapterName
 })
 
@@ -1013,6 +1030,8 @@ $controls["BtnApply"].Add_Click({
     # 3. 10-Second Interactive Countdown with Open Adapter Button
     $adapterShortName = if ($script:ActiveAdapterName) { $script:ActiveAdapterName } else { "Ethernet" }
     $controls["BtnOpenAdapter"].Content = [string]::Format($l["BtnAdapter"], $adapterShortName)
+    $controls["BtnOpenAdapter"].Foreground = New-Brush "#60A5FA"
+    $controls["BtnOpenAdapter"].BorderBrush = New-Brush "#3B82F6"
     $controls["BtnOpenAdapter"].Visibility = [System.Windows.Visibility]::Visible
     Invoke-UIRefresh
 
@@ -1025,6 +1044,10 @@ $controls["BtnApply"].Add_Click({
     if (-not $script:CountdownCancelled) {
         $window.Close()
         [System.Environment]::Exit(0)
+    } else {
+        if ($controls["BtnApply"]) {
+            $controls["BtnApply"].IsEnabled = $true
+        }
     }
 })
 

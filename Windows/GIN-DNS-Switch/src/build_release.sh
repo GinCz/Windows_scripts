@@ -14,8 +14,8 @@ cp "$SCRIPT_DIR/Uninstall.exe" "$ROOT_DIR/Uninstall.exe"
 echo "==> [3/4] Compiling Windows resource (app.rc)..."
 x86_64-w64-mingw32-windres -i "$SCRIPT_DIR/app.rc" -O coff -o "$SCRIPT_DIR/app.syso"
 
-echo "==> [4/4] Building GIN-DNS-Switch_v010_Setup.exe..."
-(cd "$SCRIPT_DIR" && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-H=windowsgui -s -w" -o "$ROOT_DIR/GIN-DNS-Switch_v010_Setup.exe" .)
-cp "$ROOT_DIR/GIN-DNS-Switch_v010_Setup.exe" "$ROOT_DIR/GIN-DNS-Switch_Setup.exe"
+echo "==> [4/4] Building GIN-DNS-Switch_v011_Setup.exe..."
+(cd "$SCRIPT_DIR" && GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-H=windowsgui -s -w" -o "$ROOT_DIR/GIN-DNS-Switch_v011_Setup.exe" .)
+cp "$ROOT_DIR/GIN-DNS-Switch_v011_Setup.exe" "$ROOT_DIR/GIN-DNS-Switch_Setup.exe"
 
-echo "✅ Build Complete: GIN-DNS-Switch_v010_Setup.exe & Uninstall.exe"
+echo "✅ Build Complete: GIN-DNS-Switch_v011_Setup.exe & Uninstall.exe"
