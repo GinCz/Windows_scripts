@@ -9,9 +9,9 @@
 ![Portable](https://img.shields.io/badge/100%25%20Portable-Zero%20Background%20Processes-orange)
 ![License](https://img.shields.io/badge/License-MIT%20%7C%20Open%20Source-blue)
 
-**A lightweight, 100% portable, open-source native Win32/GDI network bandwidth monitor and multi-cloud storage speed benchmark for Windows 10 & 11. Built as a fast, driverless, zero-bloat alternative to NetBalancer and Windows Task Manager.**
+**A lightweight, 100% portable, standalone native Win32/GDI network bandwidth monitor and multi-cloud storage speed benchmark for Windows 10 & 11. Built as a fast, driverless, zero-bloat alternative to NetBalancer and Windows Task Manager.**
 
-[⬇️ Download v003](#-quick-download--latest-release-v003) • [📸 Live Screenshot](#-interface-preview--live-telemetry) • [🌟 Key Features](#-key-features) • [☁️ Cloud Speed Benchmark](#️-built-in-cloud-engines-speed-benchmark) • [🛠️ Build from Source](#️-building-from-source-open-source) • [📜 Changelog](CHANGELOG.md)
+[⬇️ Download v003](#-quick-download--latest-release-v003) • [📸 Live Screenshot](#-interface-preview--live-telemetry) • [🌟 Key Features](#-key-features) • [☁️ Cloud Speed Benchmark](#️-built-in-cloud-engines-speed-benchmark) • [📜 Changelog](#-release-v003-changelog)
 
 ---
 
@@ -25,7 +25,7 @@
 
 <div align="center">
 
-![GIN-NetSpeed v003 Main Window](GIN-NetSpeed_v003_Screenshot.jpg)
+![GIN-NetSpeed v003 Main Window](GIN-NetSpeed_v003_Screenshot.png)
 *GIN-NetSpeed v003 monitoring live per-application download/upload traffic, plotting `MEGAsync.exe` on the real-time graph with Y-axis speed markings, horizontal average speed lines, left-side numerical average callout badges, and interactive Download/Upload toggle cards.*
 
 </div>
@@ -36,15 +36,15 @@
 
 <div align="center">
 
-### 🌐 [⬇️ Click Here to Download GIN-NetSpeed.exe (v003)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-NetSpeed/GIN-NetSpeed.exe)
-*Single standalone 64-bit portable executable (4.8 MB) • Zero external dependencies • Zero background services on exit*
+### 🌐 [⬇️ Click Here to Download GIN-NetSpeed_v003.exe](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-NetSpeed/GIN-NetSpeed_v003.exe)
+*Single standalone 64-bit portable executable (4.8 MB) • Zero installation required • Zero background services on exit*
 
 </div>
 
 ### ⚡ 1-Click PowerShell Launch
 Copy and paste into Windows PowerShell to download and launch immediately:
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-NetSpeed/GIN-NetSpeed.exe" -OutFile "$env:USERPROFILE\Desktop\GIN-NetSpeed.exe"; Start-Process "$env:USERPROFILE\Desktop\GIN-NetSpeed.exe"
+Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-NetSpeed/GIN-NetSpeed_v003.exe" -OutFile "$env:USERPROFILE\Desktop\GIN-NetSpeed_v003.exe"; Start-Process "$env:USERPROFILE\Desktop\GIN-NetSpeed_v003.exe"
 ```
 
 ---
@@ -103,39 +103,22 @@ Click the **`☁ Cloud Speed Test`** button on the top toolbar to open the dedic
 
 ---
 
-## 🛠️ Building from Source (Open Source)
+## 📜 Release v003 Changelog
 
-`GIN-NetSpeed` is written in pure **Go (Golang)** using native Windows `syscall` bindings (`user32.dll`, `gdi32.dll`, `comctl32.dll`, `iphlpapi.dll`, `psapi.dll`) with zero third-party GUI libraries.
-
-### Prerequisites
-* **Go 1.22+**
-* **MinGW-w64 `windres`** (optional, only if recompiling `app.rc` into `rsrc_windows_amd64.syso`)
-
-### Compile on Windows / Linux (Cross-Compilation)
-```bash
-git clone https://github.com/GinCz/Windows_scripts.git
-cd Windows_scripts/Windows/GIN-NetSpeed
-
-# Optional: rebuild Windows PE version info & icon resource
-x86_64-w64-mingw32-windres app.rc -O coff -o rsrc_windows_amd64.syso
-
-# Build standalone 64-bit Windows GUI executable
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-H windowsgui -s -w" -o GIN-NetSpeed.exe .
-```
+* **Multi-Application Graph Comparison (2–4 Apps Simultaneously):** Double-clicking rows in the table adds/removes applications to the top 15-minute graph (up to 4 apps simultaneously, marked `[1]`, `[2]`, `[3]`, `[4]`) with distinct color curves and row highlights.
+* **Interactive Download & Upload Toggle Buttons:** Green (`⬇ DOWNLOAD [✓ ON]`) and yellow/amber (`⬆ UPLOAD [✓ ON]`) cards on the right side of the graph toggle Download and Upload curves & average lines ON/OFF independently.
+* **Left Y-Axis Vertical Speed Markings:** Clear vertical speed scale labels (`100%`, `75%`, `50%`, `25%`, `0 B/s`) along the left edge of the graph.
+* **Horizontal Dashed Average Speed Line & Left Numerical Callout:** Real-time average Download and Upload speed calculations with horizontal dashed lines and high-contrast numerical callout badges on the left margin.
 
 ---
 
-## 📂 Repository Contents (`Windows/GIN-NetSpeed/`)
+## 📂 Folder Contents (`Windows/GIN-NetSpeed/`)
 
 | File | Description |
 | :--- | :--- |
-| [`GIN-NetSpeed.exe`](GIN-NetSpeed.exe) | Latest compiled 64-bit portable Windows executable (`v003`) |
-| [`GIN-NetSpeed_v003.exe`](GIN-NetSpeed_v003.exe) | Version-tagged release binary (`v003`) |
-| [`main.go`](main.go) | Complete open-source Go Win32/GDI implementation (~3,650 lines, zero external dependencies) |
-| [`app.rc`](app.rc) | Windows PE `VERSIONINFO` and multi-resolution icon resource definition |
-| [`Gin-NetSpeed.ico`](Gin-NetSpeed.ico) | Native multi-resolution application icon (`256x256`, `64x64`, `48x48`, `32x32`, `16x16`) |
-| [`build.sh`](build.sh) | Automated cross-compilation build script |
-| [`CHANGELOG.md`](CHANGELOG.md) | Full release history and version changelog |
+| [`GIN-NetSpeed_v003.exe`](GIN-NetSpeed_v003.exe) | Official standalone 64-bit portable Windows executable (`v003`) |
+| [`GIN-NetSpeed_v003_Screenshot.png`](GIN-NetSpeed_v003_Screenshot.png) | High-definition live interface screenshot |
+| [`README.md`](README.md) | Comprehensive English documentation and specifications |
 
 ---
 
