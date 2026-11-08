@@ -1,8 +1,8 @@
 1 ICON "app.ico"
 
 1 VERSIONINFO
-FILEVERSION 1,0,0,5
-PRODUCTVERSION 1,0,0,5
+FILEVERSION 1,0,0,6
+PRODUCTVERSION 1,0,0,6
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -14,13 +14,13 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "VladiMIR+AI"
-            VALUE "FileDescription", "GIN-DNS-Switch_v005_Setup"
-            VALUE "FileVersion", "v005"
+            VALUE "FileDescription", "GIN-DNS-Switch_v006_Setup"
+            VALUE "FileVersion", "v006"
             VALUE "InternalName", "GIN-DNS-Switch"
             VALUE "LegalCopyright", "VladiMIR+AI"
-            VALUE "OriginalFilename", "GIN-DNS-Switch_v005_Setup.exe"
-            VALUE "ProductName", "GIN-DNS-Switch_v005"
-            VALUE "ProductVersion", "v005"
+            VALUE "OriginalFilename", "GIN-DNS-Switch_v006_Setup.exe"
+            VALUE "ProductName", "GIN-DNS-Switch_v006"
+            VALUE "ProductVersion", "v006"
         END
     END
     BLOCK "VarFileInfo"

@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v005 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v006 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v005...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v006...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v005
+#  GIN-DNS-SWITCH                                                  v006
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/
@@ -49,11 +49,11 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 # 1. LOCALIZATION STRINGS (RU, EN, CS)
 # ------------------------------------------------------------------------------
 $script:Lang = "RU"
-$script:CurrentVersion = "v005"
+$script:CurrentVersion = "v006"
 
 $script:Loc = @{
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v005 — Менеджер DNS для Windows"
+        "WinTitle"       = "GIN-DNS-Switch v006 — Менеджер DNS для Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Умный переключатель DNS"
         "StatusCurrent"  = "Текущий статус:"
@@ -79,11 +79,11 @@ $script:Loc = @{
         "CardFamilyDesc" = "Блокировка рекламы, контента 18+ и принудительный SafeSearch"
         "BtnApply"       = "ПРИМЕНИТЬ НАСТРОЙКИ"
         "Step1Pending"   = "○ Настройка сетевых адаптеров..."
-        "Step1Done"      = "✔ Сетевые адаптеры успешно настроены ({0})"
+        "Step1Done"      = "✔ DNS прописан: {0}"
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v005 (Обновить)"
+        "BtnUpdate"      = "v006 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
         "StatusActiveGoogle"  = "Активен: Google + Cloudflare (Скорость и ТВ)"
@@ -94,10 +94,12 @@ $script:Loc = @{
         "StatusActiveOther"   = "Активен: Пользовательский DNS"
         "UpdChecking"    = "Проверка..."
         "UpdLatest"      = "✔ У вас последняя версия ({0})"
-        "UpdSuccess"     = "✔ Обновлено!"
+        "UpdSuccess"     = "✔ Обновлено до {0}!"
+        "Step1Fail"      = "✖ DNS НЕ применился: {0} (см. лог)"
+        "UpdFail"        = "✖ Нет связи с GitHub"
     }
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v005 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v006 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Smart DNS Switcher"
         "StatusCurrent"  = "Current status:"
@@ -123,11 +125,11 @@ $script:Loc = @{
         "CardFamilyDesc" = "Ad blocking, strict SafeSearch, and adult 18+ content filter"
         "BtnApply"       = "APPLY SETTINGS"
         "Step1Pending"   = "○ Configuring network adapters..."
-        "Step1Done"      = "✔ Network adapters configured successfully ({0})"
+        "Step1Done"      = "✔ DNS set: {0}"
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v005 (Update)"
+        "BtnUpdate"      = "v006 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Active: AdGuard DNS (AdBlock)"
         "StatusActiveGoogle"  = "Active: Google + Cloudflare (Speed & TV)"
@@ -138,10 +140,12 @@ $script:Loc = @{
         "StatusActiveOther"   = "Active: Custom DNS"
         "UpdChecking"    = "Checking..."
         "UpdLatest"      = "✔ You have the latest version ({0})"
-        "UpdSuccess"     = "✔ Updated!"
+        "UpdSuccess"     = "✔ Updated to {0}!"
+        "Step1Fail"      = "✖ DNS NOT applied: {0} (see log)"
+        "UpdFail"        = "✖ GitHub unreachable"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v005 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v006 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Chytrý přepínač DNS"
         "StatusCurrent"  = "Aktuální stav:"
@@ -167,11 +171,11 @@ $script:Loc = @{
         "CardFamilyDesc" = "Blokování reklam, filtr 18+ obsahu a vynucený SafeSearch"
         "BtnApply"       = "POUŽÍT NASTAVENÍ"
         "Step1Pending"   = "○ Konfigurace síťových adaptérů..."
-        "Step1Done"      = "✔ Síťové adaptéry byly úspěšně nastaveny ({0})"
+        "Step1Done"      = "✔ DNS nastaven: {0}"
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v005 (Aktualizovat)"
+        "BtnUpdate"      = "v006 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování reklam)"
         "StatusActiveGoogle"  = "Aktivní: Google + Cloudflare (Rychlost a TV)"
@@ -182,7 +186,9 @@ $script:Loc = @{
         "StatusActiveOther"   = "Aktivní: Vlastní DNS"
         "UpdChecking"    = "Kontrola..."
         "UpdLatest"      = "✔ Máte nejnovější verzi ({0})"
-        "UpdSuccess"     = "✔ Aktualizováno!"
+        "UpdSuccess"     = "✔ Aktualizováno na {0}!"
+        "Step1Fail"      = "✖ DNS NEBYL použit: {0} (viz log)"
+        "UpdFail"        = "✖ GitHub nedostupný"
     }
 }
 
@@ -192,7 +198,7 @@ $script:Loc = @{
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v005" SizeToContent="Height" Width="510"
+        Title="GIN-DNS-Switch v006" SizeToContent="Height" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -454,7 +460,7 @@ $script:Loc = @{
         <!-- PROGRESS CHECKLIST -->
         <Border x:Name="PanelProgress" Grid.Row="5" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Padding="12,7" Margin="0,6,0,0" Visibility="Collapsed">
             <StackPanel>
-                <TextBlock x:Name="TxtStep1" Text="○ Настройка сетевых адаптеров..." FontSize="11" Foreground="#9CA3AF" Margin="0,1"/>
+                <TextBlock x:Name="TxtStep1" Text="○ Настройка сетевых адаптеров..." FontSize="11" Foreground="#9CA3AF" Margin="0,1" TextWrapping="Wrap"/>
                 <TextBlock x:Name="TxtStep2" Text="○ Очистка кэша сопоставителя DNS..." FontSize="11" Foreground="#9CA3AF" Margin="0,1"/>
                 <TextBlock x:Name="TxtCountdown" Text="Закрытие через 3 сек..." FontSize="11.5" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,2,0,0"/>
             </StackPanel>
@@ -467,7 +473,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть главную страницу GitHub (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v005 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v006 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -638,274 +644,237 @@ $controls["LnkAuthor"].Add_MouseLeftButtonUp({
     try { [System.Diagnostics.Process]::Start("https://github.com/GinCz/") } catch {}
 })
 
+﻿# ------------------------------------------------------------------------------
+# 4. UI HELPERS (all work runs on the UI thread - PowerShell scriptblocks have
+#    NO runspace on ThreadPool threads, which silently killed v003-v005 actions)
 # ------------------------------------------------------------------------------
-# 4. SMART AUTO-UPDATE ENGINE (Checks version, shows green checkmark if latest)
+function Write-Log($msg) {
+    try { Add-Content -Path (Join-Path $env:TEMP "GIN-DNS-Switch.log") -Value ("[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $msg) -Encoding UTF8 } catch {}
+}
+
+function Invoke-UIRefresh {
+    $frame = New-Object System.Windows.Threading.DispatcherFrame
+    [System.Windows.Threading.Dispatcher]::CurrentDispatcher.BeginInvoke(
+        [System.Windows.Threading.DispatcherPriority]::Background,
+        [System.Windows.Threading.DispatcherOperationCallback]{ param($f) $f.Continue = $false; return $null },
+        $frame) | Out-Null
+    [System.Windows.Threading.Dispatcher]::PushFrame($frame)
+}
+
+function Wait-UI([int]$ms) {
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($sw.ElapsedMilliseconds -lt $ms) { Invoke-UIRefresh; Start-Sleep -Milliseconds 25 }
+}
+
+function New-Brush($hex) { return [System.Windows.Media.BrushConverter]::new().ConvertFromString($hex) }
+
+# ------------------------------------------------------------------------------
+# 5. SMART UPDATE (checks version.json; shows green check if already latest)
 # ------------------------------------------------------------------------------
 $controls["BtnUpdate"].Add_Click({
     $l = $script:Loc[$script:Lang]
-    $controls["BtnUpdate"].IsEnabled = $false
-    $controls["BtnUpdate"].Content = $l["UpdChecking"]
+    $btn = $controls["BtnUpdate"]
+    $btn.IsEnabled = $false
+    $btn.Content = $l["UpdChecking"]
+    Invoke-UIRefresh
+    try {
+        $base = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-DNS-Switch"
+        $client = New-Object System.Net.WebClient
+        $client.Headers.Add("User-Agent", "GIN-DNS-Switch-Updater")
+        $client.Headers.Add("Cache-Control", "no-cache")
+        $verJson = $client.DownloadString("$base/version.json?t=" + [DateTime]::Now.Ticks)
+        $remoteVer = $script:CurrentVersion
+        if ($verJson -match '"current_version"\s*:\s*"([^"]+)"') { $remoteVer = $matches[1] }
+        Write-Log "Update check: local=$($script:CurrentVersion) remote=$remoteVer"
 
-    $dispatcher = $window.Dispatcher
-
-    [System.Threading.ThreadPool]::QueueUserWorkItem({
-        try {
-            $rawVerUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-DNS-Switch/version.json"
-            $client = New-Object System.Net.WebClient
-            $client.Headers.Add("User-Agent", "GIN-DNS-Switch-Updater")
-            $verJsonText = $client.DownloadString($rawVerUrl)
-            
-            $remoteVer = "v005"
-            if ($verJsonText -match '"current_version"\s*:\s*"([^"]+)"') {
-                $remoteVer = $matches[1]
-            }
-
-            # If already on the latest version: DO NOT CLOSE, show green checkmark!
-            if ($remoteVer -eq $script:CurrentVersion) {
-                [System.Media.SystemSounds]::Asterisk.Play()
-                $dispatcher.Invoke([Action]{
-                    $controls["BtnUpdate"].Content = [string]::Format($l["UpdLatest"], $script:CurrentVersion)
-                    $controls["BtnUpdate"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
-                    $controls["BtnUpdate"].BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#10B981")
-                })
-
-                Start-Sleep -Seconds 3
-
-                $dispatcher.Invoke([Action]{
-                    $controls["BtnUpdate"].Content = $l["BtnUpdate"]
-                    $controls["BtnUpdate"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#38BDF8")
-                    $controls["BtnUpdate"].BorderBrush = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#0284C7")
-                    $controls["BtnUpdate"].IsEnabled = $true
-                })
-                return
-            }
-
-            # If newer version is available: Download and update!
-            $rawCodeUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-DNS-Switch/GIN-DNS-Switch.cmd"
-            $newCode = $client.DownloadString($rawCodeUrl)
-
-            if ($newCode -and $newCode.Length -gt 2000 -and $newCode -like "*GIN-DNS-SWITCH*") {
-                $targetPaths = @(
-                    "$env:ProgramFiles\GIN-DNS-Switch\GIN-DNS-Switch.cmd",
-                    "$env:ProgramFiles\GIN-DNS-Switch\GIN-DNS-Switch_$remoteVer.cmd",
-                    $env:GIN_DNS_SCRIPT,
-                    '%~f0'
-                ) | Select-Object -Unique
-
-                foreach ($p in $targetPaths) {
-                    if ($p -and (Test-Path (Split-Path $p -Parent))) {
-                        [System.IO.File]::WriteAllText($p, $newCode, [System.Text.Encoding]::UTF8)
-                    }
-                }
-
-                # Signature TWO BUBBLES SOUND (Два булька)
-                [System.Media.SystemSounds]::Asterisk.Play()
-                Start-Sleep -Milliseconds 220
-                [System.Media.SystemSounds]::Asterisk.Play()
-
-                $dispatcher.Invoke([Action]{
-                    $controls["BtnUpdate"].Content = $l["UpdSuccess"]
-                })
-                Start-Sleep -Milliseconds 600
-
-                # Seamless reload
-                $launchPath = "$env:ProgramFiles\GIN-DNS-Switch\GIN-DNS-Switch.cmd"
-                if (-not (Test-Path $launchPath)) { $launchPath = $env:GIN_DNS_SCRIPT }
-                Start-Process "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command `\"Start-Process cmd.exe -ArgumentList '/c `\"`\"$launchPath`\"`\"' -Verb RunAs`\""
-
-                $dispatcher.Invoke([Action]{
-                    $window.Close()
-                    [System.Windows.Application]::Current.Shutdown()
-                    [System.Environment]::Exit(0)
-                })
-            } else {
-                throw "Invalid payload"
-            }
-        } catch {
-            [System.Media.SystemSounds]::Hand.Play()
-            $dispatcher.Invoke([Action]{
-                $controls["BtnUpdate"].IsEnabled = $true
-                $controls["BtnUpdate"].Content = $l["BtnUpdate"]
-            })
+        if ([int]($remoteVer -replace '\D', '') -le [int]($script:CurrentVersion -replace '\D', '')) {
+            [System.Media.SystemSounds]::Asterisk.Play()
+            $btn.Content = [string]::Format($l["UpdLatest"], $script:CurrentVersion)
+            $btn.Foreground = New-Brush "#34D399"
+            $btn.BorderBrush = New-Brush "#10B981"
+            Wait-UI 3000
+            $btn.Content = $l["BtnUpdate"]
+            $btn.Foreground = New-Brush "#38BDF8"
+            $btn.BorderBrush = New-Brush "#0284C7"
+            $btn.IsEnabled = $true
+            return
         }
-    })
+
+        $newCode = $client.DownloadString("$base/GIN-DNS-Switch.cmd?t=" + [DateTime]::Now.Ticks)
+        if (-not $newCode -or $newCode.Length -lt 2000 -or $newCode -notlike "*GIN-DNS-SWITCH*") { throw "Invalid payload" }
+
+        $instDir = Join-Path $env:ProgramFiles "GIN-DNS-Switch"
+        $targets = @((Join-Path $instDir "GIN-DNS-Switch.cmd"), $env:GIN_DNS_SCRIPT) | Where-Object { $_ } | Select-Object -Unique
+        foreach ($p in $targets) {
+            if (Test-Path (Split-Path $p -Parent)) { [System.IO.File]::WriteAllText($p, $newCode, (New-Object System.Text.UTF8Encoding($false))) }
+        }
+
+        # Signature TWO BUBBLES (два булька)
+        [System.Media.SystemSounds]::Asterisk.Play()
+        Wait-UI 250
+        [System.Media.SystemSounds]::Asterisk.Play()
+        $btn.Content = [string]::Format($l["UpdSuccess"], $remoteVer)
+        $btn.Foreground = New-Brush "#34D399"
+        Wait-UI 900
+
+        $launch = Join-Path $instDir "GIN-DNS-Switch.cmd"
+        if (-not (Test-Path $launch)) { $launch = $env:GIN_DNS_SCRIPT }
+        Start-Process cmd.exe -ArgumentList "/c `"`"$launch`"`"" -WindowStyle Hidden
+        $window.Close()
+    } catch {
+        Write-Log "Update error: $($_.Exception.Message)"
+        [System.Media.SystemSounds]::Hand.Play()
+        $btn.Content = $l["UpdFail"]
+        $btn.Foreground = New-Brush "#F87171"
+        Wait-UI 3000
+        $btn.Content = $l["BtnUpdate"]
+        $btn.Foreground = New-Brush "#38BDF8"
+        $btn.IsEnabled = $true
+    }
 })
 
 # ------------------------------------------------------------------------------
-# 5. BULLETPROOF MULTI-LAYER DNS SETTER (WMI + NetTCPIP + Netsh)
+# 6. DNS ENGINE: Registry (what the IPv4 dialog shows) + WMI + netsh + NetTCPIP,
+#    then READ-BACK verification from the registry.
 # ------------------------------------------------------------------------------
-function Apply-DnsSettings($profile) {
-    $v4 = $null
-    $v6 = $null
-
+function Get-ProfileDns($profile) {
     switch ($profile) {
-        "AdGuard" {
-            $v4 = @("94.140.14.14", "94.140.15.15")
-            $v6 = @("2a10:50c0::ad1:ff", "2a10:50c0::ad2:ff")
-        }
-        "Google" {
-            $v4 = @("8.8.8.8", "1.1.1.1")
-            $v6 = @("2001:4860:4860::8888", "2606:4700:4700::1111")
-        }
-        "Yandex" {
-            $v4 = @("77.88.8.8", "77.88.8.1")
-            $v6 = @("2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff")
-        }
-        "Quad9" {
-            $v4 = @("9.9.9.9", "149.112.112.112")
-            $v6 = @("2620:fe::fe", "2620:fe::9")
-        }
-        "Family" {
-            $v4 = @("94.140.14.15", "94.140.15.16")
-            $v6 = @("2a10:50c0::bad1:ff", "2a10:50c0::bad2:ff")
-        }
-        "ISP" {
-            $v4 = $null
-            $v6 = $null
-        }
+        "AdGuard" { return @{ v4 = @("94.140.14.14", "94.140.15.15"); v6 = @("2a10:50c0::ad1:ff", "2a10:50c0::ad2:ff") } }
+        "Family"  { return @{ v4 = @("94.140.14.15", "94.140.15.16"); v6 = @("2a10:50c0::bad1:ff", "2a10:50c0::bad2:ff") } }
+        "Google"  { return @{ v4 = @("8.8.8.8", "1.1.1.1"); v6 = @("2001:4860:4860::8888", "2606:4700:4700::1111") } }
+        "Quad9"   { return @{ v4 = @("9.9.9.9", "149.112.112.112"); v6 = @("2620:fe::fe", "2620:fe::9") } }
+        "Yandex"  { return @{ v4 = @("77.88.8.8", "77.88.8.1"); v6 = @("2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff") } }
+        default   { return @{ v4 = @(); v6 = @() } }
     }
-
-    $affectedAdapters = @()
-
-    # ── METHOD 1: WMI Win32_NetworkAdapterConfiguration (100% reliable for USB/Ethernet/WiFi) ──
-    try {
-        $wmiNics = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue
-        foreach ($nic in $wmiNics) {
-            # Exclude VirtualBox and VMware adapters
-            if ($nic.Description -notlike '*VirtualBox*' -and $nic.Description -notlike '*VMware*') {
-                if ($v4 -and $v4.Count -gt 0) {
-                    $res = $nic.SetDNSServerSearchOrder($v4)
-                    if ($res.ReturnValue -eq 0 -or $res.ReturnValue -eq 1) {
-                        $affectedAdapters += $nic.Description
-                    }
-                } else {
-                    $res = $nic.SetDNSServerSearchOrder($null)
-                    if ($res.ReturnValue -eq 0 -or $res.ReturnValue -eq 1) {
-                        $affectedAdapters += $nic.Description
-                    }
-                }
-            }
-        }
-    } catch {}
-
-    # ── METHOD 2: NetTCPIP Set-DnsClientServerAddress (Modern Windows) ──
-    try {
-        if (Get-Command Get-NetAdapter -ErrorAction SilentlyContinue) {
-            $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { 
-                $_.Status -eq 'Up' -and 
-                $_.InterfaceDescription -notlike '*VirtualBox*' -and 
-                $_.InterfaceDescription -notlike '*VMware*' -and 
-                $_.InterfaceAlias -notlike '*Loopback*' -and
-                $_.InterfaceAlias -notlike '*vEthernet*'
-            }
-            foreach ($a in $adapters) {
-                if ($v4 -and $v4.Count -gt 0) {
-                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v4 -ErrorAction SilentlyContinue
-                } else {
-                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ResetServerAddresses -ErrorAction SilentlyContinue
-                }
-                if ($v6 -and $v6.Count -gt 0) {
-                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v6 -ErrorAction SilentlyContinue
-                }
-                $affectedAdapters += $a.InterfaceAlias
-            }
-        }
-    } catch {}
-
-    # ── METHOD 3: netsh Direct Console Execution ──
-    try {
-        $netshOut = cmd.exe /c "netsh interface ipv4 show interfaces"
-        foreach ($line in $netshOut) {
-            if ($line -match 'connected|подключен') {
-                # Extract the interface alias at the end of line
-                $tokens = $line.Trim() -split '\s{2,}'
-                if ($tokens.Count -ge 4) {
-                    $alias = $tokens[-1].Trim()
-                    if ($alias -and $alias -notlike '*VirtualBox*' -and $alias -notlike '*Loopback*') {
-                        if ($v4 -and $v4.Count -gt 0) {
-                            cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=static address=$($v4[0]) register=both" 2>$null
-                            if ($v4.Count -gt 1) {
-                                cmd.exe /c "netsh interface ipv4 add dnsservers name=`"$alias`" address=$($v4[1]) index=2" 2>$null
-                            }
-                        } else {
-                            cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=dhcp" 2>$null
-                        }
-                        $affectedAdapters += $alias
-                    }
-                }
-            }
-        }
-    } catch {}
-
-    # ── STEP 4: Flush DNS ──
-    try {
-        Clear-DnsClientCache -ErrorAction SilentlyContinue
-        cmd.exe /c "ipconfig /flushdns" 2>$null | Out-Null
-    } catch {}
-
-    $uniqueAdapters = $affectedAdapters | Select-Object -Unique
-    return $uniqueAdapters
 }
 
-# Apply Button Click Handler
+function Get-TargetNics {
+    $result = @()
+    $cfgs = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue
+    foreach ($c in $cfgs) {
+        $desc = [string]$c.Description
+        if ($desc -match 'VirtualBox|VMware|Hyper-V|Loopback|WAN Miniport|Wintun|WireGuard|TAP-Windows|Npcap') { continue }
+        $ad = Get-WmiObject -Class Win32_NetworkAdapter -Filter "Index = $($c.Index)" -ErrorAction SilentlyContinue
+        $result += [pscustomobject]@{ Cfg = $c; Name = [string]$ad.NetConnectionID; Desc = $desc; Guid = [string]$c.SettingID; IfIndex = [int]$c.InterfaceIndex }
+    }
+    return $result
+}
+
+function Apply-DnsSettings($profile) {
+    $dns = Get-ProfileDns $profile
+    $v4 = [string[]]$dns.v4
+    $v6 = [string[]]$dns.v6
+    $isStatic = ($v4.Count -gt 0)
+    $report = @()
+
+    $nics = Get-TargetNics
+    Write-Log "Apply profile=$profile nics=$(($nics | ForEach-Object { $_.Name + ' [' + $_.Desc + ']' }) -join '; ')"
+
+    foreach ($n in $nics) {
+        # 1) Registry - exactly what "Use the following DNS server addresses" reads
+        try {
+            $k4 = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($n.Guid)"
+            if (Test-Path $k4) { Set-ItemProperty -Path $k4 -Name "NameServer" -Value ($(if ($isStatic) { $v4 -join "," } else { "" })) -Type String -Force }
+            $k6 = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters\Interfaces\$($n.Guid)"
+            if (Test-Path $k6) { Set-ItemProperty -Path $k6 -Name "NameServer" -Value ($(if ($isStatic) { $v6 -join "," } else { "" })) -Type String -Force }
+        } catch { Write-Log "Registry error $($n.Name): $($_.Exception.Message)" }
+
+        # 2) WMI
+        try {
+            if ($isStatic) { $r = $n.Cfg.SetDNSServerSearchOrder($v4) } else { $r = $n.Cfg.SetDNSServerSearchOrder() }
+            Write-Log "WMI $($n.Name) rc=$($r.ReturnValue)"
+        } catch { Write-Log "WMI error $($n.Name): $($_.Exception.Message)" }
+
+        # 3) netsh (validate=no -> instant, no DNS probing)
+        if ($n.Name) {
+            if ($isStatic) {
+                & netsh.exe interface ipv4 set dnsservers "name=$($n.Name)" source=static "address=$($v4[0])" register=primary validate=no | Out-Null
+                for ($i = 1; $i -lt $v4.Count; $i++) { & netsh.exe interface ipv4 add dnsservers "name=$($n.Name)" "address=$($v4[$i])" "index=$($i + 1)" validate=no | Out-Null }
+                if ($v6.Count -gt 0) {
+                    & netsh.exe interface ipv6 set dnsservers "name=$($n.Name)" source=static "address=$($v6[0])" register=primary validate=no | Out-Null
+                    for ($i = 1; $i -lt $v6.Count; $i++) { & netsh.exe interface ipv6 add dnsservers "name=$($n.Name)" "address=$($v6[$i])" "index=$($i + 1)" validate=no | Out-Null }
+                }
+            } else {
+                & netsh.exe interface ipv4 set dnsservers "name=$($n.Name)" source=dhcp | Out-Null
+                & netsh.exe interface ipv6 set dnsservers "name=$($n.Name)" source=dhcp | Out-Null
+            }
+        }
+
+        # 4) NetTCPIP (Win8+): v4 and v6 in ONE call so one list never wipes the other
+        try {
+            if (Get-Command Set-DnsClientServerAddress -ErrorAction SilentlyContinue) {
+                if ($isStatic) { Set-DnsClientServerAddress -InterfaceIndex $n.IfIndex -ServerAddresses (@($v4) + @($v6)) -ErrorAction Stop }
+                else { Set-DnsClientServerAddress -InterfaceIndex $n.IfIndex -ResetServerAddresses -ErrorAction Stop }
+            }
+        } catch { Write-Log "NetTCPIP $($n.Name): $($_.Exception.Message)" }
+
+        # 5) READ-BACK verification from registry
+        $actual = ""
+        try { $actual = [string](Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($n.Guid)" -Name NameServer -ErrorAction Stop).NameServer } catch {}
+        $ok = $(if ($isStatic) { $actual -eq ($v4 -join ",") -or $actual -eq ($v4 -join " ") } else { [string]::IsNullOrWhiteSpace($actual) })
+        Write-Log "Verify $($n.Name): NameServer='$actual' ok=$ok"
+        $label = $(if ($n.Name) { $n.Name } else { $n.Desc })
+        $report += [pscustomobject]@{ Name = $label; Ok = $ok; Actual = $actual }
+    }
+
+    try { Clear-DnsClientCache -ErrorAction SilentlyContinue } catch {}
+    & ipconfig.exe /flushdns | Out-Null
+    return ,$report
+}
+
+# Apply Button Click Handler (synchronous on UI thread with live refresh)
 $controls["BtnApply"].Add_Click({
     $l = $script:Loc[$script:Lang]
     $controls["BtnApply"].IsEnabled = $false
     $controls["PanelProgress"].Visibility = [System.Windows.Visibility]::Visible
     $controls["TxtStep1"].Text = $l["Step1Pending"]
+    $controls["TxtStep1"].Foreground = New-Brush "#9CA3AF"
     $controls["TxtStep2"].Text = $l["Step2Pending"]
+    $controls["TxtStep2"].Foreground = New-Brush "#9CA3AF"
+    $controls["TxtCountdown"].Text = ""
+    Invoke-UIRefresh
 
-    # Determine chosen profile
     $chosen = "ISP"
     if ($controls["RadAdGuard"].IsChecked) { $chosen = "AdGuard" }
-    elseif ($controls["RadGoogle"].IsChecked) { $chosen = "Google" }
-    elseif ($controls["RadISP"].IsChecked) { $chosen = "ISP" }
-    elseif ($controls["RadYandex"].IsChecked) { $chosen = "Yandex" }
-    elseif ($controls["RadQuad9"].IsChecked) { $chosen = "Quad9" }
     elseif ($controls["RadFamily"].IsChecked) { $chosen = "Family" }
+    elseif ($controls["RadGoogle"].IsChecked) { $chosen = "Google" }
+    elseif ($controls["RadQuad9"].IsChecked) { $chosen = "Quad9" }
+    elseif ($controls["RadYandex"].IsChecked) { $chosen = "Yandex" }
 
-    $dispatcher = $window.Dispatcher
+    $report = @()
+    try { $report = Apply-DnsSettings $chosen } catch { Write-Log "Apply fatal: $($_.Exception.Message)" }
 
-    [System.Threading.ThreadPool]::QueueUserWorkItem({
-        # 1. Apply DNS settings using triple-engine method
-        Start-Sleep -Milliseconds 250
-        $appliedNics = Apply-DnsSettings $chosen
-        $nicSummary = "Realtek USB/Ethernet"
-        if ($appliedNics -and $appliedNics.Count -gt 0) {
-            $nicSummary = ($appliedNics | Select-Object -First 2) -join ", "
-        }
-        
-        $dispatcher.Invoke([Action]{
-            $l = $script:Loc[$script:Lang]
-            $controls["TxtStep1"].Text = [string]::Format($l["Step1Done"], $nicSummary)
-            $controls["TxtStep1"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
-        })
+    $okNics = @($report | Where-Object { $_.Ok })
+    $badNics = @($report | Where-Object { -not $_.Ok })
+    if ($report.Count -gt 0 -and $badNics.Count -eq 0) {
+        $dnsText = $(if ($chosen -eq "ISP") { "DHCP" } else { (Get-ProfileDns $chosen).v4 -join ", " })
+        $controls["TxtStep1"].Text = [string]::Format($l["Step1Done"], (($okNics | ForEach-Object { $_.Name }) -join ", ") + " → " + $dnsText)
+        $controls["TxtStep1"].Foreground = New-Brush "#34D399"
+    } else {
+        $names = $(if ($badNics.Count -gt 0) { ($badNics | ForEach-Object { $_.Name }) -join ", " } else { "—" })
+        $controls["TxtStep1"].Text = [string]::Format($l["Step1Fail"], $names)
+        $controls["TxtStep1"].Foreground = New-Brush "#F87171"
+        [System.Media.SystemSounds]::Hand.Play()
+    }
+    Wait-UI 300
 
-        # 2. Flush DNS verified
-        Start-Sleep -Milliseconds 400
-        $dispatcher.Invoke([Action]{
-            $l = $script:Loc[$script:Lang]
-            $controls["TxtStep2"].Text = $l["Step2Done"]
-            $controls["TxtStep2"].Foreground = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#34D399")
-            Refresh-StatusDisplay
-        })
+    $controls["TxtStep2"].Text = $l["Step2Done"]
+    $controls["TxtStep2"].Foreground = New-Brush "#34D399"
+    Refresh-StatusDisplay
+    Invoke-UIRefresh
 
-        # 3. 3-Second Countdown and total exit
-        for ($i = 3; $i -ge 1; $i--) {
-            $dispatcher.Invoke([Action]{
-                $l = $script:Loc[$script:Lang]
-                $controls["TxtCountdown"].Text = [string]::Format($l["StepClose"], $i)
-            })
-            Start-Sleep -Seconds 1
-        }
+    if ($badNics.Count -gt 0 -or $report.Count -eq 0) {
+        $controls["TxtCountdown"].Text = "Log: %TEMP%\GIN-DNS-Switch.log"
+        $controls["TxtCountdown"].Foreground = New-Brush "#F87171"
+        $controls["BtnApply"].IsEnabled = $true
+        return
+    }
 
-        # 4. Total exit with zero residual background tasks
-        $dispatcher.Invoke([Action]{
-            $window.Close()
-            [System.Windows.Application]::Current.Shutdown()
-            [System.Environment]::Exit(0)
-        })
-    })
+    for ($i = 3; $i -ge 1; $i--) {
+        $controls["TxtCountdown"].Text = [string]::Format($l["StepClose"], $i)
+        Wait-UI 1000
+    }
+    $window.Close()
 })
 
 # Initialize Default Language and Status

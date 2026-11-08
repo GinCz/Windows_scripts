@@ -1,5 +1,10 @@
 # 📋 WORKLOG: GIN-DNS-Switch
 
+## [v006] — 2026-11-08
+- **Корневая причина найдена:** применение DNS и «Обновить» выполнялись в `[ThreadPool]::QueueUserWorkItem` — у PowerShell-скриптблоков в пуле потоков нет runspace, код молча не выполнялся (DNS не писался, «Обновить» закрывало программу).
+- Теперь всё на UI-потоке с живой перерисовкой. DNS пишется в реестр `Tcpip\Parameters\Interfaces\{GUID}\NameServer` (ровно то, что показывает окно IPv4) + WMI + netsh validate=no + NetTCPIP; затем проверка обратным чтением. При ошибке — красная строка, окно не закрывается, лог `%TEMP%\GIN-DNS-Switch.log`.
+- Инсталлятор: `GIN-DNS-Switch_v006_Setup.exe`.
+
 ## [v005] — 2026-11-08
 - Компактный интерфейс: заголовок в одну строку «Умный переключатель DNS» + RU/EN/CS, убрана строка «Выберите профиль», убран ScrollViewer, окно SizeToContent (без прокрутки).
 - Новый порядок: AdGuard → Семейный AdGuard → Google+Cloudflare → Quad9 → Яндекс → DNS провайдера.

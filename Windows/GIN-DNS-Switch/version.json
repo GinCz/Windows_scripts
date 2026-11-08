@@ -1,8 +1,9 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v005",
+  "current_version": "v006",
   "updated_at": "2026-11-08",
   "active_versions": [
+    "GIN-DNS-Switch_v006.cmd",
     "GIN-DNS-Switch_v005.cmd",
     "GIN-DNS-Switch_v004.cmd",
     "GIN-DNS-Switch_v003.cmd",
@@ -118,6 +119,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v006",
+      "date": "2026-11-08",
+      "changes": "ROOT-CAUSE FIX: DNS apply and Update actions ran in [ThreadPool]::QueueUserWorkItem PowerShell scriptblocks which have no runspace, so DNS was never written and Update crashed/closed the app. Now everything runs on the UI thread with live refresh. DNS engine writes Tcpip\\Parameters\\Interfaces\\{GUID}\\NameServer (exactly what the IPv4 dialog shows) + WMI + netsh validate=no + NetTCPIP (v4+v6 in one call), then verifies by read-back; on failure shows red error and stays open; log at %TEMP%\\GIN-DNS-Switch.log."
+    },
     {
       "version": "v005",
       "date": "2026-11-08",
