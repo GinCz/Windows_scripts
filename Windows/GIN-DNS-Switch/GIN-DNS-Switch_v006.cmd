@@ -644,7 +644,7 @@ $controls["LnkAuthor"].Add_MouseLeftButtonUp({
     try { [System.Diagnostics.Process]::Start("https://github.com/GinCz/") } catch {}
 })
 
-﻿# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # 4. UI HELPERS (all work runs on the UI thread - PowerShell scriptblocks have
 #    NO runspace on ThreadPool threads, which silently killed v003-v005 actions)
 # ------------------------------------------------------------------------------
