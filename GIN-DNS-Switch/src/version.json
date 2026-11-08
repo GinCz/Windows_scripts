@@ -1,0 +1,163 @@
+{
+  "project": "GIN-DNS-Switch",
+  "current_version": "v012",
+  "updated_at": "2026-11-08",
+  "active_versions": [
+    "GIN-DNS-Switch.cmd"
+  ],
+  "author": "Vladimir Bulantsev (GinCz) & AI",
+  "author_github": "https://github.com/GinCz/",
+  "license": "Freeware",
+  "github_repo": "https://github.com/GinCz/Windows_scripts",
+  "github_path": "Windows/GIN-DNS-Switch/",
+  "sync_targets": {
+    "program_files": "C:\\Program Files\\GIN-DNS-Switch\\",
+    "desktop_shortcut": true,
+    "start_menu_shortcut": true
+  },
+  "profiles": [
+    {
+      "id": "adguard",
+      "name_ru": "AdGuard DNS (Без рекламы)",
+      "name_en": "AdGuard DNS (No Ads)",
+      "name_cs": "AdGuard DNS (Bez reklam)",
+      "dns_ipv4": [
+        "94.140.14.14",
+        "94.140.15.15"
+      ],
+      "dns_ipv6": [
+        "2a10:50c0::ad1:ff",
+        "2a10:50c0::ad2:ff"
+      ],
+      "color": "green",
+      "badge": "BLOCK ADS",
+      "type": "adblock"
+    },
+    {
+      "id": "family",
+      "name_ru": "Семейный DNS (Детский режим 18+)",
+      "name_en": "Family DNS (Child Safe 18+)",
+      "name_cs": "Rodinný DNS (Dětský režim 18+)",
+      "dns_ipv4": [
+        "94.140.14.15",
+        "94.140.15.16"
+      ],
+      "dns_ipv6": [
+        "2a10:50c0::bad1:ff",
+        "2a10:50c0::bad2:ff"
+      ],
+      "color": "pink",
+      "badge": "SAFE KIDS 18+",
+      "type": "family_safe"
+    },
+    {
+      "id": "google_cloudflare",
+      "name_ru": "Google + Cloudflare (Макс. скорость и ТВ)",
+      "name_en": "Google + Cloudflare (Ultra Fast & TV)",
+      "name_cs": "Google + Cloudflare (Max. rychlost a TV)",
+      "dns_ipv4": [
+        "8.8.8.8",
+        "1.1.1.1"
+      ],
+      "dns_ipv6": [
+        "2001:4860:4860::8888",
+        "2606:4700:4700::1111"
+      ],
+      "color": "blue",
+      "badge": "FAST & TV",
+      "type": "speed_and_tv"
+    },
+    {
+      "id": "quad9",
+      "name_ru": "Quad9 Security (Защита от вирусов)",
+      "name_en": "Quad9 Security (Malware Protection)",
+      "name_cs": "Quad9 Security (Ochrana proti virům)",
+      "dns_ipv4": [
+        "9.9.9.9",
+        "149.112.112.112"
+      ],
+      "dns_ipv6": [
+        "2620:fe::fe",
+        "2620:fe::9"
+      ],
+      "color": "purple",
+      "badge": "MALWARE BLOCK",
+      "type": "security"
+    },
+    {
+      "id": "yandex",
+      "name_ru": "Яндекс.DNS (Россия, Сертификаты, Госуслуги)",
+      "name_en": "Yandex.DNS (Russia & Gov Certificates)",
+      "name_cs": "Yandex.DNS (Rusko a státní certifikáty)",
+      "dns_ipv4": [
+        "77.88.8.8",
+        "77.88.8.1"
+      ],
+      "dns_ipv6": [
+        "2a02:6b8::feed:0ff",
+        "2a02:6b8:0:1::feed:0ff"
+      ],
+      "color": "amber",
+      "badge": "RUSSIA & CERTS",
+      "type": "russia_certs"
+    },
+    {
+      "id": "isp_provider",
+      "name_ru": "DNS провайдера (Чистый DHCP / Роутер)",
+      "name_en": "Provider DNS (Pure DHCP / Router)",
+      "name_cs": "DNS poskytovatele (Čisté DHCP / Router)",
+      "dns_ipv4": [],
+      "dns_ipv6": [],
+      "color": "red",
+      "badge": "ISP DIRECT",
+      "type": "dhcp"
+    }
+  ],
+  "changelog": [
+    {
+      "version": "v012",
+      "date": "2026-11-08",
+      "changes": "Target strictly physical primary network adapter (Realtek USB/PCIe GbE): Detect active Internet route via 0.0.0.0/0 default gateway; exclude VirtualBox Host-Only Ethernet Adapter and virtual interfaces across WMI, NetTCPIP, and netsh; accurately open Realtek adapter properties dialog in Shell Namespace 49."
+    },
+    {
+      "version": "v011",
+      "date": "2026-11-08",
+      "changes": "Fix BtnApply re-enabling bug: When opening adapter settings or switching DNS profile cards, cancel pending auto-close countdown immediately and re-enable Apply button, allowing continuous profile switching without restarting application; ensure strictly single versioned installer on Desktop."
+    },
+    {
+      "version": "v010",
+      "date": "2026-11-08",
+      "changes": "1) English default installer with silent zero-popup install and auto-launch; 2) Vibrant neon illumination for active/selected card icon circle and border; 3) Language persistence in registry with English default; 4) Complete EN, RU, CS translations for footer GitHub link tooltip; 5) 10-second interactive countdown with Open Adapter Settings button."
+    },
+    {
+      "version": "v009",
+      "date": "2026-11-08",
+      "changes": "Fix BtnApply template namescope bug: BtnApply content set via ContentPresenter instead of inaccessible internal TextBlock, eliminating RuntimeException property Text not found."
+    },
+    {
+      "version": "v008",
+      "date": "2026-11-08",
+      "changes": "1) Single file in Program Files (removed duplicate versioned .cmd); 2) Custom red uninstaller icon with embedded Win32 resource; 3) Compact single-line header with Windows subtitle, removed section title, auto-height window without scroll; 4) Fixed Update button: runs synchronously on UI thread, does not close if up to date; 5) Strict 6-card order: AdGuard, Family AdGuard, Google+Cloudflare, Quad9, Yandex, ISP DHCP."
+    },
+    {
+      "version": "v007",
+      "date": "2026-11-08",
+      "changes": "Rollback to rock-solid stable v004 engine: triple-engine DNS application (WMI SetDNSServerSearchOrder + NetTCPIP + Netsh), clean WPF UI without ThreadPool issues, pure UTF-8 CRLF without BOM, 100% verified error-free execution."
+    },
+    {
+      "version": "v006",
+      "date": "2026-11-08",
+      "changes": "ROOT-CAUSE FIX: DNS apply and Update actions ran in [ThreadPool]::QueueUserWorkItem PowerShell scriptblocks which have no runspace, so DNS was never written and Update crashed/closed the app. Now everything runs on the UI thread with live refresh. DNS engine writes Tcpip\\Parameters\\Interfaces\\{GUID}\\NameServer (exactly what the IPv4 dialog shows) + WMI + netsh validate=no + NetTCPIP (v4+v6 in one call), then verifies by read-back; on failure shows red error and stays open; log at %TEMP%\\GIN-DNS-Switch.log."
+    },
+    {
+      "version": "v005",
+      "date": "2026-11-08",
+      "changes": "Compact UI: single-line header 'Умный переключатель DNS' + RU/EN/CS, removed section title and ScrollViewer, window auto-height (SizeToContent) so all 6 cards fit without scrolling; new card order: AdGuard, Family AdGuard, Google+Cloudflare, Quad9, Yandex, ISP DHCP."
+    },
+    {
+      "version": "v004",
+      "date": "2026-11-08",
+      "changes": "Critical Reliability & Architecture Release v004: 1) Rewrote DNS applying engine to Triple-Engine architecture (WMI SetDNSServerSearchOrder + NetTCPIP Set-DnsClientServerAddress + Netsh direct interface bind) ensuring 100% reliable DNS writes on USB Realtek GbE, PCI, and Wi-Fi adapters; 2) Enforced in-process PowerShell UAC Administrator role check; 3) Upgraded Update Button logic: checks version.json, displays persistent green checkmark '✔ У вас последняя версия (v004)' without closing if already up-to-date; 4) Replaced Uninstall.cmd with native compiled Uninstall.exe (Go self-elevating temp-spawning uninstaller like GIN-Wallpaper); 5) Removed redundant Cloudflare 1.1.1.1 profile (consolidated to 6 clean profiles); 6) Enforced versioned installer naming convention: GIN-DNS-Switch_v004_Setup.exe."
+    }
+  ]
+}
