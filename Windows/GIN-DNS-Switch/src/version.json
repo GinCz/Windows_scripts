@@ -1,15 +1,9 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v007",
+  "current_version": "v008",
   "updated_at": "2026-11-08",
   "active_versions": [
-    "GIN-DNS-Switch_v007.cmd",
-    "GIN-DNS-Switch_v006.cmd",
-    "GIN-DNS-Switch_v005.cmd",
-    "GIN-DNS-Switch_v004.cmd",
-    "GIN-DNS-Switch_v003.cmd",
-    "GIN-DNS-Switch_v002.cmd",
-    "GIN-DNS-Switch_v001.cmd"
+    "GIN-DNS-Switch.cmd"
   ],
   "author": "Vladimir Bulantsev (GinCz) & AI",
   "author_github": "https://github.com/GinCz/",
@@ -120,6 +114,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v008",
+      "date": "2026-11-08",
+      "changes": "1) Single file in Program Files (removed duplicate versioned .cmd); 2) Custom red uninstaller icon with embedded Win32 resource; 3) Compact single-line header with Windows subtitle, removed section title, auto-height window without scroll; 4) Fixed Update button: runs synchronously on UI thread, does not close if up to date; 5) Strict 6-card order: AdGuard, Family AdGuard, Google+Cloudflare, Quad9, Yandex, ISP DHCP."
+    },
     {
       "version": "v007",
       "date": "2026-11-08",

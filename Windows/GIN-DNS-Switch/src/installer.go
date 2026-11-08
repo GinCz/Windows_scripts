@@ -114,23 +114,31 @@ func main() {
 	}
 
 	cmdDest := filepath.Join(targetDir, "GIN-DNS-Switch.cmd")
-	cmdVDest := filepath.Join(targetDir, "GIN-DNS-Switch_v007.cmd")
 	icoDest := filepath.Join(targetDir, "app.ico")
 	verDest := filepath.Join(targetDir, "version.json")
 	uninstDest := filepath.Join(targetDir, "Uninstall.exe")
 
 	os.WriteFile(cmdDest, embeddedCMD, 0755)
-	os.WriteFile(cmdVDest, embeddedCMD, 0755)
 	os.WriteFile(icoDest, embeddedICO, 0644)
 	os.WriteFile(verDest, embeddedVersion, 0644)
 	os.WriteFile(uninstDest, embeddedUninstall, 0755)
+
+	// Clean up any stray versioned scripts from previous installations
+	if entries, err := os.ReadDir(targetDir); err == nil {
+		for _, e := range entries {
+			name := e.Name()
+			if strings.HasPrefix(name, "GIN-DNS-Switch_v") && strings.HasSuffix(name, ".cmd") {
+				os.Remove(filepath.Join(targetDir, name))
+			}
+		}
+	}
 
 	createShortcutsSafe(cmdDest, targetDir, icoDest)
 
 	// Register in Windows Programs & Features
 	regCmd := fmt.Sprintf(`
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayName" /t REG_SZ /d "GIN-DNS-Switch" /f
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayVersion" /t REG_SZ /d "v007" /f
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayVersion" /t REG_SZ /d "v008" /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "Publisher" /t REG_SZ /d "Vladimir Bulantsev (GinCz) & AI" /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "DisplayIcon" /t REG_SZ /d "%s" /f
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch" /v "UninstallString" /t REG_SZ /d "\"%s\"" /f
@@ -140,6 +148,6 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-DNS-Switch
 	cmdReg.Run()
 
 	if !isSilent {
-		msgBox("GIN-DNS-Switch", "GIN-DNS-Switch v007 успешно установлен!\nЯрлык добавлен на Рабочий стол.", MB_OK|MB_ICONINFO)
+		msgBox("GIN-DNS-Switch", "GIN-DNS-Switch v008 успешно установлен!\nЯрлык добавлен на Рабочий стол.", MB_OK|MB_ICONINFO)
 	}
 }
