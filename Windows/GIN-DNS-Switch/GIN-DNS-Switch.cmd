@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v004 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v005 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v004...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v005...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v004
+#  GIN-DNS-SWITCH                                                  v005
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/
@@ -49,13 +49,13 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 # 1. LOCALIZATION STRINGS (RU, EN, CS)
 # ------------------------------------------------------------------------------
 $script:Lang = "RU"
-$script:CurrentVersion = "v004"
+$script:CurrentVersion = "v005"
 
 $script:Loc = @{
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v004 — Менеджер DNS для Windows"
+        "WinTitle"       = "GIN-DNS-Switch v005 — Менеджер DNS для Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
-        "HeaderSub"      = "Умный переключатель DNS для всей системы"
+        "HeaderSub"      = "Умный переключатель DNS"
         "StatusCurrent"  = "Текущий статус:"
         "StatusDetect"   = "Определение..."
         "SecModes"       = "ВЫБЕРИТЕ ПРОФИЛЬ DNS ДЛЯ ВСЕЙ СИСТЕМЫ (6 РЕЖИМОВ):"
@@ -83,7 +83,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v004 (Обновить)"
+        "BtnUpdate"      = "v005 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
         "StatusActiveGoogle"  = "Активен: Google + Cloudflare (Скорость и ТВ)"
@@ -97,9 +97,9 @@ $script:Loc = @{
         "UpdSuccess"     = "✔ Обновлено!"
     }
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v004 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v005 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
-        "HeaderSub"      = "Smart System-Wide DNS Profile Switcher"
+        "HeaderSub"      = "Smart DNS Switcher"
         "StatusCurrent"  = "Current status:"
         "StatusDetect"   = "Detecting..."
         "SecModes"       = "SELECT SYSTEM-WIDE DNS PROFILE (6 MODES):"
@@ -127,7 +127,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v004 (Update)"
+        "BtnUpdate"      = "v005 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Active: AdGuard DNS (AdBlock)"
         "StatusActiveGoogle"  = "Active: Google + Cloudflare (Speed & TV)"
@@ -141,9 +141,9 @@ $script:Loc = @{
         "UpdSuccess"     = "✔ Updated!"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v004 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v005 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
-        "HeaderSub"      = "Chytrý přepínač profilů DNS pro celý systém"
+        "HeaderSub"      = "Chytrý přepínač DNS"
         "StatusCurrent"  = "Aktuální stav:"
         "StatusDetect"   = "Zjišťování..."
         "SecModes"       = "VYBERTE PROFIL DNS PRO CELÝ SYSTÉM (6 REŽIMŮ):"
@@ -171,7 +171,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v004 (Aktualizovat)"
+        "BtnUpdate"      = "v005 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
         "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování reklam)"
         "StatusActiveGoogle"  = "Aktivní: Google + Cloudflare (Rychlost a TV)"
@@ -192,7 +192,7 @@ $script:Loc = @{
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v004" Height="640" Width="510"
+        Title="GIN-DNS-Switch v005" SizeToContent="Height" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -243,7 +243,7 @@ $script:Loc = @{
             <RowDefinition Height="Auto"/> <!-- Header -->
             <RowDefinition Height="Auto"/> <!-- Status pill -->
             <RowDefinition Height="Auto"/> <!-- Section Title -->
-            <RowDefinition Height="*"/>    <!-- ScrollViewer with 6 Cards -->
+            <RowDefinition Height="Auto"/> <!-- 6 Cards -->
             <RowDefinition Height="Auto"/> <!-- Apply Button -->
             <RowDefinition Height="Auto"/> <!-- Progress Checklist -->
             <RowDefinition Height="Auto"/> <!-- Footer -->
@@ -255,9 +255,9 @@ $script:Loc = @{
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0">
-                <TextBlock x:Name="TxtHeaderTitle" Text="GIN-DNS-Switch" FontSize="18" FontWeight="Bold" Foreground="#60A5FA"/>
-                <TextBlock x:Name="TxtHeaderSub" Text="Smart System-Wide DNS Profile Switcher" FontSize="11" Foreground="#9CA3AF"/>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock x:Name="TxtHeaderTitle" Text="" Visibility="Collapsed"/>
+                <TextBlock x:Name="TxtHeaderSub" Text="Умный переключатель DNS" FontSize="16" FontWeight="Bold" Foreground="#60A5FA" VerticalAlignment="Center"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button x:Name="BtnLangRU" Content="RU" Style="{StaticResource LangBtn}"/>
@@ -277,13 +277,10 @@ $script:Loc = @{
                 <TextBlock x:Name="TxtStatusValue" Grid.Column="1" Text="Определение..." FontSize="12" FontWeight="SemiBold" Foreground="#34D399" VerticalAlignment="Center"/>
             </Grid>
         </Border>
+        <TextBlock x:Name="TxtSecModes" Grid.Row="2" Visibility="Collapsed"/>
 
-        <!-- SECTION TITLE -->
-        <TextBlock x:Name="TxtSecModes" Grid.Row="2" Text="ВЫБЕРИТЕ ПРОФИЛЬ DNS ДЛЯ ВСЕЙ СИСТЕМЫ (6 РЕЖИМОВ):" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="0,2,0,4"/>
-
-        <!-- 6 CARDS IN SCROLLVIEWER -->
-        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,6,0">
-            <StackPanel>
+        <!-- 6 CARDS (no scroll) -->
+        <StackPanel Grid.Row="3">
 
                 <!-- CARD 1: AdGuard (Green) -->
                 <RadioButton x:Name="RadAdGuard" Style="{StaticResource RadioCard}" Background="#0F241C" BorderBrush="#10B981" GroupName="DnsGroup">
@@ -305,102 +302,6 @@ $script:Loc = @{
                             </Grid>
                             <TextBlock x:Name="TxtCardAdGuardSub" Text="94.140.14.14  •  94.140.15.15" FontSize="10.5" Foreground="#A7F3D0" Margin="0,1,0,1"/>
                             <TextBlock x:Name="TxtCardAdGuardDesc" Text="Полная блокировка баннеров, трекеров и фишинга во всей Windows" FontSize="10" Foreground="#9CA3AF"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
-
-                <!-- CARD 2: Google + Cloudflare (Blue) -->
-                <RadioButton x:Name="RadGoogle" Style="{StaticResource RadioCard}" Background="#122036" BorderBrush="#3B82F6" GroupName="DnsGroup">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Background="#1E3A8A" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <Path Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M7 2v11h3v9l7-12h-4l4-8z"/>
-                        </Border>
-                        <StackPanel Grid.Column="1">
-                            <Grid>
-                                <TextBlock x:Name="TxtCardGoogle" Text="Google + Cloudflare (Макс. скорость и ТВ)" FontWeight="Bold" FontSize="12.5" Foreground="#60A5FA"/>
-                                <Border HorizontalAlignment="Right" Background="#1E3A8A" CornerRadius="3" Padding="5,1">
-                                    <TextBlock Text="FAST &amp; TV" FontSize="8.5" FontWeight="Bold" Foreground="#93C5FD"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock x:Name="TxtCardGoogleSub" Text="8.8.8.8  •  1.1.1.1" FontSize="10.5" Foreground="#BAE6FD" Margin="0,1,0,1"/>
-                            <TextBlock x:Name="TxtCardGoogleDesc" Text="Ультра-скорость, Google Cast, трансляция на Android TV и банкинг" FontSize="10" Foreground="#9CA3AF"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
-
-                <!-- CARD 3: DNS провайдера (Red) -->
-                <RadioButton x:Name="RadISP" Style="{StaticResource RadioCard}" Background="#251316" BorderBrush="#EF4444" GroupName="DnsGroup">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Background="#7F1D1D" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <Path Fill="#FFFFFF" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                        </Border>
-                        <StackPanel Grid.Column="1">
-                            <Grid>
-                                <TextBlock x:Name="TxtCardISP" Text="DNS провайдера (Чистый DHCP / Роутер)" FontWeight="Bold" FontSize="12.5" Foreground="#F87171"/>
-                                <Border HorizontalAlignment="Right" Background="#5F1010" CornerRadius="3" Padding="5,1">
-                                    <TextBlock Text="ISP DIRECT" FontSize="8.5" FontWeight="Bold" Foreground="#FCA5A5"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock x:Name="TxtCardISPSub" Text="Автоматический шлюз роутера" FontSize="10.5" Foreground="#FECDD3" Margin="0,1,0,1"/>
-                            <TextBlock x:Name="TxtCardISPDesc" Text="Сброс сторонних DNS, полный доступ к сети и порталам оператора" FontSize="10" Foreground="#9CA3AF"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
-
-                <!-- CARD 4: Яндекс.DNS (Amber/Gold - Россия) -->
-                <RadioButton x:Name="RadYandex" Style="{StaticResource RadioCard}" Background="#271E0F" BorderBrush="#F59E0B" GroupName="DnsGroup">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Background="#78350F" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <Path Fill="#FFFFFF" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                        </Border>
-                        <StackPanel Grid.Column="1">
-                            <Grid>
-                                <TextBlock x:Name="TxtCardYandex" Text="Яндекс.DNS (Россия, Сертификаты, Госуслуги)" FontWeight="Bold" FontSize="12.5" Foreground="#FBBF24"/>
-                                <Border HorizontalAlignment="Right" Background="#78350F" CornerRadius="3" Padding="5,1">
-                                    <TextBlock Text="RUSSIA &amp; CERTS" FontSize="8.5" FontWeight="Bold" Foreground="#FDE68A"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock x:Name="TxtCardYandexSub" Text="77.88.8.8  •  77.88.8.1" FontSize="10.5" Foreground="#FDE68A" Margin="0,1,0,1"/>
-                            <TextBlock x:Name="TxtCardYandexDesc" Text="Оптимизирован для РФ. Госуслуги, Сбер, ВТБ, сертификаты Минцифры" FontSize="10" Foreground="#9CA3AF"/>
-                        </StackPanel>
-                    </Grid>
-                </RadioButton>
-
-                <!-- CARD 5: Quad9 Security (Purple - Антивирус) -->
-                <RadioButton x:Name="RadQuad9" Style="{StaticResource RadioCard}" Background="#1E142B" BorderBrush="#A855F7" GroupName="DnsGroup">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Background="#581C87" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <Path Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
-                        </Border>
-                        <StackPanel Grid.Column="1">
-                            <Grid>
-                                <TextBlock x:Name="TxtCardQuad9" Text="Quad9 Security (Защита от вирусов)" FontWeight="Bold" FontSize="12.5" Foreground="#C084FC"/>
-                                <Border HorizontalAlignment="Right" Background="#581C87" CornerRadius="3" Padding="5,1">
-                                    <TextBlock Text="MALWARE BLOCK" FontSize="8.5" FontWeight="Bold" Foreground="#E9D5FF"/>
-                                </Border>
-                            </Grid>
-                            <TextBlock x:Name="TxtCardQuad9Sub" Text="9.9.9.9  •  149.112.112.112" FontSize="10.5" Foreground="#E9D5FF" Margin="0,1,0,1"/>
-                            <TextBlock x:Name="TxtCardQuad9Desc" Text="Блокирует фишинг и вредоносы (ТВ и стриминг работают без сбоев)" FontSize="10" Foreground="#9CA3AF"/>
                         </StackPanel>
                     </Grid>
                 </RadioButton>
@@ -429,8 +330,102 @@ $script:Loc = @{
                     </Grid>
                 </RadioButton>
 
-            </StackPanel>
-        </ScrollViewer>
+                <!-- CARD 2: Google + Cloudflare (Blue) -->
+                <RadioButton x:Name="RadGoogle" Style="{StaticResource RadioCard}" Background="#122036" BorderBrush="#3B82F6" GroupName="DnsGroup">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Background="#1E3A8A" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <Path Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M7 2v11h3v9l7-12h-4l4-8z"/>
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <Grid>
+                                <TextBlock x:Name="TxtCardGoogle" Text="Google + Cloudflare (Макс. скорость и ТВ)" FontWeight="Bold" FontSize="12.5" Foreground="#60A5FA"/>
+                                <Border HorizontalAlignment="Right" Background="#1E3A8A" CornerRadius="3" Padding="5,1">
+                                    <TextBlock Text="FAST &amp; TV" FontSize="8.5" FontWeight="Bold" Foreground="#93C5FD"/>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="TxtCardGoogleSub" Text="8.8.8.8  •  1.1.1.1" FontSize="10.5" Foreground="#BAE6FD" Margin="0,1,0,1"/>
+                            <TextBlock x:Name="TxtCardGoogleDesc" Text="Ультра-скорость, Google Cast, трансляция на Android TV и банкинг" FontSize="10" Foreground="#9CA3AF"/>
+                        </StackPanel>
+                    </Grid>
+                </RadioButton>
+
+                <!-- CARD 5: Quad9 Security (Purple - Антивирус) -->
+                <RadioButton x:Name="RadQuad9" Style="{StaticResource RadioCard}" Background="#1E142B" BorderBrush="#A855F7" GroupName="DnsGroup">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Background="#581C87" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <Path Fill="#FFFFFF" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M12,17A2,2 0 0,0 14,15C14,13.89 13.1,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8A2,2 0 0,1 20,10V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V10C4,8.89 4.89,8 6,8H7V6A5,5 0 0,1 12,1A5,5 0 0,1 17,6V8H18M12,3A3,3 0 0,0 9,6V8H15V6A3,3 0 0,0 12,3Z"/>
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <Grid>
+                                <TextBlock x:Name="TxtCardQuad9" Text="Quad9 Security (Защита от вирусов)" FontWeight="Bold" FontSize="12.5" Foreground="#C084FC"/>
+                                <Border HorizontalAlignment="Right" Background="#581C87" CornerRadius="3" Padding="5,1">
+                                    <TextBlock Text="MALWARE BLOCK" FontSize="8.5" FontWeight="Bold" Foreground="#E9D5FF"/>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="TxtCardQuad9Sub" Text="9.9.9.9  •  149.112.112.112" FontSize="10.5" Foreground="#E9D5FF" Margin="0,1,0,1"/>
+                            <TextBlock x:Name="TxtCardQuad9Desc" Text="Блокирует фишинг и вредоносы (ТВ и стриминг работают без сбоев)" FontSize="10" Foreground="#9CA3AF"/>
+                        </StackPanel>
+                    </Grid>
+                </RadioButton>
+
+                <!-- CARD 4: Яндекс.DNS (Amber/Gold - Россия) -->
+                <RadioButton x:Name="RadYandex" Style="{StaticResource RadioCard}" Background="#271E0F" BorderBrush="#F59E0B" GroupName="DnsGroup">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Background="#78350F" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <Path Fill="#FFFFFF" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <Grid>
+                                <TextBlock x:Name="TxtCardYandex" Text="Яндекс.DNS (Россия, Сертификаты, Госуслуги)" FontWeight="Bold" FontSize="12.5" Foreground="#FBBF24"/>
+                                <Border HorizontalAlignment="Right" Background="#78350F" CornerRadius="3" Padding="5,1">
+                                    <TextBlock Text="RUSSIA &amp; CERTS" FontSize="8.5" FontWeight="Bold" Foreground="#FDE68A"/>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="TxtCardYandexSub" Text="77.88.8.8  •  77.88.8.1" FontSize="10.5" Foreground="#FDE68A" Margin="0,1,0,1"/>
+                            <TextBlock x:Name="TxtCardYandexDesc" Text="Оптимизирован для РФ. Госуслуги, Сбер, ВТБ, сертификаты Минцифры" FontSize="10" Foreground="#9CA3AF"/>
+                        </StackPanel>
+                    </Grid>
+                </RadioButton>
+
+                <!-- CARD 3: DNS провайдера (Red) -->
+                <RadioButton x:Name="RadISP" Style="{StaticResource RadioCard}" Background="#251316" BorderBrush="#EF4444" GroupName="DnsGroup">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Background="#7F1D1D" CornerRadius="18" Width="36" Height="36" Margin="0,0,10,0" VerticalAlignment="Center">
+                            <Path Fill="#FFFFFF" Width="17" Height="17" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                  Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </Border>
+                        <StackPanel Grid.Column="1">
+                            <Grid>
+                                <TextBlock x:Name="TxtCardISP" Text="DNS провайдера (Чистый DHCP / Роутер)" FontWeight="Bold" FontSize="12.5" Foreground="#F87171"/>
+                                <Border HorizontalAlignment="Right" Background="#5F1010" CornerRadius="3" Padding="5,1">
+                                    <TextBlock Text="ISP DIRECT" FontSize="8.5" FontWeight="Bold" Foreground="#FCA5A5"/>
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="TxtCardISPSub" Text="Автоматический шлюз роутера" FontSize="10.5" Foreground="#FECDD3" Margin="0,1,0,1"/>
+                            <TextBlock x:Name="TxtCardISPDesc" Text="Сброс сторонних DNS, полный доступ к сети и порталам оператора" FontSize="10" Foreground="#9CA3AF"/>
+                        </StackPanel>
+                    </Grid>
+                </RadioButton>
+        </StackPanel>
 
         <!-- APPLY BUTTON -->
         <Button x:Name="BtnApply" Grid.Row="4" Margin="0,10,0,0" Height="42" Background="#2563EB" Foreground="#FFFFFF" FontWeight="Bold" FontSize="13" Cursor="Hand">
@@ -472,7 +467,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть главную страницу GitHub (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v004 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v005 (Обновить)" Style="{StaticResource LangBtn}" Padding="10,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -660,7 +655,7 @@ $controls["BtnUpdate"].Add_Click({
             $client.Headers.Add("User-Agent", "GIN-DNS-Switch-Updater")
             $verJsonText = $client.DownloadString($rawVerUrl)
             
-            $remoteVer = "v004"
+            $remoteVer = "v005"
             if ($verJsonText -match '"current_version"\s*:\s*"([^"]+)"') {
                 $remoteVer = $matches[1]
             }

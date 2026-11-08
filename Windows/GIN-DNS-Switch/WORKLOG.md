@@ -1,5 +1,10 @@
 # 📋 WORKLOG: GIN-DNS-Switch
 
+## [v005] — 2026-11-08
+- Компактный интерфейс: заголовок в одну строку «Умный переключатель DNS» + RU/EN/CS, убрана строка «Выберите профиль», убран ScrollViewer, окно SizeToContent (без прокрутки).
+- Новый порядок: AdGuard → Семейный AdGuard → Google+Cloudflare → Quad9 → Яндекс → DNS провайдера.
+- Инсталлятор: `GIN-DNS-Switch_v005_Setup.exe` (Рабочий стол MEGA + Util-WINDOWS).
+
 ## [v004] — 2026-11-08
 - **Статус:** 🟢 Релиз готов (v004 Critical Reliability & Architecture Release)
 - **Инициатор задачи:** Владимир (исправление применения DNS на активном USB/Ethernet адаптере, переработка деинсталлятора по образцу GIN-Wallpaper/GIN-VPN, умная кнопка обновления с проверкой версии без закрытия, удаление дублирующего Cloudflare 1.1.1.1, обязательная версия в названии файла инсталлятора `GIN-DNS-Switch_v004_Setup.exe`).

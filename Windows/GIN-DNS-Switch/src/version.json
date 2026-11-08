@@ -1,8 +1,9 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v004",
+  "current_version": "v005",
   "updated_at": "2026-11-08",
   "active_versions": [
+    "GIN-DNS-Switch_v005.cmd",
     "GIN-DNS-Switch_v004.cmd",
     "GIN-DNS-Switch_v003.cmd",
     "GIN-DNS-Switch_v002.cmd",
@@ -24,22 +25,85 @@
       "name_ru": "AdGuard DNS (Без рекламы)",
       "name_en": "AdGuard DNS (No Ads)",
       "name_cs": "AdGuard DNS (Bez reklam)",
-      "dns_ipv4": ["94.140.14.14", "94.140.15.15"],
-      "dns_ipv6": ["2a10:50c0::ad1:ff", "2a10:50c0::ad2:ff"],
+      "dns_ipv4": [
+        "94.140.14.14",
+        "94.140.15.15"
+      ],
+      "dns_ipv6": [
+        "2a10:50c0::ad1:ff",
+        "2a10:50c0::ad2:ff"
+      ],
       "color": "green",
       "badge": "BLOCK ADS",
       "type": "adblock"
+    },
+    {
+      "id": "family",
+      "name_ru": "Семейный DNS (Детский режим 18+)",
+      "name_en": "Family DNS (Child Safe 18+)",
+      "name_cs": "Rodinný DNS (Dětský režim 18+)",
+      "dns_ipv4": [
+        "94.140.14.15",
+        "94.140.15.16"
+      ],
+      "dns_ipv6": [
+        "2a10:50c0::bad1:ff",
+        "2a10:50c0::bad2:ff"
+      ],
+      "color": "pink",
+      "badge": "SAFE KIDS 18+",
+      "type": "family_safe"
     },
     {
       "id": "google_cloudflare",
       "name_ru": "Google + Cloudflare (Макс. скорость и ТВ)",
       "name_en": "Google + Cloudflare (Ultra Fast & TV)",
       "name_cs": "Google + Cloudflare (Max. rychlost a TV)",
-      "dns_ipv4": ["8.8.8.8", "1.1.1.1"],
-      "dns_ipv6": ["2001:4860:4860::8888", "2606:4700:4700::1111"],
+      "dns_ipv4": [
+        "8.8.8.8",
+        "1.1.1.1"
+      ],
+      "dns_ipv6": [
+        "2001:4860:4860::8888",
+        "2606:4700:4700::1111"
+      ],
       "color": "blue",
       "badge": "FAST & TV",
       "type": "speed_and_tv"
+    },
+    {
+      "id": "quad9",
+      "name_ru": "Quad9 Security (Защита от вирусов)",
+      "name_en": "Quad9 Security (Malware Protection)",
+      "name_cs": "Quad9 Security (Ochrana proti virům)",
+      "dns_ipv4": [
+        "9.9.9.9",
+        "149.112.112.112"
+      ],
+      "dns_ipv6": [
+        "2620:fe::fe",
+        "2620:fe::9"
+      ],
+      "color": "purple",
+      "badge": "MALWARE BLOCK",
+      "type": "security"
+    },
+    {
+      "id": "yandex",
+      "name_ru": "Яндекс.DNS (Россия, Сертификаты, Госуслуги)",
+      "name_en": "Yandex.DNS (Russia & Gov Certificates)",
+      "name_cs": "Yandex.DNS (Rusko a státní certifikáty)",
+      "dns_ipv4": [
+        "77.88.8.8",
+        "77.88.8.1"
+      ],
+      "dns_ipv6": [
+        "2a02:6b8::feed:0ff",
+        "2a02:6b8:0:1::feed:0ff"
+      ],
+      "color": "amber",
+      "badge": "RUSSIA & CERTS",
+      "type": "russia_certs"
     },
     {
       "id": "isp_provider",
@@ -51,42 +115,14 @@
       "color": "red",
       "badge": "ISP DIRECT",
       "type": "dhcp"
-    },
-    {
-      "id": "yandex",
-      "name_ru": "Яндекс.DNS (Россия, Сертификаты, Госуслуги)",
-      "name_en": "Yandex.DNS (Russia & Gov Certificates)",
-      "name_cs": "Yandex.DNS (Rusko a státní certifikáty)",
-      "dns_ipv4": ["77.88.8.8", "77.88.8.1"],
-      "dns_ipv6": ["2a02:6b8::feed:0ff", "2a02:6b8:0:1::feed:0ff"],
-      "color": "amber",
-      "badge": "RUSSIA & CERTS",
-      "type": "russia_certs"
-    },
-    {
-      "id": "quad9",
-      "name_ru": "Quad9 Security (Защита от вирусов)",
-      "name_en": "Quad9 Security (Malware Protection)",
-      "name_cs": "Quad9 Security (Ochrana proti virům)",
-      "dns_ipv4": ["9.9.9.9", "149.112.112.112"],
-      "dns_ipv6": ["2620:fe::fe", "2620:fe::9"],
-      "color": "purple",
-      "badge": "MALWARE BLOCK",
-      "type": "security"
-    },
-    {
-      "id": "family",
-      "name_ru": "Семейный DNS (Детский режим 18+)",
-      "name_en": "Family DNS (Child Safe 18+)",
-      "name_cs": "Rodinný DNS (Dětský režim 18+)",
-      "dns_ipv4": ["94.140.14.15", "94.140.15.16"],
-      "dns_ipv6": ["2a10:50c0::bad1:ff", "2a10:50c0::bad2:ff"],
-      "color": "pink",
-      "badge": "SAFE KIDS 18+",
-      "type": "family_safe"
     }
   ],
   "changelog": [
+    {
+      "version": "v005",
+      "date": "2026-11-08",
+      "changes": "Compact UI: single-line header 'Умный переключатель DNS' + RU/EN/CS, removed section title and ScrollViewer, window auto-height (SizeToContent) so all 6 cards fit without scrolling; new card order: AdGuard, Family AdGuard, Google+Cloudflare, Quad9, Yandex, ISP DHCP."
+    },
     {
       "version": "v004",
       "date": "2026-11-08",
