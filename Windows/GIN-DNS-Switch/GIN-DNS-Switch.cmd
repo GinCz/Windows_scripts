@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v009 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v010 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v009...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v010...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v009
+#  GIN-DNS-SWITCH                                                  v010
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/Windows_scripts
@@ -46,58 +46,13 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]'Tls12,Tls13'
 
 # ------------------------------------------------------------------------------
-# 1. LOCALIZATION STRINGS (RU, EN, CS)
+# 1. LOCALIZATION STRINGS (EN default, RU, CS)
 # ------------------------------------------------------------------------------
-$script:Lang = "RU"
-$script:CurrentVersion = "v009"
+$script:CurrentVersion = "v010"
 
 $script:Loc = @{
-    "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v009 — Менеджер DNS для Windows"
-        "HeaderTitle"    = "GIN-DNS-Switch"
-        "HeaderSub"      = "Переключатель DNS для Windows"
-        "StatusCurrent"  = "Текущий статус:"
-        "StatusDetect"   = "Определение..."
-        "CardAdGuard"    = "AdGuard DNS (Без рекламы)"
-        "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
-        "CardAdGuardDesc"= "Полная блокировка баннеров, трекеров и фишинга во всей Windows"
-        "CardFamily"     = "Семейный AdGuard DNS (Детский 18+)"
-        "CardFamilySub"  = "94.140.14.15  •  94.140.15.16"
-        "CardFamilyDesc" = "Блокировка рекламы, контента 18+ и принудительный SafeSearch"
-        "CardGoogle"     = "Google + Cloudflare (Макс. скорость и ТВ)"
-        "CardGoogleSub"  = "8.8.8.8  •  1.1.1.1"
-        "CardGoogleDesc" = "Ультра-скорость, Google Cast, трансляция на Android TV и банкинг"
-        "CardQuad9"      = "Quad9 Security (Защита от вирусов)"
-        "CardQuad9Sub"   = "9.9.9.9  •  149.112.112.112"
-        "CardQuad9Desc"  = "Блокирует фишинг и вредоносы (ТВ и стриминг работают без сбоев)"
-        "CardYandex"     = "Яндекс.DNS (Россия, Сертификаты, Госуслуги)"
-        "CardYandexSub"  = "77.88.8.8  •  77.88.8.1"
-        "CardYandexDesc" = "Оптимизирован для РФ. Госуслуги, Сбер, ВТБ, сертификаты Минцифры"
-        "CardISP"        = "DNS провайдера (Чистый DHCP / Роутер)"
-        "CardISPSub"     = "Автоматический шлюз роутера"
-        "CardISPDesc"    = "Сброс сторонних DNS, полный доступ к сети и порталам оператора"
-        "BtnApply"       = "ПРИМЕНИТЬ НАСТРОЙКИ"
-        "Step1Pending"   = "○ Настройка сетевых адаптеров..."
-        "Step1Done"      = "✔ Сетевые адаптеры успешно настроены ({0})"
-        "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
-        "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
-        "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v009 (Обновить)"
-        "AuthorLink"     = "VladiMIR + AI"
-        "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
-        "StatusActiveFamily"  = "Активен: Семейный AdGuard DNS (Детский 18+)"
-        "StatusActiveGoogle"  = "Активен: Google + Cloudflare (Скорость и ТВ)"
-        "StatusActiveQuad9"   = "Активен: Quad9 Security (Защита от угроз)"
-        "StatusActiveYandex"  = "Активен: Яндекс.DNS (РФ и Госуслуги)"
-        "StatusActiveDHCP"    = "Активен: DNS провайдера (Роутер / DHCP)"
-        "StatusActiveOther"   = "Активен: Пользовательский DNS"
-        "UpdChecking"    = "Проверка..."
-        "UpdLatest"      = "✔ У вас последняя версия ({0})"
-        "UpdSuccess"     = "✔ Обновлено!"
-        "UpdFail"        = "✖ Ошибка связи"
-    }
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v009 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v010 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Windows DNS Switcher"
         "StatusCurrent"  = "Current status:"
@@ -126,8 +81,11 @@ $script:Loc = @{
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v009 (Update)"
+        "BtnUpdate"      = "v010 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
+        "AuthorTooltip"  = "GitHub page (https://github.com/GinCz/)"
+        "BtnAdapter"     = "⚙ Adapter Settings ({0})"
+        "BtnAdapterDone" = "✔ Settings opened"
         "StatusActiveAdGuard" = "Active: AdGuard DNS (AdBlock)"
         "StatusActiveFamily"  = "Active: Family AdGuard DNS (Safe 18+)"
         "StatusActiveGoogle"  = "Active: Google + Cloudflare (Speed & TV)"
@@ -140,8 +98,55 @@ $script:Loc = @{
         "UpdSuccess"     = "✔ Updated!"
         "UpdFail"        = "✖ Connection error"
     }
+    "RU" = @{
+        "WinTitle"       = "GIN-DNS-Switch v010 — Менеджер DNS для Windows"
+        "HeaderTitle"    = "GIN-DNS-Switch"
+        "HeaderSub"      = "Переключатель DNS для Windows"
+        "StatusCurrent"  = "Текущий статус:"
+        "StatusDetect"   = "Определение..."
+        "CardAdGuard"    = "AdGuard DNS (Без рекламы)"
+        "CardAdGuardSub" = "94.140.14.14  •  94.140.15.15"
+        "CardAdGuardDesc"= "Полная блокировка баннеров, трекеров и фишинга во всей Windows"
+        "CardFamily"     = "Семейный AdGuard DNS (Детский 18+)"
+        "CardFamilySub"  = "94.140.14.15  •  94.140.15.16"
+        "CardFamilyDesc" = "Блокировка рекламы, контента 18+ и принудительный SafeSearch"
+        "CardGoogle"     = "Google + Cloudflare (Макс. скорость и ТВ)"
+        "CardGoogleSub"  = "8.8.8.8  •  1.1.1.1"
+        "CardGoogleDesc" = "Ультра-скорость, Google Cast, трансляция на Android TV и банкинг"
+        "CardQuad9"      = "Quad9 Security (Защита от вирусов)"
+        "CardQuad9Sub"   = "9.9.9.9  •  149.112.112.112"
+        "CardQuad9Desc"  = "Блокирует фишинг и вредоносы (ТВ и стриминг работают без сбоев)"
+        "CardYandex"     = "Яндекс.DNS (Россия, Сертификаты, Госуслуги)"
+        "CardYandexSub"  = "77.88.8.8  •  77.88.8.1"
+        "CardYandexDesc" = "Оптимизирован для РФ. Госуслуги, Сбер, ВТБ, сертификаты Минцифры"
+        "CardISP"        = "DNS провайдера (Чистый DHCP / Роутер)"
+        "CardISPSub"     = "Автоматический шлюз роутера"
+        "CardISPDesc"    = "Сброс сторонних DNS, полный доступ к сети и порталам оператора"
+        "BtnApply"       = "ПРИМЕНИТЬ НАСТРОЙКИ"
+        "Step1Pending"   = "○ Настройка сетевых адаптеров..."
+        "Step1Done"      = "✔ Сетевые адаптеры успешно настроены ({0})"
+        "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
+        "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
+        "StepClose"      = "Закрытие через {0} сек..."
+        "BtnUpdate"      = "v010 (Обновить)"
+        "AuthorLink"     = "VladiMIR + AI"
+        "AuthorTooltip"  = "Страница GitHub (https://github.com/GinCz/)"
+        "BtnAdapter"     = "⚙ Настройки адаптера ({0})"
+        "BtnAdapterDone" = "✔ Настройки открыты"
+        "StatusActiveAdGuard" = "Активен: AdGuard DNS (Блокировка рекламы)"
+        "StatusActiveFamily"  = "Активен: Семейный AdGuard DNS (Детский 18+)"
+        "StatusActiveGoogle"  = "Активен: Google + Cloudflare (Скорость и ТВ)"
+        "StatusActiveQuad9"   = "Активен: Quad9 Security (Защита от угроз)"
+        "StatusActiveYandex"  = "Активен: Яндекс.DNS (РФ и Госуслуги)"
+        "StatusActiveDHCP"    = "Активен: DNS провайдера (Роутер / DHCP)"
+        "StatusActiveOther"   = "Активен: Пользовательский DNS"
+        "UpdChecking"    = "Проверка..."
+        "UpdLatest"      = "✔ У вас последняя версия ({0})"
+        "UpdSuccess"     = "✔ Обновлено!"
+        "UpdFail"        = "✖ Ошибка связи"
+    }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v009 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v010 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Přepínač DNS pro Windows"
         "StatusCurrent"  = "Aktuální stav:"
@@ -170,8 +175,11 @@ $script:Loc = @{
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v009 (Aktualizovat)"
+        "BtnUpdate"      = "v010 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
+        "AuthorTooltip"  = "Stránka GitHub (https://github.com/GinCz/)"
+        "BtnAdapter"     = "⚙ Nastavení adaptéru ({0})"
+        "BtnAdapterDone" = "✔ Nastavení otevřeno"
         "StatusActiveAdGuard" = "Aktivní: AdGuard DNS (Blokování reklam)"
         "StatusActiveFamily"  = "Aktivní: Rodinný AdGuard DNS (Bezpečný 18+)"
         "StatusActiveGoogle"  = "Aktivní: Google + Cloudflare (Rychlost a TV)"
@@ -192,7 +200,7 @@ $script:Loc = @{
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v009" SizeToContent="Height" Width="510"
+        Title="GIN-DNS-Switch v010" SizeToContent="Height" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -221,15 +229,12 @@ $script:Loc = @{
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
-                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1.5" CornerRadius="7" Padding="10,6" Margin="0,2.5" Cursor="Hand">
+                        <Border x:Name="CardBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1.5" CornerRadius="7" Padding="10,5.5" Margin="0,2" Cursor="Hand">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="CardBorder" Property="Opacity" Value="0.95"/>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="CardBorder" Property="BorderThickness" Value="2.2"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -247,7 +252,7 @@ $script:Loc = @{
             <RowDefinition Height="Auto"/> <!-- Footer -->
         </Grid.RowDefinitions>
 
-        <!-- HEADER (Title left, Subtitle next to it, Languages right) -->
+        <!-- HEADER (Title left, Subtitle next to it, Languages right: EN, RU, CS) -->
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
@@ -256,24 +261,24 @@ $script:Loc = @{
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="TxtHeaderTitle" Text="GIN-DNS-Switch" FontSize="15" FontWeight="Bold" Foreground="#60A5FA" VerticalAlignment="Center"/>
                 <TextBlock Text=" • " FontSize="13" Foreground="#4B5563" VerticalAlignment="Center" Margin="5,0"/>
-                <TextBlock x:Name="TxtHeaderSub" Text="Переключатель DNS для Windows" FontSize="12" FontWeight="SemiBold" Foreground="#9CA3AF" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtHeaderSub" Text="Windows DNS Switcher" FontSize="12" FontWeight="SemiBold" Foreground="#9CA3AF" VerticalAlignment="Center"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button x:Name="BtnLangRU" Content="RU" Style="{StaticResource LangBtn}"/>
                 <Button x:Name="BtnLangEN" Content="EN" Style="{StaticResource LangBtn}"/>
+                <Button x:Name="BtnLangRU" Content="RU" Style="{StaticResource LangBtn}"/>
                 <Button x:Name="BtnLangCS" Content="CS" Style="{StaticResource LangBtn}"/>
             </StackPanel>
         </Grid>
 
         <!-- CURRENT STATUS PILL -->
-        <Border Grid.Row="1" Background="#1A1C26" BorderBrush="#2D3142" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,7,0,6">
+        <Border Grid.Row="1" Background="#1A1C26" BorderBrush="#2D3142" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,6,0,5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="TxtStatusLabel" Text="Текущий статус:" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBlock x:Name="TxtStatusValue" Grid.Column="1" Text="Определение..." FontSize="12" FontWeight="SemiBold" Foreground="#34D399" VerticalAlignment="Center"/>
+                <TextBlock x:Name="TxtStatusLabel" Text="Current status:" FontSize="11" Foreground="#6B7280" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBlock x:Name="TxtStatusValue" Grid.Column="1" Text="Detecting..." FontSize="12" FontWeight="SemiBold" Foreground="#34D399" VerticalAlignment="Center"/>
             </Grid>
         </Border>
 
@@ -287,19 +292,19 @@ $script:Loc = @{
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#164E38" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Border x:Name="IcoBorderAdGuard" Background="#164E38" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Path Fill="#FFFFFF" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z"/>
                     </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardAdGuard" Text="AdGuard DNS (Без рекламы)" FontWeight="Bold" FontSize="12" Foreground="#34D399"/>
+                            <TextBlock x:Name="TxtCardAdGuard" Text="AdGuard DNS (No Ads)" FontWeight="Bold" FontSize="12" Foreground="#34D399"/>
                             <Border HorizontalAlignment="Right" Background="#064E3B" CornerRadius="3" Padding="5,1">
                                 <TextBlock Text="BLOCK ADS" FontSize="8.5" FontWeight="Bold" Foreground="#6EE7B7"/>
                             </Border>
                         </Grid>
                         <TextBlock x:Name="TxtCardAdGuardSub" Text="94.140.14.14  •  94.140.15.15" FontSize="10" Foreground="#A7F3D0" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardAdGuardDesc" Text="Полная блокировка баннеров, трекеров и фишинга во всей Windows" FontSize="9.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardAdGuardDesc" Text="System-wide ad, tracker, and phishing blocking in Windows" FontSize="9.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
@@ -311,19 +316,19 @@ $script:Loc = @{
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#581639" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Border x:Name="IcoBorderFamily" Background="#581639" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Path Fill="#FFFFFF" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/>
                     </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardFamily" Text="Семейный AdGuard DNS (Детский 18+)" FontWeight="Bold" FontSize="12" Foreground="#F472B6"/>
+                            <TextBlock x:Name="TxtCardFamily" Text="Family AdGuard DNS (Child Safe 18+)" FontWeight="Bold" FontSize="12" Foreground="#F472B6"/>
                             <Border HorizontalAlignment="Right" Background="#500724" CornerRadius="3" Padding="5,1">
                                 <TextBlock Text="SAFE KIDS 18+" FontSize="8.5" FontWeight="Bold" Foreground="#FBCFE8"/>
                             </Border>
                         </Grid>
                         <TextBlock x:Name="TxtCardFamilySub" Text="94.140.14.15  •  94.140.15.16" FontSize="10" Foreground="#FBCFE8" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardFamilyDesc" Text="Блокировка рекламы, контента 18+ и принудительный SafeSearch" FontSize="9.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardFamilyDesc" Text="Ad blocking, strict SafeSearch, and adult 18+ content filter" FontSize="9.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
@@ -335,19 +340,19 @@ $script:Loc = @{
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#1E3A5F" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Border x:Name="IcoBorderGoogle" Background="#1E3A5F" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Path Fill="#FFFFFF" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M13,2.05V5.08C16.39,5.57 19,8.47 19,12C19,12.9 18.8,13.76 18.43,14.54L20.62,16.73C21.5,15.36 22,13.74 22,12C22,6.82 18.05,2.55 13,2.05M12,19A7,7 0 0,1 5,12C5,8.47 7.61,5.57 11,5.08V2.05C5.94,2.55 2,6.81 2,12A10,10 0 0,0 12,22C15.3,22 18.23,20.39 20.08,17.91L17.54,15.37C16.32,17.56 13.97,19 12,19Z"/>
                     </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardGoogle" Text="Google + Cloudflare (Макс. скорость и ТВ)" FontWeight="Bold" FontSize="12" Foreground="#60A5FA"/>
+                            <TextBlock x:Name="TxtCardGoogle" Text="Google + Cloudflare (Ultra Fast &amp; TV)" FontWeight="Bold" FontSize="12" Foreground="#60A5FA"/>
                             <Border HorizontalAlignment="Right" Background="#1E3A8A" CornerRadius="3" Padding="5,1">
                                 <TextBlock Text="FAST &amp; TV" FontSize="8.5" FontWeight="Bold" Foreground="#93C5FD"/>
                             </Border>
                         </Grid>
                         <TextBlock x:Name="TxtCardGoogleSub" Text="8.8.8.8  •  1.1.1.1" FontSize="10" Foreground="#BFDBFE" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardGoogleDesc" Text="Ультра-скорость, Google Cast, трансляция на Android TV и банкинг" FontSize="9.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardGoogleDesc" Text="Maximum speed, Google Cast, Android TV streaming &amp; banking" FontSize="9.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
@@ -359,19 +364,19 @@ $script:Loc = @{
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#451A6E" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Border x:Name="IcoBorderQuad9" Background="#451A6E" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Path Fill="#FFFFFF" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M12,12H19C18.47,16.11 15.72,19.78 12,20.92V12H5V6.3L12,3.19M12,1L3,5V11C3,16.55 6.84,21.74 12,23C17.16,21.74 21,16.55 21,11V5L12,1Z"/>
                     </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardQuad9" Text="Quad9 Security (Защита от вирусов)" FontWeight="Bold" FontSize="12" Foreground="#C084FC"/>
+                            <TextBlock x:Name="TxtCardQuad9" Text="Quad9 Security (Malware Protection)" FontWeight="Bold" FontSize="12" Foreground="#C084FC"/>
                             <Border HorizontalAlignment="Right" Background="#4C1D95" CornerRadius="3" Padding="5,1">
                                 <TextBlock Text="MALWARE BLOCK" FontSize="8.5" FontWeight="Bold" Foreground="#DDD6FE"/>
                             </Border>
                         </Grid>
                         <TextBlock x:Name="TxtCardQuad9Sub" Text="9.9.9.9  •  149.112.112.112" FontSize="10" Foreground="#E9D5FF" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardQuad9Desc" Text="Блокирует фишинг и вредоносы (ТВ и стриминг работают без сбоев)" FontSize="9.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardQuad9Desc" Text="Blocks malicious domains while keeping TV streams smooth" FontSize="9.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
@@ -383,19 +388,19 @@ $script:Loc = @{
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#583908" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Border x:Name="IcoBorderYandex" Background="#583908" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Path Fill="#FFFFFF" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M11,6V11.27L14.73,15L16.14,13.59L13,10.45V6H11Z"/>
                     </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardYandex" Text="Яндекс.DNS (Россия, Сертификаты, Госуслуги)" FontWeight="Bold" FontSize="12" Foreground="#FBBF24"/>
+                            <TextBlock x:Name="TxtCardYandex" Text="Yandex.DNS (Russia &amp; Gov Certificates)" FontWeight="Bold" FontSize="12" Foreground="#FBBF24"/>
                             <Border HorizontalAlignment="Right" Background="#78350F" CornerRadius="3" Padding="5,1">
                                 <TextBlock Text="RUSSIA &amp; CERTS" FontSize="8.5" FontWeight="Bold" Foreground="#FDE68A"/>
                             </Border>
                         </Grid>
                         <TextBlock x:Name="TxtCardYandexSub" Text="77.88.8.8  •  77.88.8.1" FontSize="10" Foreground="#FDE68A" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardYandexDesc" Text="Оптимизирован для РФ. Госуслуги, Сбер, ВТБ, сертификаты Минцифры" FontSize="9.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardYandexDesc" Text="Optimized for RU services, Gosuslugi, Sber &amp; digital certs" FontSize="9.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
@@ -407,19 +412,19 @@ $script:Loc = @{
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border Background="#581616" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <Border x:Name="IcoBorderISP" Background="#581616" CornerRadius="16" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center">
                         <Path Fill="#FFFFFF" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"
                               Data="M12,3C7.58,3 4,4.79 4,7C4,9.21 7.58,11 12,11C16.42,11 20,9.21 20,7C20,4.79 16.42,3 12,3M4,9V12C4,14.21 7.58,16 12,16C16.42,16 20,14.21 20,12V9C20,11.21 16.42,13 12,13C7.58,13 4,11.21 4,9M4,14V17C4,19.21 7.58,21 12,21C16.42,21 20,19.21 20,17V14C20,16.21 16.42,18 12,18C7.58,18 4,16.21 4,14Z"/>
                     </Border>
                     <StackPanel Grid.Column="1">
                         <Grid>
-                            <TextBlock x:Name="TxtCardISP" Text="DNS провайдера (Чистый DHCP / Роутер)" FontWeight="Bold" FontSize="12" Foreground="#F87171"/>
+                            <TextBlock x:Name="TxtCardISP" Text="Provider DNS (Pure DHCP / Router)" FontWeight="Bold" FontSize="12" Foreground="#F87171"/>
                             <Border HorizontalAlignment="Right" Background="#7F1D1D" CornerRadius="3" Padding="5,1">
                                 <TextBlock Text="ISP DIRECT" FontSize="8.5" FontWeight="Bold" Foreground="#FECACA"/>
                             </Border>
                         </Grid>
-                        <TextBlock x:Name="TxtCardISPSub" Text="Автоматический шлюз роутера" FontSize="10" Foreground="#FECACA" Margin="0,1,0,1"/>
-                        <TextBlock x:Name="TxtCardISPDesc" Text="Сброс сторонних DNS, полный доступ к сети и порталам оператора" FontSize="9.5" Foreground="#9CA3AF"/>
+                        <TextBlock x:Name="TxtCardISPSub" Text="Automatic router gateway" FontSize="10" Foreground="#FECACA" Margin="0,1,0,1"/>
+                        <TextBlock x:Name="TxtCardISPDesc" Text="Reset custom DNS to ISP defaults, full operator access" FontSize="9.5" Foreground="#9CA3AF"/>
                     </StackPanel>
                 </Grid>
             </RadioButton>
@@ -428,7 +433,7 @@ $script:Loc = @{
 
         <!-- APPLY BUTTON & PROGRESS -->
         <StackPanel Grid.Row="3" Margin="0,6,0,0">
-            <Button x:Name="BtnApply" Content="ПРИМЕНИТЬ НАСТРОЙКИ" Background="#2563EB" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12.5" Height="36" Cursor="Hand">
+            <Button x:Name="BtnApply" Content="APPLY SETTINGS" Background="#2563EB" Foreground="#FFFFFF" FontWeight="Bold" FontSize="12.5" Height="36" Cursor="Hand">
                 <Button.Template>
                     <ControlTemplate TargetType="Button">
                         <Border Background="{TemplateBinding Background}" CornerRadius="7">
@@ -441,9 +446,18 @@ $script:Loc = @{
             <!-- PROGRESS CHECKLIST -->
             <Border x:Name="PanelProgress" Background="#111827" BorderBrush="#1F2937" BorderThickness="1" CornerRadius="6" Padding="12,6" Margin="0,6,0,0" Visibility="Collapsed">
                 <StackPanel>
-                    <TextBlock x:Name="TxtStep1" Text="○ Настройка сетевых адаптеров..." FontSize="10.5" Foreground="#9CA3AF" Margin="0,1" TextWrapping="Wrap"/>
-                    <TextBlock x:Name="TxtStep2" Text="○ Очистка кэша сопоставителя DNS..." FontSize="10.5" Foreground="#9CA3AF" Margin="0,1"/>
-                    <TextBlock x:Name="TxtCountdown" Text="Закрытие через 3 сек..." FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" Margin="0,2,0,0"/>
+                    <TextBlock x:Name="TxtStep1" Text="○ Configuring network adapters..." FontSize="10.5" Foreground="#9CA3AF" Margin="0,1" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="TxtStep2" Text="○ Clearing DNS resolver cache..." FontSize="10.5" Foreground="#9CA3AF" Margin="0,1"/>
+                    
+                    <!-- 10-Second Countdown and Open Adapter Settings Button -->
+                    <Grid Margin="0,4,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="TxtCountdown" Text="Closing in 10 sec..." FontSize="11" FontWeight="SemiBold" Foreground="#38BDF8" VerticalAlignment="Center"/>
+                        <Button x:Name="BtnOpenAdapter" Grid.Column="1" Content="⚙ Adapter Settings" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#F59E0B" BorderBrush="#D97706" Cursor="Hand"/>
+                    </Grid>
                 </StackPanel>
             </Border>
         </StackPanel>
@@ -454,8 +468,8 @@ $script:Loc = @{
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="Открыть главную страницу GitHub (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v009 (Обновить)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="GitHub page (https://github.com/GinCz/)"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v010 (Update)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -495,9 +509,71 @@ function New-Brush($hex) {
     return [System.Windows.Media.BrushConverter]::new().ConvertFromString($hex)
 }
 
-# Language switcher function
+# ------------------------------------------------------------------------------
+# 4. CARD SELECTION HIGHLIGHT (Vivid Neon Glow for active left icon & card)
+# ------------------------------------------------------------------------------
+function Update-CardSelection {
+    $cards = @(
+        @{ Radio = "RadAdGuard"; Icon = "IcoBorderAdGuard"; DimBg = "#164E38"; BrightBg = "#059669"; Border = "#10B981" },
+        @{ Radio = "RadFamily";  Icon = "IcoBorderFamily";  DimBg = "#581639"; BrightBg = "#DB2777"; Border = "#EC4899" },
+        @{ Radio = "RadGoogle";  Icon = "IcoBorderGoogle";  DimBg = "#1E3A5F"; BrightBg = "#2563EB"; Border = "#3B82F6" },
+        @{ Radio = "RadQuad9";   Icon = "IcoBorderQuad9";   DimBg = "#451A6E"; BrightBg = "#7C3AED"; Border = "#8B5CF6" },
+        @{ Radio = "RadYandex";  Icon = "IcoBorderYandex";  DimBg = "#583908"; BrightBg = "#D97706"; Border = "#F59E0B" },
+        @{ Radio = "RadISP";     Icon = "IcoBorderISP";     DimBg = "#581616"; BrightBg = "#DC2626"; Border = "#EF4444" }
+    )
+
+    foreach ($c in $cards) {
+        $r = $controls[$c.Radio]
+        $ico = $controls[$c.Icon]
+        if ($r -and $ico) {
+            if ($r.IsChecked) {
+                # Selected: Bright vibrant icon with glowing white border, highlighted card
+                $ico.Background = New-Brush $c.BrightBg
+                $ico.BorderBrush = New-Brush "#FFFFFF"
+                $ico.BorderThickness = [System.Windows.Thickness]::new(2)
+                $r.BorderBrush = New-Brush "#38BDF8"
+            } else {
+                # Unselected: Normal dim icon, subtle card border
+                $ico.Background = New-Brush $c.DimBg
+                $ico.BorderBrush = $null
+                $ico.BorderThickness = [System.Windows.Thickness]::new(0)
+                $r.BorderBrush = New-Brush $c.Border
+            }
+        }
+    }
+}
+
+# Wire Radio Click Events for instant illumination
+$controls["RadAdGuard"].Add_Checked({ Update-CardSelection })
+$controls["RadFamily"].Add_Checked({ Update-CardSelection })
+$controls["RadGoogle"].Add_Checked({ Update-CardSelection })
+$controls["RadQuad9"].Add_Checked({ Update-CardSelection })
+$controls["RadYandex"].Add_Checked({ Update-CardSelection })
+$controls["RadISP"].Add_Checked({ Update-CardSelection })
+
+# ------------------------------------------------------------------------------
+# 5. LANGUAGE PERSISTENCE & SWITCHING
+# ------------------------------------------------------------------------------
+function Get-SavedLanguage {
+    try {
+        $regLang = (Get-ItemProperty -Path "HKCU:\Software\GIN-DNS-Switch" -Name "Language" -ErrorAction SilentlyContinue).Language
+        if ($regLang -in @("EN", "RU", "CS")) { return $regLang }
+    } catch {}
+    return "EN"
+}
+
+function Save-Language($lang) {
+    try {
+        if (-not (Test-Path "HKCU:\Software\GIN-DNS-Switch")) {
+            New-Item -Path "HKCU:\Software\GIN-DNS-Switch" -Force | Out-Null
+        }
+        Set-ItemProperty -Path "HKCU:\Software\GIN-DNS-Switch" -Name "Language" -Value $lang -Force | Out-Null
+    } catch {}
+}
+
 function Update-Language($lang) {
     $script:Lang = $lang
+    Save-Language $lang
     $l = $script:Loc[$lang]
     
     $window.Title = $l["WinTitle"]
@@ -530,16 +606,16 @@ function Update-Language($lang) {
     $controls["TxtCardISPDesc"].Text = $l["CardISPDesc"]
 
     $controls["BtnApply"].Content = $l["BtnApply"]
-    if ($controls["TxtBtnApply"]) { $controls["TxtBtnApply"].Text = $l["BtnApply"] }
     $controls["BtnUpdate"].Content = $l["BtnUpdate"]
     $controls["LnkAuthor"].Text = $l["AuthorLink"]
+    $controls["LnkAuthor"].ToolTip = $l["AuthorTooltip"]
 
-    # Active button styles
-    $controls["BtnLangRU"].Background = if ($lang -eq "RU") { New-Brush "#2563EB" } else { New-Brush "#1E202B" }
+    # Active button styles (EN, RU, CS)
     $controls["BtnLangEN"].Background = if ($lang -eq "EN") { New-Brush "#2563EB" } else { New-Brush "#1E202B" }
+    $controls["BtnLangRU"].Background = if ($lang -eq "RU") { New-Brush "#2563EB" } else { New-Brush "#1E202B" }
     $controls["BtnLangCS"].Background = if ($lang -eq "CS") { New-Brush "#2563EB" } else { New-Brush "#1E202B" }
-    $controls["BtnLangRU"].Foreground = if ($lang -eq "RU") { [System.Windows.Media.Brushes]::White } else { New-Brush "#9CA3AF" }
     $controls["BtnLangEN"].Foreground = if ($lang -eq "EN") { [System.Windows.Media.Brushes]::White } else { New-Brush "#9CA3AF" }
+    $controls["BtnLangRU"].Foreground = if ($lang -eq "RU") { [System.Windows.Media.Brushes]::White } else { New-Brush "#9CA3AF" }
     $controls["BtnLangCS"].Foreground = if ($lang -eq "CS") { [System.Windows.Media.Brushes]::White } else { New-Brush "#9CA3AF" }
 
     Refresh-StatusDisplay
@@ -628,6 +704,7 @@ function Refresh-StatusDisplay {
             Select-RadioIfNone "RadISP"
         }
     }
+    Update-CardSelection
 }
 
 function Select-RadioIfNone($name) {
@@ -637,9 +714,9 @@ function Select-RadioIfNone($name) {
     if (-not $hasChecked) { $controls[$name].IsChecked = $true }
 }
 
-# Wire Language Buttons
-$controls["BtnLangRU"].Add_Click({ Update-Language "RU" })
+# Wire Language Buttons (EN, RU, CS)
 $controls["BtnLangEN"].Add_Click({ Update-Language "EN" })
+$controls["BtnLangRU"].Add_Click({ Update-Language "RU" })
 $controls["BtnLangCS"].Add_Click({ Update-Language "CS" })
 
 # Wire Footer Links
@@ -648,7 +725,7 @@ $controls["LnkAuthor"].Add_MouseLeftButtonUp({
 })
 
 # ------------------------------------------------------------------------------
-# 4. SMART AUTO-UPDATE ENGINE (Direct UI Thread - NEVER closes if latest!)
+# 6. SMART AUTO-UPDATE ENGINE (Direct UI Thread - NEVER closes if latest!)
 # ------------------------------------------------------------------------------
 $controls["BtnUpdate"].Add_Click({
     $l = $script:Loc[$script:Lang]
@@ -728,7 +805,7 @@ $controls["BtnUpdate"].Add_Click({
 })
 
 # ------------------------------------------------------------------------------
-# 5. BULLETPROOF MULTI-LAYER DNS SETTER (WMI + NetTCPIP + Netsh)
+# 7. BULLETPROOF MULTI-LAYER DNS SETTER (WMI + NetTCPIP + Netsh)
 # ------------------------------------------------------------------------------
 function Apply-DnsSettings($profile) {
     $v4 = $null
@@ -839,7 +916,58 @@ function Apply-DnsSettings($profile) {
     return $uniqueAdapters
 }
 
-# Apply Button Click Handler (Live UI Thread with instant feedback)
+# ------------------------------------------------------------------------------
+# 8. OPEN ADAPTER PROPERTIES (Shell.Application Namespace 49 or ncpa.cpl fallback)
+# ------------------------------------------------------------------------------
+function Open-AdapterProperties($adapterName) {
+    try {
+        $shell = New-Object -ComObject Shell.Application
+        $ncFolder = $shell.Namespace(49) # CSIDL_CONNECTIONS (Network Connections)
+        if ($ncFolder) {
+            $items = $ncFolder.Items()
+            $target = $null
+            if ($adapterName) {
+                $target = $items | Where-Object { $_.Name -like "*$adapterName*" -or $adapterName -like "*$($_.Name)*" } | Select-Object -First 1
+            }
+            if (-not $target -and $items.Count -gt 0) {
+                # Pick the first non-virtual active adapter
+                $target = $items | Where-Object { $_.Name -notmatch 'VirtualBox|VMware|Loopback|Wintun' } | Select-Object -First 1
+            }
+            if ($target) {
+                $propVerb = $target.Verbs() | Where-Object { $_.Name -match 'Properties|Свойства|Vlastnosti|&Properties|&Свойства' } | Select-Object -First 1
+                if ($propVerb) {
+                    $propVerb.DoIt()
+                    return $true
+                } else {
+                    $target.InvokeVerb("properties")
+                    return $true
+                }
+            }
+        }
+    } catch {}
+    
+    # Fallback to standard Network Connections window
+    try {
+        Start-Process "ncpa.cpl"
+        return $true
+    } catch {}
+    return $false
+}
+
+# Apply Button Click Handler (Live UI Thread with instant feedback & 10s interactive timer)
+$script:CountdownCancelled = $false
+$script:ActiveAdapterName = ""
+
+$controls["BtnOpenAdapter"].Add_Click({
+    $script:CountdownCancelled = $true
+    $l = $script:Loc[$script:Lang]
+    $controls["BtnOpenAdapter"].Content = $l["BtnAdapterDone"]
+    $controls["BtnOpenAdapter"].Foreground = New-Brush "#34D399"
+    $controls["BtnOpenAdapter"].BorderBrush = New-Brush "#10B981"
+    $controls["TxtCountdown"].Text = ""
+    Open-AdapterProperties $script:ActiveAdapterName
+})
+
 $controls["BtnApply"].Add_Click({
     $l = $script:Loc[$script:Lang]
     $controls["BtnApply"].IsEnabled = $false
@@ -849,6 +977,8 @@ $controls["BtnApply"].Add_Click({
     $controls["TxtStep2"].Text = $l["Step2Pending"]
     $controls["TxtStep2"].Foreground = New-Brush "#9CA3AF"
     $controls["TxtCountdown"].Text = ""
+    $controls["BtnOpenAdapter"].Visibility = [System.Windows.Visibility]::Collapsed
+    $script:CountdownCancelled = $false
     Invoke-UIRefresh
 
     # Determine chosen profile (1.AdGuard, 2.Family, 3.Google, 4.Quad9, 5.Yandex, 6.ISP)
@@ -864,9 +994,10 @@ $controls["BtnApply"].Add_Click({
 
     # 1. Apply DNS settings
     $appliedNics = Apply-DnsSettings $chosen
-    $nicSummary = "Сетевые адаптеры"
+    $nicSummary = "Network Adapter"
     if ($appliedNics -and $appliedNics.Count -gt 0) {
         $nicSummary = ($appliedNics | Select-Object -First 2) -join ", "
+        $script:ActiveAdapterName = $appliedNics[0]
     }
 
     $controls["TxtStep1"].Text = [string]::Format($l["Step1Done"], $nicSummary)
@@ -877,20 +1008,29 @@ $controls["BtnApply"].Add_Click({
     $controls["TxtStep2"].Text = $l["Step2Done"]
     $controls["TxtStep2"].Foreground = New-Brush "#34D399"
     Refresh-StatusDisplay
-    Wait-UI 400
+    Wait-UI 300
 
-    # 3. 3-Second Countdown and exit
-    for ($i = 3; $i -ge 1; $i--) {
+    # 3. 10-Second Interactive Countdown with Open Adapter Button
+    $adapterShortName = if ($script:ActiveAdapterName) { $script:ActiveAdapterName } else { "Ethernet" }
+    $controls["BtnOpenAdapter"].Content = [string]::Format($l["BtnAdapter"], $adapterShortName)
+    $controls["BtnOpenAdapter"].Visibility = [System.Windows.Visibility]::Visible
+    Invoke-UIRefresh
+
+    for ($i = 10; $i -ge 1; $i--) {
+        if ($script:CountdownCancelled) { break }
         $controls["TxtCountdown"].Text = [string]::Format($l["StepClose"], $i)
         Wait-UI 1000
     }
 
-    $window.Close()
-    [System.Environment]::Exit(0)
+    if (-not $script:CountdownCancelled) {
+        $window.Close()
+        [System.Environment]::Exit(0)
+    }
 })
 
-# Initialize Default Language and Status
-Update-Language "RU"
+# Initialize Language from Registry (Default: EN)
+$savedLang = Get-SavedLanguage
+Update-Language $savedLang
 
 # Show Window
 $window.ShowDialog() | Out-Null

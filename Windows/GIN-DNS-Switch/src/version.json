@@ -1,6 +1,6 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v009",
+  "current_version": "v010",
   "updated_at": "2026-11-08",
   "active_versions": [
     "GIN-DNS-Switch.cmd"
@@ -114,6 +114,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v010",
+      "date": "2026-11-08",
+      "changes": "1) English default installer with silent zero-popup install and auto-launch; 2) Vibrant neon illumination for active/selected card icon circle and border; 3) Language persistence in registry with English default; 4) Complete EN, RU, CS translations for footer GitHub link tooltip; 5) 10-second interactive countdown with Open Adapter Settings button."
+    },
     {
       "version": "v009",
       "date": "2026-11-08",
