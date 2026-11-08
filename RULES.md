@@ -88,7 +88,7 @@ D:\AI\ (на Linux серверах: /root/AI/ или /AI/)
 * **Точный прогноз готовности в каждом ответе:** Для любых сборок (Android APK, Windows EXE), тяжелых миграций, бэкапов или системных процессов агент ОБЯЗАН в первом же ответе сообщить точное расчетное время готовности **строго по пражскому европейскому времени (Europe/Prague, CET/CEST)** с обязательным технологическим запасом.
 * **Автоматическое оповещение в Telegram (> 5 минут):** Если задача или сборка на любом сервере (`DE-222`, `Oracle-49`, `Oracle-1/230`) или домашнем ПК длится суммарно более **5 минут**, агент ОБЯЗАН сразу по завершении отправить уведомление Владимиру в Telegram через бота `@My_WWW_bot`:
   ```bash
-  curl -s -X POST "https://api.telegram.org/bot1226649515:AAGEOekQayNvtzWwEPM7a4yvTwvyR1wSL3I/sendMessage" \
+  curl -s -X POST "https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/sendMessage" \
     -d chat_id="261784949" \
     -d parse_mode="HTML" \
     -d text="✅ <b>Сборка / Задача завершена</b>%0A📦 <b>Проект:</b> <AppName> <vXXX>%0A🖥 <b>Узел:</b> $(hostname)%0A⏱ <b>Готовность:</b> $(date '+%Y-%m-%d %H:%M CET')%0A📊 <b>Размер:</b> <Size>%0A🚀 <b>Статус:</b> Успешно выгружен"
