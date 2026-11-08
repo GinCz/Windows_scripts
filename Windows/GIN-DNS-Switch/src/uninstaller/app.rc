@@ -1,8 +1,8 @@
 1 ICON "uninstall.ico"
 
 1 VERSIONINFO
-FILEVERSION 0,11,0,0
-PRODUCTVERSION 0,11,0,0
+FILEVERSION 0,12,0,0
+PRODUCTVERSION 0,12,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -15,12 +15,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "VladiMIR+AI"
             VALUE "FileDescription", "GIN-DNS-Switch Uninstaller"
-            VALUE "FileVersion", "v011"
+            VALUE "FileVersion", "v012"
             VALUE "InternalName", "Uninstall"
             VALUE "LegalCopyright", "VladiMIR+AI"
             VALUE "OriginalFilename", "Uninstall.exe"
             VALUE "ProductName", "GIN-DNS-Switch"
-            VALUE "ProductVersion", "v011"
+            VALUE "ProductVersion", "v012"
         END
     END
     BLOCK "VarFileInfo"

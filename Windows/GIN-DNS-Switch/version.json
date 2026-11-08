@@ -1,6 +1,6 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v011",
+  "current_version": "v012",
   "updated_at": "2026-11-08",
   "active_versions": [
     "GIN-DNS-Switch.cmd"
@@ -114,6 +114,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v012",
+      "date": "2026-11-08",
+      "changes": "Target strictly physical primary network adapter (Realtek USB/PCIe GbE): Detect active Internet route via 0.0.0.0/0 default gateway; exclude VirtualBox Host-Only Ethernet Adapter and virtual interfaces across WMI, NetTCPIP, and netsh; accurately open Realtek adapter properties dialog in Shell Namespace 49."
+    },
     {
       "version": "v011",
       "date": "2026-11-08",

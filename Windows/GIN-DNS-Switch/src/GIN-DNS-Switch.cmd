@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-DNS-Switch v011 [ VladiMIR ^& Antigravity ]
+title GIN-DNS-Switch v012 [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell executable (supports x86, x64, Sysnative)
 set "PS_EXE=powershell.exe"
@@ -10,7 +10,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v011...
+    echo [*] Elevating to Administrator privileges for GIN-DNS-Switch v012...
     "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
@@ -24,7 +24,7 @@ exit /b
 #>
 
 # ==============================================================================
-#  GIN-DNS-SWITCH                                                  v011
+#  GIN-DNS-SWITCH                                                  v012
 #  Smart 1-Click DNS Profile Manager for Windows 7 / 8 / 10 / 11
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  Repository: https://github.com/GinCz/Windows_scripts
@@ -48,11 +48,11 @@ Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, Sys
 # ------------------------------------------------------------------------------
 # 1. LOCALIZATION STRINGS (EN default, RU, CS)
 # ------------------------------------------------------------------------------
-$script:CurrentVersion = "v011"
+$script:CurrentVersion = "v012"
 
 $script:Loc = @{
     "EN" = @{
-        "WinTitle"       = "GIN-DNS-Switch v011 — Windows DNS Manager"
+        "WinTitle"       = "GIN-DNS-Switch v012 — Windows DNS Manager"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Windows DNS Switcher"
         "StatusCurrent"  = "Current status:"
@@ -81,7 +81,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Clearing DNS resolver cache..."
         "Step2Done"      = "✔ DNS resolver cache flushed (Flush DNS)"
         "StepClose"      = "Closing in {0} sec..."
-        "BtnUpdate"      = "v011 (Update)"
+        "BtnUpdate"      = "v012 (Update)"
         "AuthorLink"     = "VladiMIR + AI"
         "AuthorTooltip"  = "GitHub page (https://github.com/GinCz/)"
         "BtnAdapter"     = "⚙ Adapter Settings ({0})"
@@ -99,7 +99,7 @@ $script:Loc = @{
         "UpdFail"        = "✖ Connection error"
     }
     "RU" = @{
-        "WinTitle"       = "GIN-DNS-Switch v011 — Менеджер DNS для Windows"
+        "WinTitle"       = "GIN-DNS-Switch v012 — Менеджер DNS для Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Переключатель DNS для Windows"
         "StatusCurrent"  = "Текущий статус:"
@@ -128,7 +128,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Очистка кэша сопоставителя DNS..."
         "Step2Done"      = "✔ Кэш сопоставителя DNS очищен (Flush DNS)"
         "StepClose"      = "Закрытие через {0} сек..."
-        "BtnUpdate"      = "v011 (Обновить)"
+        "BtnUpdate"      = "v012 (Обновить)"
         "AuthorLink"     = "VladiMIR + AI"
         "AuthorTooltip"  = "Страница GitHub (https://github.com/GinCz/)"
         "BtnAdapter"     = "⚙ Настройки адаптера ({0})"
@@ -146,7 +146,7 @@ $script:Loc = @{
         "UpdFail"        = "✖ Ошибка связи"
     }
     "CS" = @{
-        "WinTitle"       = "GIN-DNS-Switch v011 — Správce DNS pro Windows"
+        "WinTitle"       = "GIN-DNS-Switch v012 — Správce DNS pro Windows"
         "HeaderTitle"    = "GIN-DNS-Switch"
         "HeaderSub"      = "Přepínač DNS pro Windows"
         "StatusCurrent"  = "Aktuální stav:"
@@ -175,7 +175,7 @@ $script:Loc = @{
         "Step2Pending"   = "○ Vyprázdnění mezipaměti DNS..."
         "Step2Done"      = "✔ Mezipaměť DNS byla vyprázdněna (Flush DNS)"
         "StepClose"      = "Zavření za {0} s..."
-        "BtnUpdate"      = "v011 (Aktualizovat)"
+        "BtnUpdate"      = "v012 (Aktualizovat)"
         "AuthorLink"     = "VladiMIR + AI"
         "AuthorTooltip"  = "Stránka GitHub (https://github.com/GinCz/)"
         "BtnAdapter"     = "⚙ Nastavení adaptéru ({0})"
@@ -200,7 +200,7 @@ $script:Loc = @{
 [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="GIN-DNS-Switch v011" SizeToContent="Height" Width="510"
+        Title="GIN-DNS-Switch v012" SizeToContent="Height" Width="510"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Background="#13141A" Foreground="#FFFFFF" FontFamily="Segoe UI">
     <Window.Resources>
@@ -469,7 +469,7 @@ $script:Loc = @{
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock x:Name="LnkAuthor" Text="VladiMIR + AI" FontSize="11" FontWeight="SemiBold" Foreground="#60A5FA" Cursor="Hand" VerticalAlignment="Center" ToolTip="GitHub page (https://github.com/GinCz/)"/>
-            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v011 (Update)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
+            <Button x:Name="BtnUpdate" Grid.Column="1" Content="v012 (Update)" Style="{StaticResource LangBtn}" Padding="9,3" Foreground="#38BDF8" BorderBrush="#0284C7"/>
         </Grid>
     </Grid>
 </Window>
@@ -635,21 +635,98 @@ function Update-Language($lang) {
     Refresh-StatusDisplay
 }
 
+# ------------------------------------------------------------------------------
+# 5.1 PRIMARY ACTIVE ADAPTER DETECTION (Default Gateway / Physical Realtek)
+# ------------------------------------------------------------------------------
+function Get-PrimaryActiveAdapter {
+    # 1. Match active IPv4 default gateway route (0.0.0.0/0 - carrying real Internet)
+    try {
+        if (Get-Command Get-NetRoute -ErrorAction SilentlyContinue) {
+            $gwRoute = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
+                       Sort-Object RouteMetric, Metric |
+                       Select-Object -First 1
+            if ($gwRoute -and $gwRoute.InterfaceAlias) {
+                $alias = $gwRoute.InterfaceAlias
+                $adapter = Get-NetAdapter -Name $alias -ErrorAction SilentlyContinue
+                if ($adapter -and $adapter.InterfaceDescription -notmatch 'VirtualBox|VMware|Hyper-V|Loopback|Wintun|WireGuard') {
+                    return @{
+                        Alias       = $alias
+                        Description = $adapter.InterfaceDescription
+                        Index       = $adapter.InterfaceIndex
+                    }
+                }
+            }
+        }
+    } catch {}
+
+    # 2. Get-NetAdapter: Physical, Up, not virtual, not VirtualBox/VMware
+    try {
+        if (Get-Command Get-NetAdapter -ErrorAction SilentlyContinue) {
+            $phys = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+                $_.Status -eq 'Up' -and
+                (-not $_.Virtual) -and
+                $_.InterfaceDescription -notmatch 'VirtualBox|VMware|Hyper-V|Virtual|Loopback|Wintun|WireGuard|TAP|Npcap' -and
+                $_.InterfaceAlias -notmatch 'VirtualBox|vEthernet|Loopback'
+            } | Select-Object -First 1
+
+            if ($phys) {
+                return @{
+                    Alias       = $phys.InterfaceAlias
+                    Description = $phys.InterfaceDescription
+                    Index       = $phys.InterfaceIndex
+                }
+            }
+        }
+    } catch {}
+
+    # 3. WMI Win32_NetworkAdapterConfiguration with DefaultIPGateway
+    try {
+        $wmi = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue |
+               Where-Object {
+                   $_.DefaultIPGateway -ne $null -and
+                   $_.Description -notmatch 'VirtualBox|VMware|Hyper-V|Virtual|Loopback|Wintun|WireGuard|TAP|Npcap'
+               } | Select-Object -First 1
+
+        if ($wmi) {
+            $wmiAdapter = Get-WmiObject -Class Win32_NetworkAdapter -Filter "Index = $($wmi.Index)" -ErrorAction SilentlyContinue
+            $alias = if ($wmiAdapter -and $wmiAdapter.NetConnectionID) { $wmiAdapter.NetConnectionID } else { "Ethernet" }
+            return @{
+                Alias       = $alias
+                Description = $wmi.Description
+                Index       = $wmi.Index
+            }
+        }
+    } catch {}
+
+    return @{
+        Alias       = "Ethernet"
+        Description = "Realtek USB GbE Family Controller"
+        Index       = 0
+    }
+}
+
 # Detect active DNS configuration
 function Get-CurrentDnsState {
     try {
+        $primary = Get-PrimaryActiveAdapter
         $activeDns = @()
-        
-        # 1. Check via WMI
-        $wmi = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue
-        foreach ($w in $wmi) {
-            if ($w.DNSServerSearchOrder) { $activeDns += $w.DNSServerSearchOrder }
+
+        # 1. Check primary adapter via NetTCPIP
+        if (Get-Command Get-DnsClientServerAddress -ErrorAction SilentlyContinue) {
+            $addrs = Get-DnsClientServerAddress -InterfaceAlias $primary.Alias -AddressFamily IPv4 -ErrorAction SilentlyContinue
+            if ($addrs -and $addrs.ServerAddresses) {
+                $activeDns += $addrs.ServerAddresses
+            }
         }
 
-        # 2. Check via NetTCPIP if available
-        if (Get-Command Get-DnsClientServerAddress -ErrorAction SilentlyContinue) {
-            $addrs = Get-DnsClientServerAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.ServerAddresses.Count -gt 0 }
-            foreach ($a in $addrs) { $activeDns += $a.ServerAddresses }
+        # 2. Check primary adapter via WMI
+        if (-not $activeDns -or $activeDns.Count -eq 0) {
+            $wmi = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue |
+                   Where-Object { $_.Description -eq $primary.Description -or ($_.DefaultIPGateway -ne $null -and $_.Description -notmatch 'VirtualBox|VMware') } |
+                   Select-Object -First 1
+            if ($wmi -and $wmi.DNSServerSearchOrder) {
+                $activeDns += $wmi.DNSServerSearchOrder
+            }
         }
 
         $activeDns = $activeDns | Select-Object -Unique
@@ -853,67 +930,78 @@ function Apply-DnsSettings($profile) {
     }
 
     $affectedAdapters = @()
+    $primary = Get-PrimaryActiveAdapter
 
-    # 1. WMI Win32_NetworkAdapterConfiguration (100% reliable for USB/Ethernet/WiFi)
+    # Target adapters: always include primary (Realtek with default gateway), plus any other connected physical adapters
+    $targetAliases = @($primary.Alias)
+    try {
+        if (Get-Command Get-NetAdapter -ErrorAction SilentlyContinue) {
+            $otherPhys = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+                $_.Status -eq 'Up' -and
+                (-not $_.Virtual) -and
+                $_.InterfaceDescription -notmatch 'VirtualBox|VMware|Hyper-V|Virtual|Loopback|Wintun|WireGuard|TAP|Npcap' -and
+                $_.InterfaceAlias -notmatch 'VirtualBox|vEthernet|Loopback'
+            }
+            foreach ($op in $otherPhys) {
+                if ($targetAliases -notcontains $op.InterfaceAlias) {
+                    $targetAliases += $op.InterfaceAlias
+                }
+            }
+        }
+    } catch {}
+
+    # 1. NetTCPIP Set-DnsClientServerAddress (Targeted to primary & physical only, NEVER VirtualBox)
+    try {
+        if (Get-Command Set-DnsClientServerAddress -ErrorAction SilentlyContinue) {
+            foreach ($alias in $targetAliases) {
+                if ($v4 -and $v4.Count -gt 0) {
+                    Set-DnsClientServerAddress -InterfaceAlias $alias -ServerAddresses $v4 -ErrorAction SilentlyContinue
+                } else {
+                    Set-DnsClientServerAddress -InterfaceAlias $alias -ResetServerAddresses -ErrorAction SilentlyContinue
+                }
+                if ($v6 -and $v6.Count -gt 0) {
+                    Set-DnsClientServerAddress -InterfaceAlias $alias -ServerAddresses $v6 -ErrorAction SilentlyContinue
+                }
+                $affectedAdapters += $alias
+            }
+        }
+    } catch {}
+
+    # 2. netsh Direct Console Execution (Targeted STRICTLY to physical aliases)
+    try {
+        foreach ($alias in $targetAliases) {
+            if ($v4 -and $v4.Count -gt 0) {
+                cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=static address=$($v4[0]) register=both validate=no" 2>$null
+                if ($v4.Count -gt 1) {
+                    cmd.exe /c "netsh interface ipv4 add dnsservers name=`"$alias`" address=$($v4[1]) index=2 validate=no" 2>$null
+                }
+            } else {
+                cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=dhcp" 2>$null
+            }
+            if ($affectedAdapters -notcontains $alias) {
+                $affectedAdapters += $alias
+            }
+        }
+    } catch {}
+
+    # 3. WMI Win32_NetworkAdapterConfiguration (Filter out all virtual adapters)
     try {
         $wmiNics = Get-WmiObject -Class Win32_NetworkAdapterConfiguration -Filter "IPEnabled = True" -ErrorAction SilentlyContinue
         foreach ($nic in $wmiNics) {
-            if ($nic.Description -notmatch 'VirtualBox|VMware|Loopback|Wintun|WireGuard|TAP-Windows|Npcap') {
+            if ($nic.Description -notmatch 'VirtualBox|VMware|Hyper-V|Virtual|Loopback|Wintun|WireGuard|TAP-Windows|Npcap') {
                 if ($v4 -and $v4.Count -gt 0) {
                     $res = $nic.SetDNSServerSearchOrder($v4)
                     if ($res.ReturnValue -eq 0 -or $res.ReturnValue -eq 1) {
-                        $affectedAdapters += $nic.Description
+                        if ($affectedAdapters -notcontains $nic.Description) {
+                            $affectedAdapters += $nic.Description
+                        }
                     }
                 } else {
                     $res = $nic.SetDNSServerSearchOrder($null)
                     if ($res.ReturnValue -eq 0 -or $res.ReturnValue -eq 1) {
-                        $affectedAdapters += $nic.Description
-                    }
-                }
-            }
-        }
-    } catch {}
-
-    # 2. NetTCPIP Set-DnsClientServerAddress (Modern Windows)
-    try {
-        if (Get-Command Get-NetAdapter -ErrorAction SilentlyContinue) {
-            $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { 
-                $_.Status -eq 'Up' -and 
-                $_.InterfaceDescription -notmatch 'VirtualBox|VMware|Loopback|Wintun|WireGuard' -and 
-                $_.InterfaceAlias -notmatch 'Loopback|vEthernet'
-            }
-            foreach ($a in $adapters) {
-                if ($v4 -and $v4.Count -gt 0) {
-                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v4 -ErrorAction SilentlyContinue
-                } else {
-                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ResetServerAddresses -ErrorAction SilentlyContinue
-                }
-                if ($v6 -and $v6.Count -gt 0) {
-                    Set-DnsClientServerAddress -InterfaceAlias $a.InterfaceAlias -ServerAddresses $v6 -ErrorAction SilentlyContinue
-                }
-                $affectedAdapters += $a.InterfaceAlias
-            }
-        }
-    } catch {}
-
-    # 3. netsh Direct Console Execution
-    try {
-        $netshOut = cmd.exe /c "netsh interface ipv4 show interfaces"
-        foreach ($line in $netshOut) {
-            if ($line -match 'connected|подключен') {
-                $tokens = $line.Trim() -split '\s{2,}'
-                if ($tokens.Count -ge 4) {
-                    $alias = $tokens[-1].Trim()
-                    if ($alias -and $alias -notmatch 'VirtualBox|VMware|Loopback|Wintun') {
-                        if ($v4 -and $v4.Count -gt 0) {
-                            cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=static address=$($v4[0]) register=both validate=no" 2>$null
-                            if ($v4.Count -gt 1) {
-                                cmd.exe /c "netsh interface ipv4 add dnsservers name=`"$alias`" address=$($v4[1]) index=2 validate=no" 2>$null
-                            }
-                        } else {
-                            cmd.exe /c "netsh interface ipv4 set dnsservers name=`"$alias`" source=dhcp" 2>$null
+                        if ($affectedAdapters -notcontains $nic.Description) {
+                            $affectedAdapters += $nic.Description
                         }
-                        $affectedAdapters += $alias
                     }
                 }
             }
@@ -935,17 +1023,26 @@ function Apply-DnsSettings($profile) {
 # ------------------------------------------------------------------------------
 function Open-AdapterProperties($adapterName) {
     try {
+        $primary = Get-PrimaryActiveAdapter
+        $lookupName = if ($adapterName) { $adapterName } else { $primary.Alias }
+
         $shell = New-Object -ComObject Shell.Application
         $ncFolder = $shell.Namespace(49) # CSIDL_CONNECTIONS (Network Connections)
         if ($ncFolder) {
             $items = $ncFolder.Items()
             $target = $null
-            if ($adapterName) {
-                $target = $items | Where-Object { $_.Name -like "*$adapterName*" -or $adapterName -like "*$($_.Name)*" } | Select-Object -First 1
+            
+            # Exact match by Alias (e.g. "Ethernet")
+            $target = $items | Where-Object { $_.Name -eq $lookupName } | Select-Object -First 1
+            if (-not $target) {
+                $target = $items | Where-Object { $_.Name -eq $primary.Alias } | Select-Object -First 1
+            }
+            if (-not $target) {
+                $target = $items | Where-Object { $_.Name -like "*$lookupName*" -or $lookupName -like "*$($_.Name)*" } | Select-Object -First 1
             }
             if (-not $target -and $items.Count -gt 0) {
-                # Pick the first non-virtual active adapter
-                $target = $items | Where-Object { $_.Name -notmatch 'VirtualBox|VMware|Loopback|Wintun' } | Select-Object -First 1
+                # Strictly filter out VirtualBox, VMware, and virtual connections
+                $target = $items | Where-Object { $_.Name -notmatch 'VirtualBox|VMware|Loopback|Wintun|Ethernet 2' } | Select-Object -First 1
             }
             if ($target) {
                 $propVerb = $target.Verbs() | Where-Object { $_.Name -match 'Properties|Свойства|Vlastnosti|&Properties|&Свойства' } | Select-Object -First 1
@@ -1010,12 +1107,10 @@ $controls["BtnApply"].Add_Click({
     Wait-UI 200
 
     # 1. Apply DNS settings
+    $primary = Get-PrimaryActiveAdapter
     $appliedNics = Apply-DnsSettings $chosen
-    $nicSummary = "Network Adapter"
-    if ($appliedNics -and $appliedNics.Count -gt 0) {
-        $nicSummary = ($appliedNics | Select-Object -First 2) -join ", "
-        $script:ActiveAdapterName = $appliedNics[0]
-    }
+    $script:ActiveAdapterName = $primary.Alias
+    $nicSummary = "$($primary.Alias) ($($primary.Description))"
 
     $controls["TxtStep1"].Text = [string]::Format($l["Step1Done"], $nicSummary)
     $controls["TxtStep1"].Foreground = New-Brush "#34D399"

@@ -1,5 +1,12 @@
 # 📋 WORKLOG: GIN-DNS-Switch
 
+## [v012] — 2026-11-08
+- **Приоритетное наведение на физический Realtek адаптер (исключение VirtualBox Host-Only):**
+  - Добавлена функция `Get-PrimaryActiveAdapter`: определяет физический сетевой адаптер по маршруту шлюза по умолчанию (`0.0.0.0/0`) и флагу `Virtual = $false`.
+  - Из процедур `Apply-DnsSettings`, `Get-CurrentDnsState` и `Open-AdapterProperties` на 100% исключены виртуальные интерфейсы VirtualBox, VMware, Hyper-V и Loopback.
+  - Кнопка «⚙ Adapter Settings» открывает свойства именно физического адаптера (`Ethernet` / `Realtek USB GbE Family Controller`), а не виртуального `Ethernet 2` от VirtualBox.
+- **Сборка и доставка:** Инсталлятор `GIN-DNS-Switch_v012_Setup.exe` начисто собран на DE-222 и залит на Рабочий стол MEGA (`/MEGA/DOCS/desktop/GIN-DNS-Switch_v012_Setup.exe`).
+
 ## [v011] — 2026-11-08
 - **Корневое исправление повторного применения DNS (Re-enabling BtnApply):** Устранена блокировка кнопки «APPLY SETTINGS» после первого применения настроек.
   - При клике на кнопку «Adapter Settings» обратный отсчёт останавливается, окно свойств открывается, а кнопка Apply немедленно разблокируется (`IsEnabled = $true`).
