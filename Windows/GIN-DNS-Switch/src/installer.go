@@ -12,23 +12,9 @@ import (
 )
 
 var (
-	user32            = syscall.NewLazyDLL("user32.dll")
 	shell32           = syscall.NewLazyDLL("shell32.dll")
-	procMessageBoxW   = user32.NewProc("MessageBoxW")
 	procShellExecuteW = shell32.NewProc("ShellExecuteW")
 )
-
-const (
-	MB_OK       = 0x00000000
-	MB_ICONINFO = 0x00000040
-)
-
-func msgBox(title, text string, style uint) int {
-	tPtr, _ := syscall.UTF16PtrFromString(text)
-	cPtr, _ := syscall.UTF16PtrFromString(title)
-	r, _, _ := procMessageBoxW.Call(0, uintptr(unsafe.Pointer(tPtr)), uintptr(unsafe.Pointer(cPtr)), uintptr(style))
-	return int(r)
-}
 
 //go:embed GIN-DNS-Switch.cmd
 var embeddedCMD []byte
@@ -94,14 +80,6 @@ foreach ($sm in $smDirs) {
 }
 
 func main() {
-	isSilent := false
-	for _, arg := range os.Args[1:] {
-		a := strings.ToLower(arg)
-		if a == "/silent" || a == "-silent" || a == "--silent" || a == "/s" {
-			isSilent = true
-		}
-	}
-
 	if !isAdmin() {
 		runSelfAsAdmin()
 		return
