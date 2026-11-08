@@ -1,8 +1,9 @@
 {
   "project": "GIN-DNS-Switch",
-  "current_version": "v006",
+  "current_version": "v007",
   "updated_at": "2026-11-08",
   "active_versions": [
+    "GIN-DNS-Switch_v007.cmd",
     "GIN-DNS-Switch_v006.cmd",
     "GIN-DNS-Switch_v005.cmd",
     "GIN-DNS-Switch_v004.cmd",
@@ -119,6 +120,11 @@
     }
   ],
   "changelog": [
+    {
+      "version": "v007",
+      "date": "2026-11-08",
+      "changes": "Rollback to rock-solid stable v004 engine: triple-engine DNS application (WMI SetDNSServerSearchOrder + NetTCPIP + Netsh), clean WPF UI without ThreadPool issues, pure UTF-8 CRLF without BOM, 100% verified error-free execution."
+    },
     {
       "version": "v006",
       "date": "2026-11-08",
