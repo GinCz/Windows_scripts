@@ -249,7 +249,7 @@ CLEAN.cmd -Startup
 #### Key Features
 * **Zero Dependencies & Polyglot Runtime:** Single file `.cmd` executable with seamless embedded UTF-8 PowerShell runtime.
 * **Auto UAC Elevation:** Automatically triggers Windows UAC prompt with zero configuration.
-* **Multi-Language Interface:** English *(Default)*, Česky, Русский.
+* **Multi-Language Interface:** English *(Default)*, Czech, Russian.
 * **Minimalist High-Contrast UI:** Green `[ OK ]`, Yellow `[ NO ]` *(Warning)*, Red `[ NO ]` *(Critical)*.
 * **Automated Report Generation:** Automatically resolves the user's actual Desktop path (even if redirected to external drives or OneDrive) and exports `Security_Audit_Report.txt`.
 
@@ -330,7 +330,7 @@ See the full server-side setup in 👉 [GinCz/Linux_Server_Public](https://githu
 &nbsp;&nbsp;<b>|||</b>&nbsp;&nbsp;
 <a href="https://www.linkedin.com/in/gincz/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>
 &nbsp;&nbsp;<b>|||</b>&nbsp;&nbsp;
-<a href="https://uslugi.yandex.ru/profile/VladimirBulantsev-1756893" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Яндекс.Услуги-FC3F1D?style=flat&logo=yandex&logoColor=white" alt="Яндекс.Услуги" /></a>
+<a href="https://uslugi.yandex.ru/profile/VladimirBulantsev-1756893" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Yandex.Services-FC3F1D?style=flat&logo=yandex&logoColor=white" alt="Yandex.Services" /></a>
 
 <br/><br/>
 

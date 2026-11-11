@@ -21,7 +21,7 @@ A lightweight, production-ready network diagnostic microservice engineered for s
 │  City / Region:       Prague, Prague                   │
 │  ISP / Carrier:       INTERCONNECT s.r.o.              │
 ├────────────────────────────────────────────────────────┤
-│  SPEED TEST ×3              Сервер: Германия (NetCup)  │
+│  SPEED TEST ×3               Server: Germany (NetCup)  │
 │                                            [ Ready ]   │
 │  Test        Ping (ms)    Download (Mbps)  Upload (Mbps│
 │  #1             14              94.2           28.4    │
@@ -29,7 +29,7 @@ A lightweight, production-ready network diagnostic microservice engineered for s
 │  #3             13              95.8           28.9    │
 │  Average        13              95.4           28.8    │
 │                                                        │
-│  [ ⚡ Run Speed Test ×3 ]   [ 📋 Скопировать в буфер ] │
+│  [ ⚡ Run Speed Test ×3 ]    [ 📋 Copy to Clipboard ]  │
 ├────────────────────────────────────────────────────────┤
 │                     eco-seo.cz ↗                       │
 └────────────────────────────────────────────────────────┘
@@ -52,8 +52,8 @@ A lightweight, production-ready network diagnostic microservice engineered for s
 3. **Adaptive Multi-Node Architecture:**
    - Automatically detects active node and domain (eco-seo.cz vs prodvig-saita.ru).
    - Dynamically labels server location:
-     - DE-222: **Сервер: 🇩🇪 Германия (NetCup)**
-     - RU-109: **Сервер: 🇷🇺 Россия (Москва)**
+     - DE-222: **Server: 🇩🇪 Germany (NetCup)**
+     - RU-109: **Server: 🇷🇺 Russia (Moscow)**
    - Dynamic footer link leading back to the parent website (eco-seo.cz ↗ or prodvig-saita.ru ↗).
 
 4. **Robust 3x Speed Test (Speed Test ×3):**
@@ -74,8 +74,8 @@ A lightweight, production-ready network diagnostic microservice engineered for s
    - Formatted test report copying button:
      ``text
      🛡️ Gin IT — Speed Test ×3
-     📍 Сервер: 🇩🇪 Германия (NetCup)
-     🌐 185.100.197.0 (Чехия, Прага)
+     📍 Server: 🇩🇪 Germany (NetCup)
+     🌐 185.100.197.0 (Czechia, Prague)
      🏢 INTERCONNECT s.r.o.
      ⚡ 13 ms
      ⬇️ 95.4 Mbps

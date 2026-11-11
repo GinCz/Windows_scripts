@@ -1,53 +1,52 @@
 # 🛡️ Xray VPN Automated Installers & Tray Agent for Windows (7 / 10 / 11)
 
-> **Комплексные автоматизированные установщики и агент системного трея для Xray Core (VLESS + Reality + Vision) под Windows 7, Windows 10 и Windows 11.**  
-> *Разработчик / Автор сборки:* **Владимир Буланцев ([GinCz ↗](https://github.com/GinCz))**  
-> *Репозиторий:* [Windows_scripts ↗](https://github.com/GinCz/Windows_scripts) | *Путь:* `Windows/VPN/`  
-> *Теги:* `#XrayVPN #VLESS #Reality #Vision #WindowsVPN #SystemTray #PowerShell #Windows7 #Windows10 #Windows11 #RU109 #NetworkSecurity #GinCz`
+> **Complete automated deployment suite and dynamic system tray sentinel for Xray Core (VLESS + Reality + Vision) on Windows 7, Windows 10, and Windows 11.**  
+> *Author / Maintainer:* **Vladimir Bulantsev ([GinCz ↗](https://github.com/GinCz))**  
+> *Repository:* [Windows_scripts ↗](https://github.com/GinCz/Windows_scripts) | *Path:* `Windows/VPN/`  
+> *Tags:* `#XrayVPN #VLESS #Reality #Vision #WindowsVPN #SystemTray #PowerShell #Windows7 #Windows10 #Windows11 #NetworkSecurity #GinCz`
 
 ---
 
-## 📌 Состав репозитория и версий установщиков
+## 📌 Repository Contents & Installer Editions
 
-| Файл | Назначение и особенности |
+| File | Scope & Capabilities |
 | :--- | :--- |
-| 🌟 **[`XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` ↗](XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat)** | **Главная универсальная объединенная версия (ALL):** Интерактивное стартовое меню выбора ОС с установкой по умолчанию для Windows 10/11 (по нажатию `Enter`). Поддерживает Windows 7, 10, 11 в одном монолитном скрипте. |
-| 🚀 **[`XRAY-VPN_VladiMIR__Win10-11_109_&&&.bat` ↗](XRAY-VPN_VladiMIR__Win10-11_109_&&&.bat)** | Прямой установщик под ключ для **Windows 10 / 11** с загрузкой с российского мастер-сервера RU-109 (`prodvig-saita.ru`). |
-| 🚀 **[`XRAY-VPN_VladiMIR__Win7_&&&.bat` ↗](XRAY-VPN_VladiMIR__Win7_&&&.bat)** | Выделенный установщик для **Windows 7** (нативный HTTP-канал, совместимость с PowerShell 2.0 и .NET 3.5 без жестких требований к современным сертификатам TLS 1.3). |
-| 📖 **`README.md`** | Полная техническая документация, архитектура, форматы ключей и руководство пользователя. |
+| 🌟 **[`XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` ↗](XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat)** | **Master Universal Edition (ALL):** Interactive OS selector menu with 1-click Windows 10/11 default (press `Enter`). Supports Windows 7, 10, and 11 within a single monolithic script. |
+| 🚀 **[`XRAY-VPN_VladiMIR__Win10-11_109_&&&.bat` ↗](XRAY-VPN_VladiMIR__Win10-11_109_&&&.bat)** | Turnkey installer for **Windows 10 / 11** with fast downloads from dedicated master mirror servers. |
+| 🚀 **[`XRAY-VPN_VladiMIR__Win7_&&&.bat` ↗](XRAY-VPN_VladiMIR__Win7_&&&.bat)** | Dedicated installer for **Windows 7** (native HTTP fallback channel, fully compatible with PowerShell 2.0 and .NET 3.5 without strict TLS 1.3 certificate issues). |
+| 📖 **`README.md`** | Comprehensive architectural documentation, key formats, and user guide. |
 
 ---
 
-## 🏗️ Архитектура и сетевая инфраструктура (Российский мастер-сервер RU-109)
+## 🏗️ Architecture & Network Infrastructure
 
-Все компоненты установки загружаются напрямую с выделенного российского мастер-сервера **`RU-109`** (`212.109.223.109`, FastVDS Москва, [`prodvig-saita.ru/vpn/` ↗](http://prodvig-saita.ru/vpn/)):
+All installation assets can be provisioned through automated mirrors:
 
-1. **Бинарные ядра Xray Core:**
-   - 64-бит: `https://prodvig-saita.ru/vpn/xray64.exe` (35.6 МБ)
-   - 32-бит: `https://prodvig-saita.ru/vpn/xray32.exe` (33.9 МБ)
-   - ZIP-архивы: `win7_64.zip`, `win7_32.zip`
-2. **Сетевые сценарии развертывания:**
-   - Универсальный скрипт: `https://prodvig-saita.ru/vpn/install_109.ps1`
-   - Совместимый скрипт: `http://prodvig-saita.ru/vpn/install.ps1`
-3. **Безопасность и обход фильтрации ТСПУ:**
-   - Прямое размещение файлов внутри РФ гарантирует мгновенную скорость загрузки (~40–80 МБ/с) из Москвы и любых регионов России без блокировок зарубежных CDN/GitHub.
-   - Двойное зеркалирование: автоматический переход на HTTP при сбоях рукопожатия TLS на старых версиях ОС.
-
----
-
-## 🌟 Ключевые возможности и архитектура агента TrayVPN
-
-### 1. 🛡️ Векторная пиксельная иконка щита в системном трее (GDI+ 32-bit ARGB)
-Вместо устаревших или повреждённых 16-цветных `.ico`-файлов с артефактами и «разбитыми» полосами, иконка щита генерируется **динамически в оперативной памяти** средствами `System.Drawing`:
-* **Зелёный щит (`#00CD32`)** — VPN подключён, прокси активен, исходящий трафик защищён.
-* **Оранжевый щит (`#F09600`)** — процесс подключения, запуск ядра или опрос удалённого сервера.
-* **Красный щит (`#E11919`)** — ошибка подключения (неверный ключ, падение ядра, нет связи с сервером).
-* **Тонкая контрастная обводка (1 px)** — тёмная окантовка (`#0C1C0C`), гарантирующая идеальную читаемость как на светлой панели задач Windows 7, так и на тёмных темах Windows 10/11.
+1. **Xray Core Binaries:**
+   - 64-bit: `xray64.exe` (35.6 MB)
+   - 32-bit: `xray32.exe` (33.9 MB)
+   - ZIP archives: `win7_64.zip`, `win7_32.zip`
+2. **Automated Deployment Scripts:**
+   - Universal PowerShell deployment script with automatic system proxy configuration.
+3. **High-Speed Delivery & Anti-Blocking:**
+   - Mirror routing ensures fast download speeds (~40–80 MB/s) without CDN censorship or throttling.
+   - Dual-protocol fallback: automatic HTTP fallback when legacy OS TLS handshakes fail.
 
 ---
 
-### 2. 💬 Информативная всплывающая подсказка (Hover Tooltip)
-При наведении курсора мыши на иконку щита отображается компактное 3-строчное окно:
+## 🌟 Key Architecture & Features of TrayVPN Sentinel
+
+### 1. 🛡️ Dynamic Pixel Vector Shield Icon (GDI+ 32-bit ARGB)
+Instead of outdated 16-color static `.ico` files with visual artifacts, the shield icon is rendered **dynamically in memory** via `System.Drawing`:
+* **Green Shield (`#00CD32`)** — VPN connected, system proxy active, outbound traffic secured.
+* **Orange Shield (`#F09600`)** — Connecting, spawning core process, or polling remote endpoint.
+* **Red Shield (`#E11919`)** — Connection error (invalid key, core crash, or unreachable host).
+* **Crisp 1px Outline** — Dark border (`#0C1C0C`) ensuring crisp visibility on both light taskbars (Windows 7) and modern dark themes (Windows 10/11).
+
+---
+
+### 2. 💬 Multi-Line Hover Tooltip
+Hovering the mouse cursor over the shield tray icon displays real-time telemetry:
 
 ```text
 VPN: 195.63.138.33 (NL)
@@ -55,93 +54,79 @@ Orig: 185.100.197.0 (CZ)
 VladiMIR
 ```
 
-* **Строка 1 (`VPN`):** текущий внешний IP-адрес через туннель и двухбуквенный международный код страны выхода в скобках.
-* **Строка 2 (`Orig`):** исходный внешний IP-адрес вашего провайдера и код страны до подключения VPN (сохраняется при первом запуске).
-* **Строка 3:** имя пользователя (выделяется из тега конфигурации VLESS-ключа).
-* **Защита от сбоев Windows:** подсказка автоматически форматируется строго в пределах **63 символов** (жёсткий лимит Windows Shell / WinForms в Windows 7/10), исключая вылеты и аварийные завершения.
+* **Line 1 (`VPN`):** Active external IP through the tunnel and 2-letter ISO country code.
+* **Line 2 (`Orig`):** Native ISP external IP and country code prior to VPN connection.
+* **Line 3:** User / Profile identifier extracted from the VLESS configuration tag.
+* **Shell Overflow Protection:** Formatted strictly within **63 characters** (hard Windows Shell / WinForms limit on Windows 7/10) to prevent runtime tray crashes.
 
 ---
 
-### 3. 🔔 Всплывающие уведомления (Balloon Tips на английском языке)
-При успешном подключении или возникновении неисправности Windows выводит системное уведомление:
-* **При подключении:**
+### 3. 🔔 Native Balloon Notifications
+Instant toast notifications provide connection state feedback:
+* **On Connected:**
   ```text
   Xray VPN: Connected
   VPN: 195.63.138.33 (NL)
   Orig: 185.100.197.0 (CZ)
   Profile: 4er-33-VladiMIR
   ```
-* **При сбое конфигурации:**
-  *Заголовок:* `Xray VPN: Configuration Error`  
-  *Текст:* `No valid VLESS key found in link.txt. Right-click tray icon to edit key.`
-* **При таймауте / отсутствии связи с сервером:**
-  *Заголовок:* `Xray VPN: Timeout`  
-  *Текст:* `Could not connect to server 4er-33-VladiMIR. Check network or key.`
-* **При падении процесса ядра:**
-  *Заголовок:* `Xray VPN: Stopped`  
-  *Текст:* `Xray process stopped. Right-click to view log or restart.`
+* **On Configuration Error:**
+  *Title:* `Xray VPN: Configuration Error`  
+  *Text:* `No valid VLESS key found in link.txt. Right-click tray icon to edit key.`
+* **On Timeout:**
+  *Title:* `Xray VPN: Timeout`  
+  *Text:* `Could not connect to server. Check network or key.`
+* **On Core Crash:**
+  *Title:* `Xray VPN: Stopped`  
+  *Text:* `Xray process stopped. Right-click to view log or restart.`
 
 ---
 
-### 4. 🖱️ Интерактивное контекстное меню (ПКМ по трею)
-При нажатии правой кнопкой мыши по щиту доступно удобное управление:
+### 4. 🖱️ Context Menu (Right-Click Tray)
 
 ```text
 ┌──────────────────────────────────────┐
-│  VPN: 195.63.138.33 (NL)             │  (Информационный статус)
-│  ID: 4er-33-VladiMIR                 │  (Имя сервера и пользователя)
+│  VPN: 195.63.138.33 (NL)             │  (Connection status)
+│  ID: 4er-33-VladiMIR                 │  (Server & profile name)
 ├──────────────────────────────────────┤
-│  📝 Edit VLESS Key (link.txt)        │  (Быстрое открытие ключа в Notepad)
-│  📋 View Log (vpn.log)               │  (Просмотр журнала диагностики)
-│  🔄 Restart VPN                      │  (Мгновенный перезапуск службы)
+│  📝 Edit VLESS Key (link.txt)        │  (Open key config in Notepad)
+│  📋 View Log (vpn.log)               │  (Inspect diagnostic log)
+│  🔄 Restart VPN                      │  (Instant service restart)
 ├──────────────────────────────────────┤
-│  ❌ Disconnect && Exit               │  (Сброс прокси и отключение)
+│  ❌ Disconnect && Exit               │  (Reset system proxy & terminate)
 └──────────────────────────────────────┘
 ```
 
 ---
 
-### 5. ⏱️ Автономный установщик с автозакрытием
-* **Автоматическое повышение привилегий (UAC):** скрипт сам запрашивает права администратора при запуске (`fltmc`).
-* **Очистка прокси:** перед установкой сбрасываются зависшие настройки WinHTTP и системного прокси.
-* **Интерактивное меню выбора:** выбор между Windows 10/11 и Windows 7 (Enter = по умолчанию Windows 10/11).
-* **Автоматическая установка:** загрузка ядра `xray.exe`, генерация скриптов `Start_VPN`, `Stop_VPN`, `TrayVPN` и ярлыков в папке `C:\XRAY_VPN\`.
-* **Умный 15-секундный таймер:** по окончании установки консоль ведёт обратный отсчёт и закрывается сама через 15 секунд (или сразу по нажатию любой клавиши).
+### 5. ⏱️ Automated Installer with Auto-Close
+* **Automatic UAC Elevation:** Requests administrator privileges via `fltmc`.
+* **Proxy Sanitization:** Cleans stale WinHTTP and system proxy settings before installation.
+* **OS Selection:** Interactive menu (Windows 10/11 vs Windows 7; Enter = default Windows 10/11).
+* **Automated Setup:** Deploys `xray.exe`, generates `Start_VPN`, `Stop_VPN`, and `TrayVPN` shortcuts in `C:\XRAY_VPN\`.
+* **Auto-Close Countdown:** 15-second countdown timer closes terminal automatically upon success.
 
 ---
 
-## 🚀 Инструкция по установке и запуску
+## 🚀 Installation & Quick Start
 
-1. Запустите универсальный файл **`XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat`** (или соответствующую версию):
-   - При запросе подтвердите выбор ОС (нажмите `Enter` для Windows 10/11 или `2` для Windows 7).
-2. Дождитесь окончания автоматической загрузки и настройки (3–5 секунд).
-3. В открывшийся Блокнот (`C:\XRAY_VPN\link.txt`) вставьте ваш VLESS-ключ и сохраните файл (`Ctrl+S`):
+1. Run **`XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat`** (or the OS-specific installer):
+   - Confirm OS selection (`Enter` for Windows 10/11, or `2` for Windows 7).
+2. Wait for automatic setup to complete (3–5 seconds).
+3. In the opened Notepad window (`C:\XRAY_VPN\link.txt`), paste your VLESS reality key and save (`Ctrl+S`):
    ```text
    vless://uuid@server-ip:443?security=reality&...#server-name-username
    ```
-4. Запустите ярлык **`Start_VPN`** в папке `C:\XRAY_VPN\`.
-5. В системном трее появится **зелёный щит**: наведите мышь, чтобы увидеть ваши IP-адреса и страну.
-6. Для проверки перейдите по ярлыку **`Check_IP`** ([`http://prodvig-saita.ru/ip/` ↗](http://prodvig-saita.ru/ip/)).
+4. Launch the **`Start_VPN`** shortcut in `C:\XRAY_VPN\`.
+5. The **green shield** appears in the system tray: hover to view active IP and country.
 
 ---
 
-## 🔧 Технические требования
-* **Операционная система:** Windows 7 SP1, Windows 8.1, Windows 10, Windows 11 (x64 / x86).
-* **Среда выполнения:** PowerShell 2.0+ (встроен в Windows 7 по умолчанию), .NET Framework 3.5+.
-* **Подключение к сети:** протоколы HTTP/HTTPS для валидации геолокации (`ip-api.com` и `prodvig-saita.ru/ip/`).
+## 🔧 Technical Requirements
+* **Operating System:** Windows 7 SP1, Windows 8.1, Windows 10, Windows 11 (x64 / x86).
+* **Runtime:** PowerShell 2.0+ (built-in Windows 7+), .NET Framework 3.5+.
+* **Network:** HTTP/HTTPS protocols for IP telemetry validation.
 
 ---
 
-*Разработано для единой инфраструктуры [GinCz Infrastructure ↗](https://github.com/GinCz).*
-
----
-
-# ⚡ ЖЕЛЕЗНЫЙ ЗАКОН ДОСТАВКИ: ТОЛЬКО НА РАБОЧИЙ СТОЛ ВЛАДИМИРА (D:\MEGA\DOCS\desktop)
-
-> **КАТЕГОРИЧЕСКИЙ ЗАПРЕТ СТОРОННИХ ПАПОК И СЕРВЕРА DE-222:**
-> Все без исключения новые приложения, утилиты, скрипты (CMD, BAT, PS1), таблицы Excel, файлы и скомпилированные релизы для Windows **ОБЯЗАНЫ АВТОНОМНО И БЕЗ НАПОМИНАНИЙ ЗАПИСЫВАТЬСЯ ТОЛЬКО НА РАБОЧИЙ СТОЛ ВЛАДИМИРА**:
-> - **Локальный путь на компьютере Владимира:** `D:\MEGA\DOCS\desktop`
-> - **Облачный путь синхронизации в MEGA:** `/MEGA/DOCS/desktop/`
-> - **Команда загрузки с сервера DE-222:** `mega-put -c "<file_path>" "/MEGA/DOCS/desktop/"`
->
-> 🛑 **СТРОГИЙ ЗАПРЕТ:** Запрещено оставлять созданные или обновленные файлы только локально на сервере, только в git-репозитории или на сетевых дисках. Любой релизный файл Windows (.cmd, .bat, .exe, .xlsx, .zip) сразу после создания ДОЛЖЕН лежать в `/MEGA/DOCS/desktop/`!
+*Maintained under [GinCz Infrastructure ↗](https://github.com/GinCz).*
