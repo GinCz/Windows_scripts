@@ -1,17 +1,29 @@
-# 🔒 GIN-Win-Optimizer — Master Repository
+﻿# 🔒 GIN-Win-Optimizer — Master Repository
 
 > **Private Repository:** [Secret_Privat / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer)  
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
 > **Target OS:** Windows 7 / 8 / 8.1 / 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions)  
-> **Current Version:** `v045` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v045.cmd` and `GIN-Win-Optimizer_v044.cmd`).
+> **Current Version:** `v047` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v047.cmd` and `GIN-Win-Optimizer_v046.cmd`).
 
 ---
 
-## 🚀 GIN-Win-Optimizer v045: Unified Standalone CMD Architecture & Silent UAC Hardening
+## 🚀 GIN-Win-Optimizer v047: OEM & Driver Bloatware Purge (Lenovo, Intel Graphics, Conexant Audio)
 
-Version `v045` establishes the single-standard CMD format (EXE removed per Vladimir directive for maximum sysadmin portability and antivirus immunity):
+Version 047 introduces specialized hardware and OEM bloatware purge modules to optimize office workstations and remove parasitic driver services:
+- **Lenovo ImController & System Interface Foundation Purge**: Auto-detects manufacturer; if non-Lenovo, unregisters and deletes ImControllerService and purges C:\Windows\Lenovo; on native Lenovo devices, disables background services and scheduled tasks.
+- **Intel Graphics Context Menu & Rotation Hotkeys Removal**: Strips igfxDTCM, igfxCUI context menu clutter, disables accidental screen rotation hotkeys (Ctrl+Alt+Arrows) and system tray icon.
+- **Intel HD Graphics Background Services Disabling**: Stops and disables igfxCUIService, LMS, cphs, jhi_service, and cleans autorun registry keys.
+- **Conexant Audio Background Services Disabling**: Stops and disables all Cx* services (CxAudioSvc, CxUIUSvc, CxUtilSvc), completely eliminating high CPU usage and handle leaks while preserving standard Windows audio.
+- **114 Active Optimization Modules**: Fully localized across English, Czech, and Russian.
+
+## 🚀 GIN-Win-Optimizer v046: Unified Standalone CMD Architecture, Visual Highlighting & Silent UAC
+
+Version `v046` upgrades the terminal log console and status elements with vibrant visual highlighting:
+- **Terminal Log Completion Highlighting**: Upgraded the log area to a high-performance WPF RichTextBox with zero-margin paragraph styling, formatting the final completion banner in bold, vibrant yellow/gold (`#facc15`) for immediate visual feedback.
+- **Status Bar Highlight**: Bottom status bar text dynamically highlights in bold yellow upon successful completion of all optimization tasks.
+- **Full Compatibility Layer**: Implemented backward-compatible dynamic `.Text` property and bulletproof Clear/Copy/Export handlers.
 - **Universal Single-Standard CMD**: Standalone hybrid script running natively across Windows 7 SP1, 8, 8.1, 10, and 11 on both 32-bit (x86) and 64-bit (x64) architectures.
 - **100% Antivirus & SmartScreen Immunity**: Zero binary blocks, zero quarantine risk, zero compiler dependencies. Can be transferred via AnyDesk, RDP, Telegram, USB flash drives, or network shares without triggering "Unknown Publisher" security blocks.
 - **Robust Auto-Elevation (`RunAs`)**: Checks administrative privileges natively via `net session >nul 2>&1`. Automatically re-elevates if launched by regular double-click, staging to local `%TEMP%` when running from UNC network shares (`\\server\share`).
@@ -20,7 +32,7 @@ Version `v045` establishes the single-standard CMD format (EXE removed per Vladi
 
 ---
 
-## 🛠️ Core Functional Modules (v045)
+## 🛠️ Core Functional Modules (v046)
 
 ### 1. Security & UAC Hardening
 - **Slider to Minimum (Never Notify)**: Pre-configures `ConsentPromptBehaviorAdmin = 0`, `PromptOnSecureDesktop = 0`, and `FilterAdministratorToken = 0`.
@@ -51,11 +63,11 @@ Version `v045` establishes the single-standard CMD format (EXE removed per Vladi
 
 | Environment / Medium | Path | Target Version | Retention Policy |
 | :--- | :--- | :---: | :---: |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v045.cmd` | v045 | Latest 2 versions |
-| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v045.cmd` | v045 | Latest 2 versions |
-| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS\GIN-Win-Optimizer_v045.cmd` | v045 | Latest 2 versions |
-| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v045 | Full Git history |
-| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v045 | Full Git history |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v046.cmd` | v046 | Latest 2 versions |
+| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v046.cmd` | v046 | Latest 2 versions |
+| ☁️ **MEGA Cloud Remote** | `/MEGA/WIN-FLASH/Util-WINDOWS\GIN-Win-Optimizer_v046.cmd` | v046 | Latest 2 versions |
+| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v046 | Full Git history |
+| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v046 | Full Git history |
 
 
 ---

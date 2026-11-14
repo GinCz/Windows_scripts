@@ -1,8 +1,41 @@
-# 📜 GIN-Win-Optimizer — Release History & Changelog
+﻿# 📜 GIN-Win-Optimizer — Release History & Changelog
 
 All notable changes to the **GIN-Win-Optimizer** project are documented in this file.
 
 ---
+
+## [v047] - 2026-11-14
+- **OEM & Driver Bloatware Purge (Lenovo, Intel Graphics, Conexant Audio)**:
+  - **Lenovo System Interface Foundation & ImController Purge (chk_srv_oem_lenovo)**:
+    - Automatic hardware manufacturer detection (Win32_ComputerSystem.Manufacturer).
+    - If non-Lenovo system (e.g. system cloned or image restored on third-party hardware): terminates all Lenovo processes (Lenovo.Modern.ImController*, ClientBrokerAgent*), completely removes registered services (ImControllerService, LenovoVantageService) via sc.exe delete, unregisters scheduled tasks (\Lenovo\*), and purges directories (C:\Windows\Lenovo, C:\ProgramData\Lenovo).
+    - If native Lenovo device: stops and disables background services and scheduled tasks to prevent persistent RAM/CPU drain when Vantage is not used.
+  - **Intel Graphics Desktop Context Menu & Screen Rotation Hotkeys (chk_ctx_intel_graphics)**:
+    - Purged shell extensions from Desktop right-click context menu: igfxDTCM, igfxCUI, igfxcui (removes slow 'Graphics Properties...' and 'Graphics Options' submenus).
+    - Enforced registry policies to disable display rotation hotkeys (Ctrl+Alt+Arrows, Ctrl+Alt+F12) and system tray icon.
+    - Added Intel context menu handler removal to generic chk_ctx_cleanup_bloat as well.
+  - **Intel HD Graphics Background Services & Tray / Hotkey Modules (chk_srv_intel_graphics)**:
+    - Terminated helper processes: igfxCUIService.exe, igfxEM.exe, igfxHK.exe, igfxTray.exe, hkcmd.exe, igfxpers.exe.
+    - Stopped and set startup type to Disabled (Start=4) for background services: igfxCUIService1.0.0.0, igfxCUIService, LMS, cphs, jhi_service, ESRV_SVC_QUEENCREEK.
+    - Cleaned autorun Run keys in HKLM and HKCU to prevent relaunch on reboot.
+  - **Conexant / Synaptics Audio Background Services Purge (chk_srv_conexant_audio)**:
+    - Targeted high CPU usage and memory leaks from Conexant audio helpers.
+    - Automatically discovers and disables all services starting with Cx* (CxAudioSvc, CxUIUSvc, CxUtilSvc, CxHSSvc).
+    - Terminates running helper processes (CxUIU32, CxUIU64, CxAudS64, CxUtil64), offloading CPU while preserving full Windows audio playback/recording via Audiosrv.
+  - **UI & Modules Expansion**:
+    - Expanded total active optimization modules to 114 in WPF UI and localization dictionaries (EN, CS, RU).
+    - Preserved 2 latest versions (GIN-Win-Optimizer_v047.cmd and GIN-Win-Optimizer_v046.cmd), purged deprecated 045.
+    - Delivered release GIN-Win-Optimizer_v047.cmd directly to Vladimir's Desktop (D:\MEGA\DOCS\desktop).
+## [v046] - 2026-11-05
+- **Visual Highlight for Completion Banner & Status Bar**:
+  - Upgraded terminal log control `txtConsoleLog` from `TextBox` to high-performance WPF `RichTextBox` with zero-margin paragraph styling (`FlowDocument PagePadding="0"`).
+  - Formatted the final completion banner (`>>> [ГОТОВО] ВСЕ ОПЕРАЦИИ ОПТИМИЗАЦИИ УСПЕШНО ЗАВЕРШЕНЫ! <<<`, task count, reboot recommendation) in bold, vibrant yellow/gold (`#facc15`), making it prominently visible against the dark console background.
+  - Dynamically highlighted the bottom status bar (`txtStatus`) in bold yellow (`#facc15`) upon completion across all languages (RU, EN, CS).
+  - Implemented dynamic `.Text` ScriptProperty adapter on `$txtConsoleLog` to maintain complete backward compatibility for text access and modifications.
+  - Updated `Clear Log`, `Copy Log`, and `Export Log` actions to seamlessly handle `RichTextBox` document blocks without errors.
+  - Reset `$txtStatus` foreground to neutral gray (`#949ba4`) and normal weight upon starting new optimization runs.
+  - Retention policy: strictly 2 latest versions (`GIN-Win-Optimizer_v046.cmd` and `GIN-Win-Optimizer_v045.cmd`), purged `v044.cmd`.
+  - Delivered `GIN-Win-Optimizer_v046.cmd` directly to Vladimir's Desktop (`D:\MEGA\DOCS\desktop`).
 
 ## [v045] - 2026-11-05
 - **Comprehensive Total Zero-UAC Enforcement (EnableLUA=0, Slider to Zero)**:

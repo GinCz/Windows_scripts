@@ -1,6 +1,48 @@
-# 📜 GIN-Win-Optimizer — Журнал разработки и архитектурный WORKLOG
+﻿# 📜 GIN-Win-Optimizer — Журнал разработки и архитектурный WORKLOG
 
 ---
+
+## 2026-11-14 — Release v047 (OEM & Driver Bloatware Purge: Lenovo, Intel Graphics, Conexant Audio)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from 046 to 047.
+- **Lenovo System Interface Foundation & ImController Purge (chk_srv_oem_lenovo)**:
+  - Implemented automatic hardware manufacturer detection via Win32_ComputerSystem.Manufacturer.
+  - For non-Lenovo PCs (e.g. cloned system, universal restore): terminates all Lenovo processes (Lenovo.Modern.ImController*, ClientBrokerAgent*), unregisters and deletes services (ImControllerService, LenovoVantageService) via sc.exe delete, unregisters scheduled tasks (\Lenovo\*), and removes folders C:\Windows\Lenovo, C:\ProgramData\Lenovo.
+  - For native Lenovo PCs/laptops: disables background services and scheduled tasks to prevent RAM/CPU waste while keeping manual driver control intact.
+- **Intel Graphics Context Menu & Screen Rotation Hotkeys (chk_ctx_intel_graphics)**:
+  - Purged Desktop context menu shell extensions: igfxDTCM, igfxCUI, igfxcui from Directory\Background\shellex\ContextMenuHandlers.
+  - Enforced registry policies to disable display rotation hotkeys (Ctrl+Alt+Arrows, Ctrl+Alt+F12) and system tray icon.
+  - Also embedded Intel context menu cleanup into standard chk_ctx_cleanup_bloat.
+- **Intel HD Graphics Background Services & Helper Modules (chk_srv_intel_graphics)**:
+  - Terminated helper processes: igfxCUIService.exe, igfxEM.exe, igfxHK.exe, igfxTray.exe, hkcmd.exe, igfxpers.exe.
+  - Stopped and disabled background services: igfxCUIService1.0.0.0, igfxCUIService, LMS, cphs, jhi_service, ESRV_SVC_QUEENCREEK, IntelAudioService.
+  - Cleaned Registry Run autorun entries in HKLM and HKCU.
+- **Conexant / Synaptics Audio Background Services Purge (chk_srv_conexant_audio)**:
+  - Addressed chronic CPU hogging and handle leaks from Conexant audio background services.
+  - Automatically identifies and stops/disables all services matching Cx* (CxAudioSvc, CxUIUSvc, CxUtilSvc, CxHSSvc).
+  - Kills helper processes (CxUIU32, CxUIU64, CxAudS64, CxUtil64), freeing CPU while maintaining flawless Windows audio output via Audiosrv.
+- **UI Expansion & Multilingual Localization**:
+  - Updated WPF XAML UI to 114 optimization modules with native CheckBox controls.
+  - Added full multilingual translations in English, Czech, and Russian.
+  - Verified 100% token and AST balance in engine.ps1 and GIN-Win-Optimizer_v047.cmd.
+- **Retention & Desktop Delivery**:
+  - Preserved strictly 2 latest versions: GIN-Win-Optimizer_v047.cmd and GIN-Win-Optimizer_v046.cmd.
+  - Purged obsolete GIN-Win-Optimizer_v045.cmd.
+  - Delivered GIN-Win-Optimizer_v047.cmd to D:\MEGA\DOCS\desktop and D:\MEGA\WIN-FLASH\Util-WINDOWS\.
+## 2026-11-05 — Release v046 (Terminal Completion Banner & Status Bar Yellow Highlighting)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v045` to `v046`.
+- **Completion Banner Yellow Highlighting Request**:
+  - User requested: Highlight the final completion banner (tasks finished count, reboot advice) in yellow color.
+  - Upgraded terminal log control `txtConsoleLog` in XAML from basic `TextBox` to WPF `RichTextBox` with embedded `FlowDocument` and zero-margin `Paragraph` styles (`PagePadding="0"`, `Margin="0"`).
+  - Formatted the final banner text (`>>> [ГОТОВО] ВСЕ ОПЕРАЦИИ ОПТИМИЗАЦИИ УСПЕШНО ЗАВЕРШЕНЫ! <<<`) in bold vibrant yellow (`#facc15`).
+  - Dynamically styled the bottom status bar (`txtStatus`) in bold yellow (`#facc15`) on completion.
+  - Preserved standard log line green color (`#6ee7b7`) for all step-by-step optimization logs.
+  - Added backward-compatible dynamic `.Text` ScriptProperty adapter on `$txtConsoleLog`.
+  - Updated `Clear Log`, `Copy Log`, and `Export Log` click handlers for seamless document block extraction.
+  - Verified 100% bracket and token balance in both `engine.ps1` and standalone `GIN-Win-Optimizer_v046.cmd`.
+- **Retention & Desktop Delivery**:
+  - Kept strictly 2 latest versions: `GIN-Win-Optimizer_v046.cmd` and `GIN-Win-Optimizer_v045.cmd`.
+  - Removed outdated `GIN-Win-Optimizer_v044.cmd`.
+  - Uploaded `GIN-Win-Optimizer_v046.cmd` to Vladimir's Desktop via `mega-put` into `/MEGA/DOCS/desktop/`.
 
 ## 2026-11-05 — Release v045 (Total Zero-UAC Enforcement & Registry Hardening)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from `v044` to `v045`.

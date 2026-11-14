@@ -1,32 +1,37 @@
-{
-  "project": "GIN-Win-Optimizer",
-  "current_version": "v045",
-  "updated_at": "2026-11-05",
-  "active_versions": [
-    "GIN-Win-Optimizer_v045.cmd",
-    "GIN-Win-Optimizer_v044.cmd"
-  ],
-  "sync_targets": {
-    "github_privat": "Windows/GIN-Win-Optimizer/",
-    "github_public": "Windows/GIN-Win-Optimizer/",
-    "mega_cloud": "WIN-FLASH/Util-WINDOWS/",
-    "desktop_copy": true
-  },
-  "changelog": [
-    {
-      "version": "v045",
-      "date": "2026-11-05",
-      "changes": "Comprehensive Total Zero-UAC Enforcement: 1) Hardcoded immediate reg add at CMD launcher elevation to disable UAC permanently in registry (EnableLUA=0, ConsentPromptBehaviorAdmin=0, ConsentPromptBehaviorUser=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0, EnableInstallerDetection=0, ValidateAdminCodeSignatures=0); 2) Updated taskMap['chk_sec_uac_quiet'] to enforce EnableLUA=0 and all zero-prompt keys on optimization; 3) Replaced destructive New-Item -Force on Policies\\System with safe non-destructive checks; 4) Updated EN/RU/CS localization to 'Total Zero-UAC (EnableLUA=0)'; 5) Synced directly to D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v045.cmd."
-    },
-    {
-      "version": "v044",
-      "date": "2026-11-05",
-      "changes": "Critical CMD Launcher Header Restoration: Fixed corrupted cmd polyglot header that contained stray duplicate comment closers and escaped variables preventing execution on Windows 10; completely purged accidental batch header remnants from pure PowerShell engine.ps1; verified clean execution via both non-elevated double-click auto-elevation and direct 'Run as Administrator'; synchronized to D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v044.cmd."
-    },
-    {
-      "version": "v043",
-      "date": "2026-11-05",
-      "changes": "Critical Syntax Bug Fix & Engine Hardening: Fixed fatal PowerShell ParseException at line 1419 character 16 caused by an extra closing parenthesis in the XAML base64 join statement (') -join ''))' -> ') -join '')'); verified 100% clean abstract syntax tree and balanced brackets across entire engine; updated internal XAML headers to v043."
-    }
-  ]
+﻿{
+    "project":  "GIN-Win-Optimizer",
+    "current_version":  "v047",
+    "updated_at":  "2026-11-14",
+    "active_versions":  [
+                            "GIN-Win-Optimizer_v047.cmd",
+                            "GIN-Win-Optimizer_v046.cmd"
+                        ],
+    "sync_targets":  {
+                         "github_privat":  "Windows/GIN-Win-Optimizer/",
+                         "github_public":  "Windows/GIN-Win-Optimizer/",
+                         "mega_cloud":  "WIN-FLASH/Util-WINDOWS/",
+                         "desktop_copy":  true
+                     },
+    "changelog":  [
+                      {
+                          "version":  "v047",
+                          "date":  "2026-11-14",
+                          "changes":  "OEM \u0026 Driver Bloatware Purge: 1) Added chk_ctx_intel_graphics to remove Intel Graphics context menu handlers (igfxDTCM, igfxCUI), disable rotation hotkeys (Ctrl+Alt+Arrows) and tray icon; 2) Added chk_srv_oem_lenovo to detect non-Lenovo hardware and completely delete Lenovo ImController bloat, services (ImControllerService), and C:\\Windows\\Lenovo folder (or disable background drain on Lenovo devices); 3) Added chk_srv_intel_graphics to disable igfxCUIService, LMS, and background modules; 4) Added chk_srv_conexant_audio to stop and disable all Cx* audio services (CxAudioSvc, CxUIUSvc, CxUtilSvc) eliminating CPU load; 5) Total optimization modules expanded to 114; delivered GIN-Win-Optimizer_v047.cmd to D:\\MEGA\\DOCS\\desktop."
+                      },
+                      {
+                          "version":  "v046",
+                          "date":  "2026-11-05",
+                          "changes":  "Console Log Terminal \u0026 Status Completion Highlighting: Upgraded txtConsoleLog to RichTextBox with zero-margin FlowDocument styling; applied vibrant bold yellow/gold (#facc15) highlight to completion banner (\u0027Р’РЎР• РћРџР•Р РђР¦РР РћРџРўРРњРР—РђР¦РР РЈРЎРџР•РЁРќРћ Р—РђР’Р•Р РЁР•РќР«!\u0027) and bottom status bar (txtStatus); added backwards-compatible dynamic .Text ScriptProperty and safe methods for Clear, Copy, and Export; delivered GIN-Win-Optimizer_v046.cmd to D:\\MEGA\\DOCS\\desktop."
+                      },
+                      {
+                          "version":  "v045",
+                          "date":  "2026-11-05",
+                          "changes":  "Comprehensive Total Zero-UAC Enforcement: 1) Hardcoded immediate reg add at CMD launcher elevation to disable UAC permanently in registry (EnableLUA=0, ConsentPromptBehaviorAdmin=0, ConsentPromptBehaviorUser=0, PromptOnSecureDesktop=0, FilterAdministratorToken=0, EnableInstallerDetection=0, ValidateAdminCodeSignatures=0); 2) Updated taskMap[\u0027chk_sec_uac_quiet\u0027] to enforce EnableLUA=0 and all zero-prompt keys on optimization; 3) Replaced destructive New-Item -Force on Policies\\System with safe non-destructive checks; 4) Updated EN/RU/CS localization to \u0027Total Zero-UAC (EnableLUA=0)\u0027; 5) Synced directly to D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v045.cmd."
+                      },
+                      {
+                          "version":  "v044",
+                          "date":  "2026-11-05",
+                          "changes":  "Critical CMD Launcher Header Restoration: Fixed corrupted cmd polyglot header that contained stray duplicate comment closers and escaped variables preventing execution on Windows 10; completely purged accidental batch header remnants from pure PowerShell engine.ps1; verified clean execution via both non-elevated double-click auto-elevation and direct \u0027Run as Administrator\u0027; synchronized to D:\\MEGA\\DOCS\\desktop\\GIN-Win-Optimizer_v044.cmd."
+                      }
+                  ]
 }
