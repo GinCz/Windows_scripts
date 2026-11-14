@@ -4,6 +4,15 @@ All notable changes to the **GIN-Win-Optimizer** project are documented in this 
 
 ---
 
+## [v048] - 2026-11-14
+- **Windows Defender High-Performance Exclusions (chk_sec_defender_exclusions)**:
+  - Integrated high-performance Defender path and process exclusions module into grpSecurity (Security & UAC Tweaks).
+  - **Network Shares (SMB/UNC)**: Exempted \\s.gincz.com\soft, \\s.gincz.com\user, \\s.gincz.com\Storage, \\p.gincz.com\soft, \\152.53.182.222\soft, \\152.53.182.222\storage from real-time network scanning, completely eliminating 10–30s Explorer hangs and network copy delays over VPN/WAN.
+  - **Local Admin & Dev Workspaces**: Exempted D:\UTIL, C:\UTIL, D:\AI (Git repos, Python environments, models), D:\MEGA (cloud sync repository), C:\GIN-Agent, C:\GIN-Agent-PC.
+  - **Process Exclusions**: Added git.exe (3–5x faster Git repo operations) and MEGAsync.exe (eliminates 20–50% CPU spikes from MsMpEng.exe during background synchronization).
+  - Expanded total active optimization modules to 115 across English, Czech, and Russian.
+  - Retention policy: strictly 2 latest versions (GIN-Win-Optimizer_v048.cmd and GIN-Win-Optimizer_v047.cmd), purged 046.cmd.
+  - Delivered GIN-Win-Optimizer_v048.cmd directly to Vladimir's Desktop (D:\MEGA\DOCS\desktop).
 ## [v047] - 2026-11-14
 - **OEM & Driver Bloatware Purge (Lenovo, Intel Graphics, Conexant Audio)**:
   - **Lenovo System Interface Foundation & ImController Purge (chk_srv_oem_lenovo)**:

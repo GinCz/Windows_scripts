@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-11-14 — Release v048 (Windows Defender High-Performance Exclusions: Network Shares, Admin/Dev Workspaces & Processes)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from 047 to 048.
+- **Windows Defender Performance Exclusions (chk_sec_defender_exclusions)**:
+  - Implemented automatic configuration of high-impact Defender path exclusions via Add-MpPreference -ExclusionPath:
+    - Network shares: \\s.gincz.com\soft, \\s.gincz.com\user, \\s.gincz.com\Storage, \\p.gincz.com\soft, \\152.53.182.222\soft, \\152.53.182.222\storage.
+    - Local directories: D:\UTIL, C:\UTIL, D:\AI, D:\MEGA, C:\GIN-Agent, C:\GIN-Agent-PC.
+  - Implemented high-I/O process exclusions via Add-MpPreference -ExclusionProcess:
+    - git.exe (drastically reduces file lock overhead on commits/checkouts).
+    - MEGAsync.exe (stops real-time scanning of background sync operations, eliminating MsMpEng CPU thrashing).
+- **Module Count Expansion**:
+  - Added new CheckBox to grpSecurity in XAML and full multilingual translations in EN, CS, RU.
+  - Active optimization modules count expanded to 115.
+- **Retention & Desktop Delivery**:
+  - Retained strictly 2 latest versions: GIN-Win-Optimizer_v048.cmd and GIN-Win-Optimizer_v047.cmd.
+  - Purged deprecated GIN-Win-Optimizer_v046.cmd.
+  - Delivered GIN-Win-Optimizer_v048.cmd to D:\MEGA\DOCS\desktop and D:\MEGA\WIN-FLASH\Util-WINDOWS\.
 ## 2026-11-14 — Release v047 (OEM & Driver Bloatware Purge: Lenovo, Intel Graphics, Conexant Audio)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from 046 to 047.
 - **Lenovo System Interface Foundation & ImController Purge (chk_srv_oem_lenovo)**:

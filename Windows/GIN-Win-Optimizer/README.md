@@ -4,11 +4,18 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Author / Architect:** Владимир Буланцев ([GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
 > **Target OS:** Windows 7 / 8 / 8.1 / 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions)  
-> **Current Version:** `v047` (Active)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v047.cmd` and `GIN-Win-Optimizer_v046.cmd`).
+> **Current Version:** `v048` (Active)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v048.cmd` and `GIN-Win-Optimizer_v047.cmd`).
 
 ---
 
+## 🚀 GIN-Win-Optimizer v048: Windows Defender High-Performance Exclusions
+
+Version 048 integrates comprehensive Windows Defender antivirus performance exclusions:
+- **Network SMB/UNC Shares**: Automatically exempts \\s.gincz.com\soft, \\s.gincz.com\user, \\s.gincz.com\Storage, \\p.gincz.com\soft, \\152.53.182.222\soft, \\152.53.182.222\storage, preventing 10–30s Explorer hangs on network file browsing.
+- **Local Workspaces**: Exempts D:\UTIL, C:\UTIL, D:\AI (Git repos, Python venvs), D:\MEGA (cloud sync), C:\GIN-Agent.
+- **Process Exclusions**: Exempts git.exe and MEGAsync.exe, eliminating CPU thrashing from MsMpEng.exe.
+- **115 Active Optimization Modules**: Fully localized across English, Czech, and Russian.
 ## 🚀 GIN-Win-Optimizer v047: OEM & Driver Bloatware Purge (Lenovo, Intel Graphics, Conexant Audio)
 
 Version 047 introduces specialized hardware and OEM bloatware purge modules to optimize office workstations and remove parasitic driver services:

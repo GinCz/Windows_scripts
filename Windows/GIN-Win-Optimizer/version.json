@@ -1,10 +1,10 @@
 ﻿{
     "project":  "GIN-Win-Optimizer",
-    "current_version":  "v047",
+    "current_version":  "v048",
     "updated_at":  "2026-11-14",
     "active_versions":  [
-                            "GIN-Win-Optimizer_v047.cmd",
-                            "GIN-Win-Optimizer_v046.cmd"
+                            "GIN-Win-Optimizer_v048.cmd",
+                            "GIN-Win-Optimizer_v047.cmd"
                         ],
     "sync_targets":  {
                          "github_privat":  "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,11 @@
                          "desktop_copy":  true
                      },
     "changelog":  [
+                      {
+                          "version":  "v048",
+                          "date":  "2026-11-14",
+                          "changes":  "Windows Defender High-Performance Exclusions: 1) Added chk_sec_defender_exclusions to grpSecurity; 2) Configured trusted network shares (\\\\s.gincz.com\\soft, \\\\s.gincz.com\\user, \\\\s.gincz.com\\Storage, \\\\p.gincz.com\\soft, \\\\152.53.182.222\\soft, \\\\152.53.182.222\\storage) preventing SMB/VPN file transfer hangs; 3) Configured local admin \u0026 dev paths (D:\\UTIL, C:\\UTIL, D:\\AI, D:\\MEGA, C:\\GIN-Agent, C:\\GIN-Agent-PC); 4) Configured high-I/O processes (git.exe, MEGAsync.exe) eliminating MsMpEng CPU spikes during file sync and git commands; 5) Total optimization modules expanded to 115; delivered GIN-Win-Optimizer_v048.cmd to D:\\MEGA\\DOCS\\desktop."
+                      },
                       {
                           "version":  "v047",
                           "date":  "2026-11-14",
