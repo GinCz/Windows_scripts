@@ -1,5 +1,13 @@
 # 📋 WORKLOG: GIN-DNS-Switch
 
+## [Config & Directives] — 2026-11-16
+- **Фиксация путей доставки релизов по умолчанию (Владимир):**
+  - Установлены и зафиксированы строго 2 целевых каталога для всех последующих версий `GIN-DNS-Switch_vXXX_Setup.exe`:
+    1. Утилиты / Архив: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\` (в облаке MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/N E T/`).
+    2. Рабочий стол в облаке: `D:\MEGA\DOCS\desktop\` (в облаке MEGA: `/MEGA/DOCS/desktop/`).
+  - Создан `RULES.md`, обновлены `version.json` (`release_targets`) и сборочный скрипт `build_release.sh` для автоматической двухточечной выгрузки через `mega-put`.
+  - Текущий релиз `v012` синхронизирован в оба целевых каталога.
+
 ## [v012] — 2026-11-08
 - **Приоритетное наведение на физический Realtek адаптер (исключение VirtualBox Host-Only):**
   - Добавлена функция `Get-PrimaryActiveAdapter`: определяет физический сетевой адаптер по маршруту шлюза по умолчанию (`0.0.0.0/0`) и флагу `Virtual = $false`.

@@ -15,6 +15,12 @@
     "desktop_shortcut": true,
     "start_menu_shortcut": true
   },
+  "release_targets": {
+    "mega_flash": "D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\N E T\\",
+    "mega_flash_cloud": "/MEGA/WIN-FLASH/Util-WINDOWS/N E T/",
+    "mega_desktop": "D:\\MEGA\\DOCS\\desktop\\",
+    "mega_desktop_cloud": "/MEGA/DOCS/desktop/"
+  },
   "profiles": [
     {
       "id": "adguard",
