@@ -2,19 +2,47 @@
 setlocal EnableExtensions
 cls
 
-title GIN-Agent Windows PC [VladiMIR+AI]
+title GIN-Agent Windows PC v013 [VladiMIR+AI]
+
+:: -----------------------------------------------------------------------------
+:: Auto-Elevation: Ensure Full Administrator Privileges
+:: -----------------------------------------------------------------------------
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo ================================================================================
+    echo           GIN-AGENT WINDOWS PC v013 - REQUESTING ADMINISTRATOR RIGHTS (UAC)
+    echo                                 [VladiMIR+AI]
+    echo ================================================================================
+    echo.
+    echo [*] Elevating process to Administrator...
+    set "PS_EXE=powershell.exe"
+    if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+    set "GIN_SELF=%~f0"
+    "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process cmd.exe -ArgumentList @('/k', $env:GIN_SELF) -Verb RunAs } catch { exit 1 }"
+    if %errorlevel% neq 0 (
+        echo.
+        echo [!] ERROR: Administrator rights were not granted.
+        echo [!] Please right-click this file and select 'Run as administrator'.
+        echo.
+        pause
+    )
+    exit /b
+)
 
 echo ================================================================================
-echo           GIN-AGENT WINDOWS PC - 1-CLICK REMOTE ACCESS AGENT
-echo                              [VladiMIR+AI]
+echo           GIN-AGENT WINDOWS PC v013 - 1-CLICK REMOTE ACCESS AGENT
+echo                                 [VladiMIR+AI]
 echo ================================================================================
 echo.
-echo [*] Initializing remote service agent...
+echo [*] Initializing remote service agent (Administrator mode)...
 
 set "GIN_AGENT_FILE=%~f0"
 if "%GIN_AGENT_FILE%"=="" set "GIN_AGENT_FILE=%CD%\GIN-Agent_Windows.cmd"
 
-powershell.exe -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:GIN_AGENT_FILE; if (-not $f -or -not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -LiteralPath $f -Raw) -replace '(?s)^.*?::POWERSHELL_START::\r?\n',''; iex $code } else { Write-Host '[X] ERROR: Could not locate agent script file.' -ForegroundColor Red }"
+set "PS_EXE=powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+
+"%PS_EXE%" -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:GIN_AGENT_FILE; if (-not $f -or -not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $raw = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8); $tag = '::POWERSHELL_START::'; $pos = $raw.LastIndexOf($tag); if ($pos -ge 0) { iex ($raw.Substring($pos + $tag.Length).TrimStart()) } else { Write-Host '[X] ERROR: Payload marker not found.' -ForegroundColor Red } } else { Write-Host '[X] ERROR: Could not locate agent script file.' -ForegroundColor Red }"
 
 echo.
 echo ================================================================================
@@ -26,7 +54,7 @@ exit /b
 
 ::POWERSHELL_START::
 # ==============================================================================
-# GIN-Agent Windows PC v012
+# GIN-Agent Windows PC v013
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
 # Language: 100% Pure ASCII English (Universal Locale & Encoding Immunity)
@@ -130,18 +158,18 @@ try {
             ram     = $ramStr
             disk    = $diskStr
             gateway = $activeGatewayName
-            version = "v012"
+            version = "v013"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
     try {
-        [Console]::Title = "GIN-Agent Windows PC [$activeGatewayName]"
+        [Console]::Title = "GIN-Agent Windows PC v013 [$activeGatewayName]"
     } catch {}
 
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "       GIN-AGENT WINDOWS PC - REMOTE AI OPTIMIZATION PORTAL          " -ForegroundColor Green
+    Write-Host "     GIN-AGENT WINDOWS PC v013 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
     Write-Host "====================================================================" -ForegroundColor Cyan
     Write-Host "    Status:     CONNECTED TO $activeGatewayName" -ForegroundColor White
     if ($admin) {
