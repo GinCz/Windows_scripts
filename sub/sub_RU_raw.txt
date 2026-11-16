@@ -1,2 +1,1 @@
 vless://27f26dee-9cf1-4cca-93f8-9ac23d311408@147.45.47.101:8443?security=reality&encryption=none&pbk=SbVKOEMjK0sIlbwg4akyBg5mL5KZwwB-ed4eEE7YnRc&sni=apple.com&sid=6ba85179e30d4fc2&fp=firefox&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%B7%F0%9F%87%BA%20GIN-RU-01%20%5BRU-Access%5D
-vless://8197b9b9-8945-460f-99c9-325ef8a8a7c3@87.228.56.39:443?security=reality&encryption=none&pbk=e39H8hQXcwfiUnkUOmG0JkBTX5VCxaBQ3_EWEj9PZRc&sni=ru4.gofizzin.com&sid=e938e26c4425&fp=edge&type=tcp&flow=xtls-rprx-vision&spx=%2Fb4fcc6d25bda84e#%F0%9F%87%B7%F0%9F%87%BA%20GIN-RU-02%20%5BRU-Access%5D
