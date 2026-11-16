@@ -1,58 +1,22 @@
 @echo off
+chcp 65001 >nul 2>&1
 setlocal EnableExtensions
-cls
 
-title GIN-Agent Windows PC v013 [VladiMIR+AI]
-
-:: -----------------------------------------------------------------------------
-:: Auto-Elevation: Ensure Full Administrator Privileges
-:: -----------------------------------------------------------------------------
-net session >nul 2>&1
+:: Failsafe Admin Elevation: Open PowerShell directly as Administrator
+fltmc >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ================================================================================
-    echo           GIN-AGENT WINDOWS PC v013 - REQUESTING ADMINISTRATOR RIGHTS (UAC)
-    echo                                 [VladiMIR+AI]
-    echo ================================================================================
-    echo.
-    echo [*] Elevating process to Administrator...
-    set "PS_EXE=powershell.exe"
-    if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
-    set "GIN_SELF=%~f0"
-    "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process cmd.exe -ArgumentList @('/k', $env:GIN_SELF) -Verb RunAs } catch { exit 1 }"
-    if %errorlevel% neq 0 (
-        echo.
-        echo [!] ERROR: Administrator rights were not granted.
-        echo [!] Please right-click this file and select 'Run as administrator'.
-        echo.
-        pause
-    )
-    exit /b
+    set "PS_CMD=powershell.exe"
+    if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_CMD=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+    "%PS_CMD%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -ArgumentList @('-NoExit', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', [string]::Format('$f = ''{0}''; if (-not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, ''D:\DOCS\DownLOAD'', $pwd -Filter ''*GIN-Agent_Windows*.cmd'' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -Raw -Encoding UTF8 -LiteralPath $f) -replace ''(?s)^.*?<#POWERSHELL#>\r?\n'',''''; & ([ScriptBlock]::Create($code)) } else { Write-Host ''[X] ERROR: Could not locate agent script file.'' -ForegroundColor Red }', '%~f0')) -Verb RunAs"
+    exit /b 0
 )
 
-echo ================================================================================
-echo           GIN-AGENT WINDOWS PC v013 - 1-CLICK REMOTE ACCESS AGENT
-echo                                 [VladiMIR+AI]
-echo ================================================================================
-echo.
-echo [*] Initializing remote service agent (Administrator mode)...
+set "PS_CMD=powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_CMD=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+"%PS_CMD%" -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = '%~f0'; if (-not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -Raw -Encoding UTF8 -LiteralPath $f) -replace '(?s)^.*?<#POWERSHELL#>\r?\n',''; & ([ScriptBlock]::Create($code)) } else { Write-Host '[X] ERROR: Could not locate agent script file.' -ForegroundColor Red }"
+exit /b 0
 
-set "GIN_AGENT_FILE=%~f0"
-if "%GIN_AGENT_FILE%"=="" set "GIN_AGENT_FILE=%CD%\GIN-Agent_Windows.cmd"
-
-set "PS_EXE=powershell.exe"
-if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
-
-"%PS_EXE%" -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:GIN_AGENT_FILE; if (-not $f -or -not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $raw = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8); $tag = '::POWERSHELL_START::'; $pos = $raw.LastIndexOf($tag); if ($pos -ge 0) { iex ($raw.Substring($pos + $tag.Length).TrimStart()) } else { Write-Host '[X] ERROR: Payload marker not found.' -ForegroundColor Red } } else { Write-Host '[X] ERROR: Could not locate agent script file.' -ForegroundColor Red }"
-
-echo.
-echo ================================================================================
-echo [*] GIN-Agent session ended. Window kept open for diagnosis.
-echo [*] You can close this window manually or press any key.
-echo ================================================================================
-pause
-exit /b
-
-::POWERSHELL_START::
+<#POWERSHELL#>
 # ==============================================================================
 # GIN-Agent Windows PC v013
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
