@@ -1,10 +1,10 @@
 {
     "project": "GIN-Win-Optimizer",
-    "current_version": "v050",
-    "updated_at": "2026-11-17",
+    "current_version": "v051",
+    "updated_at": "2026-11-18",
     "active_versions": [
-        "GIN-Win-Optimizer_v050.cmd",
-        "GIN-Win-Optimizer_v049.cmd"
+        "GIN-Win-Optimizer_v051.cmd",
+        "GIN-Win-Optimizer_v050.cmd"
     ],
     "sync_targets": {
         "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,11 @@
         "desktop_copy": true
     },
     "changelog": [
+        {
+            "version": "v051",
+            "date": "2026-11-18",
+            "changes": "Task View Universal Multi-Profile Suppression, Taskbar Button Ungrouping & Classic Windows 7 Blue Theme: 1) Fixed elevated execution flaw where ShowTaskViewButton and TaskbarGlomLevel were only applied to Administrator HKCU, causing Task View button to appear and taskbar buttons to group on Explorer restart; 2) Implemented global Apply-TaskbarPreferences routine enforcing ShowTaskViewButton=0, TaskbarGlomLevel=2 (Never combine buttons / wide window titles) and MMTaskbarGlomLevel=2 across HKLM (64/32), HKCU, all loaded user profiles in HKEY_USERS (S-1-5-21-*), and C:\\Users\\Default\\NTUSER.DAT template; 3) Integrated authentic Windows 7 Blue theme (Apply-Win7BlueTheme) featuring Aero Sky Blue accent (#1964BA, AccentColor=4290405401, ColorizationColor=3289998522), Light App background (AppsUseLightTheme=1) and Dark System surfaces with Start/Taskbar/Titlebars colorization; 4) Injected immediate Task View suppression, ungrouping, and Win7 theme keys into CMD polyglot elevation header; 5) Re-asserted preferences in post-restart Explorer sweep; delivered GIN-Win-Optimizer_v051.cmd."
+        },
         {
             "version": "v050",
             "date": "2026-11-17",

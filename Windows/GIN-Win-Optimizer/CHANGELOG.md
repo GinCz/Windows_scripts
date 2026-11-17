@@ -6,6 +6,25 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v051] - 2026-11-18
+### Task View Multi-Profile Suppression, Taskbar Button Ungrouping & Classic Windows 7 Blue Theme
+- **Task View Button Universal Multi-Profile Suppression (`chk_ui_hide_taskview`)**:
+  - Resolved elevated token execution defect where `ShowTaskViewButton = 0` was previously written exclusively to Administrator `HKCU`, leaving interactive user profiles on Windows defaults and causing the Task View button to appear after Explorer shell restart.
+  - Implemented global `Apply-TaskbarPreferences` routine propagating `ShowTaskViewButton = 0` across `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced` (64-bit and 32-bit), `HKCU`, all interactive user profiles in `HKEY_USERS` (`S-1-5-21-*`), and `C:\Users\Default\NTUSER.DAT`.
+  - Injected immediate Task View suppression directly into CMD polyglot elevation header and re-asserted in post-restart Explorer sweep.
+- **Taskbar Button Ungrouping / Full-Width Window Labels (`chk_ui_never_combine_taskbar`)**:
+  - Fixed taskbar buttons collapsing into small grouped icons by enforcing `TaskbarGlomLevel = 2` (Never combine) and `MMTaskbarGlomLevel = 2` across all active user hives in `HKEY_USERS` and machine-wide HKLM.
+  - Windows taskbar buttons now permanently expand across their full width with individual window titles and icons, maintaining the open wide taskbar button aesthetic.
+  - Injected into CMD launcher elevation header and re-asserted after Explorer restart.
+- **Authentic Classic Windows 7 Blue Theme (`chk_ui_color_accent_theme`)**:
+  - Implemented authentic classic Windows 7 Blue theme (`Apply-Win7BlueTheme`) inspired by the classic Windows color trilogy (Blue, Silver, Olive Green).
+  - Configured vibrant Windows 7 Aero Sky Blue accent (`AccentColor = 4290405401` / `0xFFBA6419` in ABGR, RGB `#1964BA`) with matching DWM `ColorizationColor` (`3289998522` / `0xC41964BA`), `ColorizationAfterglow`, and full 8-step `AccentPalette`.
+  - Enabled colorization on Taskbar, Start Menu, Action Center, window borders, and active title bars (`ColorPrevalence = 1`, `EnableWindowColorization = 1`).
+  - Set `SystemUsesLightTheme = 0` (enabling taskbar colorization) while configuring `AppsUseLightTheme = 1` for clean, crisp, bright Windows 7 white application interiors (Notepad, File Explorer, Settings).
+  - Propagated across all user profiles, default user hive, and DWM machine settings with live desktop update (`UpdatePerUserSystemParameters`).
+- **Strict Retention & Delivery Compliance**:
+  - Retained strictly the 2 latest versions: `GIN-Win-Optimizer_v051.cmd` and `GIN-Win-Optimizer_v050.cmd`, purged deprecated `GIN-Win-Optimizer_v049.cmd` from local workspaces and MEGA cloud (`/MEGA/DOCS/desktop/` and `/MEGA/WIN-FLASH/Util-WINDOWS/`).
+
 ## [v050] - 2026-11-17
 ### Universal System Tray Unhiding & Multi-User Icon Promotion (chk_ui_show_all_tray_icons)
 - **Multi-User NotifyIconSettings Promotion (Windows 11)**:

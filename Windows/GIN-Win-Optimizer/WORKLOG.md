@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-11-18 — Release v051 (Task View Suppression, Taskbar Button Ungrouping & Classic Windows 7 Blue Theme)
+- **Strict Version Bump (Directive #14 / Rule #15 Compliance)**: Bumped version from v050 to v051 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v051.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
+- **Root Cause Remediation for Task View Appearance & Taskbar Button Grouping**:
+  - Identified that elevated execution under Administrator token was applying `ShowTaskViewButton = 0`, `TaskbarGlomLevel = 2`, and `MMTaskbarGlomLevel = 2` solely to Administrator `HKCU`. When Explorer was restarted, the interactive user session reloaded with default Windows settings, displaying the Task View button and collapsing taskbar buttons into grouped icons.
+  - Implemented universal `Apply-TaskbarPreferences` routine that propagates `ShowTaskViewButton = 0`, `TaskbarGlomLevel = 2`, and `MMTaskbarGlomLevel = 2` across:
+    1) CMD polyglot elevation header at immediate launch;
+    2) `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced` (both 64-bit and 32-bit);
+    3) All active interactive user profiles under `HKEY_USERS\S-1-5-21-*`;
+    4) `C:\Users\Default\NTUSER.DAT` template;
+    5) Post-restart Explorer sweep ensuring settings persist through shell resets.
+- **Authentic Windows 7 Blue Theme Integration (`chk_ui_color_accent_theme`)**:
+  - Implemented `Apply-Win7BlueTheme` routine restoring the classic Windows 7 Blue aesthetic:
+    - Aero Sky Blue accent (`AccentColor = 4290405401` / `0xFFBA6419` in ABGR, RGB `#1964BA`);
+    - DWM `ColorizationColor = 3289998522` (`0xC41964BA`) and `ColorizationAfterglow`;
+    - ColorPrevalence enabled across Taskbar, Start, Action Center, window borders, and title bars;
+    - `SystemUsesLightTheme = 0` (enabling taskbar colorization) with `AppsUseLightTheme = 1` (clean, bright Windows 7 white application background);
+    - Full 8-step `AccentPalette` in `Software\Microsoft\Windows\CurrentVersion\Explorer\Accent`;
+    - Multi-profile propagation across all user hives, Default hive, and HKLM DWM.
+- **Strict Retention Compliance**:
+  - Retained strictly the 2 latest versions: `GIN-Win-Optimizer_v051.cmd` and `GIN-Win-Optimizer_v050.cmd`.
+  - Purged deprecated `GIN-Win-Optimizer_v049.cmd` from local workspaces and MEGA cloud (`/MEGA/DOCS/desktop/` and `/MEGA/WIN-FLASH/Util-WINDOWS/`).
+
 ## 2026-11-17 — Release v050 (Universal System Tray Unhiding & Multi-User Icon Promotion)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from v049 to v050 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v050.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
 - **Root Cause Remediation for Hidden System Tray Icons in Windows 10 & 11**:

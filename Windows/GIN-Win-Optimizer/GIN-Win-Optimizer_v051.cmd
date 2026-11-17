@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Win-Optimizer v049 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
+title GIN-Win-Optimizer v051 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell location (supports x86, x64, Sysnative on 32-bit processes in 64-bit OS)
 set "PS_EXE=powershell.exe"
@@ -10,10 +10,10 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11 (32-bit and 64-bit)
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-Win-Optimizer v049...
-    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v049.cmd" >nul 2>&1
-    if exist "%TEMP%\GIN-Win-Optimizer_v049.cmd" (
-        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v049.cmd""' -Verb RunAs"
+    echo [*] Elevating to Administrator privileges for GIN-Win-Optimizer v051...
+    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v051.cmd" >nul 2>&1
+    if exist "%TEMP%\GIN-Win-Optimizer_v051.cmd" (
+        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v051.cmd""' -Verb RunAs"
     ) else (
         "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%~f0""' -Verb RunAs"
     )
@@ -37,6 +37,35 @@ reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxTask
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v SearchboxMode /t REG_DWORD /d 0 /f >nul 2>&1
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v SearchboxTaskbarMode /t REG_DWORD /d 0 /f >nul 2>&1
 
+:: Immediately hide Task View button from Windows 10/11 Taskbar
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowTaskViewButton /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowTaskViewButton /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v ShowTaskViewButton /t REG_DWORD /d 0 /f /reg:32 >nul 2>&1
+
+:: Immediately force Never Combine Taskbar Buttons (Show labels separately across full width)
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarGlomLevel /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v MMTaskbarGlomLevel /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarGlomLevel /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v MMTaskbarGlomLevel /t REG_DWORD /d 2 /f >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v TaskbarGlomLevel /t REG_DWORD /d 2 /f /reg:32 >nul 2>&1
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v MMTaskbarGlomLevel /t REG_DWORD /d 2 /f /reg:32 >nul 2>&1
+
+:: Immediately force System Tray to Always Show All Icons (disable auto-tray hiding chevron)
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v NoAutoTray /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer" /v EnableAutoTray /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v NoAutoTray /t REG_DWORD /d 1 /f >nul 2>&1
+
+:: Immediately configure Windows 7 Blue Theme (Aero Blue Accent, Light Apps, Dark System surfaces)
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v SystemUsesLightTheme /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v AppsUseLightTheme /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v ColorPrevalence /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v EnableTransparency /t REG_DWORD /d 0 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\DWM" /v ColorPrevalence /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\DWM" /v EnableWindowColorization /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\DWM" /v AccentColor /t REG_DWORD /d 4290405401 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\DWM" /v ColorizationColor /t REG_DWORD /d 3289998522 /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Windows\DWM" /v ColorizationAfterglow /t REG_DWORD /d 3289998522 /f >nul 2>&1
+
 :: Pass script path safely through environment variable to avoid quote escaping issues
 set "GIN_OPT_SCRIPT=%~f0"
 
@@ -44,8 +73,8 @@ set "GIN_OPT_SCRIPT=%~f0"
 start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -Command "try { $p = $env:GIN_OPT_SCRIPT; if (-not $p -or -not (Test-Path $p)) { $p = '%~f0' }; $raw = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8); Invoke-Expression $raw } catch { Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show($_.Exception.ToString(), 'Optimizer Error') }"
 exit /b
 #>
-# ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v049
+﻿# ==============================================================================
+#  GIN-WIN-OPTIMIZER PLUS                                          v051
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -220,6 +249,206 @@ try {
         }
     }
 
+    # Universal Helper: Promote all System Tray Icons to Taskbar (Windows 10 & 11)
+    function global:Promote-AllTrayIcons {
+        try {
+            # 1. Machine-wide Policy: Disable auto-hiding tray icons (Windows 10/11)
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoTray" /t REG_DWORD /d 1 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoTray" /t REG_DWORD /d 1 /f /reg:32' 2>$null | Out-Null
+
+            # 2. HKCU Settings
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "EnableAutoTray" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoAutoTray" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+
+            $hkcuNotify = "HKCU:\Control Panel\NotifyIconSettings"
+            if (Test-Path $hkcuNotify) {
+                Get-ChildItem -Path $hkcuNotify -ErrorAction SilentlyContinue | ForEach-Object {
+                    Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                }
+            }
+
+            # 3. All loaded user profiles in HKEY_USERS (S-1-5-21-*)
+            Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
+                $uSid = $_.PSChildName
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\" /v \"EnableAutoTray\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\" /v \"NoAutoTray\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+
+                $uNotify = "Registry::HKEY_USERS\$uSid\Control Panel\NotifyIconSettings"
+                if (Test-Path $uNotify) {
+                    Get-ChildItem -Path $uNotify -ErrorAction SilentlyContinue | ForEach-Object {
+                        Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+
+            # 4. Default User Profile Hive
+            try {
+                $defHive = "C:\Users\Default\NTUSER.DAT"
+                if (Test-Path $defHive) {
+                    cmd.exe /c "reg.exe load HKLM\DefUserHive \"$defHive\"" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\" /v \"EnableAutoTray\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\" /v \"NoAutoTray\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                    $defNotify = "HKLM:\DefUserHive\Control Panel\NotifyIconSettings"
+                    if (Test-Path $defNotify) {
+                        Get-ChildItem -Path $defNotify -ErrorAction SilentlyContinue | ForEach-Object {
+                            Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                        }
+                    }
+                    [GC]::Collect()
+                    Start-Sleep -Milliseconds 200
+                    cmd.exe /c "reg.exe unload HKLM\DefUserHive" 2>$null | Out-Null
+                }
+            } catch {}
+
+            # 5. Persistent Startup Hook: Keep newly spawned icons promoted at every user logon
+            $runCmd = 'powershell.exe -WindowStyle Hidden -NoProfile -Command "Get-ChildItem ''HKCU:\Control Panel\NotifyIconSettings'' -ErrorAction SilentlyContinue | Set-ItemProperty -Name ''IsPromoted'' -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue"'
+            cmd.exe /c "reg.exe add \"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\" /v \"GIN-PromoteTrayIcons\" /t REG_SZ /d \"$runCmd\" /f" 2>$null | Out-Null
+        } catch {}
+    }
+
+    # Universal Helper: Suppress Task View Button & Enforce Never Combine Taskbar Buttons (Windows 10 & 11)
+    function global:Apply-TaskbarPreferences {
+        try {
+            # 1. Machine-wide Policies / Registry Settings (64-bit and 32-bit)
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f /reg:32' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:32' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:32' 2>$null | Out-Null
+
+            # 2. Current User (HKCU)
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowTaskViewButton" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarGlomLevel" -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "MMTaskbarGlomLevel" -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue
+
+            # 3. All loaded interactive user profiles in HKEY_USERS (S-1-5-21-*)
+            Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
+                $uSid = $_.PSChildName
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"ShowTaskViewButton\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"TaskbarGlomLevel\" /t REG_DWORD /d 2 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"MMTaskbarGlomLevel\" /t REG_DWORD /d 2 /f" 2>$null | Out-Null
+            }
+
+            # 4. Default User Profile Hive
+            try {
+                $defHive = "C:\Users\Default\NTUSER.DAT"
+                if (Test-Path $defHive) {
+                    cmd.exe /c "reg.exe load HKLM\DefUserHive \"$defHive\"" 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                    [GC]::Collect()
+                    Start-Sleep -Milliseconds 150
+                    cmd.exe /c "reg.exe unload HKLM\DefUserHive" 2>$null | Out-Null
+                }
+            } catch {}
+        } catch {}
+    }
+
+    # Universal Helper: Authentic Windows 7 Blue Theme (Aero Blue Accent, Light Apps, Dark System, Crisp Aero Borders)
+    function global:Apply-Win7BlueTheme {
+        try {
+            $accentBgr = 4290405401    # 0xFFBA6419 in ABGR (RGB #1964BA - Classic Windows 7 Aero Sky Blue)
+            $colorArgb = 3289998522    # 0xC41964BA in ARGB (Rich translucent/solid Windows 7 Blue)
+            $palette = [byte[]](
+                0x69, 0xA9, 0xE8, 0x00,
+                0x4A, 0x94, 0xDC, 0x00,
+                0x2E, 0x7E, 0xD0, 0x00,
+                0x19, 0x64, 0xBA, 0x00,
+                0x13, 0x51, 0x98, 0x00,
+                0x0E, 0x3F, 0x78, 0x00,
+                0x0A, 0x2E, 0x59, 0x00,
+                0x06, 0x1D, 0x3A, 0x00
+            )
+
+            # 1. Current User (HKCU)
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "SystemUsesLightTheme" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "AppsUseLightTheme" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "EnableTransparency" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "ColorPrevalence" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\DWM" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorPrevalence" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "EnableWindowColorization" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "AccentColor" -Value $accentBgr -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationColor" -Value $colorArgb -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationAfterglow" -Value $colorArgb -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationColorBalance" -Value 89 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationAfterglowBalance" -Value 10 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationBlurBalance" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent" -Name "AccentColorMenu" -Value $accentBgr -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent" -Name "StartColorMenu" -Value $accentBgr -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent" -Name "AccentPalette" -Value $palette -Type Binary -Force -ErrorAction SilentlyContinue
+
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoColorization" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
+            # 2. Machine-wide DWM defaults
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\DWM" /v "ColorPrevalence" /t REG_DWORD /d 1 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\DWM" /v "EnableWindowColorization" /t REG_DWORD /d 1 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c "reg.exe add \"HKLM\SOFTWARE\Microsoft\Windows\DWM\" /v \"AccentColor\" /t REG_DWORD /d $accentBgr /f /reg:64" 2>$null | Out-Null
+            cmd.exe /c "reg.exe add \"HKLM\SOFTWARE\Microsoft\Windows\DWM\" /v \"ColorizationColor\" /t REG_DWORD /d $colorArgb /f /reg:64" 2>$null | Out-Null
+
+            # 3. All loaded interactive user profiles in HKEY_USERS (S-1-5-21-*)
+            Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
+                $uSid = $_.PSChildName
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\" /v \"SystemUsesLightTheme\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\" /v \"AppsUseLightTheme\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\" /v \"EnableTransparency\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\" /v \"ColorPrevalence\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\DWM\" /v \"ColorPrevalence\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\DWM\" /v \"EnableWindowColorization\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\DWM\" /v \"AccentColor\" /t REG_DWORD /d $accentBgr /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\DWM\" /v \"ColorizationColor\" /t REG_DWORD /d $colorArgb /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\DWM\" /v \"ColorizationAfterglow\" /t REG_DWORD /d $colorArgb /f" 2>$null | Out-Null
+
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Control Panel\Desktop\" /v \"AutoColorization\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                try {
+                    $uAccent = "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent"
+                    if (-not (Test-Path $uAccent)) { New-Item -Path $uAccent -Force -ErrorAction SilentlyContinue | Out-Null }
+                    Set-ItemProperty -Path $uAccent -Name "AccentColorMenu" -Value $accentBgr -Type DWord -Force -ErrorAction SilentlyContinue
+                    Set-ItemProperty -Path $uAccent -Name "StartColorMenu" -Value $accentBgr -Type DWord -Force -ErrorAction SilentlyContinue
+                    Set-ItemProperty -Path $uAccent -Name "AccentPalette" -Value $palette -Type Binary -Force -ErrorAction SilentlyContinue
+                } catch {}
+            }
+
+            # 4. Default User Profile Hive
+            try {
+                $defHive = "C:\Users\Default\NTUSER.DAT"
+                if (Test-Path $defHive) {
+                    cmd.exe /c "reg.exe load HKLM\DefUserHive \"$defHive\"" 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "SystemUsesLightTheme" /t REG_DWORD /d 0 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "AppsUseLightTheme" /t REG_DWORD /d 1 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "EnableTransparency" /t REG_DWORD /d 0 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "ColorPrevalence" /t REG_DWORD /d 1 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\DWM" /v "ColorPrevalence" /t REG_DWORD /d 1 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\DWM" /v "EnableWindowColorization" /t REG_DWORD /d 1 /f' 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\DWM\" /v \"AccentColor\" /t REG_DWORD /d $accentBgr /f" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\DWM\" /v \"ColorizationColor\" /t REG_DWORD /d $colorArgb /f" 2>$null | Out-Null
+                    [GC]::Collect()
+                    Start-Sleep -Milliseconds 150
+                    cmd.exe /c "reg.exe unload HKLM\DefUserHive" 2>$null | Out-Null
+                }
+            } catch {}
+
+            # 5. Refresh system theme live
+            try {
+                cmd.exe /c "rundll32.exe user32.dll,UpdatePerUserSystemParameters 1, True" 2>$null | Out-Null
+            } catch {}
+        } catch {}
+    }
+
+    Promote-AllTrayIcons
+    Apply-TaskbarPreferences
+    Apply-Win7BlueTheme
+
     foreach ($cmd in $wuCommands) {
         $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
         cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
@@ -232,9 +461,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v049
+#  GIN-WIN-OPTIMIZER PLUS                                          v051
 
-#  Rule: Strict Version Increment Mandate (v032 -> v049)
+#  Rule: Strict Version Increment Mandate (v032 -> v051)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -287,11 +516,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -420,18 +649,18 @@ $t = @{
 
         "chk_ui_welcome_screen" = "Disable 'Let\'s finish setting up your device' welcome screen"
         "chk_ui_lockscreen_clean" = "Lock screen: Disable fun facts/ads, show lock screen background on sign-in"
-        "chk_ui_color_accent_theme" = "Color scheme: Dark system theme, Steel Blue accent on Taskbar/Start & Titlebars, Transparency Off"
+        "chk_ui_color_accent_theme" = "Color scheme: Classic Windows 7 Blue theme (Aero Blue Accent, Light Apps, Dark System surfaces)"
         "chk_ui_mouse_inverted_large" = "Mouse pointer: Inverted (large) system scheme with pointer shadow"
 
         "chk_ui_classic_context" = "Restore Windows 10 Classic Context Menu (skip 'Show More Options')"
 
         "chk_ui_hide_search" = "Hide Search box and icon from Taskbar completely"
 
-        "chk_ui_hide_taskview" = "Hide Task View button from Taskbar"
+        "chk_ui_hide_taskview" = "Hide Task View button from Taskbar (eradicate button across all user profiles)"
 
         "chk_ui_show_all_tray_icons" = "Always show all icons in system tray (never hide behind chevron)"
 
-        "chk_ui_never_combine_taskbar" = "Never combine taskbar buttons (show window labels separately)"
+        "chk_ui_never_combine_taskbar" = "Never combine taskbar buttons (show window labels separately across full width)"
 
         "chk_ui_show_this_pc" = "Always display 'This PC' icon on Desktop"
 
@@ -568,9 +797,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -699,18 +928,18 @@ $t = @{
 
         "chk_ui_welcome_screen" = "Zakázat obrazovku 'Dokončete nastavení zařízení' po aktualizaci"
         "chk_ui_lockscreen_clean" = "Zamykací obrazovka: zakázat tipy/reklamy, zobrazit pozadí na přihlašovací obrazovce"
-        "chk_ui_color_accent_theme" = "Barevné schéma: tmavý systémový motiv, ocelově modrý akcent na hlavním panelu a záhlaví, vypnout průhlednost"
+        "chk_ui_color_accent_theme" = "Barevné schéma: klasický motiv Windows 7 Blue (modrý akcent na hlavním panelu a záhlaví, světlé aplikace)"
         "chk_ui_mouse_inverted_large" = "Ukazatel myši: Inverzní (velké) systémové schéma se stínem ukazatele"
 
         "chk_ui_classic_context" = "Obnovit klasické kontextové menu Windows 10 (bez 'Zobrazit více')"
 
         "chk_ui_hide_search" = "Zcela skrýt vyhledávací pole a ikonu hledání z hlavního panelu"
 
-        "chk_ui_hide_taskview" = "Skrýt tlačítko Zobrazení úloh (Task View) z hlavního panelu"
+        "chk_ui_hide_taskview" = "Skrýt tlačítko Zobrazení úloh (Task View) z hlavního panelu pro všechny uživatele"
 
         "chk_ui_show_all_tray_icons" = "Vždy zobrazovat všechny ikony v oznamovací oblasti (neskrývat za šipku)"
 
-        "chk_ui_never_combine_taskbar" = "Nikdy neseskupovat tlačítka hlavního panelu (Combine: Never)"
+        "chk_ui_never_combine_taskbar" = "Nikdy neseskupovat tlačítka hlavního panelu (otevřít popisky oken na plnou šířku)"
 
         "chk_ui_show_this_pc" = "Vždy zobrazovat ikonu 'Tento počítač' na ploše"
 
@@ -847,11 +1076,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -980,18 +1209,18 @@ $t = @{
 
         "chk_ui_welcome_screen" = "Отключить экран «Завершить настройку устройства» после обновлений"
         "chk_ui_lockscreen_clean" = "Экран блокировки: отключить факты/подсказки, показывать фон на экране входа"
-        "chk_ui_color_accent_theme" = "Цветовая схема: тёмная тема, морской акцент в меню Пуск/панели задач и заголовках, без прозрачности"
+        "chk_ui_color_accent_theme" = "Цветовая схема: классическая синяя тема Windows 7 (синий акцент на панели задач, меню Пуск и заголовках, светлые окна)"
         "chk_ui_mouse_inverted_large" = "Курсор мыши: Инверсная (крупная) системная схема с тенью указателя"
 
         "chk_ui_classic_context" = "Вернуть классическое компактное контекстное меню Windows 10 (без «Показать больше»)"
 
         "chk_ui_hide_search" = "Полностью убрать строку и значок поиска с панели задач (Searchbox = 0)"
 
-        "chk_ui_hide_taskview" = "Скрыть кнопку «Просмотр задач» (Task View) с панели задач"
+        "chk_ui_hide_taskview" = "Скрыть кнопку «Просмотр задач» (Task View) с панели задач (для всех пользователей)"
 
         "chk_ui_show_all_tray_icons" = "Всегда показывать все иконки в трее возле часов (не прятать под стрелку)"
 
-        "chk_ui_never_combine_taskbar" = "Никогда не группировать кнопки панели задач (Combine: Never)"
+        "chk_ui_never_combine_taskbar" = "Никогда не группировать кнопки панели задач (открывать во всю ширину с названиями)"
 
         "chk_ui_show_this_pc" = "Всегда отображать значок «Этот компьютер» на Рабочем столе"
 
@@ -1130,7 +1359,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDQ5IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDUxIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -1225,7 +1454,7 @@ $xamlBase64 = (@(
         'ZXh0QmxvY2sgTmFtZT0idHh0SG9zdEluZm8iIFRleHQ9Ikhvc3Q6IGxvY2FsIHwg0KPRgdGC0YDQvtC50YHRgtCy0L46IFBDIHwg'
         'V2luZG93czogMTAgUHJvIHwgSVA6IDEyNy4wLjAuMSIgRm9udFNpemU9IjExIiBGb3JlZ3JvdW5kPSIjY2JkNWUxIiBNYXJnaW49'
         'IjAsMywwLDAiLz4KICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIE5hbWU9InR4dEhlYWRlclN1YiIgVGV4dD0iR0lOLVdp'
-        'bi1PcHRpbWl6ZXIgdjA0NSBbVmxhZGlNSVIgKyBBSV0iIEZvbnRTaXplPSIxMCIgRm9yZWdyb3VuZD0iIzY0NzQ4YiIgTWFyZ2lu'
+        'bi1PcHRpbWl6ZXIgdjA1MSBbVmxhZGlNSVIgKyBBSV0iIEZvbnRTaXplPSIxMCIgRm9yZWdyb3VuZD0iIzY0NzQ4YiIgTWFyZ2lu'
         'PSIwLDEsMCwwIi8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvRG9ja1BhbmVsPgogICAgICAg'
         'IDwvQm9yZGVyPgoKICAgICAgICA8IS0tIFByZXNldHMgQmFyIC0tPgogICAgICAgIDxCb3JkZXIgR3JpZC5Sb3c9IjEiIEJhY2tn'
         'cm91bmQ9IiMxZTIwMjYiIENvcm5lclJhZGl1cz0iNCIgUGFkZGluZz0iMTAsNiIgTWFyZ2luPSIwLDAsMCw4IiBCb3JkZXJCcnVz'
@@ -2231,7 +2460,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v049 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v051 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -3303,30 +3532,11 @@ $executeOptimization = {
 
     if ($controls["chk_ui_color_accent_theme"].IsChecked) {
 
-        $actions += @{ Name = "Configure Theme: Dark System, Steel Blue Accent & Surfaces"; Script = {
+        $actions += @{ Name = "Configure Theme: Classic Windows 7 Blue (Aero Accent, Light Apps, Dark System)"; Script = {
 
-            Log-Message "Applying Color Scheme: Dark System, Steel Blue Accent, Transparency Off..." "INFO"
-            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Force -ErrorAction SilentlyContinue | Out-Null
-            # System dark theme for taskbar, Start and Action Center
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "SystemUsesLightTheme" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-            # Transparency effects: Off
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "EnableTransparency" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-            # Show accent color on Start, taskbar, and action center: ON
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "ColorPrevalence" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-
-            # DWM: Accent color on title bars and window borders: ON
-            New-Item -Path "HKCU:\Software\Microsoft\Windows\DWM" -Force -ErrorAction SilentlyContinue | Out-Null
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorPrevalence" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "EnableWindowColorization" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-
-            # Accent Color: Steel Blue / Dark Teal (#2D5F9A)
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "AccentColor" -Value 4288314669 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationColor" -Value 3291315610 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\DWM" -Name "ColorizationAfterglow" -Value 3291315610 -Type DWord -Force -ErrorAction SilentlyContinue
-
-            # Automatic color pick: OFF
-            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "AutoColorization" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-            Log-Message "Color Scheme applied (Dark system, Steel Blue accent on Taskbar/Start & Titlebars)." "SUCCESS"
+            Log-Message "Applying Color Scheme: Classic Windows 7 Blue Theme (Aero Blue Accent, Light Apps)..." "INFO"
+            Apply-Win7BlueTheme
+            Log-Message "Color Scheme applied (Classic Windows 7 Blue theme applied across all user profiles)." "SUCCESS"
 
         }}
 
@@ -3462,7 +3672,8 @@ $executeOptimization = {
 
         $actions += @{ Name = "Hide Task View Button from Taskbar"; Script = {
 
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowTaskViewButton" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+            Apply-TaskbarPreferences
+            Log-Message "Task View button hidden from Taskbar across all user profiles." "SUCCESS"
 
         }}
 
@@ -3472,31 +3683,7 @@ $executeOptimization = {
 
         $actions += @{ Name = "Always Show All Icons in System Tray"; Script = {
 
-            # 1. Windows 10 & legacy auto-tray disable
-
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "EnableAutoTray" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            # 2. Explorer Policy: NoAutoTray
-
-            $polPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"
-
-            if (-not (Test-Path $polPath)) { New-Item -Path $polPath -Force | Out-Null }
-
-            Set-ItemProperty -Path $polPath -Name "NoAutoTray" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-
-            # 3. Windows 11 NotifyIconSettings: Promote all icons to taskbar
-
-            $notifyPath = "HKCU:\Control Panel\NotifyIconSettings"
-
-            if (Test-Path $notifyPath) {
-
-                Get-ChildItem $notifyPath -ErrorAction SilentlyContinue | ForEach-Object {
-
-                    Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-
-                }
-
-            }
+            Promote-AllTrayIcons
 
         }}
 
@@ -3504,11 +3691,10 @@ $executeOptimization = {
 
     if ($controls["chk_ui_never_combine_taskbar"].IsChecked) {
 
-        $actions += @{ Name = "Never Combine Taskbar Buttons"; Script = {
+        $actions += @{ Name = "Never Combine Taskbar Buttons (Show Window Labels Across Full Width)"; Script = {
 
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarGlomLevel" -Value 2 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "MMTaskbarGlomLevel" -Value 2 -Type DWord -ErrorAction SilentlyContinue
+            Apply-TaskbarPreferences
+            Log-Message "Never combine taskbar buttons applied across all user profiles." "SUCCESS"
 
         }}
 
@@ -5016,7 +5202,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v049. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v051. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -5153,6 +5339,21 @@ $executeOptimization = {
                     cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
                 }
             }
+        }
+
+        # Final post-restart re-assert of System Tray icons promotion (Windows 10 & 11)
+        if ($controls["chk_ui_show_all_tray_icons"].IsChecked) {
+            Promote-AllTrayIcons
+        }
+
+        # Final post-restart re-assert of Taskbar preferences (Task View hidden, Never combine buttons)
+        if ($controls["chk_ui_hide_taskview"].IsChecked -or $controls["chk_ui_never_combine_taskbar"].IsChecked) {
+            Apply-TaskbarPreferences
+        }
+
+        # Final post-restart re-assert of Windows 7 Blue Theme
+        if ($controls["chk_ui_color_accent_theme"].IsChecked) {
+            Apply-Win7BlueTheme
         }
 
         # Final post-restart re-assert of WU lock in case Explorer restart or service triggered background check
@@ -5293,7 +5494,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v046 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v051 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 
