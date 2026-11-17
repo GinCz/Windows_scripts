@@ -4,8 +4,8 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Architect & Author:** Vladimir Bulantsev ([@GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
 > **Target Operating Systems:** Windows 7 / 8 / 8.1 / 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions)  
-> **Current Version:** `v049` (Active Production)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v049.cmd` and `GIN-Win-Optimizer_v048.cmd`).  
+> **Current Version:** `v050` (Active Production)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v050.cmd` and `GIN-Win-Optimizer_v049.cmd`).  
 > **Release History:** Complete technical changelog available in [CHANGELOG.md ↗](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/CHANGELOG.md)
 
 ---
@@ -19,6 +19,11 @@ Built upon a robust **single-standard polyglot CMD architecture**, the optimizer
 ---
 
 ## ⚡ Key Highlights of Recent Releases
+
+### 🔔 Release v050 — Universal System Tray Unhiding & Multi-User Icon Promotion
+- **Multi-User Icon Promotion Engine**: Scans and enforces `IsPromoted = 1` across all registered application subkeys under `Control Panel\NotifyIconSettings` for ALL user profiles in `HKEY_USERS` and default template, fixing elevated execution isolation.
+- **Universal Auto-Tray Policies**: Enforces `NoAutoTray = 1` in `HKLM` and `HKCU` Policies, and `EnableAutoTray = 0` across all hives, completely eradicating the hidden icon chevron across Windows 10 and 11.
+- **Persistent Logon Hook**: Registers `GIN-PromoteTrayIcons` in `HKLM Run` to ensure any newly added application icons stay visible without manual dragging.
 
 ### 🔍 Release v049 — Windows 11 Taskbar Search Box/Pill Complete Suppression
 - **Canonical Policy Enforcement (SearchOnTaskbarMode)**: Enforces `SearchOnTaskbarMode = 0` under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search` and `HKCU`, completely eradicating the Windows 11 search pill (`[ Q Hledat ]` / `[ Q Search ]`) at the Group Policy level.

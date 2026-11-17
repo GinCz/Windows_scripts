@@ -1,5 +1,5 @@
 ﻿# ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v049
+#  GIN-WIN-OPTIMIZER PLUS                                          v050
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -174,6 +174,66 @@ try {
         }
     }
 
+    # Universal Helper: Promote all System Tray Icons to Taskbar (Windows 10 & 11)
+    function global:Promote-AllTrayIcons {
+        try {
+            # 1. Machine-wide Policy: Disable auto-hiding tray icons (Windows 10/11)
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoTray" /t REG_DWORD /d 1 /f /reg:64' 2>$null | Out-Null
+            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoAutoTray" /t REG_DWORD /d 1 /f /reg:32' 2>$null | Out-Null
+
+            # 2. HKCU Settings
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "EnableAutoTray" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force -ErrorAction SilentlyContinue | Out-Null
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoAutoTray" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+
+            $hkcuNotify = "HKCU:\Control Panel\NotifyIconSettings"
+            if (Test-Path $hkcuNotify) {
+                Get-ChildItem -Path $hkcuNotify -ErrorAction SilentlyContinue | ForEach-Object {
+                    Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                }
+            }
+
+            # 3. All loaded user profiles in HKEY_USERS (S-1-5-21-*)
+            Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
+                $uSid = $_.PSChildName
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\" /v \"EnableAutoTray\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\" /v \"NoAutoTray\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+
+                $uNotify = "Registry::HKEY_USERS\$uSid\Control Panel\NotifyIconSettings"
+                if (Test-Path $uNotify) {
+                    Get-ChildItem -Path $uNotify -ErrorAction SilentlyContinue | ForEach-Object {
+                        Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+
+            # 4. Default User Profile Hive
+            try {
+                $defHive = "C:\Users\Default\NTUSER.DAT"
+                if (Test-Path $defHive) {
+                    cmd.exe /c "reg.exe load HKLM\DefUserHive \"$defHive\"" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\" /v \"EnableAutoTray\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\" /v \"NoAutoTray\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                    $defNotify = "HKLM:\DefUserHive\Control Panel\NotifyIconSettings"
+                    if (Test-Path $defNotify) {
+                        Get-ChildItem -Path $defNotify -ErrorAction SilentlyContinue | ForEach-Object {
+                            Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                        }
+                    }
+                    [GC]::Collect()
+                    Start-Sleep -Milliseconds 200
+                    cmd.exe /c "reg.exe unload HKLM\DefUserHive" 2>$null | Out-Null
+                }
+            } catch {}
+
+            # 5. Persistent Startup Hook: Keep newly spawned icons promoted at every user logon
+            $runCmd = 'powershell.exe -WindowStyle Hidden -NoProfile -Command "Get-ChildItem ''HKCU:\Control Panel\NotifyIconSettings'' -ErrorAction SilentlyContinue | Set-ItemProperty -Name ''IsPromoted'' -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue"'
+            cmd.exe /c "reg.exe add \"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run\" /v \"GIN-PromoteTrayIcons\" /t REG_SZ /d \"$runCmd\" /f" 2>$null | Out-Null
+        } catch {}
+    }
+    Promote-AllTrayIcons
+
     foreach ($cmd in $wuCommands) {
         $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
         cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
@@ -186,9 +246,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v049
+#  GIN-WIN-OPTIMIZER PLUS                                          v050
 
-#  Rule: Strict Version Increment Mandate (v032 -> v049)
+#  Rule: Strict Version Increment Mandate (v032 -> v050)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -241,11 +301,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v050 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v050 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -522,9 +582,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v050 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v050 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -801,11 +861,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v050 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v050 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1084,7 +1144,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDQ5IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDUwIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -2185,7 +2245,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v049 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v050 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -3426,31 +3486,11 @@ $executeOptimization = {
 
         $actions += @{ Name = "Always Show All Icons in System Tray"; Script = {
 
-            # 1. Windows 10 & legacy auto-tray disable
+            Promote-AllTrayIcons
 
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer" -Name "EnableAutoTray" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+        }}
 
-            # 2. Explorer Policy: NoAutoTray
-
-            $polPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"
-
-            if (-not (Test-Path $polPath)) { New-Item -Path $polPath -Force | Out-Null }
-
-            Set-ItemProperty -Path $polPath -Name "NoAutoTray" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-
-            # 3. Windows 11 NotifyIconSettings: Promote all icons to taskbar
-
-            $notifyPath = "HKCU:\Control Panel\NotifyIconSettings"
-
-            if (Test-Path $notifyPath) {
-
-                Get-ChildItem $notifyPath -ErrorAction SilentlyContinue | ForEach-Object {
-
-                    Set-ItemProperty -Path $_.PSPath -Name "IsPromoted" -Value 1 -Type DWord -ErrorAction SilentlyContinue
-
-                }
-
-            }
+    }
 
         }}
 
@@ -4970,7 +5010,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v049. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v050. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -5107,6 +5147,11 @@ $executeOptimization = {
                     cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
                 }
             }
+        }
+
+        # Final post-restart re-assert of System Tray icons promotion (Windows 10 & 11)
+        if ($controls["chk_ui_show_all_tray_icons"].IsChecked) {
+            Promote-AllTrayIcons
         }
 
         # Final post-restart re-assert of WU lock in case Explorer restart or service triggered background check

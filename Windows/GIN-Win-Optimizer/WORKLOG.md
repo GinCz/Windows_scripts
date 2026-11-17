@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-11-17 — Release v050 (Universal System Tray Unhiding & Multi-User Icon Promotion)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from v049 to v050 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v050.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
+- **Root Cause Remediation for Hidden System Tray Icons in Windows 10 & 11**:
+  - In previous versions, `chk_ui_show_all_tray_icons` attempted to set `IsPromoted = 1` solely in `HKCU:\Control Panel\NotifyIconSettings`. Because the optimizer runs elevated as Administrator, `HKCU` referred to the elevated token profile, completely bypassing the actual logged-in user profile (`HKEY_USERS\S-1-5-21-*`).
+  - Implemented `Promote-AllTrayIcons` function that iterates through all active user SIDs in `HKEY_USERS` and applies `IsPromoted = 1` to every subkey under `Control Panel\NotifyIconSettings`.
+  - Machine-wide policy `NoAutoTray = 1` set in `HKLM` (64/32-bit), `EnableAutoTray = 0` set across all user hives.
+  - Added persistent logon hook `GIN-PromoteTrayIcons` in `HKLM\...\Run` to ensure future application icons are automatically promoted.
+- **Retention & Mirrors Sync**:
+  - Retained strictly 2 latest versions: `GIN-Win-Optimizer_v050.cmd` and `GIN-Win-Optimizer_v049.cmd`.
+  - Purged deprecated `GIN-Win-Optimizer_v048.cmd`.
+  - Synchronized complete release tree to public repository `/AI/GitHub/Windows/Windows/GIN-Win-Optimizer/`.
+
 ## 2026-11-17 — Release v049 (Windows 11 Taskbar Search Box/Pill Complete Suppression)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from v048 to v049 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v049.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
 - **Root Cause Remediation for Windows 11 Taskbar Search Pill**:

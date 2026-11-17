@@ -6,6 +6,26 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v050] - 2026-11-17
+### Universal System Tray Unhiding & Multi-User Icon Promotion (chk_ui_show_all_tray_icons)
+- **Multi-User NotifyIconSettings Promotion (Windows 11)**:
+  - Resolved root cause where elevated execution under Administrator token was promoting `IsPromoted = 1` only inside Administrator `HKCU`, completely missing the logged-in desktop user profile.
+  - Implemented comprehensive `Promote-AllTrayIcons` engine that scans and updates every registered application subkey under `Registry::HKEY_USERS\$uSid\Control Panel\NotifyIconSettings` across all interactive user SIDs (`S-1-5-21-*`), setting `IsPromoted = 1` (`REG_DWORD`).
+  - Pre-promotes notification icons inside `C:\Users\Default\NTUSER.DAT` template for new accounts.
+- **Machine-Wide & Per-User Auto-Tray Policies (Windows 10 & 11)**:
+  - Set `NoAutoTray = 1` across `HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer` (both 64-bit and 32-bit hives via native `reg.exe`).
+  - Enforced `EnableAutoTray = 0` and `NoAutoTray = 1` across all active user hives in `HKEY_USERS` and `HKCU`.
+- **Immediate CMD Polyglot Header Enforcement**:
+  - Injected immediate registry commands (`NoAutoTray = 1` in HKLM/HKCU, `EnableAutoTray = 0`) into the CMD launcher header at elevation.
+- **Persistent Logon Tray Promotion Hook**:
+  - Registered a lightweight background logon hook (`GIN-PromoteTrayIcons` in `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`) ensuring that newly installed or newly spawned application icons in Windows 11 are automatically promoted to the taskbar upon user logon.
+- **Post-Restart Explorer Re-Assertion**:
+  - Re-executes `Promote-AllTrayIcons` right after `explorer.exe` restart to ensure all icons immediately populate the taskbar tray out of the chevron flyout.
+- **Strict Retention Compliance**:
+  - Retained strictly the 2 latest versions: `GIN-Win-Optimizer_v050.cmd` and `GIN-Win-Optimizer_v049.cmd`, purged deprecated `GIN-Win-Optimizer_v048.cmd`.
+
+---
+
 ## [v049] - 2026-11-17
 ### Windows 11 Taskbar Search Box/Pill Complete Suppression (chk_ui_hide_search)
 - **Windows 11 Search Policy Enforcement (SearchOnTaskbarMode)**:
