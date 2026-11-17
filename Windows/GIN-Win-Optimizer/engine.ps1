@@ -3492,10 +3492,6 @@ $executeOptimization = {
 
     }
 
-        }}
-
-    }
-
     if ($controls["chk_ui_never_combine_taskbar"].IsChecked) {
 
         $actions += @{ Name = "Never Combine Taskbar Buttons"; Script = {
