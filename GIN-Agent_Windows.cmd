@@ -1,19 +1,19 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent Windows PC v014
+title GIN-Agent Windows PC v015
 
-:: 1. Resilient Elevation Check:
-:: Try to elevate if not already Administrator, but NEVER crash or exit on failure!
+:: 1. Resilient Elevation Check
 net session >nul 2>&1
-if %errorlevel% neq 0 (
-    if not defined GIN_AGENT_ELEVATED (
-        set GIN_AGENT_ELEVATED=1
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process cmd.exe -ArgumentList '/k set GIN_AGENT_ELEVATED=1 ^& call \"\"%~f0\"\"' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
-        if %errorlevel% equ 0 exit /b 0
-    )
+if %errorlevel% equ 0 goto :RUN_AGENT
+
+if not defined GIN_AGENT_ELEVATED (
+    set GIN_AGENT_ELEVATED=1
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process '%~f0' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    if not errorlevel 1 exit /b 0
 )
 
+:RUN_AGENT
 :: 2. Set script path safely in environment variable to avoid quote parsing bugs
 set "GIN_AGENT_SCRIPT=%~f0"
 
@@ -27,7 +27,7 @@ if %errorlevel% neq 0 pause
 exit /b
 #>
 # ==============================================================================
-# GIN-Agent Windows PC v014
+# GIN-Agent Windows PC v015
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
 # Language: 100% Pure ASCII English (Universal Locale & Encoding Immunity)
@@ -150,18 +150,18 @@ try {
             ram     = $ramStr
             disk    = $diskStr
             gateway = $activeGatewayName
-            version = "v014"
+            version = "v015"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
     try {
-        [Console]::Title = "GIN-Agent Windows PC v014 [$activeGatewayName]"
+        [Console]::Title = "GIN-Agent Windows PC v015 [$activeGatewayName]"
     } catch {}
 
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "     GIN-AGENT WINDOWS PC v014 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
+    Write-Host "     GIN-AGENT WINDOWS PC v015 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
     Write-Host "====================================================================" -ForegroundColor Cyan
     Write-Host "    GIN PIN:    $pin" -ForegroundColor Yellow
     Write-Host "    Status:     CONNECTED TO $activeGatewayName" -ForegroundColor White
