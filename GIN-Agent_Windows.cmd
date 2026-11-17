@@ -1,24 +1,33 @@
+<# :
 @echo off
-chcp 65001 >nul 2>&1
-setlocal EnableExtensions
+setlocal DisableDelayedExpansion
+title GIN-Agent Windows PC v014
 
-:: Failsafe Admin Elevation: Open PowerShell directly as Administrator
-fltmc >nul 2>&1
+:: 1. Resilient Elevation Check:
+:: Try to elevate if not already Administrator, but NEVER crash or exit on failure!
+net session >nul 2>&1
 if %errorlevel% neq 0 (
-    set "PS_CMD=powershell.exe"
-    if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_CMD=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
-    "%PS_CMD%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -ArgumentList @('-NoExit', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', [string]::Format('$f = ''{0}''; if (-not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, ''D:\DOCS\DownLOAD'', $pwd -Filter ''*GIN-Agent_Windows*.cmd'' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -Raw -Encoding UTF8 -LiteralPath $f) -replace ''(?s)^.*?<#POWERSHELL#>\r?\n'',''''; & ([ScriptBlock]::Create($code)) } else { Write-Host ''[X] ERROR: Could not locate agent script file.'' -ForegroundColor Red }', '%~f0')) -Verb RunAs"
-    exit /b 0
+    if not defined GIN_AGENT_ELEVATED (
+        set GIN_AGENT_ELEVATED=1
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process cmd.exe -ArgumentList '/k set GIN_AGENT_ELEVATED=1 ^& call \"\"%~f0\"\"' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+        if %errorlevel% equ 0 exit /b 0
+    )
 )
 
-set "PS_CMD=powershell.exe"
-if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_CMD=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
-"%PS_CMD%" -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$f = '%~f0'; if (-not (Test-Path -LiteralPath $f)) { $f = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($f -and (Test-Path -LiteralPath $f)) { $code = (Get-Content -Raw -Encoding UTF8 -LiteralPath $f) -replace '(?s)^.*?<#POWERSHELL#>\r?\n',''; & ([ScriptBlock]::Create($code)) } else { Write-Host '[X] ERROR: Could not locate agent script file.' -ForegroundColor Red }"
-exit /b 0
+:: 2. Set script path safely in environment variable to avoid quote parsing bugs
+set "GIN_AGENT_SCRIPT=%~f0"
 
-<#POWERSHELL#>
+set "PS_EXE=powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+
+:: 3. Execute directly with resilient fallback:
+"%PS_EXE%" -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$p = $env:GIN_AGENT_SCRIPT; if (-not $p -or -not (Test-Path -LiteralPath $p)) { $p = '%~f0' }; if (-not (Test-Path -LiteralPath $p)) { $p = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', 'D:\MEGA\WIN-FLASH\Util-WINDOWS', 'D:\MEGA\DOCS\desktop', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($p -and (Test-Path -LiteralPath $p)) { $raw = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8); try { & ([ScriptBlock]::Create($raw)) } catch { Write-Host ('`n[X] SCRIPT EXECUTION ERROR: ' + $_.Exception.ToString()) -ForegroundColor Red; Write-Host '`nPress any key to exit...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } } else { Write-Host ('`n[X] ERROR: Could not locate agent script file. Path: ' + $p) -ForegroundColor Red; Write-Host '`nPress any key to exit...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') }"
+
+if %errorlevel% neq 0 pause
+exit /b
+#>
 # ==============================================================================
-# GIN-Agent Windows PC v013
+# GIN-Agent Windows PC v014
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
 # Language: 100% Pure ASCII English (Universal Locale & Encoding Immunity)
@@ -111,9 +120,28 @@ try {
         }
     } catch {}
 
+    # Calculate Deterministic 9-Digit GIN PIN (Hardware Fingerprint)
+    $pin = "100-000-001"
+    try {
+        $uuid = (Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue).UUID
+        $board = (Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue).SerialNumber
+        if (-not $uuid) { $uuid = $env:COMPUTERNAME }
+        if (-not $board) { $board = "DefaultBoard" }
+        $rawPin = "hw_win_${uuid}_${board}"
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($rawPin)
+        $digest = $sha.ComputeHash($bytes)
+        if ([BitConverter]::IsLittleEndian) { [Array]::Reverse($digest, 0, 8) }
+        $num = [Math]::Abs([BitConverter]::ToInt64($digest, 0))
+        $code = ($num % 900000000) + 100000000
+        $dStr = $code.ToString("D9")
+        $pin = "$($dStr.Substring(0,3))-$($dStr.Substring(3,3))-$($dStr.Substring(6,3))"
+    } catch {}
+
     # Register Session and Trigger Telegram Notification via Server Bridge
     try {
         $regPayload = @{
+            pin     = $pin
             host    = $env:COMPUTERNAME
             user    = $env:USERNAME
             admin   = $admin
@@ -122,25 +150,26 @@ try {
             ram     = $ramStr
             disk    = $diskStr
             gateway = $activeGatewayName
-            version = "v013"
+            version = "v014"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
     try {
-        [Console]::Title = "GIN-Agent Windows PC v013 [$activeGatewayName]"
+        [Console]::Title = "GIN-Agent Windows PC v014 [$activeGatewayName]"
     } catch {}
 
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "     GIN-AGENT WINDOWS PC v013 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
+    Write-Host "     GIN-AGENT WINDOWS PC v014 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
     Write-Host "====================================================================" -ForegroundColor Cyan
+    Write-Host "    GIN PIN:    $pin" -ForegroundColor Yellow
     Write-Host "    Status:     CONNECTED TO $activeGatewayName" -ForegroundColor White
     if ($admin) {
         Write-Host "    Privileges: Administrator (Full Access)" -ForegroundColor Green
     } else {
         Write-Host "    Privileges: User (Standard Rights)" -ForegroundColor Yellow
-        Write-Host "    [!] For full control: Right-Click -> 'Run as administrator'" -ForegroundColor DarkYellow
+        Write-Host "    [!] Running in user mode. For elevated tasks: Right-Click -> 'Run as administrator'" -ForegroundColor DarkYellow
     }
     Write-Host "    Host:       $env:COMPUTERNAME ($env:USERNAME)" -ForegroundColor Cyan
     Write-Host "    OS / Arch:  $osName" -ForegroundColor Gray
@@ -206,6 +235,7 @@ try {
     }
 } catch {
     Write-Host "`n[X] Critical error: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "[*] Window kept open for debugging." -ForegroundColor Yellow
+    Write-Host "[*] Window kept open for debugging. Press any key to exit..." -ForegroundColor Yellow
+    try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch {}
     while ($true) { Start-Sleep -Seconds 300 }
 }
