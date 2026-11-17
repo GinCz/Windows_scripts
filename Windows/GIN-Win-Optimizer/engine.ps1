@@ -1,5 +1,5 @@
 ﻿# ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v048
+#  GIN-WIN-OPTIMIZER PLUS                                          v049
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -149,6 +149,31 @@ try {
     New-Item -Path "HKCU:\Software\Microsoft\Command Processor" -Force -ErrorAction SilentlyContinue | Out-Null
     Set-ItemProperty -Path "HKCU:\Software\Microsoft\Command Processor" -Name "DisableUNCCheck" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
 
+    # Autonomous Taskbar Search Box Suppression (completely hide Search box/pill from Windows 10/11 Taskbar)
+    $global:tbSearchCmds = @(
+        'add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f /reg:64',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Windows Search" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f /reg:64',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f /reg:64',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarModePolicy" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:64'
+    )
+    foreach ($cmd in $global:tbSearchCmds) {
+        $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
+        cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
+        if ([Environment]::Is64BitOperatingSystem) {
+            cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
+        }
+    }
+
     foreach ($cmd in $wuCommands) {
         $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
         cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
@@ -161,9 +186,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v048
+#  GIN-WIN-OPTIMIZER PLUS                                          v049
 
-#  Rule: Strict Version Increment Mandate (v032 -> v048)
+#  Rule: Strict Version Increment Mandate (v032 -> v049)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -216,11 +241,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v048 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v048 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -497,9 +522,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v048 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v048 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -776,11 +801,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v048 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v048 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v049 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1059,7 +1084,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDQ4IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDQ5IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -2160,7 +2185,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v048 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v049 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -3348,51 +3373,40 @@ $executeOptimization = {
 
         $actions += @{ Name = "Hide Search Icon & Box from Taskbar"; Script = {
 
-            # Hide Search across all Windows 10/11 keys, policies and all user profiles
-
-            $searchPaths = @(
-
-                "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search",
-
-                "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
-
-                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Search",
-
-                "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"
-
-            )
-
-            foreach ($sp in $searchPaths) {
-
-                New-Item -Path $sp -Force -ErrorAction SilentlyContinue | Out-Null
-
-                Set-ItemProperty -Path $sp -Name "SearchboxTaskbarMode" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
+            # Enforce Taskbar Search complete suppression via native reg commands
+            foreach ($cmd in $global:tbSearchCmds) {
+                $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
+                cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
+                if ([Environment]::Is64BitOperatingSystem) {
+                    cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
+                }
             }
-
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxMode" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarModePolicy" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-            Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "DisableSearchBoxSuggestions" -Value 1 -Type DWord -ErrorAction SilentlyContinue
 
             # Propagate to all loaded user profiles in HKEY_USERS
-
             Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
-
                 $uSid = $_.PSChildName
-
-                New-Item -Path "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Search" -Force -ErrorAction SilentlyContinue | Out-Null
-
-                Set-ItemProperty -Path "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxTaskbarMode" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-                Set-ItemProperty -Path "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Search" -Name "SearchboxMode" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
-                New-Item -Path "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Force -ErrorAction SilentlyContinue | Out-Null
-
-                Set-ItemProperty -Path "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "SearchboxTaskbarMode" -Value 0 -Type DWord -ErrorAction SilentlyContinue
-
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Policies\Microsoft\Windows\Windows Search\" /v \"SearchOnTaskbarMode\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Policies\Microsoft\Windows\Windows Search\" /v \"DisableSearchBoxSuggestions\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Policies\Microsoft\Windows\Explorer\" /v \"DisableSearchBoxSuggestions\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Search\" /v \"SearchboxTaskbarMode\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Search\" /v \"SearchboxMode\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Search\" /v \"SearchboxTaskbarModePolicy\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"SearchboxTaskbarMode\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
             }
+
+            # Seed Default User profile so newly created accounts never show search box
+            try {
+                $defHive = "C:\Users\Default\NTUSER.DAT"
+                if (Test-Path $defHive) {
+                    cmd.exe /c "reg.exe load HKLM\DefUserHive \"$defHive\"" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Policies\Microsoft\Windows\Windows Search\" /v \"SearchOnTaskbarMode\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Policies\Microsoft\Windows\Windows Search\" /v \"DisableSearchBoxSuggestions\" /t REG_DWORD /d 1 /f" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add \"HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Search\" /v \"SearchboxTaskbarMode\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
+                    [GC]::Collect()
+                    Start-Sleep -Milliseconds 300
+                    cmd.exe /c "reg.exe unload HKLM\DefUserHive" 2>$null | Out-Null
+                }
+            } catch {}
 
         }}
 
@@ -4614,6 +4628,31 @@ $executeOptimization = {
         New-Item -Path "HKCU:\Software\Microsoft\Command Processor" -Force -ErrorAction SilentlyContinue | Out-Null
         Set-ItemProperty -Path "HKCU:\Software\Microsoft\Command Processor" -Name "DisableUNCCheck" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
 
+    # Autonomous Taskbar Search Box Suppression (completely hide Search box/pill from Windows 10/11 Taskbar)
+    $global:tbSearchCmds = @(
+        'add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f /reg:64',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Windows Search" /v "SearchOnTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Windows Search" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f /reg:64',
+        'add "HKCU\Software\Policies\Microsoft\Windows\Explorer" /v "DisableSearchBoxSuggestions" /t REG_DWORD /d 1 /f /reg:64',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarModePolicy" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:64',
+        'add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:32',
+        'add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f /reg:64'
+    )
+    foreach ($cmd in $global:tbSearchCmds) {
+        $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
+        cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
+        if ([Environment]::Is64BitOperatingSystem) {
+            cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
+        }
+    }
+
         # 3. Guarantee core LAN, Discovery, Printing, Compatibility & Link Tracking services are Automatic and Running
         $coreLanServices = @("FDResPub", "fdPHost", "LanmanWorkstation", "LanmanServer", "lmhosts", "Dnscache", "Spooler", "NlaSvc", "netprofm", "SSDPSRV", "upnphost")
         foreach ($svcName in $coreLanServices) {
@@ -4931,7 +4970,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v048. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v049. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -5059,6 +5098,17 @@ $executeOptimization = {
                 }
             }
         }
+        # Final post-restart re-assert of Taskbar Search suppression
+        if ($controls["chk_ui_hide_search"].IsChecked) {
+            foreach ($cmd in $global:tbSearchCmds) {
+                $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
+                cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
+                if ([Environment]::Is64BitOperatingSystem) {
+                    cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
+                }
+            }
+        }
+
         # Final post-restart re-assert of WU lock in case Explorer restart or service triggered background check
         if ($controls["chk_wu_disable_auto_updates"].IsChecked) {
             foreach ($cmd in $finalLockCmds) {

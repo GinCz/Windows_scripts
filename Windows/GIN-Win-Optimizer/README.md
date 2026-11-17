@@ -4,8 +4,8 @@
 > **Public Mirror:** [Windows_scripts / Windows / GIN-Win-Optimizer ↗](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Architect & Author:** Vladimir Bulantsev ([@GinCz ↗](https://github.com/GinCz)) & AI [VladiMIR + AI]  
 > **Target Operating Systems:** Windows 7 / 8 / 8.1 / 10 / 11 (Universal x86 32-bit & x64 64-bit, all editions)  
-> **Current Version:** `v048` (Active Production)  
-> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v048.cmd` and `GIN-Win-Optimizer_v047.cmd`).  
+> **Current Version:** `v049` (Active Production)  
+> **Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v049.cmd` and `GIN-Win-Optimizer_v048.cmd`).  
 > **Release History:** Complete technical changelog available in [CHANGELOG.md ↗](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/CHANGELOG.md)
 
 ---
@@ -19,6 +19,12 @@ Built upon a robust **single-standard polyglot CMD architecture**, the optimizer
 ---
 
 ## ⚡ Key Highlights of Recent Releases
+
+### 🔍 Release v049 — Windows 11 Taskbar Search Box/Pill Complete Suppression
+- **Canonical Policy Enforcement (SearchOnTaskbarMode)**: Enforces `SearchOnTaskbarMode = 0` under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search` and `HKCU`, completely eradicating the Windows 11 search pill (`[ Q Hledat ]` / `[ Q Search ]`) at the Group Policy level.
+- **Instant Launcher & Startup Suppression**: Direct native `reg.exe` commands in CMD launcher header and startup `SELF-HEALING & ENVIRONMENT CLEANUP` guarantee the search widget never appears when applying layout templates.
+- **Universal Multi-Profile & Default User Propagation**: Propagates to all active profiles in `HKEY_USERS` and seeds `C:\Users\Default\NTUSER.DAT`.
+- **Post-Restart Explorer Re-Assertion**: Re-locks search suppression after `explorer.exe` restart to eliminate shell reinitialization glitches.
 
 ### 🛡️ Release v048 — Windows Defender High-Performance Exclusions
 - **Remote Network Shares (SMB / UNC)**: Exempts `\\s.gincz.com\soft`, `\\s.gincz.com\user`, `\\s.gincz.com\Storage`, `\\p.gincz.com\soft`, `\\152.53.182.222\soft`, `\\152.53.182.222\storage` from real-time network scanning, eradicating 10–30s Windows Explorer freezes and transfer lag over VPN/WAN links.

@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-11-17 — Release v049 (Windows 11 Taskbar Search Box/Pill Complete Suppression)
+- **Strict Version Bump (Directive #14 Compliance)**: Bumped version from v048 to v049 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v049.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
+- **Root Cause Remediation for Windows 11 Taskbar Search Pill**:
+  - Identified that Windows 11 (22H2 build 22621+, 23H2, 24H2) defaults taskbar search to `2` (Search icon and label / pill `[ Q Hledat ]` / `[ Q Search ]`) when the shell restarts or `LayoutModification.xml` is deployed.
+  - Fixed Group Policy registry parameter from `SearchboxTaskbarMode` to the canonical Microsoft Group Policy value `SearchOnTaskbarMode` (`REG_DWORD = 0`) under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search` and `HKCU:\Software\Policies\Microsoft\Windows\Windows Search`.
+- **Multi-Stage Defense-in-Depth Search Suppression**:
+  - **Stage 1 (Launcher Elevation Header)**: Injected native `reg.exe` commands directly into polyglot CMD header to immediately kill `SearchOnTaskbarMode` and `SearchboxTaskbarMode` upon elevation.
+  - **Stage 2 (Startup Self-Healing)**: Added `$global:tbSearchCmds` array to `SELF-HEALING & ENVIRONMENT CLEANUP`, ensuring search suppression precedes `LayoutModification.xml` application.
+  - **Stage 3 (chk_ui_hide_search Module)**: Enhanced module to apply 64-bit and 32-bit native `reg.exe` commands, recursively inject keys across all user SIDs in `HKEY_USERS`, and mount `C:\Users\Default\NTUSER.DAT` template.
+  - **Stage 4 (Post-Restart Explorer Sweep)**: Re-asserted search suppression immediately following `explorer.exe` restart to defeat any shell reinitialization defaults.
+- **Retention & Mirrors Sync**:
+  - Retained strictly 2 latest versions: `GIN-Win-Optimizer_v049.cmd` and `GIN-Win-Optimizer_v048.cmd`.
+  - Purged deprecated `GIN-Win-Optimizer_v047.cmd`.
+  - Replicated complete release set to public mirror `/AI/GitHub/Windows/Windows/GIN-Win-Optimizer/`.
+
 ## 2026-11-14 — Release v048 (Windows Defender High-Performance Exclusions: Network Shares, Admin/Dev Workspaces & Processes)
 - **Strict Version Bump (Directive #14 Compliance)**: Bumped version from 047 to 048.
 - **Windows Defender Performance Exclusions (chk_sec_defender_exclusions)**:

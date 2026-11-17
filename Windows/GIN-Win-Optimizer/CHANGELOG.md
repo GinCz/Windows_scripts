@@ -6,6 +6,26 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v049] - 2026-11-17
+### Windows 11 Taskbar Search Box/Pill Complete Suppression (chk_ui_hide_search)
+- **Windows 11 Search Policy Enforcement (SearchOnTaskbarMode)**:
+  - Corrected policy registry parameter from `SearchboxTaskbarMode` to the canonical Microsoft Group Policy value **`SearchOnTaskbarMode`** (`REG_DWORD = 0`) under `HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search` and `HKCU:\Software\Policies\Microsoft\Windows\Windows Search`.
+  - Setting `SearchOnTaskbarMode = 0` completely eradicates the search pill button (`[ Q Hledat ]` / `[ Q Search ]`) and search box from the Windows 11 taskbar at the system policy level.
+- **Immediate CMD Polyglot Header Suppression**:
+  - Injected direct registry suppression commands into the CMD polyglot launcher header, applying `SearchOnTaskbarMode = 0` and `SearchboxTaskbarMode = 0` at the very instant of Administrator elevation before any GUI or shell components initialize.
+- **Autonomous Startup Self-Healing Integration**:
+  - Integrated `SearchOnTaskbarMode` and `SearchboxTaskbarMode` into the pre-GUI `SELF-HEALING & ENVIRONMENT CLEANUP` block. When `LayoutModification.xml` is deployed, the taskbar shell no longer falls back to Windows 11 default search button display.
+- **Universal Multi-Profile & Default User Propagation**:
+  - `chk_ui_hide_search` now applies native `reg.exe` commands across both 64-bit and 32-bit registry spaces.
+  - Recursively propagates policy and user keys (`SearchOnTaskbarMode = 0`, `SearchboxTaskbarMode = 0`, `SearchboxMode = 0`) across all active user SIDs in `HKEY_USERS`.
+  - Mounts `C:\Users\Default\NTUSER.DAT` to enforce search suppression on all future user accounts created on the machine.
+- **Post-Restart Explorer Shell Re-Assertion**:
+  - Added dedicated re-assertion of `tbSearchCmds` immediately following `explorer.exe` restart to guarantee that Explorer shell reinitialization never displays the search box.
+- **Strict Retention Compliance**:
+  - Retained strictly the 2 latest versions: `GIN-Win-Optimizer_v049.cmd` and `GIN-Win-Optimizer_v048.cmd`, purged deprecated `GIN-Win-Optimizer_v047.cmd`.
+
+---
+
 ## [v048] - 2026-11-14
 ### Windows Defender High-Performance Exclusions (chk_sec_defender_exclusions)
 - **High-Impact Antivirus Performance Exclusions**:
