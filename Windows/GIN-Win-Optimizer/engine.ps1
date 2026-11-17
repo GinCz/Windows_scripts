@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 #  GIN-WIN-OPTIMIZER PLUS                                          v051
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]

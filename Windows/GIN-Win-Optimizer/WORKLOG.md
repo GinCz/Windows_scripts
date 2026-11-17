@@ -1,4 +1,4 @@
-﻿# 📜 GIN-Win-Optimizer — Журнал разработки и архитектурный WORKLOG
+# 📜 GIN-Win-Optimizer — Журнал разработки и архитектурный WORKLOG
 
 ---
 
