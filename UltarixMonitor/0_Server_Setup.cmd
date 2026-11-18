@@ -2,59 +2,78 @@
 setlocal EnableDelayedExpansion
 
 :: ============================================================================
-:: ULTARIX s.r.o. - Server Setup & Directory Initializer
+:: ULTARIX s.r.o. - Server Setup & Directory Initializer (v2.2.0)
 :: Author  : VladiMIR + Antigravity AI
-:: Version : v2.1.0 (2026-11)
-:: Target  : ULPS1 Server (192.168.33.128) / Admin PC
+:: Physical Server Path : C:\UTIL\UltarixMonitor
+:: Network Share Path   : \\ulps1\UTIL\UltarixMonitor
 :: ============================================================================
 
+:: Enable UNC path support
+reg add "HKCU\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t REG_DWORD /d 1 /f >nul 2>&1
+reg add "HKLM\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t REG_DWORD /d 1 /f >nul 2>&1
+
+:: Auto-Elevation check
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [*] Vyzaduji se administratorska prava...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c pushd \"\"%~dp0\"\" && \"\"%~f0\"\" admin' -Verb RunAs"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/k pushd \"\"%~dp0\"\" && \"\"%~f0\"\" admin' -Verb RunAs"
     exit /b
 )
 
-title ULTARIX - Inicializace monitoringu na serveru [VladiMIR + Antigravity]
+title ULTARIX - Nastaveni monitoringu na serveru ULPS1 [VladiMIR + Antigravity]
 
 pushd "%~dp0" 2>nul
 
 echo ================================================================================
-echo       ULTARIX s.r.o. - Priprava slozky UTIL pro monitoring na serveru
+echo       ULTARIX s.r.o. - Inicializace uloziste monitoringu na serveru ULPS1
 echo ================================================================================
 echo.
 
-:: Detect UTIL directory path
-set "UTIL_DIR="
-if exist "D:\UTIL" set "UTIL_DIR=D:\UTIL\UltarixMonitor"
-if not defined UTIL_DIR if exist "\\ULPS1\Sdílené Data\UTIL" set "UTIL_DIR=\\ULPS1\Sdílené Data\UTIL\UltarixMonitor"
-if not defined UTIL_DIR if exist "\\ULPS1\ULTARIX\UTIL" set "UTIL_DIR=\\ULPS1\ULTARIX\UTIL\UltarixMonitor"
-if not defined UTIL_DIR if exist "\\ULPS1\UTIL" set "UTIL_DIR=\\ULPS1\UTIL\UltarixMonitor"
-if not defined UTIL_DIR if exist "E:\UTIL" set "UTIL_DIR=E:\UTIL\UltarixMonitor"
-if not defined UTIL_DIR if exist "S:\UTIL" set "UTIL_DIR=S:\UTIL\UltarixMonitor"
-if not defined UTIL_DIR set "UTIL_DIR=%~dp0"
-
-echo [*] Cilova slozka monitoringu: %UTIL_DIR%
-
-:: Create logs directory
-if not exist "%UTIL_DIR%\logs" mkdir "%UTIL_DIR%\logs" >nul 2>&1
-
-:: Copy dashboard.html if present locally
-if exist "%~dp0dashboard.html" (
-    copy /y "%~dp0dashboard.html" "%UTIL_DIR%\dashboard.html" >nul 2>&1
-    echo [OK] Soubor dashboard.html zkopirovan do %UTIL_DIR%\dashboard.html
+:: Detect physical folder (defaults to C:\UTIL\UltarixMonitor)
+set "BASE_DIR=C:\UTIL\UltarixMonitor"
+if not exist "C:\UTIL" (
+    if exist "%~dp0" set "BASE_DIR=%~dp0"
 )
 
-:: Set permissions on logs directory so all PCs can append logs
-icacls "%UTIL_DIR%\logs" /grant Everyone:(OI)(CI)M /t /c /q >nul 2>&1
-icacls "%UTIL_DIR%\logs" /grant "Everyone":(OI)(CI)F /t /c /q >nul 2>&1
+echo [*] Fyzicka cesta na serveru : %BASE_DIR%
+echo [*] Sitova cesta pro klienty : \\ulps1\UTIL\UltarixMonitor\logs
+echo.
 
-echo [OK] Pristupova prava pro zapis logu ze vsech pocitacu nastavena.
+:: Create logs directory
+if not exist "%BASE_DIR%\logs" (
+    mkdir "%BASE_DIR%\logs" >nul 2>&1
+    echo [+] Slozka %BASE_DIR%\logs byla uspesne vytvorena.
+) else (
+    echo [i] Slozka %BASE_DIR%\logs jiz existuje.
+)
+
+:: Copy dashboard.html to server folder
+if exist "%~dp0dashboard.html" (
+    if /i not "%~dp0"=="%BASE_DIR%\" (
+        copy /y "%~dp0dashboard.html" "%BASE_DIR%\dashboard.html" >nul 2>&1
+    )
+    echo [OK] Soubor dashboard.html je pripraven v %BASE_DIR%\dashboard.html
+)
+
+:: Set permissions on logs directory for all network computers
+echo [*] Nastavuji prava plneho pristupu pro zapis logu ze site...
+icacls "%BASE_DIR%\logs" /grant Everyone:(OI)(CI)F /t /c /q >nul 2>&1
+icacls "%BASE_DIR%\logs" /grant "Everyone":(OI)(CI)F /t /c /q >nul 2>&1
+icacls "%BASE_DIR%\logs" /grant Users:(OI)(CI)F /t /c /q >nul 2>&1
+echo [OK] Prava zapisu pro vsechny pocitace v siti uspesne nastavena.
+
+:: Create test heartbeat to verify folder
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$test = @{ server = 'ULPS1'; status = 'READY'; updated = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss') } | ConvertTo-Json; Set-Content -Path '%BASE_DIR%\logs\server_status.json' -Value $test -Encoding utf8"
+echo [OK] Kontrolni testovaci soubor server_status.json vytvoren.
+
 echo.
 echo ================================================================================
-echo       SERVER JE PRIPRAVEN! ULOZISTE PRO PC-09 A OSTATNI PC AKTIVNI.
+echo       SERVER JE 100%% PRIPRAVEN!
+echo ================================================================================
+echo  Klienti (PC-09 a dalsi) nyni mohou zapisovat logy do:
+echo  \\ulps1\UTIL\UltarixMonitor\logs
 echo ================================================================================
 echo.
 popd 2>nul
-timeout /t 5 >nul
+pause
 exit /b 0

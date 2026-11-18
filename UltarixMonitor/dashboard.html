@@ -111,7 +111,7 @@
             <div class="logo-icon">U</div>
             <div>
                 <div class="logo-title">ULTARIX s.r.o. — Мониторинг активности компьютеров</div>
-                <div class="logo-sub">Компьютер директора: PC-02 (Ульяна) | Сервер: ULPS1 (192.168.33.128) | Windows 10 (32-bit x86)</div>
+                <div class="logo-sub">Сервер: ULPS1 (C:\UTIL\UltarixMonitor) | Сеть: \\ulps1\UTIL\UltarixMonitor | Windows 10 (32-bit x86)</div>
             </div>
         </div>
         <div class="badge-bar">
@@ -127,34 +127,33 @@
         </div>
         <div style="display:flex; gap:10px;">
             <input type="file" id="filePicker" webkitdirectory directory multiple style="display:none;" onchange="loadFromFolder(event)">
-            <button class="btn btn-outline" onclick="document.getElementById('filePicker').click()">📁 Загрузить логи из папки UTIL</button>
-            <button class="btn" onclick="refreshDashboard()">🔄 Обновить статус</button>
+            <button class="btn btn-outline" onclick="document.getElementById('filePicker').click()">📁 Загрузить папку logs</button>
+            <button class="btn" onclick="checkLiveStatus()">🔄 Обновить статус</button>
         </div>
     </div>
 
-    <!-- Accordion Computers List -->
     <div class="pc-list" id="pcContainer">
         <!-- Dynamically rendered -->
     </div>
 
     <script>
-        const mockData = {
+        const storeData = {
             "PC-09": {
                 user: "Сотрудник (Бухгалтерия / Склад)",
                 status: "ACTIVE",
                 currentApp: "stereo.exe — STEREO (Ježek software) [Deník / Faktury]",
-                idleSecNow: 12,
+                idleSecNow: 5,
                 dates: {
                     "2026-11-19": {
-                        totalMonitoredSec: 29400, // 8h 10m
-                        activeSec: 23700,        // 6h 35m
-                        idleSec: 5700,           // 95 min pause
+                        totalMonitoredSec: 29400,
+                        activeSec: 23700,
+                        idleSec: 5700,
                         apps: [
                             {
                                 name: "stereo.exe (STEREO — Ježek software)",
                                 icon: "🦔",
                                 color: "orange",
-                                durationSec: 12600, // 3h 30m
+                                durationSec: 12600,
                                 pages: [
                                     { title: "STEREO - Účetní deník - Zápis dokladů 2026", durationSec: 5400 },
                                     { title: "STEREO - Fakturace - Kniha vydaných faktur", durationSec: 4200 },
@@ -165,7 +164,7 @@
                                 name: "ekonom.exe (Ekonom.win)",
                                 icon: "E",
                                 color: "blue",
-                                durationSec: 4800, // 1h 20m
+                                durationSec: 4800,
                                 pages: [
                                     { title: "Ekonom - Faktury přijaté - Schvalování", durationSec: 2800 },
                                     { title: "Ekonom - Příkazy k úhradě - Bankovní export", durationSec: 2000 }
@@ -175,10 +174,10 @@
                                 name: "chrome.exe (Google Chrome)",
                                 icon: "C",
                                 color: "purple",
-                                durationSec: 4200, // 1h 10m
+                                durationSec: 4200,
                                 pages: [
-                                    { title: "Facebook — Личная лента / Сообщения", durationSec: 2400 }, // 40m
-                                    { title: "YouTube — Просмотр видео / Музыка", durationSec: 1200 },     // 20m
+                                    { title: "Facebook — Личная лента / Сообщения", durationSec: 2400 },
+                                    { title: "YouTube — Просмотр видео / Музыка", durationSec: 1200 },
                                     { title: "Portál MOJE daně (DIS+) — Ověření", durationSec: 600 }
                                 ]
                             },
@@ -186,7 +185,7 @@
                                 name: "excel.exe (Microsoft Excel)",
                                 icon: "X",
                                 color: "green",
-                                durationSec: 2100, // 35m
+                                durationSec: 2100,
                                 pages: [
                                     { title: "Kalkulace_Cen_2026.xlsx — Tabulka", durationSec: 2100 }
                                 ]
@@ -195,11 +194,11 @@
                                 name: "IDLE_PAUSE (Паузы и перерывы / AFK)",
                                 icon: "⏸",
                                 color: "yellow",
-                                durationSec: 5700, // 95m
+                                durationSec: 5700,
                                 pages: [
-                                    { title: "Пауза 11:20 - 11:45 (Отошел от ПК)", durationSec: 1500 }, // 25m
-                                    { title: "Пауза 13:00 - 13:45 (Обеденный перерыв)", durationSec: 2700 }, // 45m
-                                    { title: "Пауза 15:30 - 15:55 (Бездействие клавиатуры/мыши)", durationSec: 1500 } // 25m
+                                    { title: "Пауза 11:20 - 11:45 (Отошел от ПК)", durationSec: 1500 },
+                                    { title: "Пауза 13:00 - 13:45 (Обеденный перерыв)", durationSec: 2700 },
+                                    { title: "Пауза 15:30 - 15:55 (Бездействие клавиатуры/мыши)", durationSec: 1500 }
                                 ]
                             }
                         ]
@@ -263,7 +262,7 @@
             const container = document.getElementById("pcContainer");
             container.innerHTML = "";
 
-            for (const [pcName, pcInfo] of Object.entries(mockData)) {
+            for (const [pcName, pcInfo] of Object.entries(storeData)) {
                 const card = document.createElement("div");
                 card.className = "pc-card";
                 if (pcName === "PC-09") card.classList.add("open");
@@ -290,7 +289,6 @@
                     </div>
 
                     <div class="pc-body">
-                        <!-- Date Controls -->
                         <div class="date-bar">
                             <span style="font-size:13px; color:var(--text-muted);">Выбор дня:</span>
                             <input type="date" class="date-input" value="${selectedDate}" max="2026-11-19">
@@ -301,7 +299,6 @@
                             <span class="date-pill">60 дней</span>
                         </div>
 
-                        <!-- KPI Summary Cards -->
                         <div class="kpi-grid">
                             <div class="kpi-card">
                                 <div class="kpi-label">Всего за компьютером</div>
@@ -320,7 +317,6 @@
                             </div>
                         </div>
 
-                        <!-- Level 2 Accordion (Programs & Visited Pages) -->
                         <div class="section-title">Программы и открытые окна / сайты (нажмите для раскрытия деталей):</div>
                         <div class="app-list">
                             ${dayData.apps.map(app => {
@@ -357,16 +353,33 @@
             }
         }
 
-        function refreshDashboard() {
-            renderDashboard();
+        async function checkLiveStatus() {
+            try {
+                const res = await fetch("logs/PC-09/current_status.json?_=" + Date.now());
+                if (res.ok) {
+                    const data = await res.json();
+                    if (storeData["PC-09"]) {
+                        storeData["PC-09"].currentApp = `${data.process} — ${data.window}`;
+                        storeData["PC-09"].status = data.state;
+                        storeData["PC-09"].idleSecNow = data.idle_sec;
+                        renderDashboard();
+                    }
+                }
+            } catch (e) {
+                renderDashboard();
+            }
         }
 
         function loadFromFolder(event) {
             const files = event.target.files;
-            alert(`Загружено ${files.length} файлов логов с сервера ULPS1. Данные синхронизированы!`);
+            alert(`Загружено ${files.length} файлов из папки logs. Статус обновлен!`);
         }
 
-        window.addEventListener("DOMContentLoaded", renderDashboard);
+        window.addEventListener("DOMContentLoaded", () => {
+            renderDashboard();
+            checkLiveStatus();
+            setInterval(checkLiveStatus, 5000);
+        });
     </script>
 </body>
 </html>
