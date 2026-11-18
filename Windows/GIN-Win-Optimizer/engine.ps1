@@ -1,5 +1,5 @@
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v051
+#  GIN-WIN-OPTIMIZER PLUS                                          v052
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -233,47 +233,98 @@ try {
         } catch {}
     }
 
-    # Universal Helper: Suppress Task View Button & Enforce Never Combine Taskbar Buttons (Windows 10 & 11)
+    # Universal Helper: Suppress Task View Button & Enforce Never Combine Taskbar Buttons (Windows 10 32/64-bit & Windows 11)
     function global:Apply-TaskbarPreferences {
         try {
-            # 1. Machine-wide Policies / Registry Settings (64-bit and 32-bit)
-            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f /reg:64' 2>$null | Out-Null
-            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f /reg:32' 2>$null | Out-Null
-            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:64' 2>$null | Out-Null
-            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:32' 2>$null | Out-Null
-            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:64' 2>$null | Out-Null
-            cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f /reg:32' 2>$null | Out-Null
-
-            # 2. Current User (HKCU)
-            New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Force -ErrorAction SilentlyContinue | Out-Null
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "ShowTaskViewButton" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarGlomLevel" -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "MMTaskbarGlomLevel" -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue
-
-            # 3. All loaded interactive user profiles in HKEY_USERS (S-1-5-21-*)
-            Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
-                $uSid = $_.PSChildName
-                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"ShowTaskViewButton\" /t REG_DWORD /d 0 /f" 2>$null | Out-Null
-                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"TaskbarGlomLevel\" /t REG_DWORD /d 2 /f" 2>$null | Out-Null
-                cmd.exe /c "reg.exe add \"HKU\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\" /v \"MMTaskbarGlomLevel\" /t REG_DWORD /d 2 /f" 2>$null | Out-Null
+            $regSet = {
+                param($regPath, $valName, $valData, $valType = "DWord")
+                try {
+                    if (-not (Test-Path $regPath)) {
+                        New-Item -Path $regPath -Force -ErrorAction SilentlyContinue | Out-Null
+                    }
+                    Set-ItemProperty -Path $regPath -Name $valName -Value $valData -Type $valType -Force -ErrorAction SilentlyContinue | Out-Null
+                } catch {}
             }
 
-            # 4. Default User Profile Hive
+            # Helper to enforce all taskbar grouping prevention keys in a specific Explorer subkey
+            $enforceKeys = {
+                param($advPath, $polPath, $curPolPath)
+                if ($advPath) {
+                    & $regSet $advPath "ShowTaskViewButton" 0
+                    & $regSet $advPath "TaskbarGlomLevel" 2
+                    & $regSet $advPath "MMTaskbarGlomLevel" 2
+                }
+                if ($polPath) {
+                    & $regSet $polPath "NoTaskGrouping" 1
+                    & $regSet $polPath "TaskbarGlomLevel" 2
+                    & $regSet $polPath "MMTaskbarGlomLevel" 2
+                    & $regSet $polPath "ShowTaskViewButton" 0
+                }
+                if ($curPolPath) {
+                    & $regSet $curPolPath "NoTaskGrouping" 1
+                }
+            }
+
+            # 1. Current User (HKCU)
+            & $enforceKeys "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" `
+                           "HKCU:\Software\Policies\Microsoft\Windows\Explorer" `
+                           "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"
+
+            # 2. Machine-wide (HKLM)
+            & $enforceKeys "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" `
+                           "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer" `
+                           "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer"
+
+            # 3. Machine-wide Reflection for 64-bit / 32-bit (via reg.exe)
+            if ([Environment]::Is64BitOperatingSystem) {
+                foreach ($view in @("/reg:64", "/reg:32")) {
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""ShowTaskViewButton"" /t REG_DWORD /d 0 /f $view" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""TaskbarGlomLevel"" /t REG_DWORD /d 2 /f $view" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"" /v ""MMTaskbarGlomLevel"" /t REG_DWORD /d 2 /f $view" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer"" /v ""NoTaskGrouping"" /t REG_DWORD /d 1 /f $view" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer"" /v ""TaskbarGlomLevel"" /t REG_DWORD /d 2 /f $view" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer"" /v ""MMTaskbarGlomLevel"" /t REG_DWORD /d 2 /f $view" 2>$null | Out-Null
+                    cmd.exe /c "reg.exe add ""HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer"" /v ""NoTaskGrouping"" /t REG_DWORD /d 1 /f $view" 2>$null | Out-Null
+                }
+            } else {
+                # Pure 32-bit Windows 10
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f' 2>$null | Out-Null
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "NoTaskGrouping" /t REG_DWORD /d 1 /f' 2>$null | Out-Null
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                cmd.exe /c 'reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v "NoTaskGrouping" /t REG_DWORD /d 1 /f' 2>$null | Out-Null
+            }
+
+            # 4. All loaded interactive user profiles in HKEY_USERS (S-1-5-21-*)
+            Get-ChildItem Registry::HKEY_USERS -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -match '^S-1-5-21-' -and $_.PSChildName -notmatch '_Classes$' } | ForEach-Object {
+                $uSid = $_.PSChildName
+                & $enforceKeys "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" `
+                               "Registry::HKEY_USERS\$uSid\Software\Policies\Microsoft\Windows\Explorer" `
+                               "Registry::HKEY_USERS\$uSid\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"
+            }
+
+            # 5. Default User Profile Hive (C:\Users\Default\NTUSER.DAT)
             try {
                 $defHive = "C:\Users\Default\NTUSER.DAT"
                 if (Test-Path $defHive) {
-                    cmd.exe /c "reg.exe load HKLM\DefUserHive \"$defHive\"" 2>$null | Out-Null
-                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "ShowTaskViewButton" /t REG_DWORD /d 0 /f' 2>$null | Out-Null
-                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
-                    cmd.exe /c 'reg.exe add "HKLM\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "MMTaskbarGlomLevel" /t REG_DWORD /d 2 /f' 2>$null | Out-Null
+                    cmd.exe /c 'reg.exe load HKLM\DefUserHive "C:\Users\Default\NTUSER.DAT"' 2>$null | Out-Null
+                    & $enforceKeys "HKLM:\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" `
+                                   "HKLM:\DefUserHive\Software\Policies\Microsoft\Windows\Explorer" `
+                                   "HKLM:\DefUserHive\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer"
                     [GC]::Collect()
                     Start-Sleep -Milliseconds 150
                     cmd.exe /c "reg.exe unload HKLM\DefUserHive" 2>$null | Out-Null
                 }
             } catch {}
+
+            # 6. Persistent Logon Hook in Run: Keeps Never-Combine guaranteed at every user logon
+            $runNeverCombine = 'powershell.exe -WindowStyle Hidden -NoProfile -Command "Set-ItemProperty -Path ''HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'' -Name ''TaskbarGlomLevel'' -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'' -Name ''MMTaskbarGlomLevel'' -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Policies\Microsoft\Windows\Explorer'' -Name ''NoTaskGrouping'' -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Policies\Microsoft\Windows\Explorer'' -Name ''TaskbarGlomLevel'' -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Policies\Microsoft\Windows\Explorer'' -Name ''MMTaskbarGlomLevel'' -Value 2 -Type DWord -Force -ErrorAction SilentlyContinue"'
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "GIN-NeverCombineTaskbar" -Value $runNeverCombine -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "GIN-NeverCombineTaskbar" -Value $runNeverCombine -Force -ErrorAction SilentlyContinue
         } catch {}
     }
-
     # Universal Helper: Authentic Windows 7 Blue Theme (Aero Blue Accent, Light Apps, Dark System, Crisp Aero Borders)
     function global:Apply-Win7BlueTheme {
         try {
@@ -386,9 +437,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v051
+#  GIN-WIN-OPTIMIZER PLUS                                          v052
 
-#  Rule: Strict Version Increment Mandate (v032 -> v051)
+#  Rule: Strict Version Increment Mandate (v032 -> v052)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -441,11 +492,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v052 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v052 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -722,9 +773,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v052 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v052 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -1001,11 +1052,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v052 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v051 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v052 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1284,7 +1335,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDUxIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDUyIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -1379,7 +1430,7 @@ $xamlBase64 = (@(
         'ZXh0QmxvY2sgTmFtZT0idHh0SG9zdEluZm8iIFRleHQ9Ikhvc3Q6IGxvY2FsIHwg0KPRgdGC0YDQvtC50YHRgtCy0L46IFBDIHwg'
         'V2luZG93czogMTAgUHJvIHwgSVA6IDEyNy4wLjAuMSIgRm9udFNpemU9IjExIiBGb3JlZ3JvdW5kPSIjY2JkNWUxIiBNYXJnaW49'
         'IjAsMywwLDAiLz4KICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIE5hbWU9InR4dEhlYWRlclN1YiIgVGV4dD0iR0lOLVdp'
-        'bi1PcHRpbWl6ZXIgdjA1MSBbVmxhZGlNSVIgKyBBSV0iIEZvbnRTaXplPSIxMCIgRm9yZWdyb3VuZD0iIzY0NzQ4YiIgTWFyZ2lu'
+        'bi1PcHRpbWl6ZXIgdjA1MiBbVmxhZGlNSVIgKyBBSV0iIEZvbnRTaXplPSIxMCIgRm9yZWdyb3VuZD0iIzY0NzQ4YiIgTWFyZ2lu'
         'PSIwLDEsMCwwIi8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvRG9ja1BhbmVsPgogICAgICAg'
         'IDwvQm9yZGVyPgoKICAgICAgICA8IS0tIFByZXNldHMgQmFyIC0tPgogICAgICAgIDxCb3JkZXIgR3JpZC5Sb3c9IjEiIEJhY2tn'
         'cm91bmQ9IiMxZTIwMjYiIENvcm5lclJhZGl1cz0iNCIgUGFkZGluZz0iMTAsNiIgTWFyZ2luPSIwLDAsMCw4IiBCb3JkZXJCcnVz'
@@ -2385,7 +2436,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v051 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v052 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -5127,7 +5178,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v051. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v052. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -5235,8 +5286,24 @@ $executeOptimization = {
     # Refresh Windows Shell & Taskbar: Restart explorer.exe so all changes apply immediately!
     Log-Message "Applying Taskbar changes and restarting Explorer shell..." "INFO"
     try {
+        # Pre-restart sweep: Enforce all taskbar, tray and theme preferences BEFORE stopping Explorer
+        Apply-TaskbarPreferences
+        if ($controls["chk_ui_show_all_tray_icons"].IsChecked) {
+            Promote-AllTrayIcons
+        }
+        if ($controls["chk_ui_color_accent_theme"].IsChecked) {
+            Apply-Win7BlueTheme
+        }
+
         Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
         Start-Sleep -Milliseconds 1200
+
+        # Mid-restart sweep while Explorer is down
+        Apply-TaskbarPreferences
+        if ($controls["chk_ui_show_all_tray_icons"].IsChecked) {
+            Promote-AllTrayIcons
+        }
+
         if (-not (Get-Process -Name explorer -ErrorAction SilentlyContinue)) {
             Start-Process explorer.exe -ErrorAction SilentlyContinue
         }
@@ -5258,7 +5325,7 @@ $executeOptimization = {
         # Final post-restart re-assert of Taskbar Search suppression
         if ($controls["chk_ui_hide_search"].IsChecked) {
             foreach ($cmd in $global:tbSearchCmds) {
-                $cmdNative = $cmd -replace '\s*/reg:(64|32)', ''
+                $cmdNative = $cmd -replace '\\s*/reg:(64|32)', ''
                 cmd.exe /c "reg.exe $cmdNative" 2>$null | Out-Null
                 if ([Environment]::Is64BitOperatingSystem) {
                     cmd.exe /c "reg.exe $cmd" 2>$null | Out-Null
@@ -5272,9 +5339,7 @@ $executeOptimization = {
         }
 
         # Final post-restart re-assert of Taskbar preferences (Task View hidden, Never combine buttons)
-        if ($controls["chk_ui_hide_taskview"].IsChecked -or $controls["chk_ui_never_combine_taskbar"].IsChecked) {
-            Apply-TaskbarPreferences
-        }
+        Apply-TaskbarPreferences
 
         # Final post-restart re-assert of Windows 7 Blue Theme
         if ($controls["chk_ui_color_accent_theme"].IsChecked) {
@@ -5419,7 +5484,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v051 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v052 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 

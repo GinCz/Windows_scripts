@@ -2,9 +2,26 @@
 
 All notable changes, architectural overhauls, optimization module additions, and security remediations for the **GIN-Win-Optimizer** project are meticulously documented in this file.
 
-The project strictly follows semantic engineering discipline: every new feature, bug fix, policy enhancement, or module addition increments the release version (`v008` ➔ `v048`).
+The project strictly follows semantic engineering discipline: every new feature, bug fix, policy enhancement, or module addition increments the release version (`v008` ➔ `v052`).
 
 ---
+
+## [v052] - 2026-11-19
+### Taskbar Buttons Never Combine & No Grouping Universal Enforcement (Windows 10 32/64-bit & Windows 11)
+- **Universal Never Combine Taskbar Buttons (`chk_ui_never_combine_taskbar`)**:
+  - Eliminated taskbar buttons collapsing into small grouped icons ("ярлычки") on Windows 10 (32-bit & 64-bit) and Windows 11 (23H2+ / modern shell).
+  - Enforced `TaskbarGlomLevel = 2` (Never combine, show full window titles) and `MMTaskbarGlomLevel = 2` across all user profiles in `HKEY_USERS` (`S-1-5-21-*`), `HKCU`, and `C:\Users\Default\NTUSER.DAT`.
+  - Added enterprise policy enforcement: configured `NoTaskGrouping = 1` in `HKCU\Software\Policies\Microsoft\Windows\Explorer`, `HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer`, `HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer`, and `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer` (with both 64-bit and 32-bit registry views).
+  - Replaced fragile `cmd.exe /c` quote-escaped registry calls in PowerShell with robust native .NET `Set-ItemProperty` and `New-Item` cmdlets, eliminating silent failures on multi-user enumeration.
+- **Immediate CMD Polyglot Header Hardening (x86 & x64 Safe)**:
+  - Injected clean, unconditional native `reg.exe add` commands into the CMD launcher elevation header that execute seamlessly on pure 32-bit Windows 10 as well as 64-bit Windows 10 and Windows 11 without syntax errors from unsupported architecture flags.
+- **Three-Stage Explorer Lifecycle Re-Assertion**:
+  - Implemented pre-restart, mid-restart (while Explorer is terminated), and post-restart enforcement of `Apply-TaskbarPreferences`, guaranteeing that `explorer.exe` reads `TaskbarGlomLevel = 2` at initialization and never falls back to grouped icon mode.
+- **Persistent Logon Hook**:
+  - Registered `GIN-NeverCombineTaskbar` in `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run` and `HKCU\...\Run` to permanently maintain ungrouped taskbar buttons across reboots and profile logons.
+- **Strict Retention & Delivery Compliance**:
+  - Retained strictly the 2 latest versions: `GIN-Win-Optimizer_v052.cmd` and `GIN-Win-Optimizer_v051.cmd`.
+  - Purged deprecated `GIN-Win-Optimizer_v050.cmd`.
 
 ## [v051] - 2026-11-18
 ### Task View Multi-Profile Suppression, Taskbar Button Ungrouping & Classic Windows 7 Blue Theme

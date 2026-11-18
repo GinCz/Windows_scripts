@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-11-19 — Release v052 (Taskbar Buttons Never Combine & No Grouping Universal Enforcement)
+- **Strict Version Bump (Directive #14 / Rule #15 Compliance)**: Bumped version from v051 to v052 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v052.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
+- **Root Cause Remediation for Taskbar Buttons Turning into Icons ("ярлычки")**:
+  - Diagnosed that in v051, open taskbar buttons collapsed into grouped icons without labels due to:
+    1) PowerShell `Apply-TaskbarPreferences` escaping bug where `cmd.exe /c "reg.exe add \"HKU\$uSid...\""` sent literal backslashes to `cmd.exe`, causing silent syntax errors and failure to apply settings to interactive user profiles;
+    2) Lack of enterprise policy enforcement (`NoTaskGrouping = 1`), allowing Windows Explorer shell defaults to override user preferences;
+    3) Shell restart lifecycle issue where `Apply-TaskbarPreferences` only executed after Explorer was already running, preventing the new shell from reading `TaskbarGlomLevel = 2` on initialization;
+    4) Incompatible `/reg:32` / `/reg:64` arguments in CMD elevation header causing failures on 32-bit Windows 10 installations.
+  - Implemented comprehensive defense-in-depth ungrouping architecture:
+    1) **Multi-Hive Policy & Preference Enforcement**: Applied `TaskbarGlomLevel = 2`, `MMTaskbarGlomLevel = 2`, and `NoTaskGrouping = 1` across `HKCU`, `HKLM`, `Policies\Microsoft\Windows\Explorer`, `CurrentVersion\Policies\Explorer`, all loaded user profiles in `HKEY_USERS` (`S-1-5-21-*`), and `C:\Users\Default\NTUSER.DAT`.
+    2) **Pure Native .NET Registry Provider**: Replaced all external `cmd.exe /c reg.exe` calls in user profile loops with native PowerShell `Set-ItemProperty` and `New-Item` cmdlets.
+    3) **Architecture-Safe Elevation Header**: Re-engineered polyglot CMD launcher header with clean unconditional native `reg.exe add` commands compatible with Windows 10 32-bit, Windows 10 64-bit, and Windows 11.
+    4) **Three-Stage Shell Lifecycle Enforcement**: Re-asserted `Apply-TaskbarPreferences` pre-restart (before killing Explorer), mid-restart (while Explorer is terminated), and post-restart.
+    5) **Logon Hook Persistence**: Registered `GIN-NeverCombineTaskbar` in `Run` keys across HKLM and HKCU.
+- **Strict Retention & Delivery Compliance**:
+  - Retained strictly the 2 latest versions: `GIN-Win-Optimizer_v052.cmd` and `GIN-Win-Optimizer_v051.cmd`.
+  - Purged deprecated `GIN-Win-Optimizer_v050.cmd` from local workspaces and MEGA cloud (`/MEGA/DOCS/desktop/` and `/MEGA/WIN-FLASH/Util-WINDOWS/`).
+
 ## 2026-11-18 — Release v051 (Task View Suppression, Taskbar Button Ungrouping & Classic Windows 7 Blue Theme)
 - **Strict Version Bump (Directive #14 / Rule #15 Compliance)**: Bumped version from v050 to v051 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v051.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
 - **Root Cause Remediation for Task View Appearance & Taskbar Button Grouping**:
