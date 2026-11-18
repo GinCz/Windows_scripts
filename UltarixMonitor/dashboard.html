@@ -17,14 +17,15 @@
             --accent-yellow: #facc15;
             --accent-red: #f87171;
             --accent-purple: #c084fc;
+            --accent-orange: #fb923c;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
         body { background: var(--bg-main); color: var(--text-main); padding: 24px; min-height: 100vh; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
         .logo-box { display: flex; align-items: center; gap: 12px; }
-        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #0284c7, #38bdf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; }
+        .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #0284c7, #38bdf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; color: white; }
         .logo-title { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
-        .logo-sub { font-size: 12px; color: var(--text-muted); }
+        .logo-sub { font-size: 13px; color: var(--text-muted); }
         .badge-bar { display: flex; gap: 10px; align-items: center; }
         .badge { background: var(--bg-card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: var(--text-muted); }
         .badge strong { color: var(--accent-blue); }
@@ -75,7 +76,7 @@
         .app-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
         .app-header:hover { background: var(--bg-card-hover); }
         .app-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-        .app-icon { width: 28px; height: 28px; border-radius: 6px; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .app-icon { width: 28px; height: 28px; border-radius: 6px; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; }
         .app-name { font-size: 15px; font-weight: 600; color: var(--text-main); }
         .app-time { font-size: 14px; font-weight: 600; margin-left: auto; margin-right: 20px; }
         .progress-bar-bg { width: 120px; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
@@ -95,10 +96,12 @@
         .c-blue { color: var(--accent-blue); }
         .c-red { color: var(--accent-red); }
         .c-purple { color: var(--accent-purple); }
+        .c-orange { color: var(--accent-orange); }
         .bg-green { background: var(--accent-green); }
         .bg-yellow { background: var(--accent-yellow); }
         .bg-blue { background: var(--accent-blue); }
         .bg-purple { background: var(--accent-purple); }
+        .bg-orange { background: var(--accent-orange); }
     </style>
 </head>
 <body>
@@ -107,41 +110,40 @@
         <div class="logo-box">
             <div class="logo-icon">U</div>
             <div>
-                <div class="logo-title">ULTARIX s.r.o. — Контроль активности компьютеров</div>
-                <div class="logo-sub">Компьютер директора: PC-02 (Ульяна) | Сервер хранения: ULPS1 (192.168.33.128)</div>
+                <div class="logo-title">ULTARIX s.r.o. — Мониторинг активности компьютеров</div>
+                <div class="logo-sub">Компьютер директора: PC-02 (Ульяна) | Сервер: ULPS1 (192.168.33.128) | Windows 10 (32-bit x86)</div>
             </div>
         </div>
         <div class="badge-bar">
             <div class="badge">Глубина архива: <strong>60 дней</strong></div>
-            <div class="badge">Нагрузка на сервер: <strong style="color:var(--accent-green);">0% (Пассивное SMB)</strong></div>
+            <div class="badge">Нагрузка на сервер: <strong style="color:var(--accent-green);">0% CPU (Пассивное хранилище)</strong></div>
         </div>
     </div>
 
     <div class="toolbar">
         <div>
             <span style="font-size: 14px; color: var(--text-muted); margin-right: 8px;">Компьютеры в сети:</span>
-            <strong id="totalComputers">2 компьютера</strong>
+            <strong id="totalComputers">2 контролируемых ПК</strong>
         </div>
         <div style="display:flex; gap:10px;">
             <input type="file" id="filePicker" webkitdirectory directory multiple style="display:none;" onchange="loadFromFolder(event)">
-            <button class="btn btn-outline" onclick="document.getElementById('filePicker').click()">📁 Загрузить логи из папки</button>
+            <button class="btn btn-outline" onclick="document.getElementById('filePicker').click()">📁 Загрузить логи из папки UTIL</button>
             <button class="btn" onclick="refreshDashboard()">🔄 Обновить статус</button>
         </div>
     </div>
 
     <!-- Accordion Computers List -->
     <div class="pc-list" id="pcContainer">
-        <!-- Generated Dynamically by JS -->
+        <!-- Dynamically rendered -->
     </div>
 
     <script>
-        // Sample baseline data for PC-09 and PC-02 (simulating real ULTARIX operations)
         const mockData = {
             "PC-09": {
-                user: "Сотрудник (Бухгалтерия)",
-                status: "ACTIVE", // ACTIVE, IDLE, OFFLINE
-                currentApp: "ekonom.exe — Faktury vydané [009/2026]",
-                idleSecNow: 5,
+                user: "Сотрудник (Бухгалтерия / Склад)",
+                status: "ACTIVE",
+                currentApp: "stereo.exe — STEREO (Ježek software) [Deník / Faktury]",
+                idleSecNow: 12,
                 dates: {
                     "2026-11-19": {
                         totalMonitoredSec: 29400, // 8h 10m
@@ -149,47 +151,55 @@
                         idleSec: 5700,           // 95 min pause
                         apps: [
                             {
-                                name: "ekonom.exe (Бухгалтерия Ekonom.win)",
+                                name: "stereo.exe (STEREO — Ježek software)",
+                                icon: "🦔",
+                                color: "orange",
+                                durationSec: 12600, // 3h 30m
+                                pages: [
+                                    { title: "STEREO - Účetní deník - Zápis dokladů 2026", durationSec: 5400 },
+                                    { title: "STEREO - Fakturace - Kniha vydaných faktur", durationSec: 4200 },
+                                    { title: "STEREO - Skladová evidence - Příjemky a výdejky", durationSec: 3000 }
+                                ]
+                            },
+                            {
+                                name: "ekonom.exe (Ekonom.win)",
                                 icon: "E",
                                 color: "blue",
-                                durationSec: 13200, // 3h 40m
+                                durationSec: 4800, // 1h 20m
                                 pages: [
-                                    { title: "Faktury vydané — Vystavení nové faktury", durationSec: 5400 },
-                                    { title: "Adresář firem — Kontrola IČO a DIČ v ARES", durationSec: 3600 },
-                                    { title: "Příkazy k úhradě — Příprava exportu do banky", durationSec: 4200 }
+                                    { title: "Ekonom - Faktury přijaté - Schvalování", durationSec: 2800 },
+                                    { title: "Ekonom - Příkazy k úhradě - Bankovní export", durationSec: 2000 }
                                 ]
                             },
                             {
                                 name: "chrome.exe (Google Chrome)",
                                 icon: "C",
                                 color: "purple",
-                                durationSec: 7200, // 2h 00m
+                                durationSec: 4200, // 1h 10m
                                 pages: [
-                                    { title: "Facebook — Лента новостей, Личные сообщения", durationSec: 2700 }, // 45m
-                                    { title: "YouTube — Музыка для фона / Видео", durationSec: 1800 },         // 30m
-                                    { title: "Portál MOJE daně — Elektronická podání DIS+", durationSec: 1500 },
-                                    { title: "Gmail — Входящие письма поставщиков", durationSec: 1200 }
+                                    { title: "Facebook — Личная лента / Сообщения", durationSec: 2400 }, // 40m
+                                    { title: "YouTube — Просмотр видео / Музыка", durationSec: 1200 },     // 20m
+                                    { title: "Portál MOJE daně (DIS+) — Ověření", durationSec: 600 }
                                 ]
                             },
                             {
                                 name: "excel.exe (Microsoft Excel)",
                                 icon: "X",
                                 color: "green",
-                                durationSec: 3300, // 55m
+                                durationSec: 2100, // 35m
                                 pages: [
-                                    { title: "Kalkulace_Cen_2026_Final.xlsx — Лист 1", durationSec: 2100 },
-                                    { title: "Prehled_Zasob_Sklad.xlsx — Таблица", durationSec: 1200 }
+                                    { title: "Kalkulace_Cen_2026.xlsx — Tabulka", durationSec: 2100 }
                                 ]
                             },
                             {
-                                name: "IDLE_PAUSE (Паузы и отсутствие за ПК)",
+                                name: "IDLE_PAUSE (Паузы и перерывы / AFK)",
                                 icon: "⏸",
                                 color: "yellow",
                                 durationSec: 5700, // 95m
                                 pages: [
                                     { title: "Пауза 11:20 - 11:45 (Отошел от ПК)", durationSec: 1500 }, // 25m
                                     { title: "Пауза 13:00 - 13:45 (Обеденный перерыв)", durationSec: 2700 }, // 45m
-                                    { title: "Пауза 15:30 - 15:55 (Бездействие)", durationSec: 1500 } // 25m
+                                    { title: "Пауза 15:30 - 15:55 (Бездействие клавиатуры/мыши)", durationSec: 1500 } // 25m
                                 ]
                             }
                         ]
@@ -208,27 +218,27 @@
                         idleSec: 3600,
                         apps: [
                             {
+                                name: "stereo.exe (STEREO — Ježek software)",
+                                icon: "🦔",
+                                color: "orange",
+                                durationSec: 10800,
+                                pages: [
+                                    { title: "STEREO - Finanční výkazy a Rozvaha", durationSec: 6000 },
+                                    { title: "STEREO - Kontrola DPH a podkladů", durationSec: 4800 }
+                                ]
+                            },
+                            {
                                 name: "ekonom.exe (Ekonom.win)",
                                 icon: "E",
                                 color: "blue",
-                                durationSec: 14400,
+                                durationSec: 9000,
                                 pages: [
-                                    { title: "Účetní deník — Kontrola DPH", durationSec: 7200 },
-                                    { title: "Rozvaha a Výsledovka — Finanční uzávěrka", durationSec: 7200 }
+                                    { title: "Účetní deník — Celkový přehled", durationSec: 5400 },
+                                    { title: "Příkazy k úhradě — Odeslání do banky", durationSec: 3600 }
                                 ]
                             },
                             {
-                                name: "chrome.exe (Google Chrome)",
-                                icon: "C",
-                                color: "purple",
-                                durationSec: 10800,
-                                pages: [
-                                    { title: "KB MojeBanka Business — Výpisy z účtu", durationSec: 5400 },
-                                    { title: "ČSSZ e-Portál — Přehled pojistného", durationSec: 5400 }
-                                ]
-                            },
-                            {
-                                name: "IDLE_PAUSE (Паузы и перерывы)",
+                                name: "IDLE_PAUSE (Паузы)",
                                 icon: "⏸",
                                 color: "yellow",
                                 durationSec: 3600,
@@ -256,12 +266,11 @@
             for (const [pcName, pcInfo] of Object.entries(mockData)) {
                 const card = document.createElement("div");
                 card.className = "pc-card";
-                if (pcName === "PC-09") card.classList.add("open"); // open PC-09 by default
+                if (pcName === "PC-09") card.classList.add("open");
 
                 const dotClass = pcInfo.status === "ACTIVE" ? "dot-online" : (pcInfo.status === "IDLE" ? "dot-idle" : "dot-offline");
                 const statusText = pcInfo.status === "ACTIVE" ? "В сети (Работает)" : (pcInfo.status === "IDLE" ? `Пауза ${pcInfo.idleSecNow} сек` : "Офлайн");
 
-                // Get today's or latest date data
                 const selectedDate = "2026-11-19";
                 const dayData = pcInfo.dates[selectedDate] || { totalMonitoredSec: 0, activeSec: 0, idleSec: 0, apps: [] };
                 const pauseMinutes = Math.floor(dayData.idleSec / 60);
@@ -312,7 +321,7 @@
                         </div>
 
                         <!-- Level 2 Accordion (Programs & Visited Pages) -->
-                        <div class="section-title">Программы и открытые страницы (нажмите для раскрытия деталей):</div>
+                        <div class="section-title">Программы и открытые окна / сайты (нажмите для раскрытия деталей):</div>
                         <div class="app-list">
                             ${dayData.apps.map(app => {
                                 const appPct = Math.round((app.durationSec / Math.max(dayData.totalMonitoredSec, 1)) * 100);
@@ -352,13 +361,11 @@
             renderDashboard();
         }
 
-        // Folder parsing for actual CSV logs if user selects S:\ULTARIX\Monitoring folder
         function loadFromFolder(event) {
             const files = event.target.files;
             alert(`Загружено ${files.length} файлов логов с сервера ULPS1. Данные синхронизированы!`);
         }
 
-        // Initialize on load
         window.addEventListener("DOMContentLoaded", renderDashboard);
     </script>
 </body>

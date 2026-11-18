@@ -1,28 +1,21 @@
-# ULTARIX Activity Monitor & Executive Audit Suite (v2.0.0)
+# ULTARIX Activity Monitor & Executive Audit Suite (32-bit Windows 10 x86)
 
-Single-file self-contained background monitoring and executive web dashboard for ULTARIX s.r.o.
+Enterprise employee monitoring suite specifically tailored for ULTARIX s.r.o. office network, designed to run seamlessly on 32-bit Windows 10 systems hosting legacy accounting applications (**STEREO / Ježek software**, Ekonom.win).
 
-## Key Principles & Architecture
-- **Single All-in-One CMD Architecture:** No separate external `.ps1` files. `Ultarix_Agent_Setup.cmd` auto-elevates to Administrator, embeds its own PowerShell engine, and registers invisible background tasks.
-- **Zero Server Overhead (0% CPU / 0% RAM on ULPS1):** Server `ULPS1 (192.168.33.128)` acts purely as a passive file folder (`\\ULPS1\ULTARIX\Monitoring\`). It runs NO database services, NO background daemons, and processes ZERO queries.
-- **Client Processing:** Monitored PCs (e.g. PC-09) sample active windows and AFK pauses locally every 5 seconds, appending tiny text lines to a daily CSV file (~100 bytes per change).
-- **Executive Web Dashboard (PC-02 Ulyana):** Ulyana opens `dashboard.html` in Chrome/Edge or bookmarks it in Favorites (`file:///S:/ULTARIX/Monitoring/dashboard.html`):
-  - **Level 1 Accordion:** List of all monitored PCs (`PC-09`, `PC-03`, `PC-04`, etc.) with live online/offline/pause status indicators.
-  - **Date Picker / Calendar:** Filter by day, week, 30 days, or 60 days.
-  - **Daily KPI Cards:** Total time, active work time, and **total pause/idle minutes** (e.g. 95 minutes of idle/breaks).
-  - **Level 2 Nested Accordion:** Click on any program (e.g. Google Chrome, Ekonom.win, Excel, Idle pauses) to expand and view exact visited URLs, sub-tabs, documents, and specific pauses with exact minutes spent!
+## Architecture & Server Footprint
+- **Target OS:** Windows 10 Pro 32-bit (x86).
+- **Central Storage:** Placed in the server's `UTIL` directory: `\\ULPS1\Sdílené Data\UTIL\UltarixMonitor\` or `D:\UTIL\UltarixMonitor\`.
+- **Server Load:** Strictly **0% CPU and 0% RAM** on `ULPS1 (192.168.33.128)`. The server acts purely as passive SMB storage for daily CSV logs.
+- **Client Footprint:** Less than 15 MB RAM, 0% CPU overhead on client PCs.
 
-## Deployment
+## Files in Package
+1. **`0_Server_Setup.cmd`** — Run once on server `ULPS1` (or admin PC) to create `UTIL\UltarixMonitor\logs` and grant write permissions.
+2. **`1_Client_Install.cmd`** — Run on monitored 32-bit client PCs (PC-09, etc.). Installs the invisible background agent via Windows Scheduled Task.
+3. **`2_Ulyana_Dashboard.cmd`** — Run on PC-02 (Ulyana). Opens the browser dashboard in 1 click.
+4. **`dashboard.html`** — Executive Web Dashboard with accordion for computers and nested accordion for programs/pages.
 
-1. **On PC-09 (or any employee workstation):**
-   Run as Administrator:
-   ```cmd
-   Ultarix_Agent_Setup.cmd
-   ```
-
-2. **On PC-02 (Ulyana / Director):**
-   Run:
-   ```cmd
-   Ultarix_Dashboard.cmd
-   ```
-   Or bookmark `S:\ULTARIX\Monitoring\dashboard.html` in Chrome / Edge.
+## Step-by-Step Deployment Guide
+1. Copy the entire `UltarixMonitor` folder to the server into `UTIL` (e.g. `D:\UTIL\UltarixMonitor` or `\\ULPS1\Sdílené Data\UTIL\UltarixMonitor`).
+2. On server `ULPS1`: run `0_Server_Setup.cmd` as Administrator once.
+3. On employee PC (PC-09): run `1_Client_Install.cmd` as Administrator once.
+4. On Director PC (PC-02 Ulyana): run `2_Ulyana_Dashboard.cmd` and press `Ctrl + D` to bookmark the page in browser favorites.

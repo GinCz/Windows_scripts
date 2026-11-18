@@ -2,14 +2,14 @@
 setlocal EnableDelayedExpansion
 
 :: ============================================================================
-:: ULTARIX s.r.o. - Activity Monitor Agent (All-in-One Self-Contained CMD)
+:: ULTARIX s.r.o. - Client Monitor Agent Installer (Windows 10 32-bit x86)
 :: Author  : VladiMIR + Antigravity AI
-:: Version : v2.0.0 (2026-11)
-:: Target  : Windows 10 / 11 Workstations (e.g. PC-09, PC-02)
-:: Server  : ULPS1 (192.168.33.128) - 0% CPU Server Load (Passive SMB Storage)
+:: Version : v2.1.0 (2026-11)
+:: Target  : Windows 10 Pro 32-bit (PC-09, PC-03, PC-04, PC-05...)
+:: Software: STEREO (Jezek software), Ekonom.win, MS Office, Browsers
+:: Server  : ULPS1 (192.168.33.128) - 0% CPU Passive Storage
 :: ============================================================================
 
-:: Auto-Elevation to Administrator via PowerShell
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [*] Vyzaduji se administratorska prava...
@@ -17,22 +17,32 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-title ULTARIX - Activity Monitor Agent Setup [VladiMIR + Antigravity]
+title ULTARIX - Instalace agenta monitoringu (Win10 32-bit) [PC-09]
 
 pushd "%~dp0" 2>nul
 
 echo ================================================================================
-echo       ULTARIX s.r.o. - Tichy agent monitoringu aktivity pocitace
+echo       ULTARIX s.r.o. - Tichy agent monitoringu pro Windows 10 (32-bit x86)
 echo ================================================================================
-echo Pocitac: %COMPUTERNAME% ^| Cilove uloziste: \\ULPS1\ULTARIX\Monitoring
+echo Pocitac: %COMPUTERNAME% ^| Architektura: %PROCESSOR_ARCHITECTURE% (32-bit Win10)
 echo ================================================================================
 echo.
 
 set "TARGET_DIR=%ProgramData%\UltarixMonitor"
 if not exist "%TARGET_DIR%" mkdir "%TARGET_DIR%" >nul 2>&1
 
-:: Extract embedded PowerShell agent code directly into TARGET_DIR
-echo [*] Instalace agenta do %TARGET_DIR%...
+:: Detect server UTIL path
+set "SERVER_LOGS="
+if exist "\\ULPS1\Sdílené Data\UTIL\UltarixMonitor\logs" set "SERVER_LOGS=\\ULPS1\Sdílené Data\UTIL\UltarixMonitor\logs"
+if not defined SERVER_LOGS if exist "\\ULPS1\UTIL\UltarixMonitor\logs" set "SERVER_LOGS=\\ULPS1\UTIL\UltarixMonitor\logs"
+if not defined SERVER_LOGS if exist "D:\UTIL\UltarixMonitor\logs" set "SERVER_LOGS=D:\UTIL\UltarixMonitor\logs"
+if not defined SERVER_LOGS if exist "E:\UTIL\UltarixMonitor\logs" set "SERVER_LOGS=E:\UTIL\UltarixMonitor\logs"
+if not defined SERVER_LOGS if exist "S:\UTIL\UltarixMonitor\logs" set "SERVER_LOGS=S:\UTIL\UltarixMonitor\logs"
+if not defined SERVER_LOGS if exist "\\ULPS1\ULTARIX\Monitoring" set "SERVER_LOGS=\\ULPS1\ULTARIX\Monitoring"
+if not defined SERVER_LOGS set "SERVER_LOGS=\\ULPS1\Sdílené Data\UTIL\UltarixMonitor\logs"
+
+echo [*] Serverova slozka logu: %SERVER_LOGS%
+echo [*] Generuji optimalizovany 32-bitovy skript agenta...
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
 "$code = @'" + [System.Environment]::NewLine + ^
@@ -41,13 +51,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
 "    [int]`$PollIntervalSec = 5,`n" + ^
 "    [int]`$IdleThresholdSec = 60,`n" + ^
 "    [int]`$RetentionDays = 90,`n" + ^
-"    [string]`$ServerShare = '\\ULPS1\ULTARIX\Monitoring'`n" + ^
+"    [string]`$ServerShare = '" + "%SERVER_LOGS%" + "'`n" + ^
 ")`n" + ^
 "`$win32Code = @'`n" + ^
 "using System;`n" + ^
 "using System.Runtime.InteropServices;`n" + ^
 "using System.Text;`n" + ^
-"public class Win32 {`n" + ^
+"public class Win32x86 {`n" + ^
 "    [DllImport(\"user32.dll\")]`n" + ^
 "    public static extern IntPtr GetForegroundWindow();`n" + ^
 "    [DllImport(\"user32.dll\", CharSet = CharSet.Auto, SetLastError = true)]`n" + ^
@@ -61,11 +71,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
 "    }`n" + ^
 "    [DllImport(\"user32.dll\")]`n" + ^
 "    public static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);`n" + ^
-"    public static uint GetIdleTimeMillis() {`n" + ^
+"    public static uint GetIdleMillis() {`n" + ^
 "        LASTINPUTINFO lii = new LASTINPUTINFO();`n" + ^
 "        lii.cbSize = (uint)Marshal.SizeOf(lii);`n" + ^
 "        if (GetLastInputInfo(ref lii)) {`n" + ^
-"            return (uint)Environment.TickCount - lii.dwTime;`n" + ^
+"            uint curTick = unchecked((uint)Environment.TickCount);`n" + ^
+"            return (curTick >= lii.dwTime) ? (curTick - lii.dwTime) : (curTick + (uint.MaxValue - lii.dwTime));`n" + ^
 "        }`n" + ^
 "        return 0;`n" + ^
 "    }`n" + ^
@@ -120,22 +131,23 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
 "        if (-not (Test-Path `$remoteLogDir -ErrorAction SilentlyContinue)) {`n" + ^
 "            `$null = New-Item -ItemType Directory -Path `$remoteLogDir -Force -ErrorAction SilentlyContinue`n" + ^
 "        }`n" + ^
-"        `$idleSec = [math]::Floor([Win32]::GetIdleTimeMillis() / 1000)`n" + ^
+"        `$idleMs = [Win32x86]::GetIdleMillis()`n" + ^
+"        `$idleSec = [math]::Floor(`$idleMs / 1000)`n" + ^
 "        `$curState = if (`$idleSec -ge `$IdleThresholdSec) { 'IDLE' } else { 'ACTIVE' }`n" + ^
-"        `$hWnd = [Win32]::GetForegroundWindow()`n" + ^
+"        `$hWnd = [Win32x86]::GetForegroundWindow()`n" + ^
 "        `$proc = 'Unknown'; `$title = ''`n" + ^
 "        if (`$hWnd -ne [IntPtr]::Zero) {`n" + ^
 "            `$sb = New-Object System.Text.StringBuilder 512`n" + ^
-"            [void][Win32]::GetWindowText(`$hWnd, `$sb, `$sb.Capacity)`n" + ^
+"            [void][Win32x86]::GetWindowText(`$hWnd, `$sb, `$sb.Capacity)`n" + ^
 "            `$title = `$sb.ToString().Trim()`n" + ^
 "            `$pidOut = 0`n" + ^
-"            [void][Win32]::GetWindowThreadProcessId(`$hWnd, [ref]`$pidOut)`n" + ^
+"            [void][Win32x86]::GetWindowThreadProcessId(`$hWnd, [ref]`$pidOut)`n" + ^
 "            if (`$pidOut -gt 0) {`n" + ^
 "                `$p = Get-Process -Id `$pidOut -ErrorAction SilentlyContinue`n" + ^
 "                if (`$p) { `$proc = `$p.ProcessName }`n" + ^
 "            }`n" + ^
 "        }`n" + ^
-"        if (`$curState -eq 'IDLE') { `$title = \"[Пауза - `$idleSec сек]\"; `$proc = 'IDLE_PAUSE' }`n" + ^
+"        if (`$curState -eq 'IDLE') { `$title = \"[Пауза / Бездействие - `$idleSec сек]\"; `$proc = 'IDLE_PAUSE' }`n" + ^
 "        if ((`$proc -ne `$lastProc) -or (`$title -ne `$lastTitle) -or (`$curState -ne `$lastState)) {`n" + ^
 "            if (`$lastProc -ne '') {`n" + ^
 "                `$now = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')`n" + ^
@@ -150,23 +162,25 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
 "}`n" + ^
 "'@; Set-Content -Path '%TARGET_DIR%\agent.ps1' -Value `$code -Encoding utf8 -Force"
 
-echo [OK] Agenta byl uspesne vygenerovan.
+echo [OK] Agenta uspesne zkompilovan a pripraven pro 32-bit Win10.
 
-:: Register Windows Scheduled Task (Runs on Logon, Hidden, Highest Privileges)
+:: Stop existing task
 schtasks /delete /tn "UltarixMonitor" /f >nul 2>&1
+
+:: Register scheduled task (Runs on logon, hidden, highest privileges)
 schtasks /create /tn "UltarixMonitor" /tr "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"%TARGET_DIR%\agent.ps1\"" /sc ONLOGON /rl HIGHEST /f >nul 2>&1
 
-:: Fallback in registry Run
+:: Register in Registry Run as backup
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v "UltarixMonitor" /t REG_SZ /d "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"%TARGET_DIR%\agent.ps1\"" /f >nul 2>&1
 
-:: Launch task right now
+:: Start task right now
 schtasks /run /tn "UltarixMonitor" >nul 2>&1
 
 echo.
 echo ================================================================================
-echo       INSTALACE DOKONCENA! AGENT BEZI V TICHYCH PROCESECH WINDOWS.
+echo       INSTALACE PROBEHLA USPESNE! MONITORING PRO STEREO A PC-09 BEZI.
 echo ================================================================================
 echo.
 popd 2>nul
-timeout /t 4 >nul
+timeout /t 5 >nul
 exit /b 0
