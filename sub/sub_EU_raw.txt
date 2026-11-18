@@ -1,1 +1,1 @@
-vless://f18c5f6d-2bac-4a99-8c92-a6e6e7aea9b4@172.93.122.11:8443?security=reality&encryption=none&pbk=VDZdbh_RzDDZsHpYF58yUuuvXh93XnmkvpSqb50qG2U&sni=nl2.reddotcorp.org&sid=1be482b8e08aa0ef&fp=firefox&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%B3%F0%9F%87%B1%20GIN-NL-01
+vless://4ff754c4-a405-401b-81ba-6241fbbb9314@mngd.connainho.lol:59736?security=reality&encryption=none&pbk=Zos_i17fmOY1oBrudr6mlL8MJClNuBXvjdOxZ4JK2lI&sni=www.apple.com&sid=cab2f4e8&fp=chrome&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%BB%F0%9F%87%B3%20GIN-VN-01
