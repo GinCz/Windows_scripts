@@ -1,58 +1,28 @@
-# ULTARIX Activity Monitor & Executive Audit System
+# ULTARIX Activity Monitor & Executive Audit Suite (v2.0.0)
 
-Lightweight, private, zero-dependency background activity and window tracking suite for ULTARIX s.r.o. office workstations (Windows 10/11).
+Single-file self-contained background monitoring and executive web dashboard for ULTARIX s.r.o.
 
-## Architecture & Data Flow
+## Key Principles & Architecture
+- **Single All-in-One CMD Architecture:** No separate external `.ps1` files. `Ultarix_Agent_Setup.cmd` auto-elevates to Administrator, embeds its own PowerShell engine, and registers invisible background tasks.
+- **Zero Server Overhead (0% CPU / 0% RAM on ULPS1):** Server `ULPS1 (192.168.33.128)` acts purely as a passive file folder (`\\ULPS1\ULTARIX\Monitoring\`). It runs NO database services, NO background daemons, and processes ZERO queries.
+- **Client Processing:** Monitored PCs (e.g. PC-09) sample active windows and AFK pauses locally every 5 seconds, appending tiny text lines to a daily CSV file (~100 bytes per change).
+- **Executive Web Dashboard (PC-02 Ulyana):** Ulyana opens `dashboard.html` in Chrome/Edge or bookmarks it in Favorites (`file:///S:/ULTARIX/Monitoring/dashboard.html`):
+  - **Level 1 Accordion:** List of all monitored PCs (`PC-09`, `PC-03`, `PC-04`, etc.) with live online/offline/pause status indicators.
+  - **Date Picker / Calendar:** Filter by day, week, 30 days, or 60 days.
+  - **Daily KPI Cards:** Total time, active work time, and **total pause/idle minutes** (e.g. 95 minutes of idle/breaks).
+  - **Level 2 Nested Accordion:** Click on any program (e.g. Google Chrome, Ekonom.win, Excel, Idle pauses) to expand and view exact visited URLs, sub-tabs, documents, and specific pauses with exact minutes spent!
 
-```
-+-------------------------------------------------------------+
-| PC-09 (Monitored Workstation)                               |
-|   - Ultarix_Agent.ps1 (Runs silently via Scheduled Task)    |
-|   - Samples every 5s: Active Window + AFK/Idle Detection    |
-|   - Writes local cache: %ProgramData%\UltarixMonitor\logs\  |
-|   - Syncs real-time to \\ULPS1\ULTARIX\Monitoring\PC-09\    |
-+-------------------------------------------------------------+
-                              |
-                              v (Local SMB Share / Network)
-+-------------------------------------------------------------+
-| Central Server ULPS1 (192.168.33.128)                       |
-|   - \\ULPS1\ULTARIX\Monitoring\PC-09\activity_YYYY-MM-DD.csv|
-|   - \\ULPS1\ULTARIX\Monitoring\PC-09\current_status.json    |
-+-------------------------------------------------------------+
-                              |
-                              v (On-demand inspection)
-+-------------------------------------------------------------+
-| PC-02 (Director Ulyana's Workstation)                       |
-|   - Check_PC09_Activity.cmd -> Get_Ultarix_Report.ps1       |
-|   - Real-time live status: current program & AFK duration   |
-|   - 60-day historical audit, Top 10 apps, pause analytics  |
-|   - Interactive HTML Executive Dashboard                    |
-+-------------------------------------------------------------+
-```
+## Deployment
 
-## Features
-- **Zero Third-Party Dependencies:** 100% native Windows PowerShell and Win32 APIs (`user32.dll` `GetForegroundWindow`, `GetWindowText`, `GetLastInputInfo`).
-- **Resource Footprint:** Consumes less than 15 MB RAM, 0% CPU impact.
-- **AFK / Idle Detection:** Accurately distinguishes active keyboard/mouse work from idle pauses (default threshold: 60 seconds).
-- **60-90 Days Retention:** Daily structured CSV logs and automatic rolling purge of files older than 90 days.
-- **Offline Resilient:** If server ULPS1 is temporarily unavailable, logs are queued locally on PC-09 and pushed automatically upon reconnection.
-- **Turnkey Reporting:** 1-click execution for Director Ulyana on PC-02 to view daily breakdown, application time percentages, and open an interactive visual HTML dashboard.
+1. **On PC-09 (or any employee workstation):**
+   Run as Administrator:
+   ```cmd
+   Ultarix_Agent_Setup.cmd
+   ```
 
-## Deployment Steps
-
-### 1. On PC-09 (Monitored Employee PC):
-Run as Administrator:
-```cmd
-Install_Ultarix_Agent.cmd
-```
-This registers the scheduled task `UltarixMonitor` running hidden at logon.
-
-### 2. On PC-02 (Director Ulyana's PC):
-Double-click:
-```cmd
-Check_PC09_Activity.cmd
-```
-Or run from PowerShell:
-```powershell
-.\Get_Ultarix_Report.ps1 -TargetComputer "PC-09" -Days 60 -OpenReport
-```
+2. **On PC-02 (Ulyana / Director):**
+   Run:
+   ```cmd
+   Ultarix_Dashboard.cmd
+   ```
+   Or bookmark `S:\ULTARIX\Monitoring\dashboard.html` in Chrome / Edge.

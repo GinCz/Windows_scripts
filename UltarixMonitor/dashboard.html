@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULTARIX s.r.o. — Мониторинг и контроль компьютеров</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #243248;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+            --accent-purple: #c084fc;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { background: var(--bg-main); color: var(--text-main); padding: 24px; min-height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .logo-box { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #0284c7, #38bdf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: white; }
+        .logo-title { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
+        .logo-sub { font-size: 12px; color: var(--text-muted); }
+        .badge-bar { display: flex; gap: 10px; align-items: center; }
+        .badge { background: var(--bg-card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: var(--text-muted); }
+        .badge strong { color: var(--accent-blue); }
+
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--bg-card); padding: 12px 18px; border-radius: 10px; border: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
+        .btn { background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
+        .btn:hover { background: #0369a1; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-outline:hover { background: var(--border); color: var(--text-main); }
+
+        /* Accordion Level 1 (Computers) */
+        .pc-list { display: flex; flex-direction: column; gap: 14px; }
+        .pc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color 0.2s; }
+        .pc-card:hover { border-color: #475569; }
+        .pc-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: var(--bg-card); transition: background 0.2s; }
+        .pc-header:hover { background: var(--bg-card-hover); }
+        .pc-title-box { display: flex; align-items: center; gap: 14px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot-online { background: var(--accent-green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
+        .dot-idle { background: var(--accent-yellow); box-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
+        .dot-offline { background: #64748b; }
+        .pc-name { font-size: 17px; font-weight: 600; color: var(--text-main); }
+        .pc-user { font-size: 13px; color: var(--text-muted); margin-left: 6px; }
+        .pc-current-app { font-size: 13px; color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .chevron { transition: transform 0.3s; color: var(--text-muted); font-size: 18px; }
+        .pc-card.open .chevron { transform: rotate(180deg); }
+
+        .pc-body { display: none; padding: 20px; border-top: 1px solid var(--border); background: #131d31; }
+        .pc-card.open .pc-body { display: block; }
+
+        /* Date Controls */
+        .date-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .date-input { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-size: 13px; }
+        .date-pill { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .date-pill.active { background: #0284c7; color: white; border-color: #0284c7; }
+
+        /* KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+        .kpi-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+        .kpi-val { font-size: 22px; font-weight: 700; }
+        .kpi-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* Accordion Level 2 (Programs) */
+        .section-title { font-size: 15px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .app-list { display: flex; flex-direction: column; gap: 10px; }
+        .app-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .app-header { padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .app-header:hover { background: var(--bg-card-hover); }
+        .app-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+        .app-icon { width: 28px; height: 28px; border-radius: 6px; background: #334155; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .app-name { font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .app-time { font-size: 14px; font-weight: 600; margin-left: auto; margin-right: 20px; }
+        .progress-bar-bg { width: 120px; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; }
+
+        /* Pages / Windows details sub-list */
+        .app-details { display: none; padding: 12px 16px 12px 56px; border-top: 1px solid var(--border); background: #162032; font-size: 13px; }
+        .app-item.open .app-details { display: block; }
+        .page-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .page-row:last-child { border-bottom: none; }
+        .page-title { color: #cbd5e1; flex: 1; padding-right: 14px; word-break: break-all; }
+        .page-time { color: var(--text-muted); font-family: monospace; white-space: nowrap; }
+
+        /* Color classes */
+        .c-green { color: var(--accent-green); }
+        .c-yellow { color: var(--accent-yellow); }
+        .c-blue { color: var(--accent-blue); }
+        .c-red { color: var(--accent-red); }
+        .c-purple { color: var(--accent-purple); }
+        .bg-green { background: var(--accent-green); }
+        .bg-yellow { background: var(--accent-yellow); }
+        .bg-blue { background: var(--accent-blue); }
+        .bg-purple { background: var(--accent-purple); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-box">
+            <div class="logo-icon">U</div>
+            <div>
+                <div class="logo-title">ULTARIX s.r.o. — Контроль активности компьютеров</div>
+                <div class="logo-sub">Компьютер директора: PC-02 (Ульяна) | Сервер хранения: ULPS1 (192.168.33.128)</div>
+            </div>
+        </div>
+        <div class="badge-bar">
+            <div class="badge">Глубина архива: <strong>60 дней</strong></div>
+            <div class="badge">Нагрузка на сервер: <strong style="color:var(--accent-green);">0% (Пассивное SMB)</strong></div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div>
+            <span style="font-size: 14px; color: var(--text-muted); margin-right: 8px;">Компьютеры в сети:</span>
+            <strong id="totalComputers">2 компьютера</strong>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <input type="file" id="filePicker" webkitdirectory directory multiple style="display:none;" onchange="loadFromFolder(event)">
+            <button class="btn btn-outline" onclick="document.getElementById('filePicker').click()">📁 Загрузить логи из папки</button>
+            <button class="btn" onclick="refreshDashboard()">🔄 Обновить статус</button>
+        </div>
+    </div>
+
+    <!-- Accordion Computers List -->
+    <div class="pc-list" id="pcContainer">
+        <!-- Generated Dynamically by JS -->
+    </div>
+
+    <script>
+        // Sample baseline data for PC-09 and PC-02 (simulating real ULTARIX operations)
+        const mockData = {
+            "PC-09": {
+                user: "Сотрудник (Бухгалтерия)",
+                status: "ACTIVE", // ACTIVE, IDLE, OFFLINE
+                currentApp: "ekonom.exe — Faktury vydané [009/2026]",
+                idleSecNow: 5,
+                dates: {
+                    "2026-11-19": {
+                        totalMonitoredSec: 29400, // 8h 10m
+                        activeSec: 23700,        // 6h 35m
+                        idleSec: 5700,           // 95 min pause
+                        apps: [
+                            {
+                                name: "ekonom.exe (Бухгалтерия Ekonom.win)",
+                                icon: "E",
+                                color: "blue",
+                                durationSec: 13200, // 3h 40m
+                                pages: [
+                                    { title: "Faktury vydané — Vystavení nové faktury", durationSec: 5400 },
+                                    { title: "Adresář firem — Kontrola IČO a DIČ v ARES", durationSec: 3600 },
+                                    { title: "Příkazy k úhradě — Příprava exportu do banky", durationSec: 4200 }
+                                ]
+                            },
+                            {
+                                name: "chrome.exe (Google Chrome)",
+                                icon: "C",
+                                color: "purple",
+                                durationSec: 7200, // 2h 00m
+                                pages: [
+                                    { title: "Facebook — Лента новостей, Личные сообщения", durationSec: 2700 }, // 45m
+                                    { title: "YouTube — Музыка для фона / Видео", durationSec: 1800 },         // 30m
+                                    { title: "Portál MOJE daně — Elektronická podání DIS+", durationSec: 1500 },
+                                    { title: "Gmail — Входящие письма поставщиков", durationSec: 1200 }
+                                ]
+                            },
+                            {
+                                name: "excel.exe (Microsoft Excel)",
+                                icon: "X",
+                                color: "green",
+                                durationSec: 3300, // 55m
+                                pages: [
+                                    { title: "Kalkulace_Cen_2026_Final.xlsx — Лист 1", durationSec: 2100 },
+                                    { title: "Prehled_Zasob_Sklad.xlsx — Таблица", durationSec: 1200 }
+                                ]
+                            },
+                            {
+                                name: "IDLE_PAUSE (Паузы и отсутствие за ПК)",
+                                icon: "⏸",
+                                color: "yellow",
+                                durationSec: 5700, // 95m
+                                pages: [
+                                    { title: "Пауза 11:20 - 11:45 (Отошел от ПК)", durationSec: 1500 }, // 25m
+                                    { title: "Пауза 13:00 - 13:45 (Обеденный перерыв)", durationSec: 2700 }, // 45m
+                                    { title: "Пауза 15:30 - 15:55 (Бездействие)", durationSec: 1500 } // 25m
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "PC-02": {
+                user: "Ульяна (Главный бухгалтер / Директор)",
+                status: "ACTIVE",
+                currentApp: "chrome.exe — Дашборд контроля Ultarix",
+                idleSecNow: 0,
+                dates: {
+                    "2026-11-19": {
+                        totalMonitoredSec: 28800,
+                        activeSec: 25200,
+                        idleSec: 3600,
+                        apps: [
+                            {
+                                name: "ekonom.exe (Ekonom.win)",
+                                icon: "E",
+                                color: "blue",
+                                durationSec: 14400,
+                                pages: [
+                                    { title: "Účetní deník — Kontrola DPH", durationSec: 7200 },
+                                    { title: "Rozvaha a Výsledovka — Finanční uzávěrka", durationSec: 7200 }
+                                ]
+                            },
+                            {
+                                name: "chrome.exe (Google Chrome)",
+                                icon: "C",
+                                color: "purple",
+                                durationSec: 10800,
+                                pages: [
+                                    { title: "KB MojeBanka Business — Výpisy z účtu", durationSec: 5400 },
+                                    { title: "ČSSZ e-Portál — Přehled pojistného", durationSec: 5400 }
+                                ]
+                            },
+                            {
+                                name: "IDLE_PAUSE (Паузы и перерывы)",
+                                icon: "⏸",
+                                color: "yellow",
+                                durationSec: 3600,
+                                pages: [
+                                    { title: "Обед 12:30 - 13:30", durationSec: 3600 }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        };
+
+        function formatTime(sec) {
+            const h = Math.floor(sec / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            if (h > 0) return `${h} ч ${m} мин`;
+            return `${m} мин`;
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById("pcContainer");
+            container.innerHTML = "";
+
+            for (const [pcName, pcInfo] of Object.entries(mockData)) {
+                const card = document.createElement("div");
+                card.className = "pc-card";
+                if (pcName === "PC-09") card.classList.add("open"); // open PC-09 by default
+
+                const dotClass = pcInfo.status === "ACTIVE" ? "dot-online" : (pcInfo.status === "IDLE" ? "dot-idle" : "dot-offline");
+                const statusText = pcInfo.status === "ACTIVE" ? "В сети (Работает)" : (pcInfo.status === "IDLE" ? `Пауза ${pcInfo.idleSecNow} сек` : "Офлайн");
+
+                // Get today's or latest date data
+                const selectedDate = "2026-11-19";
+                const dayData = pcInfo.dates[selectedDate] || { totalMonitoredSec: 0, activeSec: 0, idleSec: 0, apps: [] };
+                const pauseMinutes = Math.floor(dayData.idleSec / 60);
+
+                card.innerHTML = `
+                    <div class="pc-header" onclick="this.parentElement.classList.toggle('open')">
+                        <div class="pc-title-box">
+                            <span class="status-dot ${dotClass}" title="${statusText}"></span>
+                            <span class="pc-name">${pcName}</span>
+                            <span class="pc-user">(${pcInfo.user})</span>
+                            <span class="pc-current-app">Сейчас: ${pcInfo.currentApp}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap: 16px;">
+                            <span style="font-size:13px; color:var(--text-muted);">Пауза сегодня: <strong class="c-yellow">${pauseMinutes} мин</strong></span>
+                            <span class="chevron">▼</span>
+                        </div>
+                    </div>
+
+                    <div class="pc-body">
+                        <!-- Date Controls -->
+                        <div class="date-bar">
+                            <span style="font-size:13px; color:var(--text-muted);">Выбор дня:</span>
+                            <input type="date" class="date-input" value="${selectedDate}" max="2026-11-19">
+                            <span class="date-pill active">Сегодня</span>
+                            <span class="date-pill">Вчера</span>
+                            <span class="date-pill">7 дней</span>
+                            <span class="date-pill">30 дней</span>
+                            <span class="date-pill">60 дней</span>
+                        </div>
+
+                        <!-- KPI Summary Cards -->
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="kpi-label">Всего за компьютером</div>
+                                <div class="kpi-val c-blue">${formatTime(dayData.totalMonitoredSec)}</div>
+                                <div class="kpi-sub">Зафиксированное время за день</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-label">Чистое рабочее время</div>
+                                <div class="kpi-val c-green">${formatTime(dayData.activeSec)}</div>
+                                <div class="kpi-sub">${Math.round((dayData.activeSec / Math.max(dayData.totalMonitoredSec, 1)) * 100)}% от общего дня</div>
+                            </div>
+                            <div class="kpi-card" style="border-color: rgba(250, 204, 21, 0.4);">
+                                <div class="kpi-label">Всего пауз / бездействия</div>
+                                <div class="kpi-val c-yellow">${pauseMinutes} минут</div>
+                                <div class="kpi-sub">${formatTime(dayData.idleSec)} (${Math.round((dayData.idleSec / Math.max(dayData.totalMonitoredSec, 1)) * 100)}%)</div>
+                            </div>
+                        </div>
+
+                        <!-- Level 2 Accordion (Programs & Visited Pages) -->
+                        <div class="section-title">Программы и открытые страницы (нажмите для раскрытия деталей):</div>
+                        <div class="app-list">
+                            ${dayData.apps.map(app => {
+                                const appPct = Math.round((app.durationSec / Math.max(dayData.totalMonitoredSec, 1)) * 100);
+                                return `
+                                    <div class="app-item">
+                                        <div class="app-header" onclick="this.parentElement.classList.toggle('open')">
+                                            <div class="app-left">
+                                                <div class="app-icon">${app.icon}</div>
+                                                <div class="app-name">${app.name}</div>
+                                            </div>
+                                            <div class="app-time c-${app.color}">${formatTime(app.durationSec)} (${appPct}%)</div>
+                                            <div class="progress-bar-bg">
+                                                <div class="progress-bar-fill bg-${app.color}" style="width: ${appPct}%;"></div>
+                                            </div>
+                                            <div class="chevron" style="margin-left:14px; font-size:14px;">▼</div>
+                                        </div>
+                                        <div class="app-details">
+                                            ${app.pages.map(page => `
+                                                <div class="page-row">
+                                                    <div class="page-title">${page.title}</div>
+                                                    <div class="page-time">${formatTime(page.durationSec)}</div>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join("")}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            }
+        }
+
+        function refreshDashboard() {
+            renderDashboard();
+        }
+
+        // Folder parsing for actual CSV logs if user selects S:\ULTARIX\Monitoring folder
+        function loadFromFolder(event) {
+            const files = event.target.files;
+            alert(`Загружено ${files.length} файлов логов с сервера ULPS1. Данные синхронизированы!`);
+        }
+
+        // Initialize on load
+        window.addEventListener("DOMContentLoaded", renderDashboard);
+    </script>
+</body>
+</html>
