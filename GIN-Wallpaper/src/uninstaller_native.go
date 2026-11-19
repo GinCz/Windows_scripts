@@ -11,9 +11,26 @@ import (
 )
 
 var (
+	kernel32          = syscall.NewLazyDLL("kernel32.dll")
 	shell32           = syscall.NewLazyDLL("shell32.dll")
+	procCreateMutexW  = kernel32.NewProc("CreateMutexW")
 	procShellExecuteW = shell32.NewProc("ShellExecuteW")
+	uninstMutex       uintptr
 )
+
+func checkUninstSingleInstance() bool {
+	mutexName := syscall.StringToUTF16Ptr("Local\\GIN_WALLPAPER_UNINSTALLER_MUTEX")
+	hMutex, _, err := procCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(mutexName)))
+	if hMutex == 0 {
+		return false
+	}
+	errno, isErrno := err.(syscall.Errno)
+	if isErrno && (errno == 183 || errno == 5) {
+		return false
+	}
+	uninstMutex = hMutex
+	return true
+}
 
 func runSelfAsAdmin(args ...string) {
 	exe, _ := os.Executable()
@@ -43,14 +60,20 @@ func main() {
 		return
 	}
 
+	if !checkUninstSingleInstance() {
+		return
+	}
+
 	// ── Phase 2: Running from %TEMP% as external cleanup agent ─────────────────
 	if len(os.Args) >= 3 && os.Args[1] == "--cleanup" {
 		targetDir := os.Args[2]
 
 		time.Sleep(800 * time.Millisecond)
 
-		// Terminate any lingering wallpaper processes
+		// Terminate any lingering wallpaper and uninstaller processes
 		exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe").Run()
+		currPid := os.Getpid()
+		exec.Command("taskkill", "/F", "/FI", fmt.Sprintf("PID ne %d", currPid), "/IM", "Uninstall.exe").Run()
 
 		// Robust wipe loop: delete all files and directory with retries
 		for i := 0; i < 15; i++ {
@@ -95,10 +118,16 @@ func main() {
 	}
 
 	// ── Phase 1: User launched Uninstall.exe (Completely Silent, 0 Popups) ───────
-	// 1. Force kill active wallpaper processes
+	// 1. Force kill active wallpaper and duplicate uninstaller processes
 	cmdKill := exec.Command("taskkill", "/F", "/IM", "GIN-Wallpaper-Calend.exe")
 	cmdKill.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdKill.Run()
+
+	currPid := os.Getpid()
+	cmdKillOther := exec.Command("taskkill", "/F", "/FI", fmt.Sprintf("PID ne %d", currPid), "/IM", "Uninstall.exe")
+	cmdKillOther.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmdKillOther.Run()
+
 	time.Sleep(400 * time.Millisecond)
 
 	// 2. Remove registry keys

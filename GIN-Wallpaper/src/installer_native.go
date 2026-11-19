@@ -16,11 +16,28 @@ import (
 )
 
 var (
+	kernel32          = syscall.NewLazyDLL("kernel32.dll")
 	user32            = syscall.NewLazyDLL("user32.dll")
 	shell32           = syscall.NewLazyDLL("shell32.dll")
+	procCreateMutexW  = kernel32.NewProc("CreateMutexW")
 	procMessageBoxW   = user32.NewProc("MessageBoxW")
 	procShellExecuteW = shell32.NewProc("ShellExecuteW")
+	installerMutex    uintptr
 )
+
+func checkInstallerSingleInstance() bool {
+	mutexName := syscall.StringToUTF16Ptr("Local\\GIN_WALLPAPER_INSTALLER_MUTEX")
+	hMutex, _, err := procCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(mutexName)))
+	if hMutex == 0 {
+		return false
+	}
+	errno, isErrno := err.(syscall.Errno)
+	if isErrno && (errno == 183 || errno == 5) {
+		return false
+	}
+	installerMutex = hMutex
+	return true
+}
 
 const (
 	MB_OKCANCEL     = 0x00000001
@@ -147,6 +164,10 @@ if (Test-Path $sm) {
 }
 
 func main() {
+	if !checkInstallerSingleInstance() {
+		return
+	}
+
 	isSilent := false
 	isConfirmed := false
 
@@ -223,12 +244,12 @@ func main() {
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v030"
+	dispName := "GIN-Wallpaper-Calend v031"
 	cmdReg1 := exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f")
 	cmdReg1.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg1.Run()
 
-	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v030", "/f")
+	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v031", "/f")
 	cmdReg2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg2.Run()
 

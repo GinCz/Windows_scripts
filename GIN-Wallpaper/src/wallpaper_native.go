@@ -65,6 +65,8 @@ var (
 	procPostQuitMessage       = user32.NewProc("PostQuitMessage")
 	procShowWindow            = user32.NewProc("ShowWindow")
 	procDestroyWindow         = user32.NewProc("DestroyWindow")
+	procFindWindowW           = user32.NewProc("FindWindowW")
+	procCreateMutexW          = kernel32.NewProc("CreateMutexW")
 	procSendMessageW          = user32.NewProc("SendMessageW")
 	procLoadImageW            = user32.NewProc("LoadImageW")
 	procGetModuleHandleW      = kernel32.NewProc("GetModuleHandleW")
@@ -109,7 +111,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v030"
+	AppVersion = "v031"
 
 	SS_CENTER = 0x00000001
 	SS_NOTIFY = 0x00000100
@@ -3178,8 +3180,71 @@ func loadAppIcon() syscall.Handle {
 	return 0
 }
 
+var singleInstanceMutex uintptr
+
+func checkSingleInstance() bool {
+	mutexName := strPtr("Local\\GIN_WALLPAPER_CALEND_SINGLE_INSTANCE_MUTEX")
+	hMutex, _, err := procCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(mutexName)))
+
+	isAlreadyRunning := false
+	if hMutex == 0 {
+		isAlreadyRunning = true
+	} else {
+		errno, isErrno := err.(syscall.Errno)
+		if isErrno && (errno == 183 /* ERROR_ALREADY_EXISTS */ || errno == 5 /* ERROR_ACCESS_DENIED */) {
+			isAlreadyRunning = true
+		} else {
+			singleInstanceMutex = hMutex
+		}
+	}
+
+	if isAlreadyRunning {
+		// Existing instance is running!
+		// 1. If Settings window exists, bring it to front
+		existingWnd, _, _ := procFindWindowW.Call(
+			uintptr(unsafe.Pointer(strPtr("GIN_Wallpaper_SettingsClass"))),
+			0,
+		)
+		if existingWnd != 0 {
+			procShowWindow.Call(existingWnd, 9) // SW_RESTORE
+			procShowWindow.Call(existingWnd, 5) // SW_SHOW
+			procSetForegroundWindow.Call(existingWnd)
+			return false
+		}
+
+		// 2. If Tray window exists, command it to open Settings window
+		trayWnd, _, _ := procFindWindowW.Call(
+			uintptr(unsafe.Pointer(strPtr("GIN_Wallpaper_TrayClass"))),
+			0,
+		)
+		if trayWnd != 0 {
+			procSendMessageW.Call(trayWnd, WM_COMMAND, IDM_SETTINGS, 0)
+			return false
+		}
+
+		// 3. Stale headless zombie instance held the mutex -> terminate it and take over
+		currPid := os.Getpid()
+		killCmd := exec.Command("taskkill", "/F", "/FI", fmt.Sprintf("PID ne %d", currPid), "/IM", "GIN-Wallpaper-Calend.exe")
+		killCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		_ = killCmd.Run()
+		time.Sleep(250 * time.Millisecond)
+
+		hMutex2, _, _ := procCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(mutexName)))
+		if hMutex2 != 0 {
+			singleInstanceMutex = hMutex2
+		}
+		return true
+	}
+
+	return true
+}
+
 func main() {
 	runtime.LockOSThread()
+
+	if !checkSingleInstance() {
+		return
+	}
 
 	appDataDir = filepath.Join(os.Getenv("APPDATA"), "GIN-Wallpaper-Calend")
 	os.MkdirAll(appDataDir, 0755)
