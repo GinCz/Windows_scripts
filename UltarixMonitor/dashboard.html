@@ -51,7 +51,7 @@
         .pc-user { font-size: 13px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
         .edit-name-btn { background: none; border: none; cursor: pointer; color: #64748b; font-size: 13px; padding: 2px 4px; border-radius: 4px; }
         .edit-name-btn:hover { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
-        .pc-current-app { font-size: 13px; color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .pc-current-app { font-size: 13px; color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); max-width: 450px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .chevron { transition: transform 0.3s; color: var(--text-muted); font-size: 18px; }
         .pc-card.open .chevron { transform: rotate(180deg); }
 
@@ -125,12 +125,12 @@
     <div class="toolbar">
         <div>
             <span style="font-size: 14px; color: var(--text-muted); margin-right: 8px;">Компьютеры в сети:</span>
-            <strong id="totalComputers">2 контролируемых ПК</strong>
+            <strong id="totalComputers">Загрузка ПК...</strong>
         </div>
         <div style="display:flex; gap:10px;">
             <input type="file" id="filePicker" webkitdirectory directory multiple style="display:none;" onchange="loadFromFolder(event)">
             <button class="btn btn-outline" onclick="document.getElementById('filePicker').click()">📁 Загрузить папку logs</button>
-            <button class="btn" onclick="checkLiveStatus()">🔄 Обновить статус</button>
+            <button class="btn" onclick="checkAllComputersLive(true)">🔄 Обновить статус</button>
         </div>
     </div>
 
@@ -141,6 +141,7 @@
     <script>
         // Track open state for each computer so user's manual expand/collapse is never overwritten
         const pcOpenState = {
+            "ULTARIX-07": true,
             "U-09": false,
             "PC-09": false,
             "PC-02": false
@@ -149,9 +150,43 @@
         // Saved custom names for employees in localStorage
         const customNames = JSON.parse(localStorage.getItem("ultarix_custom_names") || "{}");
 
+        // Canonical mapping of office computers
+        const defaultProfiles = {
+            "ULTARIX-07": { name: "Галина", role: "Бухгалтерия 07", icon: "💼" },
+            "Ulta_007":   { name: "Галина", role: "Бухгалтерия 07", icon: "💼" },
+            "U-09":       { name: "Татьяна / Любовь", role: "Бухгалтерия / Склад (Ёжик)", icon: "📦" },
+            "PC-09":      { name: "Татьяна / Любовь", role: "Бухгалтерия / Склад (Ёжик)", icon: "📦" },
+            "ULTARIX-09": { name: "Любовь", role: "Бухгалтерия 09", icon: "📦" },
+            "PC-02":      { name: "Ульяна", role: "Главный бухгалтер / Директор", icon: "👑" },
+            "Ulka-02":    { name: "Ульяна", role: "Главный бухгалтер / Директор", icon: "👑" },
+            "ULTARIX-03": { name: "Лилия", role: "Бухгалтерия 03", icon: "📊" },
+            "ULTARIX-04": { name: "Оксана", role: "Бухгалтерия 04", icon: "📑" },
+            "ULTARIX-05": { name: "Анна", role: "Бухгалтерия 05", icon: "🖨️" },
+            "ULTARIX-06": { name: "Бухгалтер 06", role: "Бухгалтерия 06", icon: "📂" },
+            "ULTARIX-08": { name: "Светлана", role: "Бухгалтерия 08", icon: "📈" },
+            "ULTARIX-010":{ name: "Наталья", role: "Бухгалтерия 10", icon: "🗂️" },
+            "ULPS1":      { name: "Сервер", role: "Главный сервер ULPS1", icon: "🖥️" }
+        };
+
+        // Primary store data
         const storeData = {
+            "ULTARIX-07": {
+                defaultName: "Галина",
+                defaultRole: "Бухгалтерия 07",
+                status: "OFFLINE",
+                currentApp: "Ожидание первого отклика от агента...",
+                idleSecNow: 0,
+                dates: {
+                    "2026-11-19": {
+                        totalMonitoredSec: 0,
+                        activeSec: 0,
+                        idleSec: 0,
+                        apps: []
+                    }
+                }
+            },
             "U-09": {
-                defaultName: "Татьяна",
+                defaultName: "Татьяна / Любовь",
                 defaultRole: "Бухгалтерия / Склад (Ёжик)",
                 status: "ACTIVE",
                 currentApp: "stereo.exe — STEREO (Ježek software) [Deník]",
@@ -286,6 +321,8 @@
         function getDisplayName(pcKey) {
             if (customNames[pcKey]) return customNames[pcKey];
             if (storeData[pcKey]) return `${storeData[pcKey].defaultName} (${storeData[pcKey].defaultRole})`;
+            const prof = defaultProfiles[pcKey];
+            if (prof) return `${prof.name} (${prof.role})`;
             return pcKey;
         }
 
@@ -304,12 +341,16 @@
             const container = document.getElementById("pcContainer");
             container.innerHTML = "";
 
-            for (const [pcName, pcInfo] of Object.entries(storeData)) {
+            let activeCount = 0;
+            const entries = Object.entries(storeData);
+
+            for (const [pcName, pcInfo] of entries) {
+                if (pcInfo.status === "ACTIVE") activeCount++;
+
                 const card = document.createElement("div");
                 card.className = "pc-card";
                 card.id = `card-${pcName}`;
 
-                // Restore open state
                 if (pcOpenState[pcName] === true) {
                     card.classList.add("open");
                 }
@@ -318,7 +359,7 @@
                 const statusText = pcInfo.status === "ACTIVE" ? "В сети (Работает)" : (pcInfo.status === "IDLE" ? `Пауза ${pcInfo.idleSecNow} сек` : "Офлайн");
 
                 const selectedDate = "2026-11-19";
-                const dayData = pcInfo.dates[selectedDate] || { totalMonitoredSec: 0, activeSec: 0, idleSec: 0, apps: [] };
+                const dayData = (pcInfo.dates && pcInfo.dates[selectedDate]) || { totalMonitoredSec: 0, activeSec: 0, idleSec: 0, apps: [] };
                 const pauseMinutes = Math.floor(dayData.idleSec / 60);
 
                 card.innerHTML = `
@@ -352,24 +393,25 @@
                         <div class="kpi-grid">
                             <div class="kpi-card">
                                 <div class="kpi-label">Всего за компьютером</div>
-                                <div class="kpi-val c-blue">${formatTime(dayData.totalMonitoredSec)}</div>
+                                <div class="kpi-val c-blue" id="kpi-tot-${pcName}">${formatTime(dayData.totalMonitoredSec)}</div>
                                 <div class="kpi-sub">Зафиксированное время за день</div>
                             </div>
                             <div class="kpi-card">
                                 <div class="kpi-label">Чистое рабочее время</div>
-                                <div class="kpi-val c-green">${formatTime(dayData.activeSec)}</div>
-                                <div class="kpi-sub">${Math.round((dayData.activeSec / Math.max(dayData.totalMonitoredSec, 1)) * 100)}% от общего дня</div>
+                                <div class="kpi-val c-green" id="kpi-act-${pcName}">${formatTime(dayData.activeSec)}</div>
+                                <div class="kpi-sub" id="kpi-act-sub-${pcName}">${Math.round((dayData.activeSec / Math.max(dayData.totalMonitoredSec, 1)) * 100)}% от общего дня</div>
                             </div>
                             <div class="kpi-card" style="border-color: rgba(250, 204, 21, 0.4);">
                                 <div class="kpi-label">Всего пауз / бездействия</div>
-                                <div class="kpi-val c-yellow">${pauseMinutes} минут</div>
-                                <div class="kpi-sub">${formatTime(dayData.idleSec)} (${Math.round((dayData.idleSec / Math.max(dayData.totalMonitoredSec, 1)) * 100)}%)</div>
+                                <div class="kpi-val c-yellow" id="kpi-idl-${pcName}">${pauseMinutes} минут</div>
+                                <div class="kpi-sub" id="kpi-idl-sub-${pcName}">${formatTime(dayData.idleSec)} (${Math.round((dayData.idleSec / Math.max(dayData.totalMonitoredSec, 1)) * 100)}%)</div>
                             </div>
                         </div>
 
                         <div class="section-title">Программы и открытые окна / сайты (нажмите для раскрытия деталей):</div>
-                        <div class="app-list">
-                            ${dayData.apps.map(app => {
+                        <div class="app-list" id="apps-${pcName}">
+                            ${dayData.apps.length === 0 ? '<div style="color:var(--text-muted); padding:10px 0;">Ожидание сбора активности...</div>' :
+                            dayData.apps.map(app => {
                                 const appPct = Math.round((app.durationSec / Math.max(dayData.totalMonitoredSec, 1)) * 100);
                                 return `
                                     <div class="app-item">
@@ -401,6 +443,8 @@
 
                 container.appendChild(card);
             }
+
+            document.getElementById("totalComputers").textContent = `${activeCount} активных / ${entries.length} в системе`;
         }
 
         function updateCardHeader(pcName) {
@@ -413,37 +457,139 @@
             }
         }
 
-        // Targeted in-place DOM update without wiping DOM or reopening accordions
-        async function checkLiveStatus() {
-            try {
-                // Try U-09
-                const res = await fetch("logs/U-09/current_status.json?_=" + Date.now());
-                if (res.ok) {
-                    const data = await res.json();
-                    const appEl = document.getElementById("app-U-09");
-                    const dotEl = document.getElementById("dot-U-09");
-                    if (appEl) {
-                        appEl.textContent = `Сейчас: ${data.process} — ${data.window}`;
-                    }
-                    if (dotEl) {
-                        dotEl.className = "status-dot " + (data.state === "ACTIVE" ? "dot-online" : "dot-idle");
-                    }
-                }
-            } catch (e) {}
+        // Parse CSV activity log
+        function parseActivityCsv(csvText) {
+            const lines = csvText.trim().split("\n");
+            if (lines.length <= 1) return null;
+            const appMap = {};
+            let totalSec = 0;
+            let idleSec = 0;
 
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split(",");
+                if (parts.length < 8) continue;
+                const dur = parseInt(parts[2]) || 0;
+                const proc = parts[5].trim();
+                const title = parts[6].replace(/^"|"$/g, "").trim();
+                const state = parts[7].trim();
+
+                totalSec += dur;
+                if (state === "IDLE") idleSec += dur;
+
+                const appKey = state === "IDLE" ? "IDLE_PAUSE (Паузы)" : proc;
+                if (!appMap[appKey]) {
+                    let icon = "💻";
+                    let color = "blue";
+                    if (appKey.includes("stereo")) { icon = "🦔"; color = "orange"; }
+                    else if (appKey.includes("ekonom")) { icon = "E"; color = "blue"; }
+                    else if (appKey.includes("chrome") || appKey.includes("brave")) { icon = "C"; color = "purple"; }
+                    else if (appKey.includes("excel")) { icon = "X"; color = "green"; }
+                    else if (appKey.includes("IDLE")) { icon = "⏸"; color = "yellow"; }
+
+                    appMap[appKey] = {
+                        name: appKey,
+                        icon: icon,
+                        color: color,
+                        durationSec: 0,
+                        pages: {}
+                    };
+                }
+                appMap[appKey].durationSec += dur;
+                appMap[appKey].pages[title] = (appMap[appKey].pages[title] || 0) + dur;
+            }
+
+            const apps = Object.values(appMap).map(a => ({
+                name: a.name,
+                icon: a.icon,
+                color: a.color,
+                durationSec: a.durationSec,
+                pages: Object.entries(a.pages).map(([t, d]) => ({ title: t, durationSec: d }))
+            }));
+
+            return {
+                totalMonitoredSec: totalSec,
+                activeSec: Math.max(0, totalSec - idleSec),
+                idleSec: idleSec,
+                apps: apps
+            };
+        }
+
+        // Live check across all possible computer names
+        const candidatePcs = [
+            "ULTARIX-07", "Ulta_007", "PC-07",
+            "U-09", "PC-09", "ULTARIX-09",
+            "PC-02", "Ulka-02", "ULTARIX-02",
+            "ULTARIX-03", "ULTARIX-04", "ULTARIX-05", "ULTARIX-06", "ULTARIX-08", "ULTARIX-010", "ULPS1"
+        ];
+
+        async function checkAllComputersLive(forceRerender = false) {
+            let newlyDiscovered = false;
+
+            // Load employees.json config first
             try {
-                // Also check employees.json if present
                 const confRes = await fetch("employees.json?_=" + Date.now());
                 if (confRes.ok) {
                     const empConf = await confRes.json();
                     for (const [k, v] of Object.entries(empConf)) {
+                        defaultProfiles[k] = v;
                         if (!customNames[k] && v.name) {
                             customNames[k] = `${v.name} (${v.role || ""})`;
-                            updateCardHeader(k);
                         }
                     }
                 }
             } catch (e) {}
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+
+            for (const pc of candidatePcs) {
+                try {
+                    const res = await fetch(`logs/${pc}/current_status.json?_=` + Date.now());
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (!storeData[pc]) {
+                            const prof = defaultProfiles[pc] || { name: pc, role: "Рабочая станция", icon: "💻" };
+                            storeData[pc] = {
+                                defaultName: prof.name,
+                                defaultRole: prof.role,
+                                status: data.state || "ACTIVE",
+                                currentApp: `${data.process} — ${data.window}`,
+                                idleSecNow: data.idle_sec || 0,
+                                dates: {}
+                            };
+                            newlyDiscovered = true;
+                        } else {
+                            storeData[pc].status = data.state || "ACTIVE";
+                            storeData[pc].currentApp = `${data.process} — ${data.window}`;
+                            storeData[pc].idleSecNow = data.idle_sec || 0;
+                        }
+
+                        // Try loading today's CSV activity
+                        try {
+                            const csvRes = await fetch(`logs/${pc}/activity_${dateStr}.csv?_=` + Date.now());
+                            if (csvRes.ok) {
+                                const csvText = await csvRes.text();
+                                const parsed = parseActivityCsv(csvText);
+                                if (parsed) {
+                                    storeData[pc].dates[dateStr] = parsed;
+                                }
+                            }
+                        } catch (e) {}
+
+                        // Update in-place elements if rendered
+                        const appEl = document.getElementById(`app-${pc}`);
+                        const dotEl = document.getElementById(`dot-${pc}`);
+                        if (appEl) appEl.textContent = `Сейчас: ${storeData[pc].currentApp}`;
+                        if (dotEl) {
+                            dotEl.className = "status-dot " + (data.state === "ACTIVE" ? "dot-online" : "dot-idle");
+                            dotEl.title = data.state === "ACTIVE" ? "В сети (Работает)" : `Пауза ${data.idle_sec || 0} сек`;
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            if (newlyDiscovered || forceRerender) {
+                renderDashboard();
+            }
         }
 
         function loadFromFolder(event) {
@@ -453,9 +599,8 @@
 
         window.addEventListener("DOMContentLoaded", () => {
             renderDashboard();
-            checkLiveStatus();
-            // Polling only updates badges and text in-place, NEVER re-renders DOM!
-            setInterval(checkLiveStatus, 5000);
+            checkAllComputersLive(true);
+            setInterval(() => checkAllComputersLive(false), 5000);
         });
     </script>
 </body>
