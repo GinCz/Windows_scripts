@@ -83,19 +83,51 @@ func isAdmin() bool {
 func createShortcutsSafe(targetExe, workDir, icoPath string) {
 	psScript := fmt.Sprintf(`
 $w = New-Object -ComObject WScript.Shell
-$deskDirs = @('D:\MEGA\DOCS\desktop', 'D:\mega\docs\desktop', [Environment]::GetFolderPath('Desktop'), "$env:USERPROFILE\Desktop", "$env:PUBLIC\Desktop")
-foreach ($d in $deskDirs) {
-    if (Test-Path $d) {
-        try {
-            $s = $w.CreateShortcut("$d\GIN-Wallpaper-Calend.lnk")
-            $s.TargetPath = '%s'
-            $s.WorkingDirectory = '%s'
-            $s.IconLocation = '%s,0'
-            $s.Description = 'GIN-Wallpaper-Calend by VladiMIR+AI'
-            $s.Save()
-        } catch {}
+
+# 1. Purge any duplicate shortcuts from Public Desktop
+$pubDesks = @("$env:PUBLIC\Desktop", "C:\Users\Public\Desktop")
+foreach ($p in $pubDesks) {
+    if (Test-Path "$p\GIN-Wallpaper-Calend.lnk") {
+        try { Remove-Item -Force "$p\GIN-Wallpaper-Calend.lnk" -ErrorAction SilentlyContinue } catch {}
     }
 }
+
+# 2. Identify the single primary user desktop directory
+$userDesk = $null
+$candidates = @('D:\DOCS\desktop', 'D:\docs\desktop', 'D:\MEGA\DOCS\desktop', 'D:\mega\docs\desktop')
+foreach ($c in $candidates) {
+    if (Test-Path $c) { $userDesk = $c; break }
+}
+if (-not $userDesk) {
+    try {
+        $regVal = (Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders' -Name 'Desktop' -ErrorAction SilentlyContinue).Desktop
+        if ($regVal) {
+            $expanded = [System.Environment]::ExpandEnvironmentVariables($regVal)
+            if (Test-Path $expanded) { $userDesk = $expanded }
+        }
+    } catch {}
+}
+if (-not $userDesk) {
+    $shDesk = [Environment]::GetFolderPath('Desktop')
+    if ($shDesk -and (Test-Path $shDesk)) { $userDesk = $shDesk }
+}
+if (-not $userDesk) {
+    $userDesk = "$env:USERPROFILE\Desktop"
+}
+
+# 3. Create strictly ONE shortcut on the user's desktop
+if ($userDesk -and (Test-Path $userDesk)) {
+    try {
+        $s = $w.CreateShortcut("$userDesk\GIN-Wallpaper-Calend.lnk")
+        $s.TargetPath = '%s'
+        $s.WorkingDirectory = '%s'
+        $s.IconLocation = '%s,0'
+        $s.Description = 'GIN-Wallpaper-Calend by VladiMIR+AI'
+        $s.Save()
+    } catch {}
+}
+
+# 4. Start Menu shortcut
 $sm = [Environment]::GetFolderPath('Programs')
 if (Test-Path $sm) {
     try {
@@ -162,6 +194,15 @@ func main() {
 		os.MkdirAll(targetDir, 0755)
 	}
 
+	// Clean up any stray files in target directory
+	if files, err := os.ReadDir(targetDir); err == nil {
+		for _, f := range files {
+			if strings.HasPrefix(f.Name(), "CGIN-Wallpaper_Uninstall") {
+				os.Remove(filepath.Join(targetDir, f.Name()))
+			}
+		}
+	}
+
 	// 3. Write embedded high-res icon
 	icoDest := filepath.Join(targetDir, "app.ico")
 	if len(embeddedAppICO) > 0 {
@@ -182,12 +223,12 @@ func main() {
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v029"
+	dispName := "GIN-Wallpaper-Calend v030"
 	cmdReg1 := exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f")
 	cmdReg1.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg1.Run()
 
-	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v029", "/f")
+	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v030", "/f")
 	cmdReg2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg2.Run()
 

@@ -1,4 +1,4 @@
-# 🖼️ GIN-Wallpaper-Calend `v029` (Universal 32/64-bit)
+# 🖼️ GIN-Wallpaper-Calend `v030` (Universal 32/64-bit)
 
 <div align="center">
 
@@ -15,7 +15,7 @@
 
 <br/>
 
-[![Download Installer](https://img.shields.io/badge/🚀%20Download-GIN--Wallpaper--Calend%20v029%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v029_Setup.exe)
+[![Download Installer](https://img.shields.io/badge/🚀%20Download-GIN--Wallpaper--Calend%20v030%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v030_Setup.exe)
 [![Official Wallhaven Website](https://img.shields.io/badge/🌐%20Wallpaper%20Source-Wallhaven.cc%20Official-1abc9c?style=for-the-badge&logo=google-chrome&logoColor=white)](https://wallhaven.cc/)
 [![GitHub Project](https://img.shields.io/badge/💻%20GitHub-Windows_scripts%2FGIN--Wallpaper-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper)
 
@@ -56,10 +56,12 @@ Unlike bulky Electron- or Chromium-based wallpaper apps that consume 150–350 M
 
 ---
 
-## ✨ Key Features in `v029`
+## ✨ Key Features in `v030`
 
 | Feature | Description |
 |---|---|
+| 🎯 **Single User Desktop Shortcut** | Detects active user desktop path (e.g. `D:\DOCS\desktop`) and creates strictly ONE shortcut, automatically cleaning up public desktop duplicates. |
+| 🧹 **Robust Clean Uninstaller** | Complete silent uninstallation: terminates running processes, wipes files, removes autostart and registry entries. |
 | ⚡ **Universal 32/64-bit Architecture** | Fully compatible with both **Windows 10/11 32-bit (x86)** and **64-bit (x64)** editions. Resolves 32-bit WinAPI compatibility via dynamic `SetWindowLongW` fallback and proper 32-bit signed offsets. |
 | 📦 **65% Smaller Installer Package** | Installer package size reduced from 13.7 MB down to **4.9 MB** via transparent, zero-dependency in-memory gzip decompression. |
 | 🛡️ **Ultra-Compact Native C Uninstaller** | High-performance C uninstaller with embedded high-resolution PE icon and version metadata. |
@@ -119,7 +121,7 @@ Left Column (Fonts 1–8):              Right Column (Fonts 9–16):
 
 ### Option 1: Standalone Installer (Recommended)
 
-1. Download [`GIN-Wallpaper-Calend_v029_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v029_Setup.exe).
+1. Download [`GIN-Wallpaper-Calend_v030_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v030_Setup.exe).
 2. Run the executable.
 3. Confirm the clean prompt: `GIN-Wallpaper-Calend - Install?` -> click **OK**.
 4. The application starts immediately, adds an icon to the system tray, registers Windows autostart, and places a desktop shortcut.

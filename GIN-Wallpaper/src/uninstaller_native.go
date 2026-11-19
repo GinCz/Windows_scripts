@@ -114,12 +114,15 @@ func main() {
 	cmdReg3.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg3.Run()
 
-	// 3. Remove shortcuts from Desktop and Start Menu
+	// 3. Remove shortcuts from all Desktop variants and Start Menu
 	deskDirs := []string{
+		`D:\DOCS\desktop`,
+		`D:\docs\desktop`,
 		`D:\MEGA\DOCS\desktop`,
 		`D:\mega\docs\desktop`,
 		filepath.Join(os.Getenv("USERPROFILE"), "Desktop"),
 		filepath.Join(os.Getenv("PUBLIC"), "Desktop"),
+		`C:\Users\Public\Desktop`,
 	}
 	for _, d := range deskDirs {
 		os.Remove(filepath.Join(d, "GIN-Wallpaper-Calend.lnk"))

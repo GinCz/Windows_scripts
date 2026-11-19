@@ -109,7 +109,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v029"
+	AppVersion = "v030"
 
 	SS_CENTER = 0x00000001
 	SS_NOTIFY = 0x00000100
