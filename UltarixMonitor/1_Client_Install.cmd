@@ -22,7 +22,7 @@ set "SCRIPT_FILE=%~f0"
 set "PS_EXE=powershell.exe"
 if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); try { & ([ScriptBlock]::Create($raw)) } catch { Write-Host ('`n[X] CHYBA INSTALACE: ' + $_.Exception.ToString()) -ForegroundColor Red; Write-Host '`nStisknete libovolnou klavesu pro ukonceni...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') }"
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:SCRIPT_FILE; if (-not $f) { $f = '%~f0' }; $raw = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8); try { & ([ScriptBlock]::Create($raw)) } catch { try { [Console]::WriteLine('`n[X] CHYBA INSTALACE: ' + $_.Exception.Message) } catch { Write-Output $_.Exception.Message } }"
 
 if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
     echo.
@@ -33,20 +33,38 @@ exit /b
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (32-bit Windows 10 x86)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.2.0 (2026-11)
-# Target  : PC-09 and all employee workstations (32-bit Windows 10)
+# Version : v2.4.0 (2026-11)
+# Target  : All employee workstations (32-bit Windows 10 Pro)
 # Network : \\ulps1\UTIL\UltarixMonitor\logs
 # ==============================================================================
 
-Clear-Host
-$Host.UI.RawUI.WindowTitle = "ULTARIX - Instalace agenta monitoringu [PC-09]"
+function Write-SafeHost {
+    param(
+        [string]$Text = "",
+        [ConsoleColor]$Color = [ConsoleColor]::White
+    )
+    try {
+        Write-Host $Text -ForegroundColor $Color
+    } catch {
+        try {
+            [Console]::ForegroundColor = $Color
+            [Console]::WriteLine($Text)
+            [Console]::ResetColor()
+        } catch {
+            Write-Output $Text
+        }
+    }
+}
 
-Write-Host "================================================================================" -ForegroundColor Cyan
-Write-Host "      ULTARIX s.r.o. - Instalace ticheho agenta monitoringu (Win10 32-bit)      " -ForegroundColor Green
-Write-Host "================================================================================" -ForegroundColor Cyan
-Write-Host " Pocitac: $env:COMPUTERNAME | Uživatel: $env:USERNAME | Architektura: $env:PROCESSOR_ARCHITECTURE" -ForegroundColor White
-Write-Host "================================================================================" -ForegroundColor Cyan
-Write-Host ""
+try { Clear-Host } catch {}
+try { $Host.UI.RawUI.WindowTitle = "ULTARIX - Instalace agenta monitoringu [$env:COMPUTERNAME]" } catch {}
+
+Write-SafeHost "======================================================================" Cyan
+Write-SafeHost "   ULTARIX s.r.o. - Instalace ticheho agenta monitoringu (Win10 x86)  " Green
+Write-SafeHost "======================================================================" Cyan
+Write-SafeHost " Pocitac: $env:COMPUTERNAME | Uzivatel: $env:USERNAME | Arch: $env:PROCESSOR_ARCHITECTURE" White
+Write-SafeHost "======================================================================" Cyan
+Write-SafeHost "" White
 
 $targetShare = "\\ulps1\UTIL\UltarixMonitor\logs"
 $localDir = "$env:ProgramData\UltarixMonitor"
@@ -59,10 +77,10 @@ if (-not (Test-Path $localDir)) {
 if (-not (Test-Path $localLogDir)) {
     New-Item -ItemType Directory -Path $localLogDir -Force | Out-Null
 }
-Write-Host "[OK] Mistni slozka: $localDir pripravena." -ForegroundColor Green
+Write-SafeHost "[OK] Mistni slozka: $localDir pripravena." Green
 
 # 2. Check network server reachability
-Write-Host "[*] Kontrola dostupnosti serveru $targetShare..." -ForegroundColor Yellow
+Write-SafeHost "[*] Kontrola dostupnosti serveru $targetShare..." Yellow
 $remoteCompLog = "$targetShare\$env:COMPUTERNAME"
 $serverOk = $false
 try {
@@ -77,11 +95,11 @@ try {
     Set-Content -Path $testFile -Value "OK" -Force -ErrorAction Stop
     Remove-Item -Path $testFile -Force -ErrorAction SilentlyContinue
     $serverOk = $true
-    Write-Host "    [OK] Spojeni se serverem ULPS1 funguje perfektne!" -ForegroundColor Green
-    Write-Host "    [OK] Cesta pro logy: $remoteCompLog" -ForegroundColor Green
+    Write-SafeHost "    [OK] Spojeni se serverem ULPS1 funguje perfektne!" Green
+    Write-SafeHost "    [OK] Cesta pro logy: $remoteCompLog" Green
 } catch {
-    Write-Host "    [!] Varovani: Sitova slozka $targetShare nyni neodpovida." -ForegroundColor DarkYellow
-    Write-Host "        Agent bude logovat lokalne a synchronizovat se pri pripojeni k serveru." -ForegroundColor Gray
+    Write-SafeHost "    [!] Varovani: Sitova slozka $targetShare nyni neodpovida." DarkYellow
+    Write-SafeHost "        Agent bude logovat lokalne a synchronizovat se pri pripojeni." Gray
 }
 
 # 3. Create background agent script
@@ -130,7 +148,9 @@ public class Win32x86 {
     }
 }
 "@
-Add-Type -TypeDefinition $win32 -ErrorAction SilentlyContinue
+if (-not ([System.Management.Automation.PSTypeName]'Win32x86').Type) {
+    Add-Type -TypeDefinition $win32 -ErrorAction SilentlyContinue
+}
 
 $comp = $env:COMPUTERNAME
 $user = $env:USERNAME
@@ -203,7 +223,7 @@ while ($true) {
         }
 
         if ($curSt -eq "IDLE") {
-            $wTitle = "[Пауза / Бездействие - $idleSec сек]"
+            $wTitle = "[Pauza / Neaktivita - $idleSec sec]"
             $pName = "IDLE_PAUSE"
         }
 
@@ -224,10 +244,10 @@ while ($true) {
 '@
 
 Set-Content -Path $agentScriptPath -Value $agentCode -Encoding utf8 -Force
-Write-Host "[OK] Skript agenta vytvoren v $agentScriptPath" -ForegroundColor Green
+Write-SafeHost "[OK] Skript agenta vytvoren v $agentScriptPath" Green
 
 # 4. Register Windows Scheduled Task
-Write-Host "[*] Registruji automaticky start agenta v Planovaci uloh..." -ForegroundColor Yellow
+Write-SafeHost "[*] Registruji automaticky start agenta v Planovaci uloh..." Yellow
 schtasks /delete /tn "UltarixMonitor" /f 2>$null | Out-Null
 $taskCmd = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$agentScriptPath`""
 schtasks /create /tn "UltarixMonitor" /tr "$taskCmd" /sc ONLOGON /rl HIGHEST /f | Out-Null
@@ -238,33 +258,33 @@ Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Na
 # 6. Start task immediately
 schtasks /run /tn "UltarixMonitor" | Out-Null
 
-Write-Host "    [OK] Uloha Planovace 'UltarixMonitor' uspesne vytvorena a SPUSTENA!" -ForegroundColor Green
+Write-SafeHost "    [OK] Uloha Planovace 'UltarixMonitor' uspesne vytvorena a SPUSTENA!" Green
 
 # 7. Initial Pulse verification
 Start-Sleep -Seconds 2
 if (Test-Path "$localDir\current_status.json") {
     $hb = Get-Content "$localDir\current_status.json" -Raw -Encoding utf8 | ConvertFrom-Json
-    Write-Host ""
-    Write-Host "================ AKTIVITA ZACHYCENA V REÁLNÉM ČASE ================" -ForegroundColor Cyan
-    Write-Host " Aktualni proces : $($hb.process)" -ForegroundColor White
-    Write-Host " Titulek okna    : $($hb.window)" -ForegroundColor White
-    Write-Host " Stav aktivity   : $($hb.state)" -ForegroundColor Green
-    Write-Host "====================================================================" -ForegroundColor Cyan
+    Write-SafeHost "" White
+    Write-SafeHost "=============== AKTIVITA ZACHYCENA V REALNEM CASE ===============" Cyan
+    Write-SafeHost " Aktualni proces : $($hb.process)" White
+    Write-SafeHost " Titulek okna    : $($hb.window)" White
+    Write-SafeHost " Stav aktivity   : $($hb.state)" Green
+    Write-SafeHost "==================================================================" Cyan
 }
 
-Write-Host ""
-Write-Host "================================================================================" -ForegroundColor Green
-Write-Host "       INSTALACE BYLA USPESNE DOKONCENA NA POCITACI $env:COMPUTERNAME!         " -ForegroundColor Green
-Write-Host "================================================================================" -ForegroundColor Green
-Write-Host " Agent nyni nepretrzite a tise bezi v pozadi Windows 10 (32-bit)." -ForegroundColor White
-Write-Host " Logy a pauzy se automaticky ukladaji na server: $targetShare" -ForegroundColor White
-Write-Host "================================================================================" -ForegroundColor Green
-Write-Host ""
+Write-SafeHost "" White
+Write-SafeHost "======================================================================" Green
+Write-SafeHost "     INSTALACE BYLA USPESNE DOKONCENA NA POCITACI $env:COMPUTERNAME!  " Green
+Write-SafeHost "======================================================================" Green
+Write-SafeHost " Agent nyni nepretrzite a tise bezi v pozadi Windows 10 (32-bit)." White
+Write-SafeHost " Logy a pauzy se automaticky ukladaji na server: $targetShare" White
+Write-SafeHost "======================================================================" Green
+Write-SafeHost "" White
 
 if ($args -contains "-Silent" -or $env:SILENT -eq "1" -or -not [Environment]::UserInteractive) {
     Start-Sleep -Seconds 2
     exit 0
 }
 
-Write-Host "Stisknete libovolnou klavesu pro zavreni..." -ForegroundColor Yellow
-try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Start-Sleep -Seconds 3 }
+Write-SafeHost "Stisknete libovolnou klavesu pro zavreni..." Yellow
+try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Start-Sleep -Seconds 2 }

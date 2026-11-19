@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 :: ============================================================================
-:: ULTARIX s.r.o. - Server Setup & Directory Initializer (v2.2.0)
+:: ULTARIX s.r.o. - Server Setup & Directory Initializer (v2.4.0)
 :: Author  : VladiMIR + Antigravity AI
 :: Physical Server Path : C:\UTIL\UltarixMonitor
 :: Network Share Path   : \\ulps1\UTIL\UltarixMonitor
@@ -24,9 +24,9 @@ title ULTARIX - Nastaveni monitoringu na serveru ULPS1 [VladiMIR + Antigravity]
 
 pushd "%~dp0" 2>nul
 
-echo ================================================================================
-echo       ULTARIX s.r.o. - Inicializace uloziste monitoringu na serveru ULPS1
-echo ================================================================================
+echo ======================================================================
+echo       ULTARIX s.r.o. - Inicializace uloziste monitoringu na serveru
+echo ======================================================================
 echo.
 
 :: Detect physical folder (defaults to C:\UTIL\UltarixMonitor)
@@ -67,12 +67,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$test = @{ server = 
 echo [OK] Kontrolni testovaci soubor server_status.json vytvoren.
 
 echo.
-echo ================================================================================
+echo ======================================================================
 echo       SERVER JE 100%% PRIPRAVEN!
-echo ================================================================================
-echo  Klienti (PC-09 a dalsi) nyni mohou zapisovat logy do:
+echo ======================================================================
+echo  Klienti (PC-09, ULTARIX-07 a dalsi) nyni mohou zapisovat logy do:
 echo  \\ulps1\UTIL\UltarixMonitor\logs
-echo ================================================================================
+echo ======================================================================
 echo.
 popd 2>nul
 if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
