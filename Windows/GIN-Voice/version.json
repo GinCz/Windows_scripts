@@ -1,9 +1,7 @@
 {
-  "version": "v046",
+  "version": "v047",
+  "app_version": "0.47.0.0",
+  "build_date": "2026-11-19",
   "name": "GIN-Voice",
-  "installer": "GIN-Voice_Setup.exe",
-  "engine": "100% Verbatim Pure Speech Transcription (Whisper Large v3) + Auto-Stop Recording Watchdog (60s) + Hard 30s Transcription Timeout & Pre-Compiled Dictionary Guard",
-  "release_date": "2026-11-19",
-  "author": "VladiMIR+AI",
-  "repository": "https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Voice"
+  "title": "GIN-Voice v047"
 }
