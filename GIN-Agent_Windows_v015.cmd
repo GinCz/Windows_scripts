@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent Windows PC v015
+title GIN-Agent Windows PC v016
 
 :: 1. Resilient Elevation Check
 net session >nul 2>&1
@@ -27,7 +27,7 @@ if %errorlevel% neq 0 pause
 exit /b
 #>
 # ==============================================================================
-# GIN-Agent Windows PC v015
+# GIN-Agent Windows PC v016
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Universal 32-bit / 64-bit Windows Agent for Antigravity AI
 # Language: 100% Pure ASCII English (Universal Locale & Encoding Immunity)
@@ -150,18 +150,18 @@ try {
             ram     = $ramStr
             disk    = $diskStr
             gateway = $activeGatewayName
-            version = "v015"
+            version = "v016"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
     try {
-        [Console]::Title = "GIN-Agent Windows PC v015 [$activeGatewayName]"
+        [Console]::Title = "GIN-Agent Windows PC v016 [$activeGatewayName]"
     } catch {}
 
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "     GIN-AGENT WINDOWS PC v015 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
+    Write-Host "     GIN-AGENT WINDOWS PC v016 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
     Write-Host "====================================================================" -ForegroundColor Cyan
     Write-Host "    GIN PIN:    $pin" -ForegroundColor Yellow
     Write-Host "    Status:     CONNECTED TO $activeGatewayName" -ForegroundColor White

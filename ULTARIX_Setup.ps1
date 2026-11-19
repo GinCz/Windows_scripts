@@ -1,4 +1,4 @@
-# =============================================================================
+﻿# =============================================================================
 # Execution Context : PowerShell (Run as Administrator)
 # Target Server     : ULTARIX Office PCs (Windows 10 Pro 32-bit / 64-bit)
 # Description       : Ultarix Complete PC Optimization & Network Stabilizer
@@ -162,9 +162,27 @@ try {
 Write-Host ""
 
 # -----------------------------------------------------------------------------
-# Krok 8: Autostart Telegram Desktop & Overeni serveru ULPS1
+# Krok 8: RustDesk permanent password & Autostart Telegram Desktop & Overeni serveru ULPS1
 # -----------------------------------------------------------------------------
-Write-Host "[*] Krok 8/8: Overeni serveru ULPS1 a autostart Telegramu..." -ForegroundColor Yellow
+Write-Host "[*] Krok 8/9: Konfigurace RustDesk (heslo Ultarix-22)..." -ForegroundColor Yellow
+$rdExe = @(
+    "$env:ProgramFiles\RustDesk\RustDesk.exe",
+    "${env:ProgramFiles(x86)}\RustDesk\RustDesk.exe",
+    "C:\Program Files\RustDesk\rustdesk.exe"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+if ($rdExe) {
+    try {
+        $p = Start-Process -FilePath $rdExe -ArgumentList "--password", "Ultarix-22" -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue
+        if ($p) { $p.WaitForExit(5000) }
+        Restart-Service RustDesk -Force -ErrorAction SilentlyContinue
+        Write-Host "    [OK] RustDesk permanentni heslo uspesne nastaveno: Ultarix-22." -ForegroundColor Green
+    } catch {
+        Write-Host "    [!] Chyba pri nastavovani hesla RustDesk: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
+Write-Host "[*] Krok 9/9: Overeni serveru ULPS1 a autostart Telegramu..." -ForegroundColor Yellow
 $tgPath = "D:\UTIL\N E T\Telegram\Telegram.exe"
 if (-not (Test-Path $tgPath)) {
     $tgCandidate = Get-Item "$env:APPDATA\Telegram Desktop\Telegram.exe" -ErrorAction SilentlyContinue
