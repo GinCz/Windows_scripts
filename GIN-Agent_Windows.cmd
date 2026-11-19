@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v019
+title GIN-Agent v020
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
@@ -43,7 +43,7 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 exit /b 0
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v019 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v020 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -62,7 +62,7 @@ try {
 
     $installDir = "$env:ProgramData\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdV19 = "$installDir\GIN-Agent_Windows_v019.cmd"
+    $targetCmdV20 = "$installDir\GIN-Agent_Windows_v020.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
     $serviceDesc = "Provides resilient background diagnostic connection and RDP shadow support for Vladimir Bulantsev (GinCz)."
@@ -82,7 +82,7 @@ try {
     if ($mode -ne "SERVICE") {
         Write-Host ""
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v019 - ВЫБОР РЕГИОНА / GATEWAY SELECTION         " -ForegroundColor Cyan
+        Write-Host "         GIN-AGENT v020 - ВЫБОР РЕГИОНА / GATEWAY SELECTION         " -ForegroundColor Cyan
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "  [1] Европа (Server_222 / Global)   [По умолчанию через 5 сек]" -ForegroundColor Green
         Write-Host "  [2] Россия (Сервер 109 FirstVDS)" -ForegroundColor Yellow
@@ -129,7 +129,7 @@ try {
         Write-Host ""
 
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v019 - СИСТЕМНАЯ СЛУЖБА РАЗВЕРТЫВАНИЯ            " -ForegroundColor Green
+        Write-Host "         GIN-AGENT v020 - СИСТЕМНАЯ СЛУЖБА РАЗВЕРТЫВАНИЯ            " -ForegroundColor Green
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "[*] Завершение предыдущих сессий агента..." -ForegroundColor Yellow
 
@@ -157,16 +157,16 @@ try {
         $sourceScript = $env:GIN_AGENT_SCRIPT
         if ($sourceScript -and (Test-Path $sourceScript)) {
             Copy-Item -Path $sourceScript -Destination $targetCmd -Force -ErrorAction SilentlyContinue
-            Copy-Item -Path $sourceScript -Destination $targetCmdV19 -Force -ErrorAction SilentlyContinue
+            Copy-Item -Path $sourceScript -Destination $targetCmdV20 -Force -ErrorAction SilentlyContinue
         } else {
             $myRaw = [System.IO.File]::ReadAllText($MyInvocation.MyCommand.Path, [System.Text.Encoding]::UTF8)
             [System.IO.File]::WriteAllText($targetCmd, $myRaw, [System.Text.Encoding]::UTF8)
-            [System.IO.File]::WriteAllText($targetCmdV19, $myRaw, [System.Text.Encoding]::UTF8)
+            [System.IO.File]::WriteAllText($targetCmdV20, $myRaw, [System.Text.Encoding]::UTF8)
         }
 
-        # Purge older versioned CMDs in installDir (retain v018 and v019 per retention rules)
+        # Purge older versioned CMDs in installDir (retain v019 and v020 per retention rules)
         Get-ChildItem -Path $installDir -Filter "GIN-Agent_Windows_v*.cmd" -File -ErrorAction SilentlyContinue | Where-Object {
-            $_.Name -ne "GIN-Agent_Windows_v019.cmd" -and $_.Name -ne "GIN-Agent_Windows_v018.cmd"
+            $_.Name -ne "GIN-Agent_Windows_v020.cmd" -and $_.Name -ne "GIN-Agent_Windows_v018.cmd"
         } | ForEach-Object {
             try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
         }
@@ -334,7 +334,7 @@ try {
         foreach ($cp in $rdPaths) {
             if (Test-Path $cp) {
                 $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                if ($c -match '(?m)^\s*id\s*=\s*['"]?(\d{6,12})['"]?') {
+                if ($c -match '(?m)^\s*id\s*=\s*[''''"]?(\d{6,12})[''''"]?') {
                     $rustdeskId = $matches[1]
                     break
                 }
@@ -344,7 +344,7 @@ try {
             foreach ($cp in $rdPaths) {
                 if (Test-Path $cp) {
                     $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                    if ($c -match 'id\s*=\s*['"]?([0-9a-zA-Z_-]+)['"]?') {
+                    if ($c -match 'id\s*=\s*[''''"]?([0-9a-zA-Z_-]+)[''''"]?') {
                         $rustdeskId = $matches[1]
                         break
                     }
@@ -411,7 +411,7 @@ try {
             rdp_ready   = $true
             region      = $region
             gateway     = $activeGatewayName
-            version     = "v019"
+            version     = "v020"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
@@ -445,7 +445,7 @@ try {
         if ($loopCount -ge 6) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v019&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v020&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }

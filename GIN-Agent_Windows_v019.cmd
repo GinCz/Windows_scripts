@@ -334,7 +334,7 @@ try {
         foreach ($cp in $rdPaths) {
             if (Test-Path $cp) {
                 $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                if ($c -match '(?m)^\s*id\s*=\s*['"]?(\d{6,12})['"]?') {
+                if ($c -match '(?m)^\s*id\s*=\s*[''''"]?(\d{6,12})[''''"]?') {
                     $rustdeskId = $matches[1]
                     break
                 }
@@ -344,7 +344,7 @@ try {
             foreach ($cp in $rdPaths) {
                 if (Test-Path $cp) {
                     $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                    if ($c -match 'id\s*=\s*['"]?([0-9a-zA-Z_-]+)['"]?') {
+                    if ($c -match 'id\s*=\s*[''''"]?([0-9a-zA-Z_-]+)[''''"]?') {
                         $rustdeskId = $matches[1]
                         break
                     }
