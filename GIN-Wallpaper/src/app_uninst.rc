@@ -1,8 +1,8 @@
 1 ICON "app.ico"
 
 1 VERSIONINFO
-FILEVERSION 0,28,0,0
-PRODUCTVERSION 0,28,0,0
+FILEVERSION 0,29,0,0
+PRODUCTVERSION 0,29,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -15,12 +15,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "VladiMIR+AI"
             VALUE "FileDescription", "GIN-Wallpaper-Calend Uninstall"
-            VALUE "FileVersion", "v028"
+            VALUE "FileVersion", "v029"
             VALUE "InternalName", "Uninstall"
             VALUE "LegalCopyright", "VladiMIR+AI"
             VALUE "OriginalFilename", "Uninstall.exe"
-            VALUE "ProductName", "GIN-Wallpaper-Calend_v028"
-            VALUE "ProductVersion", "v028"
+            VALUE "ProductName", "GIN-Wallpaper-Calend_v029"
+            VALUE "ProductVersion", "v029"
         END
     END
     BLOCK "VarFileInfo"

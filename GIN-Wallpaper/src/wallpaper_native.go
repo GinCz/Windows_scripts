@@ -92,6 +92,7 @@ var (
 	procCreatePen             = gdi32.NewProc("CreatePen")
 	procRectangle             = gdi32.NewProc("Rectangle")
 	procGetStockObject        = gdi32.NewProc("GetStockObject")
+	procSetWindowLongW        = user32.NewProc("SetWindowLongW")
 	procSetWindowLongPtrW     = user32.NewProc("SetWindowLongPtrW")
 	procCallWindowProcW       = user32.NewProc("CallWindowProcW")
 	procGetWindowTextW        = user32.NewProc("GetWindowTextW")
@@ -108,7 +109,7 @@ type SIZE struct {
 }
 
 const (
-	AppVersion = "v028"
+	AppVersion = "v029"
 
 	SS_CENTER = 0x00000001
 	SS_NOTIFY = 0x00000100
@@ -1707,6 +1708,15 @@ func createSettingsWindow() {
 	procSetForegroundWindow.Call(uintptr(hwndSettings))
 }
 
+func setWindowLongPtr(hWnd syscall.Handle, nIndex int, dwNewLong uintptr) uintptr {
+	if procSetWindowLongPtrW.Find() == nil {
+		r, _, _ := procSetWindowLongPtrW.Call(uintptr(hWnd), uintptr(int32(nIndex)), dwNewLong)
+		return r
+	}
+	r, _, _ := procSetWindowLongW.Call(uintptr(hWnd), uintptr(int32(nIndex)), dwNewLong)
+	return r
+}
+
 func createControls(parent syscall.Handle) {
 	btnClass := strPtr("BUTTON")
 	staticClass := strPtr("STATIC")
@@ -1888,7 +1898,7 @@ func createControls(parent syscall.Handle) {
 	if origCheckboxProc == 0 {
 		cbProc := syscall.NewCallback(themeCheckboxWndProc)
 		for _, it := range getIndividualThemeCheckboxes() {
-			p, _, _ := procSetWindowLongPtrW.Call(uintptr(it.h), uintptr(uint64(0xFFFFFFFFFFFFFFFC)), cbProc) // GWLP_WNDPROC = -4
+			p := setWindowLongPtr(it.h, -4, cbProc) // GWLP_WNDPROC = -4
 			if p != 0 && origCheckboxProc == 0 {
 				origCheckboxProc = p
 			}

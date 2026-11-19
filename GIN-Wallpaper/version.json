@@ -1,18 +1,19 @@
 {
-  "version": "v028",
+  "version": "v029",
   "name": "GIN-Wallpaper-Calend",
-  "installer": "GIN-Wallpaper-Calend_v028_Setup.exe",
-  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Custom Pictures folder auto-detection e.g. D:\\docs\\Pictures, clickable status notification to open and highlight file in Explorer, 📥 Download button, official Wallhaven API 4K integration)",
+  "installer": "GIN-Wallpaper-Calend_v029_Setup.exe",
+  "description": "Smart Desktop Wallpaper with Calendar for Windows 10/11 (Universal 32-bit & 64-bit architecture, ~65% smaller package size via in-memory stream decompression, Win32 SetWindowLongW fallback)",
   "author": "GinCz / Vladimir Bulantsev",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper",
-  "date": "2026-11-07",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v028_Setup.exe",
+  "date": "2026-11-19",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v029_Setup.exe",
   "features": [
-    "Custom & Relocated Pictures Directory: auto-detects D:\\docs\\Pictures, Windows Registry User Shell Folders (My Pictures and Personal/Documents), and Shell SHGetFolderPathW APIs",
+    "Universal 32-bit & 64-bit Architecture: runs natively on Windows 10/11 (x86 and x64) via Intel 80386 PE32 standard and WOW64",
+    "Streamlined Installer Footprint: installer reduced by ~65% from 13.7 MB to 4.9 MB via transparent gzip payload streaming",
+    "Win32 API Dynamic Fallback: native support for 32-bit user32.dll SetWindowLongW with safe signed pointer offsets",
+    "Lightweight Native C Uninstaller: streamlined uninstaller binary with embedded high-resolution PE icon and version metadata",
+    "Custom & Relocated Pictures Directory: auto-detects D:\\docs\\Pictures, Windows Registry User Shell Folders, and Shell APIs",
     "Clickable Status Link: clicking '✓ Сохранено в Pictures: <file>' instantly opens Windows Explorer and highlights the newly saved image (/select,<path>)",
-    "Interactive UI Feedback: status turns into a bright link color with IDC_HAND mouse cursor upon saving",
-    "📥 Download button in settings: saves current 4K UHD wallpaper without calendar overlay into <category>_001.jpg sequence",
-    "Anti-Duplication History Cache: sliding window of the last 100 wallpaper IDs with random seed on every search",
     "Official Wallhaven 4K API source with 14 curated categories (Trucks & Jeeps, Girls/Fashion portraits, 3D, Nature, etc.)",
     "Full trilingual EN/CS/RU localization, minimal installer, silent uninstaller, and ~1.5-2 MB idle RAM consumption"
   ]

@@ -1,8 +1,8 @@
-# 🖼️ GIN-Wallpaper-Calend `v028`
+# 🖼️ GIN-Wallpaper-Calend `v029` (Universal 32/64-bit)
 
 <div align="center">
 
-[![Windows 10 / 11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(x64)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts)
+[![Windows 10 / 11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20(32%2F64--bit)-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts)
 [![Go 1.22+](https://img.shields.io/badge/Language-Go%201.22%2B%20Native%20WinAPI-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev/)
 [![RAM Footprint](https://img.shields.io/badge/Idle%20RAM-~1.5--2.0%20MB-00E676?style=for-the-badge&logo=speedtest&logoColor=white)](https://github.com/GinCz/Windows_scripts)
 [![Wallhaven 4K](https://img.shields.io/badge/Wallpapers-Wallhaven%204K%20UHD%20API-FF5722?style=for-the-badge&logo=google-chrome&logoColor=white)](https://wallhaven.cc/)
@@ -11,11 +11,11 @@
 <br/>
 
 ### 🌟 Smart Desktop Wallpaper Engine with Live Calendar HUD for Windows
-**Lightweight • Native WinAPI • 4K UHD Wallhaven API • Anti-Duplication • Trilingual • Ultra-Low Memory**
+**Universal 32/64-bit • Native WinAPI • 4K UHD Wallhaven API • Anti-Duplication • Trilingual • Ultra-Low Memory**
 
 <br/>
 
-[![Download Installer](https://img.shields.io/badge/🚀%20Download-GIN--Wallpaper--Calend%20v028%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v028_Setup.exe)
+[![Download Installer](https://img.shields.io/badge/🚀%20Download-GIN--Wallpaper--Calend%20v029%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v029_Setup.exe)
 [![Official Wallhaven Website](https://img.shields.io/badge/🌐%20Wallpaper%20Source-Wallhaven.cc%20Official-1abc9c?style=for-the-badge&logo=google-chrome&logoColor=white)](https://wallhaven.cc/)
 [![GitHub Project](https://img.shields.io/badge/💻%20GitHub-Windows_scripts%2FGIN--Wallpaper-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/tree/main/GIN-Wallpaper)
 
@@ -56,10 +56,13 @@ Unlike bulky Electron- or Chromium-based wallpaper apps that consume 150–350 M
 
 ---
 
-## ✨ Key Features in `v028`
+## ✨ Key Features in `v029`
 
 | Feature | Description |
 |---|---|
+| ⚡ **Universal 32/64-bit Architecture** | Fully compatible with both **Windows 10/11 32-bit (x86)** and **64-bit (x64)** editions. Resolves 32-bit WinAPI compatibility via dynamic `SetWindowLongW` fallback and proper 32-bit signed offsets. |
+| 📦 **65% Smaller Installer Package** | Installer package size reduced from 13.7 MB down to **4.9 MB** via transparent, zero-dependency in-memory gzip decompression. |
+| 🛡️ **Ultra-Compact Native C Uninstaller** | High-performance C uninstaller with embedded high-resolution PE icon and version metadata. |
 | 📂 **Smart Custom Pictures Auto-Detection** | Intelligently detects custom and relocated user Pictures folders (e.g. **`D:\docs\Pictures`**, `D:\DOCS\Pictures`), queries Windows Registry `User Shell Folders` (`My Pictures` and `Personal`), and Shell `SHGetFolderPathW` APIs. Auto-creates `Pictures` inside `D:\docs` if present. |
 | 🔗 **Clickable Status Link with File Highlight** | The download confirmation status `✓ Saved to Pictures: <file>` is an interactive link with an `IDC_HAND` hover cursor. Clicking it immediately opens Windows File Explorer and selects the saved image (`explorer.exe /select,<path>`). |
 | 📥 **Direct 4K Wallpaper Download** | Added a compact **`📥 Download`** button in Settings. Saves the pristine 4K UHD wallpaper (clean, without calendar HUD) into your Pictures folder sequentially numbered as `<category>_001.jpg`, `<category>_002.jpg`, etc. |
@@ -116,7 +119,7 @@ Left Column (Fonts 1–8):              Right Column (Fonts 9–16):
 
 ### Option 1: Standalone Installer (Recommended)
 
-1. Download [`GIN-Wallpaper-Calend_v028_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v028_Setup.exe).
+1. Download [`GIN-Wallpaper-Calend_v029_Setup.exe`](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Wallpaper/GIN-Wallpaper-Calend_v029_Setup.exe).
 2. Run the executable.
 3. Confirm the clean prompt: `GIN-Wallpaper-Calend - Install?` -> click **OK**.
 4. The application starts immediately, adds an icon to the system tray, registers Windows autostart, and places a desktop shortcut.

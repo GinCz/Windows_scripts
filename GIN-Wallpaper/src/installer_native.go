@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,14 +35,31 @@ func msgBox(title, text string, style uint) int {
 	return int(r)
 }
 
-//go:embed GIN-Wallpaper-Calend.exe
-var embeddedRunnerEXE []byte
+//go:embed GIN-Wallpaper-Calend.exe.gz
+var embeddedRunnerGZ []byte
 
-//go:embed Uninstall.exe
-var embeddedUninstEXE []byte
+//go:embed Uninstall.exe.gz
+var embeddedUninstGZ []byte
 
 //go:embed app.ico
 var embeddedAppICO []byte
+
+func unpackGz(gzData []byte, destPath string) error {
+	gr, err := gzip.NewReader(bytes.NewReader(gzData))
+	if err != nil {
+		return err
+	}
+	defer gr.Close()
+
+	outFile, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	_, err = io.Copy(outFile, gr)
+	return err
+}
 
 func runSelfAsAdmin(args ...string) {
 	exe, _ := os.Executable()
@@ -131,8 +151,12 @@ func main() {
 	cmdKill.Run()
 	time.Sleep(400 * time.Millisecond)
 
-	// 2. Target installation directory
-	targetDir := `C:\Program Files\GIN-Wallpaper-Calend`
+	// 2. Target installation directory (Universal for 32-bit & 64-bit Windows)
+	progFiles := os.Getenv("ProgramFiles")
+	if progFiles == "" {
+		progFiles = `C:\Program Files`
+	}
+	targetDir := filepath.Join(progFiles, "GIN-Wallpaper-Calend")
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		targetDir = filepath.Join(os.Getenv("LOCALAPPDATA"), "GIN-Wallpaper-Calend")
 		os.MkdirAll(targetDir, 0755)
@@ -144,26 +168,26 @@ func main() {
 		os.WriteFile(icoDest, embeddedAppICO, 0644)
 	}
 
-	// 4. Write native runner EXE
+	// 4. Decompress native runner EXE
 	mainExe := filepath.Join(targetDir, "GIN-Wallpaper-Calend.exe")
-	if len(embeddedRunnerEXE) > 0 {
-		os.WriteFile(mainExe, embeddedRunnerEXE, 0755)
+	if len(embeddedRunnerGZ) > 0 {
+		unpackGz(embeddedRunnerGZ, mainExe)
 	}
 
-	// 5. Write dedicated separate Uninstaller binary
+	// 5. Decompress separate Uninstaller binary
 	uninstExe := filepath.Join(targetDir, "Uninstall.exe")
-	if len(embeddedUninstEXE) > 0 {
-		os.WriteFile(uninstExe, embeddedUninstEXE, 0755)
+	if len(embeddedUninstGZ) > 0 {
+		unpackGz(embeddedUninstGZ, uninstExe)
 	}
 
 	// 6. Register in Windows Programs & Features
 	regPath := `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Wallpaper-Calend`
-	dispName := "GIN-Wallpaper-Calend v028"
+	dispName := "GIN-Wallpaper-Calend v029"
 	cmdReg1 := exec.Command("reg", "add", regPath, "/v", "DisplayName", "/t", "REG_SZ", "/d", dispName, "/f")
 	cmdReg1.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg1.Run()
 
-	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v028", "/f")
+	cmdReg2 := exec.Command("reg", "add", regPath, "/v", "DisplayVersion", "/t", "REG_SZ", "/d", "v029", "/f")
 	cmdReg2.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	cmdReg2.Run()
 
