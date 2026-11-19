@@ -1,5 +1,5 @@
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v053
+#  GIN-WIN-OPTIMIZER PLUS                                          v055
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -444,21 +444,15 @@ try {
                         Get-ChildItem -Path $bagsClasses -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -ne "AllFolders" } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
                     }
                     if (Test-Path $bagsWin) {
-                        Remove-Item -Path $bagsWin -Recurse -Force -ErrorAction SilentlyContinue
+                        Get-ChildItem -Path $bagsWin -ErrorAction SilentlyContinue | Where-Object { $_.PSChildName -ne "AllFolders" } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
                     }
                 } catch {}
             }
 
-            # 2. Configure AllFolders\Shell template
+            # 2. Configure AllFolders\Shell template across Classes and Standard Windows Shell
             $applyAllFolders = {
                 param($hivePrefix)
                 try {
-                    $allFoldersShell = "$hivePrefix\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell"
-                    if (-not (Test-Path $allFoldersShell)) {
-                        New-Item -Path $allFoldersShell -Force -ErrorAction SilentlyContinue | Out-Null
-                    }
-                    Set-ItemProperty -Path $allFoldersShell -Name "FolderType" -Value "Generic" -Type String -Force -ErrorAction SilentlyContinue
-
                     $folderGuids = @(
                         "{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}", # Generic
                         "{7D49D726-3C21-4F05-99AA-FDC2C9474656}", # Documents
@@ -482,17 +476,35 @@ try {
                         "{4D3427C7-7AE2-426B-9A89-93E65E450F30}"  # Storage Provider Videos
                     )
 
-                    foreach ($fg in $folderGuids) {
-                        $gPath = "$allFoldersShell\$fg"
-                        if (-not (Test-Path $gPath)) {
-                            New-Item -Path $gPath -Force -ErrorAction SilentlyContinue | Out-Null
+                    foreach ($baseBags in @(
+                        "$hivePrefix\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders",
+                        "$hivePrefix\Software\Microsoft\Windows\Shell\Bags\AllFolders"
+                    )) {
+                        foreach ($sub in @("Shell", "ComDlg", "ComDlg32")) {
+                            $subPath = "$baseBags\$sub"
+                            if (-not (Test-Path $subPath)) {
+                                New-Item -Path $subPath -Force -ErrorAction SilentlyContinue | Out-Null
+                            }
+                            Set-ItemProperty -Path $subPath -Name "FolderType" -Value "Generic" -Type String -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $subPath -Name "LogicalViewMode" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $subPath -Name "Mode" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $subPath -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $subPath -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $subPath -Name "SortByList" -Value "prop:System.ItemTypeText;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
+
+                            foreach ($fg in $folderGuids) {
+                                $gPath = "$subPath\$fg"
+                                if (-not (Test-Path $gPath)) {
+                                    New-Item -Path $gPath -Force -ErrorAction SilentlyContinue | Out-Null
+                                }
+                                Set-ItemProperty -Path $gPath -Name "FFlags" -Value 0x41200001 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $gPath -Name "Mode" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $gPath -Name "LogicalViewMode" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $gPath -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $gPath -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $gPath -Name "SortByList" -Value "prop:System.ItemTypeText;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
+                            }
                         }
-                        Set-ItemProperty -Path $gPath -Name "FFlags" -Value 0x41200001 -Type DWord -Force -ErrorAction SilentlyContinue
-                        Set-ItemProperty -Path $gPath -Name "Mode" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
-                        Set-ItemProperty -Path $gPath -Name "LogicalViewMode" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
-                        Set-ItemProperty -Path $gPath -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
-                        Set-ItemProperty -Path $gPath -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-                        Set-ItemProperty -Path $gPath -Name "SortByList" -Value "prop:System.ItemType;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
                     }
                 } catch {}
             }
@@ -519,17 +531,35 @@ try {
                             Set-ItemProperty -Path $ftKey -Name "LogicalViewMode" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
                             Set-ItemProperty -Path $ftKey -Name "Mode" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
                             Set-ItemProperty -Path $ftKey -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $ftKey -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $ftKey -Name "SortByList" -Value "prop:System.ItemTypeText;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
+                            Set-ItemProperty -Path $ftKey -Name "GroupBy" -Value "" -Type String -Force -ErrorAction SilentlyContinue
 
                             $topViews = "$ftKey\TopViews"
                             if (Test-Path $topViews) {
+                                Set-ItemProperty -Path $topViews -Name "LogicalViewMode" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $topViews -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $topViews -Name "SortByList" -Value "prop:System.ItemTypeText;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $topViews -Name "GroupBy" -Value "" -Type String -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $topViews -Name "GroupAscending" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+                                Set-ItemProperty -Path $topViews -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
                                 Get-ChildItem -Path $topViews -ErrorAction SilentlyContinue | ForEach-Object {
                                     $tvKey = $_.PSPath
                                     Set-ItemProperty -Path $tvKey -Name "LogicalViewMode" -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue
                                     Set-ItemProperty -Path $tvKey -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
-                                    Set-ItemProperty -Path $tvKey -Name "SortByList" -Value "prop:System.ItemType;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
+                                    Set-ItemProperty -Path $tvKey -Name "SortByList" -Value "prop:System.ItemTypeText;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
                                     Set-ItemProperty -Path $tvKey -Name "GroupBy" -Value "" -Type String -Force -ErrorAction SilentlyContinue
                                     Set-ItemProperty -Path $tvKey -Name "GroupAscending" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
                                     Set-ItemProperty -Path $tvKey -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
+
+                                    try {
+                                        $colList = (Get-ItemProperty -Path $tvKey -Name "ColumnList" -ErrorAction SilentlyContinue).ColumnList
+                                        if ($colList -and ($colList -notmatch "System\.ItemTypeText")) {
+                                            $newColList = $colList -replace '^prop:', 'prop:0System.ItemTypeText;'
+                                            Set-ItemProperty -Path $tvKey -Name "ColumnList" -Value $newColList -Type String -Force -ErrorAction SilentlyContinue
+                                        }
+                                    } catch {}
                                 }
                             }
                         }
@@ -564,7 +594,7 @@ try {
                         Set-ItemProperty -Path $thisPcPath -Name "Mode" -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue
                         Set-ItemProperty -Path $thisPcPath -Name "IconSize" -Value 16 -Type DWord -Force -ErrorAction SilentlyContinue
                         Set-ItemProperty -Path $thisPcPath -Name "GroupView" -Value 0 -Type DWord -Force -ErrorAction SilentlyContinue
-                        Set-ItemProperty -Path $thisPcPath -Name "SortByList" -Value "prop:System.ItemType;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
+                        Set-ItemProperty -Path $thisPcPath -Name "SortByList" -Value "prop:System.ItemTypeText;System.ItemNameDisplay;" -Type String -Force -ErrorAction SilentlyContinue
                     }
                 } catch {}
             }
@@ -599,7 +629,7 @@ try {
             } catch {}
 
             # D. Persistent Startup Hook in Run: Keeps Folder View List + Sort by Type guaranteed at every user logon
-            $runFolderView = 'powershell.exe -WindowStyle Hidden -NoProfile -Command "Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell'' -Name ''FolderType'' -Value ''Generic'' -Type String -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell\{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}'' -Name ''LogicalViewMode'' -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell\{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}'' -Name ''Mode'' -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell\{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}'' -Name ''SortByList'' -Value ''prop:System.ItemType;System.ItemNameDisplay;'' -Type String -Force -ErrorAction SilentlyContinue"'
+            $runFolderView = 'powershell.exe -WindowStyle Hidden -NoProfile -Command "Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell'' -Name ''FolderType'' -Value ''Generic'' -Type String -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell'' -Name ''LogicalViewMode'' -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell'' -Name ''Mode'' -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell'' -Name ''SortByList'' -Value ''prop:System.ItemTypeText;System.ItemNameDisplay;'' -Type String -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell\{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}'' -Name ''LogicalViewMode'' -Value 4 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell\{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}'' -Name ''Mode'' -Value 3 -Type DWord -Force -ErrorAction SilentlyContinue; Set-ItemProperty -Path ''HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell\{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}'' -Name ''SortByList'' -Value ''prop:System.ItemTypeText;System.ItemNameDisplay;'' -Type String -Force -ErrorAction SilentlyContinue"'
             Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "GIN-FolderViewListSortType" -Value $runFolderView -Force -ErrorAction SilentlyContinue
             Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "GIN-FolderViewListSortType" -Value $runFolderView -Force -ErrorAction SilentlyContinue
         } catch {}
@@ -621,9 +651,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v053
+#  GIN-WIN-OPTIMIZER PLUS                                          v055
 
-#  Rule: Strict Version Increment Mandate (v032 -> v053)
+#  Rule: Strict Version Increment Mandate (v032 -> v055)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -676,11 +706,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v053 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v053 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -957,9 +987,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v053 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v053 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -1236,11 +1266,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v053 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v053 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -2620,7 +2650,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v053 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v055 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -5372,7 +5402,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v053. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v055. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 
@@ -5549,6 +5579,18 @@ $executeOptimization = {
         # Final post-restart re-assert of Folder View List and Sort by Type
         if ($controls["chk_ui_folder_view_list_sort_type"].IsChecked) {
             Apply-FolderViewListSortType
+            try {
+                $shellApp = New-Object -ComObject Shell.Application
+                foreach ($win in $shellApp.Windows()) {
+                    try {
+                        $doc = $win.Document
+                        if ($doc) {
+                            $doc.CurrentViewMode = 3
+                            try { $doc.SortColumns = "prop:System.ItemTypeText;System.ItemNameDisplay;" } catch {}
+                        }
+                    } catch {}
+                }
+            } catch {}
         }
 
         # Final post-restart re-assert of WU lock in case Explorer restart or service triggered background check
@@ -5689,7 +5731,7 @@ try {
 
 } catch {
 
-    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v053 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
+    [System.Windows.MessageBox]::Show("Unexpected Error: " + $_.Exception.ToString(), "GIN-Win-Optimizer v055 Error", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
 
 }
 

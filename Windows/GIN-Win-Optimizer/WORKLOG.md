@@ -2,6 +2,28 @@
 
 ---
 
+## 2026-11-19 — GIN-Win-Optimizer v055 Release: Fix Sort by Type via Canonical System.ItemTypeText
+- **Task**: Fix sorting inside folders to sort by Type ("по типу") instead of Name ("по имени") while keeping default view as List ("список").
+- **Root Cause Analysis**:
+  1. In v053/v054, `SortByList` was set to `"prop:System.ItemType;System.ItemNameDisplay;"`.
+  2. In the Windows Property System, `System.ItemType` represents the raw programmatic file extension (e.g. `.txt`, `.exe`), but for folder directories it is empty/null, and it is not an exposed column property in Windows Explorer views.
+  3. Because Explorer could not evaluate `System.ItemType` for the folder view sort, it discarded it and fell back to the secondary sort property: `System.ItemNameDisplay` (File Name), causing folders and files to sort by Name instead of Type!
+  4. The canonical Windows Shell property for file type is `System.ItemTypeText` (e.g. "File folder", "Application", "Text Document").
+- **Architecture & Implementation in v055**:
+  1. Updated `SortByList` to `"prop:System.ItemTypeText;System.ItemNameDisplay;"` across all FolderTypes and nested `TopViews` in HKCU, HKEY_USERS (`S-1-5-21-*`), and Default NTUSER.DAT template.
+  2. Injected `0System.ItemTypeText;` into `ColumnList` for all folder view templates lacking the Type property to ensure Explorer always recognizes Type as a sortable attribute.
+  3. Configured `AllFolders\Shell`, `AllFolders\ComDlg`, and `AllFolders\ComDlg32` across both `Software\Classes\Local Settings\...\Bags` and standard `Software\Microsoft\Windows\Shell\Bags` with `Mode=3` (List), `LogicalViewMode=4`, `IconSize=16`, `GroupView=0`, and `SortByList="prop:System.ItemTypeText;System.ItemNameDisplay;"`.
+  4. Configured "This PC" Root Bags (Slot 1) and all primary folder GUIDs with canonical `System.ItemTypeText`.
+  5. Injected updated keys into CMD launcher elevation header.
+  6. Added live Windows Shell COM automation (`Shell.Application`) in post-restart sweep to immediately force all open Explorer windows to List view (`CurrentViewMode = 3`) and sort by Type (`SortColumns = "prop:System.ItemTypeText;System.ItemNameDisplay;"`).
+  7. Embedded persistent logon hook `GIN-FolderViewListSortType` in Run keys.
+  8. Enforced 2-version retention policy: retained `v055` and `v054`, purged `v052` and `v053`.
+- **Verification**: Verified via `validate_release.py`: 0 BOM, 100% CRLF line endings, 0 PowerShell syntax/bracket errors.
+
+## 2026-11-19 — GIN-Win-Optimizer v054 Release: Folder View List Default Stabilization
+- **Task**: Maintained default folder view configuration to List mode across Windows Explorer FolderTypes and Bags templates.
+- **Artifact**: Delivered `GIN-Win-Optimizer_v054.cmd`.
+
 ## 2026-11-19 — GIN-Win-Optimizer v053 Release: Default Folder View to List & Sort by Type
 - **Task**: Implement universal folder view default as List ("Список") and sorted by Type ("Typ") across all folders, "This PC", local drives, and network shares (e.g. `\\ULPS1\util`) as requested by Vladimir.
 - **Root Cause & Architecture**: `chk_ui_folder_view_list_sort_type` was already present in UI localization and checkboxes, but was missing an optimization execution action in `engine.ps1`. Furthermore, Windows Explorer caches per-folder view modes in `Bags` and `BagMRU`, requiring a synchronized purge during Explorer shutdown and deep registration across `FolderTypes\TopViews`, `AllFolders\Shell`, and root Bags (Slot 1).

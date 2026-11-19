@@ -6,6 +6,20 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v055] - 2026-11-19
+### Universal Folder View Default: List Mode & Sort by Type Fix (Canonical System.ItemTypeText Property)
+- **Canonical Property Enforcement for File Type Sorting**: Fixed critical sorting issue where Windows Explorer fell back to sorting files alphabetically by Name (`System.ItemNameDisplay`) because `SortByList` previously referenced `System.ItemType` (which is raw extension/ProgID and ignored by the shell) instead of the canonical display property `System.ItemTypeText`.
+- **TopViews & FolderTypes Deep Enforcement**: Set `SortByList="prop:System.ItemTypeText;System.ItemNameDisplay;"` across all FolderTypes and nested `TopViews` subkeys in HKCU, HKEY_USERS (`S-1-5-21-*`), and Default NTUSER.DAT template.
+- **ColumnList Injection**: Automatically injected `0System.ItemTypeText;` into `ColumnList` for all folder view templates lacking the Type property, ensuring Explorer always recognizes Type as a sortable attribute.
+- **Multi-Bag & Common Dialog Architecture**: Configured `AllFolders\Shell`, `AllFolders\ComDlg`, and `AllFolders\ComDlg32` across both `Software\Classes\Local Settings\...\Bags` and standard `Software\Microsoft\Windows\Shell\Bags` with `Mode=3` (List), `LogicalViewMode=4`, `IconSize=16`, `GroupView=0`, and `SortByList="prop:System.ItemTypeText;System.ItemNameDisplay;"`.
+- **Live Shell COM Automation**: Added real-time `Shell.Application` COM iteration in post-restart sweep to immediately force all open Explorer windows to List view (`CurrentViewMode = 3`) and sort by Type (`SortColumns = "prop:System.ItemTypeText;System.ItemNameDisplay;"`).
+- **CMD Polyglot Elevation Header & Logon Hook**: Synchronized CMD launcher header and persistent startup Run hook `GIN-FolderViewListSortType` with canonical `System.ItemTypeText`.
+- **Artifact Delivery & Two-Version Retention**: Delivered `GIN-Win-Optimizer_v055.cmd` to Vladimir's Desktop in MEGA (`D:\MEGA\DOCS\desktop\`) and `/MEGA/WIN-FLASH/Util-WINDOWS/`; retained strictly `v055` and `v054`.
+
+## [v054] - 2026-11-19
+### Folder View List Default Stabilization
+- **Folder View List Mode Stabilization**: Maintained default folder view configuration to List mode across Windows Explorer FolderTypes and Bags templates; delivered `GIN-Win-Optimizer_v054.cmd`.
+
 ## [v053] - 2026-11-19
 ### Universal Folder View Default: List Mode & Sort by Type Enforcement (All Folders, "This PC", Local Drives & Network Shares)
 - **Implemented `chk_ui_folder_view_list_sort_type`**: Activated full execution logic for "Вид папок по умолчанию — «Список» (лист) и сортировка по типу", which was previously declared in UI localization but lacked an optimization action.

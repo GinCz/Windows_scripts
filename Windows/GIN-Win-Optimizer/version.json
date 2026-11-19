@@ -1,10 +1,10 @@
 {
     "project": "GIN-Win-Optimizer",
-    "current_version": "v053",
+    "current_version": "v055",
     "updated_at": "2026-11-19",
     "active_versions": [
-        "GIN-Win-Optimizer_v053.cmd",
-        "GIN-Win-Optimizer_v052.cmd"
+        "GIN-Win-Optimizer_v055.cmd",
+        "GIN-Win-Optimizer_v054.cmd"
     ],
     "sync_targets": {
         "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,16 @@
         "desktop_copy": true
     },
     "changelog": [
+        {
+            "version": "v055",
+            "date": "2026-11-19",
+            "changes": "Universal Folder View Default: List Mode & Sort by Type Fix (System.ItemTypeText Canonical Property Enforcement): 1) Fixed critical sorting flaw where Explorer fell back to sorting by Name because SortByList utilized raw extension property 'System.ItemType' instead of canonical Windows Shell display property 'System.ItemTypeText'; 2) Configured 'SortByList'='prop:System.ItemTypeText;System.ItemNameDisplay;' across all Windows Explorer FolderTypes and their nested TopViews templates; 3) Injected '0System.ItemTypeText;' into ColumnList of all TopViews templates to guarantee file type property is present in column definitions; 4) Updated AllFolders\\Shell and AllFolders\\ComDlg across both HKCU Classes and Standard Windows Shell Bags with Mode=3 (List), LogicalViewMode=4, IconSize=16, GroupView=0 and SortByList='prop:System.ItemTypeText;System.ItemNameDisplay;'; 5) Configured This PC Root Bags (Slot 1) and all 20 primary folder GUIDs; 6) Injected immediate CMD elevation launcher header with updated SortByList and view keys; 7) Integrated live Windows Shell COM automation (Shell.Application) in post-restart sweep to immediately force active Explorer windows to List view (Mode 3) sorted by Type; 8) Embedded persistent logon hook GIN-FolderViewListSortType in Run keys; delivered GIN-Win-Optimizer_v055.cmd."
+        },
+        {
+            "version": "v054",
+            "date": "2026-11-19",
+            "changes": "Folder View List Default Stabilization: Maintained default folder view configuration to List mode across Windows Explorer FolderTypes and Bags templates; delivered GIN-Win-Optimizer_v054.cmd."
+        },
         {
             "version": "v053",
             "date": "2026-11-19",

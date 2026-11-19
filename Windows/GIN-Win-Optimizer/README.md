@@ -1,9 +1,9 @@
 # ⚡ GIN-Win-Optimizer — Windows 7 / 8 / 10 / 11 Ultimate Optimizer
 
-[![Download Latest Production Release](https://img.shields.io/badge/📥_DOWNLOAD-GIN--Win--Optimizer_v053.cmd_(LATEST)-00C853?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v053.cmd)
-[![View Script on GitHub](https://img.shields.io/badge/💻_VIEW_ON_GITHUB-GIN--Win--Optimizer_v053.cmd-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v053.cmd)
+[![Download Latest Production Release](https://img.shields.io/badge/📥_DOWNLOAD-GIN--Win--Optimizer_v055.cmd_(LATEST)-00C853?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v055.cmd)
+[![View Script on GitHub](https://img.shields.io/badge/💻_VIEW_ON_GITHUB-GIN--Win--Optimizer_v055.cmd-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v055.cmd)
 
-[![Version](https://img.shields.io/badge/Version-v053_(Latest_Production)-00E676.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)
+[![Version](https://img.shields.io/badge/Version-v055_(Latest_Production)-00E676.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)
 [![Platform](https://img.shields.io/badge/Platform-Windows_7_|_8.1_|_10_|_11_|_Server-0078D6.svg?style=flat-square&logo=windows&logoColor=white)](https://microsoft.com/windows)
 [![Architecture](https://img.shields.io/badge/Arch-Universal_x86_|_x64-0284C7.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts)
 [![Modules](https://img.shields.io/badge/Catalog-115_Active_Modules-FF6D00.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts)
@@ -14,8 +14,8 @@
 > **Public Repository:** [Windows_scripts / Windows / GIN-Win-Optimizer](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)  
 > **Private Master Repository:** [Secret_Privat / Windows / GIN-Win-Optimizer](https://github.com/GinCz/Secret_Privat/tree/main/Windows/GIN-Win-Optimizer)  
 > **Target Operating Systems:** Windows 7 / 8 / 8.1 / 10 / 11 / Windows Server (32-bit x86 & 64-bit x64, all editions)  
-> **Current Version:** `v053` (Active Production)  
-> **Active Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v053.cmd` and `GIN-Win-Optimizer_v051.cmd`)  
+> **Current Version:** `v055` (Active Production)  
+> **Active Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v055.cmd` and `GIN-Win-Optimizer_v054.cmd`)  
 > **Release History:** Complete technical changelog available in [CHANGELOG.md](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/CHANGELOG.md)
 
 ---
@@ -26,8 +26,8 @@
 
 | Release | File | Size | Direct Download Button | Web UI |
 | :--- | :--- | :---: | :---: | :---: |
-| 🟢 **Latest (Recommended)** | `GIN-Win-Optimizer_v053.cmd` | ~294 KB | [**📥 Download v053**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v053.cmd) | [View v053 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v053.cmd) |
-| ⚪ **Previous Stable** | `GIN-Win-Optimizer_v051.cmd` | ~290 KB | [**📥 Download v051**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v051.cmd) | [View v051 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v051.cmd) |
+| 🟢 **Latest (Recommended)** | `GIN-Win-Optimizer_v055.cmd` | ~294 KB | [**📥 Download v055**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v055.cmd) | [View v055 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v055.cmd) |
+| ⚪ **Previous Stable** | `GIN-Win-Optimizer_v054.cmd` | ~290 KB | [**📥 Download v054**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v054.cmd) | [View v054 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v054.cmd) |
 
 ---
 
@@ -36,15 +36,15 @@
 #### Option A: PowerShell (Run as Administrator)
 Download directly to your Desktop and run immediately:
 ```powershell
-$path = "$([Environment]::GetFolderPath('Desktop'))\GIN-Win-Optimizer_v053.cmd"
-Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v053.cmd" -OutFile $path
+$path = "$([Environment]::GetFolderPath('Desktop'))\GIN-Win-Optimizer_v055.cmd"
+Invoke-WebRequest -Uri "https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v055.cmd" -OutFile $path
 Start-Process $path
 ```
 
 #### Option B: Command Prompt (CMD)
 ```cmd
-curl -fLo "%USERPROFILE%\Desktop\GIN-Win-Optimizer_v053.cmd" "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v053.cmd"
-start "" "%USERPROFILE%\Desktop\GIN-Win-Optimizer_v053.cmd"
+curl -fLo "%USERPROFILE%\Desktop\GIN-Win-Optimizer_v055.cmd" "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v055.cmd"
+start "" "%USERPROFILE%\Desktop\GIN-Win-Optimizer_v055.cmd"
 ```
 
 ---
@@ -141,16 +141,16 @@ Built upon a robust **single-standard polyglot CMD architecture**, the optimizer
 
 | Environment / Medium | Target Path | Target Version | Active Retention |
 | :--- | :--- | :---: | :---: |
-| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v053.cmd` | v051 | Strictly 2 latest versions (`v053`, `v051`) |
-| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v053.cmd` | v051 | Strictly 2 latest versions (`v053`, `v051`) |
-| 💻 **Vladimir's Desktop (Primary)** | `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v053.cmd` | v051 | Strictly 2 latest versions (`v053`, `v051`) |
-| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v051 | Full Git history |
-| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v051 | Full Git history |
+| 💾 **USB Flash Drive (Ventoy)** | `V:\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v055.cmd` | v054 | Strictly 2 latest versions (`v055`, `v054`) |
+| ☁️ **MEGA Win-Flash Mirror** | `D:\MEGA\WIN-FLASH\Util-WINDOWS\GIN-Win-Optimizer_v055.cmd` | v054 | Strictly 2 latest versions (`v055`, `v054`) |
+| 💻 **Vladimir's Desktop (Primary)** | `D:\MEGA\DOCS\desktop\GIN-Win-Optimizer_v055.cmd` | v054 | Strictly 2 latest versions (`v055`, `v054`) |
+| 🔒 **Private Git Repository** | `Secret_Privat/Windows/GIN-Win-Optimizer/` | v054 | Full Git history |
+| 🌐 **Public Git Repository** | `Windows_scripts/Windows/GIN-Win-Optimizer/` | v054 | Full Git history |
 
 ---
 
 ## 📦 Delivery & Execution Instructions
 
-1. **Autonomous Elevation**: Double-clicking `GIN-Win-Optimizer_v053.cmd` automatically checks for administrative privileges and elevates itself via native UAC `RunAs` without modal prompts.
-2. **Network Share Execution**: When launched from UNC network shares (`\\server\share\GIN-Win-Optimizer_v053.cmd`), the script automatically stages itself to `%TEMP%` to prevent CMD working directory execution warnings.
+1. **Autonomous Elevation**: Double-clicking `GIN-Win-Optimizer_v055.cmd` automatically checks for administrative privileges and elevates itself via native UAC `RunAs` without modal prompts.
+2. **Network Share Execution**: When launched from UNC network shares (`\\server\share\GIN-Win-Optimizer_v055.cmd`), the script automatically stages itself to `%TEMP%` to prevent CMD working directory execution warnings.
 3. **Turnkey Execution**: Select preset (**Select All**, **Office**, or **Gaming**) and click **Optimize** (or **Optimalizovat**). The terminal emulator outputs live progress, followed by acoustic confirmation chimes upon completion.
