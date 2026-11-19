@@ -4,7 +4,7 @@ setlocal
 :: ============================================================================
 :: ULTARIX s.r.o. - Executive Dashboard Launcher (Server ULPS1 & PC-02 Ulyana)
 :: Author  : VladiMIR + Antigravity AI
-:: Version : v2.4.0 (2026-11)
+:: Version : v2.4.1 (2026-11)
 :: ============================================================================
 
 title ULTARIX - Prehled aktivity pocitacu [Ulyana / PC-02 / ULPS1]
@@ -30,5 +30,6 @@ echo  Stisknete CTRL + D v prohlizeci a pridejte si tuto stranku do OBLIBENYCH
 echo  (Zalozek) v prohlizeci. Budete ji mit vzdy po ruce na jeden klik!
 echo ======================================================================
 echo.
-timeout /t 5 >nul
+echo  Stisknete libovolnou klavesu pro zavreni okna...
+pause >nul
 exit /b 0

@@ -26,14 +26,17 @@ if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" set "PS_E
 
 if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
     echo.
-    pause
+    echo ======================================================================
+    echo  Aktualizace dokoncena. Stisknete libovolnou klavesu pro zavreni...
+    echo ======================================================================
+    pause >nul
 )
-exit /b
+exit /b 0
 #>
 # ==============================================================================
-# ULTARIX s.r.o. - 1-Click Update From GitHub (Hybrid Polyglot Engine)
+# ULTARIX s.r.o. - 1-Click Update From GitHub (Multi-Target Cache-Busting Engine)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.4.0 (2026-11)
+# Version : v2.4.1 (2026-11)
 # ==============================================================================
 
 function Write-SafeHost {
@@ -54,43 +57,60 @@ function Write-SafeHost {
     }
 }
 
-$target = "C:\UTIL\UltarixMonitor"
-if (-not (Test-Path $target)) {
-    if (Test-Path "$PSScriptRoot\dashboard.html") {
-        $target = $PSScriptRoot
-    } else {
-        New-Item -ItemType Directory -Path $target -Force | Out-Null
-    }
-}
-
 try { Clear-Host } catch {}
 try { $Host.UI.RawUI.WindowTitle = "ULTARIX - Aktualizace monitoringu z GitHub" } catch {}
 
 Write-SafeHost "======================================================================" Cyan
 Write-SafeHost "   ULTARIX s.r.o. - Automaticka aktualizace souboru z GitHub          " Green
 Write-SafeHost "======================================================================" Cyan
-Write-SafeHost " Cilova slozka : $target" White
-Write-SafeHost " Repozitar     : GinCz/Windows_scripts (vetev main)" White
+Write-SafeHost " Repozitar : GinCz/Windows_scripts (vetev main)" White
 Write-SafeHost "======================================================================" Cyan
 Write-SafeHost "" White
+
+# Detect target directories (update all accessible relevant folders)
+$targets = @()
+
+if ($PSScriptRoot -and (Test-Path $PSScriptRoot)) {
+    $targets += $PSScriptRoot
+}
+
+if (Test-Path "C:\UTIL\UltarixMonitor") {
+    $localPath = (Get-Item "C:\UTIL\UltarixMonitor").FullName
+    if ($targets -notcontains $localPath) { $targets += $localPath }
+}
+
+if (Test-Path "\\ulps1\UTIL\UltarixMonitor") {
+    $netShare = "\\ulps1\UTIL\UltarixMonitor"
+    if ($targets -notcontains $netShare) { $targets += $netShare }
+}
+
+if ($targets.Count -eq 0) {
+    $defaultDir = "C:\UTIL\UltarixMonitor"
+    New-Item -ItemType Directory -Path $defaultDir -Force | Out-Null
+    $targets += $defaultDir
+}
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $baseUri = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/UltarixMonitor"
 $files = @("dashboard.html", "0_Server_Setup.cmd", "1_Client_Install.cmd", "2_Ulyana_Dashboard.cmd", "employees.json", "README.md", "Update_From_GitHub.cmd")
+$cacheBuster = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 
-foreach ($f in $files) {
-    $url = "$baseUri/$f"
-    $dest = "$target\$f"
-    try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
-        $len = (Get-Item $dest).Length
-        Write-SafeHost ("    [OK] {0,-25} : Aktualizovano ({1} B)" -f $f, $len) Green
-    } catch {
-        Write-SafeHost ("    [!] {0,-25} : Chyba stahovani: {1}" -f $f, $_.Exception.Message) Red
+foreach ($target in $targets) {
+    Write-SafeHost "[*] Aktualizuji slozku: $target" Yellow
+    foreach ($f in $files) {
+        $url = "$baseUri/$f`?cb=$cacheBuster"
+        $dest = "$target\$f"
+        try {
+            Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing -TimeoutSec 15 -Headers @{ "Cache-Control" = "no-cache"; "Pragma" = "no-cache" } -ErrorAction Stop
+            $len = (Get-Item $dest).Length
+            Write-SafeHost ("    [OK] {0,-25} : Uspesne stazeno ({1} B)" -f $f, $len) Green
+        } catch {
+            Write-SafeHost ("    [!] {0,-25} : Chyba stahovani: {1}" -f $f, $_.Exception.Message) Red
+        }
     }
+    Write-SafeHost "" White
 }
 
-Write-SafeHost "" White
 Write-SafeHost "======================================================================" Green
 Write-SafeHost "       AKTUALIZACE Z GITHUB BYLA USPESNE DOKONCENA!                   " Green
 Write-SafeHost "======================================================================" Green
@@ -98,3 +118,5 @@ Write-SafeHost " Vsechny skripty, dashboard.html a nastaveni byly prepsany." Whi
 Write-SafeHost " Vase ulozene logy v podslozce \logs zustaly nedotceny." White
 Write-SafeHost "======================================================================" Green
 Write-SafeHost "" White
+Write-SafeHost "Stisknete libovolnou klavesu pro ukonceni..." Yellow
+try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Pause }

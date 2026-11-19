@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 :: ============================================================================
-:: ULTARIX s.r.o. - Server Setup & Directory Initializer (v2.4.0)
+:: ULTARIX s.r.o. - Server Setup & Directory Initializer (v2.4.1)
 :: Author  : VladiMIR + Antigravity AI
 :: Physical Server Path : C:\UTIL\UltarixMonitor
 :: Network Share Path   : \\ulps1\UTIL\UltarixMonitor
@@ -77,6 +77,9 @@ echo.
 popd 2>nul
 if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
     echo.
-    pause
+    echo ======================================================================
+    echo  Hotovo! Stisknete libovolnou klavesu pro zavreni okna...
+    echo ======================================================================
+    pause >nul
 )
 exit /b 0

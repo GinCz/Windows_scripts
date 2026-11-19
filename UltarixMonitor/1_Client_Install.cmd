@@ -26,14 +26,17 @@ if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" set "PS_E
 
 if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
     echo.
-    pause
+    echo ======================================================================
+    echo  Konec instalace. Stisknete libovolnou klavesu pro zavreni okna...
+    echo ======================================================================
+    pause >nul
 )
 exit /b
 #>
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (32-bit Windows 10 x86)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.4.0 (2026-11)
+# Version : v2.4.1 (2026-11)
 # Target  : All employee workstations (32-bit Windows 10 Pro)
 # Network : \\ulps1\UTIL\UltarixMonitor\logs
 # ==============================================================================
@@ -280,11 +283,5 @@ Write-SafeHost " Agent nyni nepretrzite a tise bezi v pozadi Windows 10 (32-bit)
 Write-SafeHost " Logy a pauzy se automaticky ukladaji na server: $targetShare" White
 Write-SafeHost "======================================================================" Green
 Write-SafeHost "" White
-
-if ($args -contains "-Silent" -or $env:SILENT -eq "1" -or -not [Environment]::UserInteractive) {
-    Start-Sleep -Seconds 2
-    exit 0
-}
-
-Write-SafeHost "Stisknete libovolnou klavesu pro zavreni..." Yellow
-try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Start-Sleep -Seconds 2 }
+Write-SafeHost "Stisknete libovolnou klavesu pro zavreni okna..." Yellow
+try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Pause }
