@@ -24,19 +24,13 @@ if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" set "PS_E
 
 "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$f = $env:SCRIPT_FILE; if (-not $f) { $f = '%~f0' }; $raw = [System.IO.File]::ReadAllText($f, [System.Text.Encoding]::UTF8); try { & ([ScriptBlock]::Create($raw)) } catch { try { [Console]::WriteLine('`n[X] CHYBA INSTALACE: ' + $_.Exception.Message) } catch { Write-Output $_.Exception.Message } }"
 
-if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
-    echo.
-    echo ======================================================================
-    echo  Konec instalace. Stisknete libovolnou klavesu pro zavreni okna...
-    echo ======================================================================
-    pause >nul
-)
-exit /b
+timeout /t 2 >nul 2>&1
+exit /b 0
 #>
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (32-bit Windows 10 x86)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.4.1 (2026-11)
+# Version : v2.4.2 (2026-11)
 # Target  : All employee workstations (32-bit Windows 10 Pro)
 # Network : \\ulps1\UTIL\UltarixMonitor\logs
 # ==============================================================================
@@ -100,6 +94,14 @@ try {
     $serverOk = $true
     Write-SafeHost "    [OK] Spojeni se serverem ULPS1 funguje perfektne!" Green
     Write-SafeHost "    [OK] Cesta pro logy: $remoteCompLog" Green
+    # Auto-register this computer in network active_hosts index
+    try {
+        $hf = "$targetShare\active_hosts.txt"
+        $ex = if (Test-Path $hf) { Get-Content $hf -ErrorAction SilentlyContinue } else { @() }
+        if ($ex -notcontains $env:COMPUTERNAME) {
+            $env:COMPUTERNAME | Out-File -FilePath $hf -Encoding utf8 -Append
+        }
+    } catch {}
 } catch {
     Write-SafeHost "    [!] Varovani: Sitova slozka $targetShare nyni neodpovida." DarkYellow
     Write-SafeHost "        Agent bude logovat lokalne a synchronizovat se pri pripojeni." Gray
@@ -115,6 +117,21 @@ param(
     [int]$IdleThresholdSec = 60,
     [string]$ServerShare = "\\ulps1\UTIL\UltarixMonitor\logs"
 )
+
+# Terminate duplicate agent instances to guarantee strictly 1 active process
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -like "*agent.ps1*" -and $_.ProcessId -ne $PID
+} | ForEach-Object {
+    try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+}
+
+# Single-instance Mutex guard
+$mutexName = "Global\UltarixMonitorAgentMutex"
+$createdNew = $false
+$script:agentMutex = New-Object System.Threading.Mutex($true, $mutexName, [ref]$createdNew)
+if (-not $createdNew) {
+    exit 0
+}
 
 $win32 = @"
 using System;
@@ -260,7 +277,16 @@ while ($true) {
 Set-Content -Path $agentScriptPath -Value $agentCode -Encoding utf8 -Force
 Write-SafeHost "[OK] Skript agenta vytvoren v $agentScriptPath" Green
 
-# 4. Register Windows Scheduled Task
+# 4. Terminate previous instances and Register Windows Scheduled Task
+Write-SafeHost "[*] Ukoncuji pripadne predchozi instance agenta..." Yellow
+schtasks /end /tn "UltarixMonitor" 2>$null | Out-Null
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+    $_.CommandLine -like "*agent.ps1*" -and $_.ProcessId -ne $PID
+} | ForEach-Object {
+    try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+}
+Start-Sleep -Milliseconds 500
+
 Write-SafeHost "[*] Registruji automaticky start agenta v Planovaci uloh..." Yellow
 schtasks /delete /tn "UltarixMonitor" /f 2>$null | Out-Null
 $taskCmd = "powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$agentScriptPath`""
@@ -294,5 +320,9 @@ Write-SafeHost " Agent nyni nepretrzite a tise bezi v pozadi Windows 10 (32-bit)
 Write-SafeHost " Logy a pauzy se automaticky ukladaji na server: $targetShare" White
 Write-SafeHost "======================================================================" Green
 Write-SafeHost "" White
-Write-SafeHost "Stisknete libovolnou klavesu pro zavreni okna..." Yellow
-try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Pause }
+Write-SafeHost " Agent bezi zcela skryte bez oken, bez ikon a bez ruseni uzivatele." White
+Write-SafeHost " Automaticky startuje pri zapnuti pocitace i po restartu." White
+Write-SafeHost "======================================================================" Green
+Write-SafeHost "" White
+Write-SafeHost " Okno se automaticky zavre za 2 sekundy..." Yellow
+Start-Sleep -Seconds 2
