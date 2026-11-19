@@ -162,6 +162,17 @@ $localLogs = "$localData\logs\$comp"
 $remoteLogs = "$ServerShare\$comp"
 $null = New-Item -ItemType Directory -Path $localLogs -Force -ErrorAction SilentlyContinue
 
+# Auto-register this computer in network hosts index
+if (Test-Path $ServerShare -ErrorAction SilentlyContinue) {
+    try {
+        $hf = "$ServerShare\active_hosts.txt"
+        $ex = if (Test-Path $hf) { Get-Content $hf -ErrorAction SilentlyContinue } else { @() }
+        if ($ex -notcontains $comp) {
+            $comp | Out-File -FilePath $hf -Encoding utf8 -Append
+        }
+    } catch {}
+}
+
 function Append-Log($s, $e, $d, $p, $t, $st) {
     if ($d -le 0) { return }
     $date = (Get-Date).ToString("yyyy-MM-dd")

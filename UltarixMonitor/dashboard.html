@@ -532,9 +532,22 @@
                     const empConf = await confRes.json();
                     for (const [k, v] of Object.entries(empConf)) {
                         defaultProfiles[k] = v;
+                        if (!candidatePcs.includes(k)) candidatePcs.push(k);
                         if (!customNames[k] && v.name) {
                             customNames[k] = `${v.name} (${v.role || ""})`;
                         }
+                    }
+                }
+            } catch (e) {}
+
+            // Load dynamically registered hosts from active_hosts.txt
+            try {
+                const hostsRes = await fetch("logs/active_hosts.txt?_=" + Date.now());
+                if (hostsRes.ok) {
+                    const text = await hostsRes.text();
+                    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+                    for (const h of lines) {
+                        if (!candidatePcs.includes(h)) candidatePcs.push(h);
                     }
                 }
             } catch (e) {}
