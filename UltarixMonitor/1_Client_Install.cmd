@@ -30,7 +30,7 @@ exit /b 0
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (32-bit Windows 10 x86)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.4.3 (2026-11)
+# Version : v2.4.4 (2026-11)
 # Target  : All employee workstations (32-bit Windows 10 Pro)
 # Network : \\ulps1\UTIL\UltarixMonitor\logs
 # ==============================================================================
@@ -185,6 +185,112 @@ if (Test-Path $ServerShare -ErrorAction SilentlyContinue) {
     } catch {}
 }
 
+
+function Update-DayJs($date) {
+    try {
+        $csv = "$localLogs\activity_$date.csv"
+        if (-not (Test-Path $csv)) { return }
+        $lines = Get-Content $csv -Encoding utf8 -ErrorAction SilentlyContinue
+        if ($null -eq $lines -or $lines.Count -le 1) { return }
+
+        $appMap = @{}
+        $totSec = 0
+        $idleSec = 0
+
+        for ($i = 1; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            $parts = $line.Split(",")
+            if ($parts.Count -lt 7) { continue }
+            $dur = 0
+            [int]::TryParse($parts[2], [ref]$dur) | Out-Null
+            if ($dur -le 0) { continue }
+            $proc = $parts[5].Trim()
+            $win = ""
+            if ($parts.Count -ge 8) {
+                $winParts = $parts[6..($parts.Count - 2)]
+                $win = ($winParts -join ",") -replace '^"|"$', '' -replace '""', '"'
+                $st = $parts[$parts.Count - 1].Trim()
+            } else {
+                $win = $parts[6].Trim() -replace '^"|"$', '' -replace '""', '"'
+                $st = "ACTIVE"
+            }
+
+            $totSec += $dur
+            if ($st -eq "IDLE" -or $proc -eq "IDLE_PAUSE") {
+                $idleSec += $dur
+            }
+
+            if (-not $appMap.ContainsKey($proc)) {
+                $icon = "📱"; $color = "blue"; $disp = $proc
+                $pLower = $proc.ToLower()
+                if ($pLower -like "*stereo*") { $icon = "🦔"; $color = "orange"; $disp = "$proc (STEREO — Ježek)" }
+                elseif ($pLower -like "*ekonom*") { $icon = "💼"; $color = "blue"; $disp = "$proc (Ekonom.win)" }
+                elseif ($pLower -like "*chrome*") { $icon = "🌐"; $color = "purple"; $disp = "$proc (Google Chrome)" }
+                elseif ($pLower -like "*firefox*") { $icon = "🦊"; $color = "orange"; $disp = "$proc (Mozilla Firefox)" }
+                elseif ($pLower -like "*edge*") { $icon = "🌀"; $color = "blue"; $disp = "$proc (Microsoft Edge)" }
+                elseif ($pLower -like "*excel*") { $icon = "📊"; $color = "green"; $disp = "$proc (Microsoft Excel)" }
+                elseif ($pLower -like "*word*") { $icon = "📝"; $color = "blue"; $disp = "$proc (Microsoft Word)" }
+                elseif ($pLower -like "*idle*") { $icon = "⏸"; $color = "yellow"; $disp = "IDLE_PAUSE (Паузы / AFK)" }
+
+                $appMap[$proc] = @{
+                    name = $disp
+                    icon = $icon
+                    color = $color
+                    durationSec = 0
+                    pages = @{}
+                }
+            }
+
+            $appMap[$proc].durationSec += $dur
+            $wKey = if ($win) { $win } else { "Hlavní okno programu" }
+            if (-not $appMap[$proc].pages.ContainsKey($wKey)) {
+                $appMap[$proc].pages[$wKey] = 0
+            }
+            $appMap[$proc].pages[$wKey] += $dur
+        }
+
+        $appList = @()
+        foreach ($k in $appMap.Keys) {
+            $a = $appMap[$k]
+            $pgList = @()
+            foreach ($w in $a.pages.Keys) {
+                $pgList += @{ title = $w; durationSec = $a.pages[$w] }
+            }
+            $sortedPg = $pgList | Sort-Object -Property durationSec -Descending
+            $appList += @{
+                name = $a.name
+                icon = $a.icon
+                color = $a.color
+                durationSec = $a.durationSec
+                pages = @($sortedPg)
+            }
+        }
+        $sortedApps = @($appList | Sort-Object -Property durationSec -Descending)
+
+        $actSec = [math]::Max(0, $totSec - $idleSec)
+        $obj = @{
+            date = $date
+            computer = $comp
+            totalMonitoredSec = $totSec
+            activeSec = $actSec
+            idleSec = $idleSec
+            apps = $sortedApps
+        }
+
+        $json = $obj | ConvertTo-Json -Depth 5 -Compress
+        $js = "window.updateDaySummary && window.updateDaySummary('$comp', '$date', $json);"
+
+        $js | Set-Content -Path "$localLogs\today.js" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+        $js | Set-Content -Path "$localLogs\activity_$date.js" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+
+        if (Test-Path $remoteLogs -ErrorAction SilentlyContinue) {
+            $js | Set-Content -Path "$remoteLogs\today.js" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+            $js | Set-Content -Path "$remoteLogs\activity_$date.js" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+        }
+    } catch {}
+}
+
 function Append-Log($s, $e, $d, $p, $t, $st) {
     if ($d -le 0) { return }
     $date = (Get-Date).ToString("yyyy-MM-dd")
@@ -206,6 +312,8 @@ function Append-Log($s, $e, $d, $p, $t, $st) {
             $line | Out-File -FilePath $rem -Encoding utf8 -Append
         } catch {}
     }
+
+    Update-DayJs $date
 }
 
 function Write-Pulse($p, $t, $st, $d, $idle) {
@@ -273,6 +381,11 @@ while ($true) {
 
         $lastP = $pName; $lastT = $wTitle; $lastSt = $curSt; $dur += $PollIntervalSec
         Write-Pulse $pName $wTitle $curSt $dur $idleSec
+
+        if ($dur % 15 -eq 0) {
+            $curDate = (Get-Date).ToString("yyyy-MM-dd")
+            Update-DayJs $curDate
+        }
 
     } catch {}
     Start-Sleep -Seconds $PollIntervalSec

@@ -339,6 +339,83 @@
 
         
         // Global callbacks for dynamic script loading (file:// CORS bypass)
+        window.updateDaySummary = function(pc, date, dayData) {
+            if (!dayData) return;
+            if (!storeData[pc]) return;
+            if (!storeData[pc].dates) storeData[pc].dates = {};
+            storeData[pc].dates[date] = dayData;
+            updateDayViewDom(pc, date, dayData);
+        };
+
+        function renderAppsListHtml(dayData) {
+            if (!dayData || !dayData.apps || dayData.apps.length === 0) {
+                return '<div style="color:var(--text-muted); padding:10px 0;">Ожидание сбора активности...</div>';
+            }
+            const tot = Math.max(dayData.totalMonitoredSec, 1);
+            return dayData.apps.map(app => {
+                const appPct = Math.round((app.durationSec / tot) * 100);
+                return `
+                    <div class="app-item">
+                        <div class="app-header" onclick="this.parentElement.classList.toggle('open')">
+                            <div class="app-left">
+                                <div class="app-icon">${app.icon}</div>
+                                <div class="app-name">${app.name}</div>
+                            </div>
+                            <div class="app-time c-${app.color}">${formatTime(app.durationSec)} (${appPct}%)</div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill bg-${app.color}" style="width: ${appPct}%;"></div>
+                            </div>
+                            <div class="chevron" style="margin-left:14px; font-size:14px;">▼</div>
+                        </div>
+                        <div class="app-details">
+                            ${(app.pages || []).map(page => `
+                                <div class="page-row">
+                                    <div class="page-title">${page.title}</div>
+                                    <div class="page-time">${formatTime(page.durationSec)}</div>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function updateDayViewDom(pc, date, dayData) {
+            if (!dayData) return;
+            const totEl = document.getElementById(`kpi-tot-${pc}`);
+            const actEl = document.getElementById(`kpi-act-${pc}`);
+            const actSubEl = document.getElementById(`kpi-act-sub-${pc}`);
+            const idlEl = document.getElementById(`kpi-idl-${pc}`);
+            const idlSubEl = document.getElementById(`kpi-idl-sub-${pc}`);
+            const pauseEl = document.getElementById(`pause-${pc}`);
+            const appsEl = document.getElementById(`apps-${pc}`);
+
+            const pauseMinutes = Math.floor(dayData.idleSec / 60);
+            const tot = Math.max(dayData.totalMonitoredSec, 1);
+            const actPct = Math.round((dayData.activeSec / tot) * 100);
+            const idlPct = Math.round((dayData.idleSec / tot) * 100);
+
+            if (totEl) totEl.textContent = formatTime(dayData.totalMonitoredSec);
+            if (actEl) actEl.textContent = formatTime(dayData.activeSec);
+            if (actSubEl) actSubEl.textContent = `${actPct}% от общего дня`;
+            if (idlEl) idlEl.textContent = `${pauseMinutes} минут`;
+            if (idlSubEl) idlSubEl.textContent = `${formatTime(dayData.idleSec)} (${idlPct}%)`;
+            if (pauseEl) pauseEl.textContent = `${pauseMinutes} мин`;
+            if (appsEl) appsEl.innerHTML = renderAppsListHtml(dayData);
+        }
+
+        window.changeDateForPc = function(pc, dateVal) {
+            const oldD = document.getElementById(`script-day-${pc}`);
+            if (oldD) oldD.remove();
+            const sd = document.createElement("script");
+            sd.id = `script-day-${pc}`;
+            sd.src = `logs/${pc}/activity_${dateVal}.js?_=` + Date.now();
+            sd.onerror = function() {
+                updateDayViewDom(pc, dateVal, { totalMonitoredSec: 0, activeSec: 0, idleSec: 0, apps: [] });
+            };
+            document.head.appendChild(sd);
+        };
+
         window.updateHostStatus = function(pc, data) {
             const dateStr = new Date().toISOString().slice(0, 10);
             handleHostData(pc, data, dateStr);
@@ -454,7 +531,7 @@
                     <div class="pc-body">
                         <div class="date-bar">
                             <span style="font-size:13px; color:var(--text-muted);">Выбор дня:</span>
-                            <input type="date" class="date-input" value="${selectedDate}" max="2026-11-19">
+                            <input type="date" class="date-input" value="${selectedDate}" onchange="changeDateForPc('${pcName}', this.value)">
                             <span class="date-pill active">Сегодня</span>
                             <span class="date-pill">Вчера</span>
                             <span class="date-pill">7 дней</span>
@@ -628,7 +705,7 @@
 
             // Process each PC: support both native fetch() and dynamic <script> (file:// CORS bypass)
             for (const pc of candidatePcs) {
-                // 1. Try script tag injection first (100% works on file:// protocol without CORS blocks)
+                // 1. Poll pulse / current status
                 try {
                     const oldS = document.getElementById(`script-poll-${pc}`);
                     if (oldS) oldS.remove();
@@ -636,13 +713,22 @@
                     s.id = `script-poll-${pc}`;
                     s.src = `logs/${pc}/current_status.js?_=` + Date.now();
                     s.onerror = function() {
-                        // 2. Fallback to fetch if script tag is not available yet
                         fetch(`logs/${pc}/current_status.json?_=` + Date.now())
                             .then(r => r.ok ? r.json() : null)
                             .then(data => { if (data) handleHostData(pc, data, dateStr); })
                             .catch(() => {});
                     };
                     document.head.appendChild(s);
+                } catch (e) {}
+
+                // 2. Poll today's aggregated activity and apps
+                try {
+                    const oldT = document.getElementById(`script-today-${pc}`);
+                    if (oldT) oldT.remove();
+                    const st = document.createElement("script");
+                    st.id = `script-today-${pc}`;
+                    st.src = `logs/${pc}/today.js?_=` + Date.now();
+                    document.head.appendChild(st);
                 } catch (e) {}
             }
 
