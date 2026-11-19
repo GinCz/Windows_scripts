@@ -6,6 +6,31 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v056] - 2026-11-19
+### Hardcore Autostart, Scheduled Tasks & Windows License Purge (Lenovo, Office, Updaters & License Checks)
+- **Hardcore Autostart Purge (`chk_srv_startup_apps_clean`)**:
+  - Implemented deep sweep across `HKLM\...\Run`, `HKCU\...\Run`, `WOW6432Node`, all user hives in `HKEY_USERS`, and all Startup folders (`ProgramData` and user profiles).
+  - Automatically purges autostart entries for Lenovo Vantage, Microsoft Office (OfficeSyncProcess, OneNote, Teams, Lync, OneDrive), Driver Booster, IObit, CCleaner, Adobe, Discord, Spotify, Steam, Chrome, Edge, and Opera so all programs launch only when manually invoked by the user.
+  - **Strict Whitelist Safeguard**: Protected `GIN-*`, `AntiGravity`, and `RustDesk` remote access infrastructure from ever being removed.
+- **Deep Purge of Microsoft Office Tasks & ClickToRun Monitor (`chk_srv_office_tasks`)**:
+  - Recursively unregisters and deletes all scheduled tasks under `\Microsoft\Office\` (`Office Automatic Updates 2.0`, `Office ClickToRun Service Monitor`, `Office Feature Updates`, `Office Feature Updates Logon`, `OfficeTelemetryAgentFallBack`, `OfficeBackgroundTaskHandler*`).
+  - Sets `ClickToRunSvc` service startup type to `Demand` (Manual), allowing Word and Excel to launch manually on demand while eliminating persistent background polling and telemetry.
+  - Cleans remaining Office autostart Run keys (`OfficeSyncProcess`, `OneNoteM`, etc.).
+- **Windows License Validation & Activation Tasks Purge (`chk_wu_license_checks`)**:
+  - Unregisters and deletes all scheduled license validation tasks across `\Microsoft\Windows\SoftwareProtectionPlatform\` (`SvcRestartTask`, `SvcRestartTaskLogon`, `SvcRestartTaskNetwork`, `LicenseValidation`), `\Microsoft\Windows\Windows Activation Technologies\` (`ValidationTask`, `ValidationTaskDeadline`), `\Microsoft\Windows\Subscription\` (`EnableLicenseAcquisition`, `LicenseAcquisition`), and `\Microsoft\Windows\Clip\` (`License Validation`).
+  - Sets Software Protection service (`sppsvc`) to `Demand` (Manual).
+- **Deep Recursive Lenovo Tasks & Bloat Purge (`chk_srv_oem_lenovo`)**:
+  - Enhanced to query and delete all tasks across all nested Lenovo folders (`\Lenovo\BatteryGauge`, `\Lenovo\ImController\Plugins`, `\Lenovo\ImController\TimeBasedEvents` GUID tasks, `\Lenovo\Power Manager`, `\Lenovo\Vantage`) and remove empty task directories.
+  - Terminates Lenovo background processes and stops/disables Lenovo services (`ImControllerService`, `LenovoVantageService`, `LnvvAutoUpdateSvc`, `LenovoDeviceMetricsService`).
+- **Root Updater & Driver Tasks Purge (`chk_browser_updaters`)**:
+  - Added targeted eradication of root-level scheduled updater tasks: `Driver Booster*`, `IObit*`, `Intel PTT EK Recertification`, `MicrosoftEdgeUpdate*`, `GoogleUpdate*`, `BraveUpdate*`, `Adobe*`, and `CCleaner*`.
+- **Windows Update & Update Orchestrator Scanner Deletion (`chk_wu_disable_auto_updates`)**:
+  - Deeply unregisters and deletes scheduled scanner tasks under `\Microsoft\Windows\WindowsUpdate\` (`Refresh Group Policy Cache`, `Scheduled Start`, `Automatic App Update`, `sih`, `sihboot`) and `\Microsoft\Windows\UpdateOrchestrator\` (`Schedule Scan`, `Schedule Scan Static Task`, `USO_UxBroker`, etc.).
+- **Self-Healing & Environment Cleanup Expansion**:
+  - Injected immediate autostart and rogue task scheduler cleanup into startup self-healing routine for zero-click background protection.
+- **Catalog & Delivery Expansion**:
+  - Expanded total active optimization modules to **119**; delivered `GIN-Win-Optimizer_v056.cmd` to Vladimir's Desktop in MEGA (`D:\MEGA\DOCS\desktop\`); retained strictly `v056` and `v055`.
+
 ## [v055] - 2026-11-19
 ### Universal Folder View Default: List Mode & Sort by Type Fix (Canonical System.ItemTypeText Property)
 - **Canonical Property Enforcement for File Type Sorting**: Fixed critical sorting issue where Windows Explorer fell back to sorting files alphabetically by Name (`System.ItemNameDisplay`) because `SortByList` previously referenced `System.ItemType` (which is raw extension/ProgID and ignored by the shell) instead of the canonical display property `System.ItemTypeText`.

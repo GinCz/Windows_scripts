@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-11-19 — GIN-Win-Optimizer v056 Release: Hardcore Autostart, Scheduled Tasks & Windows License Purge
+- **Task**: Deep purge of autostart programs and task scheduler items after installed software (Lenovo Vantage, Microsoft Office, Driver Booster, Intel PTT EK, browser updaters, Windows Update scanner tasks, and Windows license verification tasks), ensuring all user applications launch only when manually invoked.
+- **User Feedback & Requirements**:
+  1. Clean autostart and scheduled tasks aggressively after installing vendor bloatware like Lenovo Vantage or Microsoft Office.
+  2. Purge Driver Booster, Intel PTT EK, Edge/Google updaters from Task Scheduler root.
+  3. Purge Windows Update background tasks (`Scheduled Start`, `Refresh Group Policy Cache`) and license checks (`SoftwareProtectionPlatform`, `Windows Activation Technologies`, `Subscription`).
+  4. Ensure all programs run only on manual user launch.
+  5. Strictly safeguard Vladimir's tools: `GIN-*`, `GIN-Agent*`, and `RustDesk` remote connection.
+- **Architectural Implementation**:
+  1. **New Module `chk_srv_startup_apps_clean`**: Audits and purges third-party programs from Run/RunOnce keys (`HKLM`, `HKCU`, `WOW6432Node`, `HKEY_USERS`) and Startup folders (`ProgramData` and user profiles). Whitelists `GIN*`, `AntiGravity`, `RustDesk`, and essential system components.
+  2. **New Module `chk_srv_office_tasks`**: Recursively purges all scheduled tasks under `\Microsoft\Office\`, configures `ClickToRunSvc` to `Demand` (manual on-demand start with zero persistent background polling), and wipes Office autostart Run keys.
+  3. **New Module `chk_wu_license_checks`**: Disables and unregisters scheduled license verification tasks across `\Microsoft\Windows\SoftwareProtectionPlatform\`, `\Microsoft\Windows\Windows Activation Technologies\`, `\Microsoft\Windows\Subscription\`, and `\Microsoft\Windows\Clip\`. Sets `sppsvc` to Demand.
+  4. **Deep `chk_srv_oem_lenovo` Upgrade**: Recursively queries and unregisters all tasks across nested Lenovo directories (`\Lenovo\BatteryGauge`, `\Lenovo\ImController\Plugins`, `\Lenovo\ImController\TimeBasedEvents` GUID tasks, `\Lenovo\Power Manager`) and deletes empty task folders.
+  5. **Deep `chk_browser_updaters` Upgrade**: Eradicates root updater tasks (Driver Booster, Intel PTT EK, Edge Update, Google Update, Adobe, CCleaner).
+  6. **Deep `chk_wu_disable_auto_updates` Upgrade**: Unregisters and deletes all scheduled background update scanner tasks (`WindowsUpdate` and `UpdateOrchestrator`).
+  7. **Self-Healing Routine**: Added autonomous immediate task scheduler purge during startup self-healing.
+  8. **Catalog Expansion**: Total active optimization modules increased to **119**.
+  9. **Retention Policy**: Retained strictly 2 latest versions (`v056` and `v055`), purged `v054`.
+- **Verification**: Verified via `validate_release.py`: 0 BOM, 100% CRLF line endings, 0 PowerShell syntax errors.
+
 ## 2026-11-19 — GIN-Win-Optimizer v055 Release: Fix Sort by Type via Canonical System.ItemTypeText
 - **Task**: Fix sorting inside folders to sort by Type ("по типу") instead of Name ("по имени") while keeping default view as List ("список").
 - **Root Cause Analysis**:

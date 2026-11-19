@@ -1,10 +1,10 @@
 {
     "project": "GIN-Win-Optimizer",
-    "current_version": "v055",
+    "current_version": "v056",
     "updated_at": "2026-11-19",
     "active_versions": [
-        "GIN-Win-Optimizer_v055.cmd",
-        "GIN-Win-Optimizer_v054.cmd"
+        "GIN-Win-Optimizer_v056.cmd",
+        "GIN-Win-Optimizer_v055.cmd"
     ],
     "sync_targets": {
         "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,11 @@
         "desktop_copy": true
     },
     "changelog": [
+        {
+            "version": "v056",
+            "date": "2026-11-19",
+            "changes": "Hardcore Autostart, Scheduled Tasks & Windows License Purge: 1) Added chk_wu_license_checks to grpWinUpdate to disable and unregister all license validation and activation tasks (SoftwareProtectionPlatform SvcRestartTask/LicenseValidation, Windows Activation Technologies ValidationTask, Subscription EnableLicenseAcquisition, Clip License Validation) and set sppsvc to manual demand; 2) Added chk_srv_office_tasks to grpApps to recursively purge all Microsoft Office scheduled tasks (Office Automatic Updates 2.0, ClickToRun Service Monitor, Feature Updates/Logon, Telemetry), configure ClickToRunSvc to Demand (manual on-demand execution only with zero background polling), and wipe Office autostart Run keys; 3) Added chk_srv_startup_apps_clean to grpServices to audit and purge third-party programs from Run/RunOnce keys and Startup folders (Lenovo, Office, Driver Booster, CCleaner, Adobe, Discord, Spotify, Steam, Chrome, Edge) while strictly preserving GIN-Agent and RustDesk remote access; 4) Enhanced chk_srv_oem_lenovo with deep recursive schtasks query and unregistration across all nested Lenovo folders (\\Lenovo\\BatteryGauge, \\Lenovo\\ImController\\Plugins, \\Lenovo\\ImController\\TimeBasedEvents GUID tasks, \\Lenovo\\Power Manager) and deletion of empty task directories; 5) Enhanced chk_browser_updaters to eliminate root updater tasks (Driver Booster, Intel PTT EK Recertification, MicrosoftEdgeUpdate, GoogleUpdate, Adobe); 6) Enhanced chk_wu_disable_auto_updates to unregister and delete all WindowsUpdate and UpdateOrchestrator scanner tasks; 7) Total optimization modules expanded to 119; delivered GIN-Win-Optimizer_v056.cmd to D:\\MEGA\\DOCS\\desktop."
+        },
         {
             "version": "v055",
             "date": "2026-11-19",
