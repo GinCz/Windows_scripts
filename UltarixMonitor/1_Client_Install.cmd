@@ -24,8 +24,10 @@ if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" set "PS_E
 
 "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); try { & ([ScriptBlock]::Create($raw)) } catch { Write-Host ('`n[X] CHYBA INSTALACE: ' + $_.Exception.ToString()) -ForegroundColor Red; Write-Host '`nStisknete libovolnou klavesu pro ukonceni...' -ForegroundColor Yellow; $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') }"
 
-echo.
-pause
+if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
+    echo.
+    pause
+)
 exit /b
 #>
 # ==============================================================================
@@ -258,5 +260,11 @@ Write-Host " Agent nyni nepretrzite a tise bezi v pozadi Windows 10 (32-bit)." -
 Write-Host " Logy a pauzy se automaticky ukladaji na server: $targetShare" -ForegroundColor White
 Write-Host "================================================================================" -ForegroundColor Green
 Write-Host ""
+
+if ($args -contains "-Silent" -or $env:SILENT -eq "1" -or -not [Environment]::UserInteractive) {
+    Start-Sleep -Seconds 2
+    exit 0
+}
+
 Write-Host "Stisknete libovolnou klavesu pro zavreni..." -ForegroundColor Yellow
-$null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+try { $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown') } catch { Start-Sleep -Seconds 3 }

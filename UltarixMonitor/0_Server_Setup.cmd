@@ -75,5 +75,8 @@ echo  \\ulps1\UTIL\UltarixMonitor\logs
 echo ================================================================================
 echo.
 popd 2>nul
-pause
+if /i not "%~1"=="-silent" if /i not "%~1"=="/silent" (
+    echo.
+    pause
+)
 exit /b 0

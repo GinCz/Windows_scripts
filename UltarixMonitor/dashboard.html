@@ -42,13 +42,15 @@
         .pc-card:hover { border-color: #475569; }
         .pc-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; background: var(--bg-card); transition: background 0.2s; }
         .pc-header:hover { background: var(--bg-card-hover); }
-        .pc-title-box { display: flex; align-items: center; gap: 14px; }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .pc-title-box { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
         .dot-online { background: var(--accent-green); box-shadow: 0 0 10px rgba(74, 222, 128, 0.5); }
         .dot-idle { background: var(--accent-yellow); box-shadow: 0 0 10px rgba(250, 204, 21, 0.5); }
         .dot-offline { background: #64748b; }
         .pc-name { font-size: 17px; font-weight: 600; color: var(--text-main); }
-        .pc-user { font-size: 13px; color: var(--text-muted); margin-left: 6px; }
+        .pc-user { font-size: 13px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+        .edit-name-btn { background: none; border: none; cursor: pointer; color: #64748b; font-size: 13px; padding: 2px 4px; border-radius: 4px; }
+        .edit-name-btn:hover { color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
         .pc-current-app { font-size: 13px; color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
         .chevron { transition: transform 0.3s; color: var(--text-muted); font-size: 18px; }
         .pc-card.open .chevron { transform: rotate(180deg); }
@@ -137,11 +139,22 @@
     </div>
 
     <script>
+        // Track open state for each computer so user's manual expand/collapse is never overwritten
+        const pcOpenState = {
+            "U-09": false,
+            "PC-09": false,
+            "PC-02": false
+        };
+
+        // Saved custom names for employees in localStorage
+        const customNames = JSON.parse(localStorage.getItem("ultarix_custom_names") || "{}");
+
         const storeData = {
-            "PC-09": {
-                user: "Сотрудник (Бухгалтерия / Склад)",
+            "U-09": {
+                defaultName: "Татьяна",
+                defaultRole: "Бухгалтерия / Склад (Ёжик)",
                 status: "ACTIVE",
-                currentApp: "stereo.exe — STEREO (Ježek software) [Deník / Faktury]",
+                currentApp: "stereo.exe — STEREO (Ježek software) [Deník]",
                 idleSecNow: 5,
                 dates: {
                     "2026-11-19": {
@@ -206,7 +219,8 @@
                 }
             },
             "PC-02": {
-                user: "Ульяна (Главный бухгалтер / Директор)",
+                defaultName: "Ульяна",
+                defaultRole: "Главный бухгалтер / Директор",
                 status: "ACTIVE",
                 currentApp: "chrome.exe — Дашборд контроля Ultarix",
                 idleSecNow: 0,
@@ -258,6 +272,34 @@
             return `${m} мин`;
         }
 
+        function editEmployeeName(pcKey, event) {
+            event.stopPropagation();
+            const current = customNames[pcKey] || (storeData[pcKey] ? `${storeData[pcKey].defaultName} (${storeData[pcKey].defaultRole})` : "");
+            const newName = prompt(`Введите имя сотрудника и должность для ${pcKey}:`, current);
+            if (newName !== null) {
+                customNames[pcKey] = newName.trim();
+                localStorage.setItem("ultarix_custom_names", JSON.stringify(customNames));
+                updateCardHeader(pcKey);
+            }
+        }
+
+        function getDisplayName(pcKey) {
+            if (customNames[pcKey]) return customNames[pcKey];
+            if (storeData[pcKey]) return `${storeData[pcKey].defaultName} (${storeData[pcKey].defaultRole})`;
+            return pcKey;
+        }
+
+        function togglePcCard(pcName, cardEl) {
+            const isCurrentlyOpen = cardEl.classList.contains("open");
+            if (isCurrentlyOpen) {
+                cardEl.classList.remove("open");
+                pcOpenState[pcName] = false;
+            } else {
+                cardEl.classList.add("open");
+                pcOpenState[pcName] = true;
+            }
+        }
+
         function renderDashboard() {
             const container = document.getElementById("pcContainer");
             container.innerHTML = "";
@@ -265,7 +307,12 @@
             for (const [pcName, pcInfo] of Object.entries(storeData)) {
                 const card = document.createElement("div");
                 card.className = "pc-card";
-                if (pcName === "PC-09") card.classList.add("open");
+                card.id = `card-${pcName}`;
+
+                // Restore open state
+                if (pcOpenState[pcName] === true) {
+                    card.classList.add("open");
+                }
 
                 const dotClass = pcInfo.status === "ACTIVE" ? "dot-online" : (pcInfo.status === "IDLE" ? "dot-idle" : "dot-offline");
                 const statusText = pcInfo.status === "ACTIVE" ? "В сети (Работает)" : (pcInfo.status === "IDLE" ? `Пауза ${pcInfo.idleSecNow} сек` : "Офлайн");
@@ -275,15 +322,18 @@
                 const pauseMinutes = Math.floor(dayData.idleSec / 60);
 
                 card.innerHTML = `
-                    <div class="pc-header" onclick="this.parentElement.classList.toggle('open')">
+                    <div class="pc-header" onclick="togglePcCard('${pcName}', this.parentElement)">
                         <div class="pc-title-box">
-                            <span class="status-dot ${dotClass}" title="${statusText}"></span>
+                            <span class="status-dot ${dotClass}" id="dot-${pcName}" title="${statusText}"></span>
                             <span class="pc-name">${pcName}</span>
-                            <span class="pc-user">(${pcInfo.user})</span>
-                            <span class="pc-current-app">Сейчас: ${pcInfo.currentApp}</span>
+                            <span class="pc-user" id="user-${pcName}">
+                                <span>— ${getDisplayName(pcName)}</span>
+                                <button class="edit-name-btn" title="Переименовать сотрудника" onclick="editEmployeeName('${pcName}', event)">✏️</button>
+                            </span>
+                            <span class="pc-current-app" id="app-${pcName}">Сейчас: ${pcInfo.currentApp}</span>
                         </div>
                         <div style="display:flex; align-items:center; gap: 16px;">
-                            <span style="font-size:13px; color:var(--text-muted);">Пауза сегодня: <strong class="c-yellow">${pauseMinutes} мин</strong></span>
+                            <span style="font-size:13px; color:var(--text-muted);">Пауза сегодня: <strong class="c-yellow" id="pause-${pcName}">${pauseMinutes} мин</strong></span>
                             <span class="chevron">▼</span>
                         </div>
                     </div>
@@ -353,21 +403,47 @@
             }
         }
 
+        function updateCardHeader(pcName) {
+            const userEl = document.getElementById(`user-${pcName}`);
+            if (userEl) {
+                userEl.innerHTML = `
+                    <span>— ${getDisplayName(pcName)}</span>
+                    <button class="edit-name-btn" title="Переименовать сотрудника" onclick="editEmployeeName('${pcName}', event)">✏️</button>
+                `;
+            }
+        }
+
+        // Targeted in-place DOM update without wiping DOM or reopening accordions
         async function checkLiveStatus() {
             try {
-                const res = await fetch("logs/PC-09/current_status.json?_=" + Date.now());
+                // Try U-09
+                const res = await fetch("logs/U-09/current_status.json?_=" + Date.now());
                 if (res.ok) {
                     const data = await res.json();
-                    if (storeData["PC-09"]) {
-                        storeData["PC-09"].currentApp = `${data.process} — ${data.window}`;
-                        storeData["PC-09"].status = data.state;
-                        storeData["PC-09"].idleSecNow = data.idle_sec;
-                        renderDashboard();
+                    const appEl = document.getElementById("app-U-09");
+                    const dotEl = document.getElementById("dot-U-09");
+                    if (appEl) {
+                        appEl.textContent = `Сейчас: ${data.process} — ${data.window}`;
+                    }
+                    if (dotEl) {
+                        dotEl.className = "status-dot " + (data.state === "ACTIVE" ? "dot-online" : "dot-idle");
                     }
                 }
-            } catch (e) {
-                renderDashboard();
-            }
+            } catch (e) {}
+
+            try {
+                // Also check employees.json if present
+                const confRes = await fetch("employees.json?_=" + Date.now());
+                if (confRes.ok) {
+                    const empConf = await confRes.json();
+                    for (const [k, v] of Object.entries(empConf)) {
+                        if (!customNames[k] && v.name) {
+                            customNames[k] = `${v.name} (${v.role || ""})`;
+                            updateCardHeader(k);
+                        }
+                    }
+                }
+            } catch (e) {}
         }
 
         function loadFromFolder(event) {
@@ -378,6 +454,7 @@
         window.addEventListener("DOMContentLoaded", () => {
             renderDashboard();
             checkLiveStatus();
+            // Polling only updates badges and text in-place, NEVER re-renders DOM!
             setInterval(checkLiveStatus, 5000);
         });
     </script>
