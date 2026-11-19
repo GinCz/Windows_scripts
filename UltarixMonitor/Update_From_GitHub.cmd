@@ -32,7 +32,7 @@ exit /b
 # ==============================================================================
 # ULTARIX s.r.o. - 1-Click Update From GitHub (Hybrid Polyglot Engine)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.3.1 (2026-11)
+# Version : v2.3.2 (2026-11)
 # ==============================================================================
 
 $target = "C:\UTIL\UltarixMonitor"
@@ -60,18 +60,12 @@ $baseUri = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Ultarix
 $files = @("dashboard.html", "0_Server_Setup.cmd", "1_Client_Install.cmd", "2_Ulyana_Dashboard.cmd", "employees.json", "README.md", "Update_From_GitHub.cmd")
 
 foreach ($f in $files) {
-    $url = "$baseUri/$f?v=" + [DateTime]::UtcNow.Ticks
+    $url = "$baseUri/$f"
     $dest = "$target\$f"
     try {
-        $wc = New-Object System.Net.WebClient
-        $wc.Headers.Add("User-Agent", "Mozilla/5.0")
-        $bytes = $wc.DownloadData($url)
-        if ($bytes.Length -gt 100) {
-            [System.IO.File]::WriteAllBytes($dest, $bytes)
-            Write-Host ("    [OK] {0,-25} : Stazeno ({1} B)" -f $f, $bytes.Length) -ForegroundColor Green
-        } else {
-            Write-Host ("    [-] {0,-25} : Soubor je prilis maly" -f $f) -ForegroundColor Yellow
-        }
+        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+        $len = (Get-Item $dest).Length
+        Write-Host ("    [OK] {0,-25} : Aktualizovano ({1} B)" -f $f, $len) -ForegroundColor Green
     } catch {
         Write-Host ("    [!] {0,-25} : Chyba stahovani: {1}" -f $f, $_.Exception.Message) -ForegroundColor Red
     }
