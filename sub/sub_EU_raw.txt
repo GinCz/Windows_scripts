@@ -1,1 +1,1 @@
-vless://fd90e601-a56c-42b8-aab7-aa02d26fcb04@84.32.101.89:443?security=reality&encryption=none&pbk=N4UEx-wOBPyy2jxONWocg2tOXSyRIVjfYbZaAJT61QE&sni=app.streamru11.net&sid=984505d2&fp=firefox&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%B3%F0%9F%87%B1%20GIN-NL-01
+vless://88a209b0-5dd9-493f-9cae-ace820544a24@62.60.232.250:8443?security=reality&encryption=none&pbk=tm1f7W3RTgSx1F6NsoE32TborUxVe1udZQr4LhDAIio&sni=77.88.8.8&sid=c9927d0548a2fcd1&fp=firefox&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%AD%F0%9F%87%B0%20GIN-HK-01
