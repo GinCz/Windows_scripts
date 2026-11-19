@@ -173,8 +173,8 @@
             "ULTARIX-07": {
                 defaultName: "Галина",
                 defaultRole: "Бухгалтерия 07",
-                status: "OFFLINE",
-                currentApp: "Ожидание первого отклика от агента...",
+                status: "ACTIVE",
+                currentApp: "В сети — идет опрос активности...",
                 idleSecNow: 0,
                 dates: {
                     "2026-11-19": {
@@ -334,6 +334,78 @@
             } else {
                 cardEl.classList.add("open");
                 pcOpenState[pcName] = true;
+            }
+        }
+
+        
+        // Global callbacks for dynamic script loading (file:// CORS bypass)
+        window.updateHostStatus = function(pc, data) {
+            const dateStr = new Date().toISOString().slice(0, 10);
+            handleHostData(pc, data, dateStr);
+        };
+
+        window.updateActiveHosts = function(hosts) {
+            if (Array.isArray(hosts)) {
+                for (const h of hosts) {
+                    if (!candidatePcs.includes(h)) {
+                        candidatePcs.push(h);
+                        if (!storeData[h]) {
+                            const prof = defaultProfiles[h] || { name: h, role: "Рабочая станция", icon: "💻" };
+                            storeData[h] = {
+                                defaultName: prof.name,
+                                defaultRole: prof.role,
+                                status: "ACTIVE",
+                                currentApp: "В сети — идет опрос активности...",
+                                idleSecNow: 0,
+                                dates: {}
+                            };
+                            renderDashboard();
+                        }
+                    }
+                }
+            }
+        };
+
+        function handleHostData(pc, data, dateStr) {
+            if (!data) return;
+            const now = Date.now();
+            let isOnline = true;
+            if (data.timestamp) {
+                const ts = new Date(data.timestamp.replace(" ", "T")).getTime();
+                if (!isNaN(ts) && (now - ts) > 180000) {
+                    isOnline = false;
+                }
+            }
+
+            const effectiveState = isOnline ? (data.state || "ACTIVE") : "OFFLINE";
+            const appText = isOnline 
+                ? (data.process ? `${data.process} — ${data.window || ""}` : "В сети")
+                : "Компьютер выключен / нет связи";
+
+            if (!storeData[pc]) {
+                const prof = defaultProfiles[pc] || { name: pc, role: "Рабочая станция", icon: "💻" };
+                storeData[pc] = {
+                    defaultName: prof.name,
+                    defaultRole: prof.role,
+                    status: effectiveState,
+                    currentApp: appText,
+                    idleSecNow: data.idle_sec || 0,
+                    dates: {}
+                };
+                renderDashboard();
+            } else {
+                storeData[pc].status = effectiveState;
+                storeData[pc].currentApp = appText;
+                storeData[pc].idleSecNow = data.idle_sec || 0;
+            }
+
+            // Update in-place elements if rendered
+            const appEl = document.getElementById(`app-${pc}`);
+            const dotEl = document.getElementById(`dot-${pc}`);
+            if (appEl) appEl.textContent = `Сейчас: ${storeData[pc].currentApp}`;
+            if (dotEl) {
+                dotEl.className = "status-dot " + (effectiveState === "ACTIVE" ? "dot-online" : (effectiveState === "IDLE" ? "dot-idle" : "dot-offline"));
+                dotEl.title = effectiveState === "ACTIVE" ? "В сети (Работает)" : (effectiveState === "IDLE" ? `Пауза ${data.idle_sec || 0} сек` : "Офлайн");
             }
         }
 
@@ -554,49 +626,23 @@
 
             const dateStr = new Date().toISOString().slice(0, 10);
 
+            // Process each PC: support both native fetch() and dynamic <script> (file:// CORS bypass)
             for (const pc of candidatePcs) {
+                // 1. Try script tag injection first (100% works on file:// protocol without CORS blocks)
                 try {
-                    const res = await fetch(`logs/${pc}/current_status.json?_=` + Date.now());
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (!storeData[pc]) {
-                            const prof = defaultProfiles[pc] || { name: pc, role: "Рабочая станция", icon: "💻" };
-                            storeData[pc] = {
-                                defaultName: prof.name,
-                                defaultRole: prof.role,
-                                status: data.state || "ACTIVE",
-                                currentApp: `${data.process} — ${data.window}`,
-                                idleSecNow: data.idle_sec || 0,
-                                dates: {}
-                            };
-                            newlyDiscovered = true;
-                        } else {
-                            storeData[pc].status = data.state || "ACTIVE";
-                            storeData[pc].currentApp = `${data.process} — ${data.window}`;
-                            storeData[pc].idleSecNow = data.idle_sec || 0;
-                        }
-
-                        // Try loading today's CSV activity
-                        try {
-                            const csvRes = await fetch(`logs/${pc}/activity_${dateStr}.csv?_=` + Date.now());
-                            if (csvRes.ok) {
-                                const csvText = await csvRes.text();
-                                const parsed = parseActivityCsv(csvText);
-                                if (parsed) {
-                                    storeData[pc].dates[dateStr] = parsed;
-                                }
-                            }
-                        } catch (e) {}
-
-                        // Update in-place elements if rendered
-                        const appEl = document.getElementById(`app-${pc}`);
-                        const dotEl = document.getElementById(`dot-${pc}`);
-                        if (appEl) appEl.textContent = `Сейчас: ${storeData[pc].currentApp}`;
-                        if (dotEl) {
-                            dotEl.className = "status-dot " + (data.state === "ACTIVE" ? "dot-online" : "dot-idle");
-                            dotEl.title = data.state === "ACTIVE" ? "В сети (Работает)" : `Пауза ${data.idle_sec || 0} сек`;
-                        }
-                    }
+                    const oldS = document.getElementById(`script-poll-${pc}`);
+                    if (oldS) oldS.remove();
+                    const s = document.createElement("script");
+                    s.id = `script-poll-${pc}`;
+                    s.src = `logs/${pc}/current_status.js?_=` + Date.now();
+                    s.onerror = function() {
+                        // 2. Fallback to fetch if script tag is not available yet
+                        fetch(`logs/${pc}/current_status.json?_=` + Date.now())
+                            .then(r => r.ok ? r.json() : null)
+                            .then(data => { if (data) handleHostData(pc, data, dateStr); })
+                            .catch(() => {});
+                    };
+                    document.head.appendChild(s);
                 } catch (e) {}
             }
 

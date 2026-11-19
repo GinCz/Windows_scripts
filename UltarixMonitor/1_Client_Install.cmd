@@ -30,7 +30,7 @@ exit /b 0
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (32-bit Windows 10 x86)
 # Author  : VladiMIR + Antigravity AI
-# Version : v2.4.2 (2026-11)
+# Version : v2.4.3 (2026-11)
 # Target  : All employee workstations (32-bit Windows 10 Pro)
 # Network : \\ulps1\UTIL\UltarixMonitor\logs
 # ==============================================================================
@@ -125,13 +125,8 @@ Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
     try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
 }
 
-# Single-instance Mutex guard
-$mutexName = "Global\UltarixMonitorAgentMutex"
-$createdNew = $false
-$script:agentMutex = New-Object System.Threading.Mutex($true, $mutexName, [ref]$createdNew)
-if (-not $createdNew) {
-    exit 0
-}
+# Ensure clean single process execution
+# (Process check above already terminated previous instances safely)
 
 $win32 = @"
 using System;
@@ -214,15 +209,25 @@ function Append-Log($s, $e, $d, $p, $t, $st) {
 }
 
 function Write-Pulse($p, $t, $st, $d, $idle) {
+    $now = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
     $hb = [PSCustomObject]@{
-        timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
+        timestamp = $now
         computer = $comp; user = $user; process = $p; window = $t
         state = $st; duration_sec = $d; idle_sec = $idle
     }
     $j = $hb | ConvertTo-Json -Compress
+    $js = "window.updateHostStatus && window.updateHostStatus('$comp', $j);"
+
+    # Write both JSON and JS locally
     $j | Set-Content -Path "$localData\current_status.json" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+    $js | Set-Content -Path "$localData\current_status.js" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+
+    # Write both JSON and JS to remote server share (for browser file:// CORS bypass)
     if (Test-Path $remoteLogs -ErrorAction SilentlyContinue) {
-        try { $j | Set-Content -Path "$remoteLogs\current_status.json" -Encoding utf8 -Force -ErrorAction SilentlyContinue } catch {}
+        try {
+            $j | Set-Content -Path "$remoteLogs\current_status.json" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+            $js | Set-Content -Path "$remoteLogs\current_status.js" -Encoding utf8 -Force -ErrorAction SilentlyContinue
+        } catch {}
     }
 }
 
