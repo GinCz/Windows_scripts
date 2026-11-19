@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-11-19 — GIN-Win-Optimizer v053 Release: Default Folder View to List & Sort by Type
+- **Task**: Implement universal folder view default as List ("Список") and sorted by Type ("Typ") across all folders, "This PC", local drives, and network shares (e.g. `\\ULPS1\util`) as requested by Vladimir.
+- **Root Cause & Architecture**: `chk_ui_folder_view_list_sort_type` was already present in UI localization and checkboxes, but was missing an optimization execution action in `engine.ps1`. Furthermore, Windows Explorer caches per-folder view modes in `Bags` and `BagMRU`, requiring a synchronized purge during Explorer shutdown and deep registration across `FolderTypes\TopViews`, `AllFolders\Shell`, and root Bags (Slot 1).
+- **Execution & Changes**:
+  1. Implemented global `Apply-FolderViewListSortType` enforcing `LogicalViewMode=4`, `Mode=3`, `IconSize=16`, `GroupView=0`, and `SortByList="prop:System.ItemType;System.ItemNameDisplay;"`.
+  2. Applied across HKCU, all interactive user profiles in `HKEY_USERS` (`S-1-5-21-*`), and `C:\Users\Default\NTUSER.DAT`.
+  3. Purged stale per-folder caches in `BagMRU`, `Bags`, and `Streams\Defaults`.
+  4. Embedded immediate registry injection into CMD launcher header.
+  5. Integrated into pre-restart, mid-restart, and post-restart phases of Explorer shell restart.
+  6. Registered persistent logon hook `GIN-FolderViewListSortType` in Run keys.
+  7. Retained strictly 2 latest versions (`v053` and `v052`), removed `v051`.
+  8. Synced 100% with public repo `Windows_scripts` and deployed to MEGA cloud.
+- **Verification**: Verified via `validate_release.py`: 0 BOM, 100% CRLF line endings, 0 PowerShell syntax/bracket errors.
+
 ## 2026-11-19 — Release v052 (Taskbar Buttons Never Combine & No Grouping Universal Enforcement)
 - **Strict Version Bump (Directive #14 / Rule #15 Compliance)**: Bumped version from v051 to v052 across `version.json`, `engine.ps1`, `GIN-Win-Optimizer_v052.cmd`, `CHANGELOG.md`, `README.md`, and `WORKLOG.md`.
 - **Root Cause Remediation for Taskbar Buttons Turning into Icons ("ярлычки")**:

@@ -6,6 +6,19 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v053] - 2026-11-19
+### Universal Folder View Default: List Mode & Sort by Type Enforcement (All Folders, "This PC", Local Drives & Network Shares)
+- **Implemented `chk_ui_folder_view_list_sort_type`**: Activated full execution logic for "Вид папок по умолчанию — «Список» (лист) и сортировка по типу", which was previously declared in UI localization but lacked an optimization action.
+- **Global `Apply-FolderViewListSortType` Routine**: Enforced List view layout (`LogicalViewMode=4`, `Mode=3`, `IconSize=16`, `GroupView=0`) and file type sorting (`SortByList="prop:System.ItemType;System.ItemNameDisplay;"`) across HKCU, all loaded user profiles in `HKEY_USERS` (`S-1-5-21-*`), and `C:\Users\Default\NTUSER.DAT` template.
+- **Universal FolderTypes & TopViews Configuration**: Cloned and configured all Windows Explorer `FolderTypes` templates and nested `TopViews` subkeys so any newly opened folder category defaults to List mode sorted by Type.
+- **`AllFolders\Shell` Deep Enforcement**: Populated `AllFolders\Shell` with `FolderType="Generic"` and 20 primary folder GUIDs (Generic, Documents, Downloads, Pictures, Music, Videos, Network shares, Search Results, etc.).
+- **"This PC" Root Bags Enforcement**: Configured root Bags (`Slot 1`) for "This PC" (`{5C4F28B5-F869-4E84-8E60-F11DB97C5CC7}`) ensuring navigation starting from My Computer displays drives and root items in List view.
+- **Stale Per-Folder View Cache Purge**: Cleared existing `BagMRU`, numeric `Bags`, and `Streams\Defaults` during Explorer restart so previously cached icon/details views are immediately purged.
+- **CMD Polyglot Elevation Header Injection**: Injected immediate folder view registry enforcement into the batch header for instant application at launcher elevation.
+- **Explorer Shell Lifecycle Integration**: Integrated `Apply-FolderViewListSortType` into pre-restart, mid-restart (while Explorer is terminated), and post-restart sweep phases.
+- **Persistent Logon Hook**: Registered `GIN-FolderViewListSortType` in `HKLM` and `HKCU` Run keys to guarantee persistence across user sign-ins.
+- **Artifact Delivery**: Delivered `GIN-Win-Optimizer_v053.cmd` to Vladimir's Desktop in MEGA (`D:\MEGA\DOCS\desktop\`) and flash drive utilities (`/MEGA/WIN-FLASH/Util-WINDOWS/`).
+
 ## [v052] - 2026-11-19
 ### Taskbar Buttons Never Combine & No Grouping Universal Enforcement (Windows 10 32/64-bit & Windows 11)
 - **Universal Never Combine Taskbar Buttons (`chk_ui_never_combine_taskbar`)**:
