@@ -1,2 +1,1 @@
-vless://981ab9b4-2b26-4bda-9bd9-ce3f360e552b@144.31.241.24:443?security=reality&encryption=none&pbk=PAqGM0sKOwWkHhhI8UKztzThI1V7o994ZwD6V8qYd0s&sni=dfad5148.con.rasterparcel.tech&sid=5823fa569cc01687&fp=firefox&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%A9%F0%9F%87%AA%20GIN-DE-01
-vless://955d8dc7-5e3b-40ac-b2bb-bd8aa20fc7e6@138.124.40.157:443?security=reality&encryption=none&pbk=mPa9kajf-i6Rng1q5Wp8VgewBbnlRhol9m1ZYk8Jjy8&sni=gta6.recrent-sell.com&sid=&fp=qq&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%B5%F0%9F%87%B1%20GIN-PL-02
+vless://955d8dc7-5e3b-40ac-b2bb-bd8aa20fc7e6@88.216.182.45:443?security=reality&encryption=none&pbk=-6gdsjkT3qn4ZvhkumysjgDzyfx7v-LAzEwH-lziVxM&sni=gate.wey-land.net&sid=&fp=firefox&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%A9%F0%9F%87%AA%20GIN-DE-01
