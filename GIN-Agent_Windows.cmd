@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v022
+title GIN-Agent v023
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
@@ -46,12 +46,24 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" (
     set "PS_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
 )
 
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText($env:GIN_AGENT_SCRIPT, [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
+set "PS_ERR=%errorlevel%"
 
-exit /b 0
+if "%GIN_AGENT_MODE%"=="INSTALL" (
+    if %PS_ERR% neq 0 (
+        echo.
+        echo ====================================================================
+        echo [ERROR] GIN-Agent execution halted with error code: %PS_ERR%
+        echo ====================================================================
+        echo.
+        pause
+    )
+)
+
+exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v022 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v023 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -71,7 +83,7 @@ try {
 
     $installDir = "$env:ProgramData\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdV22 = "$installDir\GIN-Agent_Windows_v022.cmd"
+    $targetCmdV23 = "$installDir\GIN-Agent_Windows_v023.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
     $serviceDesc = "Provides resilient background diagnostic connection and RDP shadow support for Vladimir Bulantsev (GinCz)."
@@ -91,7 +103,7 @@ try {
     if ($mode -ne "SERVICE") {
         Write-Host ""
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v022 - ВЫБОР РЕГИОНА / GATEWAY SELECTION         " -ForegroundColor Cyan
+        Write-Host "         GIN-AGENT v023 - ВЫБОР РЕГИОНА / GATEWAY SELECTION         " -ForegroundColor Cyan
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "  [1] Европа (Server_222 / Global)   [По умолчанию через 5 сек]" -ForegroundColor Green
         Write-Host "  [2] Россия (Сервер 109 FirstVDS)" -ForegroundColor Yellow
@@ -138,18 +150,18 @@ try {
         Write-Host ""
 
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v022 - СИСТЕМНАЯ СЛУЖБА РАЗВЕРТЫВАНИЯ            " -ForegroundColor Green
+        Write-Host "         GIN-AGENT v023 - СИСТЕМНАЯ СЛУЖБА РАЗВЕРТЫВАНИЯ            " -ForegroundColor Green
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "[*] Полная остановка и удаление предыдущих версий агента..." -ForegroundColor Yellow
 
         # 1. Stop and remove any running scheduled task instances (Service & Watchdogs)
         $oldTasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog")
         foreach ($ot in $oldTasks) {
-            try { schtasks.exe /end /tn $ot >$null 2>&1 } catch {}
-            try { schtasks.exe /delete /tn $ot /f >$null 2>&1 } catch {}
+            try { schtasks.exe /end /tn $ot 2>&1 | Out-Null } catch {}
+            try { schtasks.exe /delete /tn $ot /f 2>&1 | Out-Null } catch {}
         }
 
-        # 2. Kill all background agent processes (both cmd.exe and powershell.exe)
+        # 2. Terminate previous agent processes safely
         $currentPid = $PID
         $parentPid = 0
         try {
@@ -157,42 +169,34 @@ try {
             if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
         } catch {}
 
-        # Scan and terminate all previous GIN-Agent powershell and cmd instances
+        # Kill previous powershell instances running GIN-Agent
         try {
-            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue | Where-Object {
                 $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    ($_.Name -eq "powershell.exe" -and (
-                        $_.CommandLine -like "*GIN-Agent*" -or
-                        $_.CommandLine -like "*agent-api*" -or
-                        $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*" -or
-                        $_.CommandLine -like "*remote.gincz.com/agent-api*"
-                    )) -or
-                    ($_.Name -eq "cmd.exe" -and (
-                        $_.CommandLine -like "*ProgramData\GIN-Agent*" -or
-                        $_.CommandLine -like "*GIN-Agent*.cmd*" -or
-                        $_.CommandLine -like "*/service*"
-                    ))
+                    $_.CommandLine -like "*GIN-Agent*" -or
+                    $_.CommandLine -like "*agent-api*" -or
+                    $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*" -or
+                    $_.CommandLine -like "*remote.gincz.com/agent-api*"
                 )
             } | ForEach-Object {
                 try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
             }
         } catch {}
 
-        # Supplementary safety check via Get-Process
+        # Kill previous background cmd instances running the service
         try {
-            Get-Process powershell -ErrorAction SilentlyContinue | Where-Object {
-                $_.Id -ne $currentPid -and $_.Id -ne $parentPid
+            Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
+                    $_.CommandLine -like "*ProgramData\GIN-Agent*" -or
+                    $_.CommandLine -like "*GIN-Agent.cmd* /service*" -or
+                    $_.CommandLine -like "*/service*"
+                )
             } | ForEach-Object {
-                try {
-                    $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $($_.Id)" -ErrorAction SilentlyContinue).CommandLine
-                    if ($cmdLine -and ($cmdLine -like "*GIN-Agent*" -or $cmdLine -like "*agent-api*")) {
-                        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
-                    }
-                } catch {}
+                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
             }
         } catch {}
 
-        Start-Sleep -Milliseconds 800
+        Start-Sleep -Milliseconds 600
 
         # Deploy Directory and CMD file (Zero PS1 files)
         if (-not (Test-Path $installDir)) {
@@ -214,6 +218,10 @@ try {
 
         # Copy the single CMD file to installation target with safe overwrite
         $sourceScript = $env:GIN_AGENT_SCRIPT
+        if (-not $sourceScript -or (-not (Test-Path $sourceScript))) {
+            $sourceScript = $MyInvocation.MyCommand.Path
+        }
+
         if ($sourceScript -and (Test-Path $sourceScript)) {
             try { Remove-Item -Path $targetCmd -Force -ErrorAction SilentlyContinue } catch {}
             try {
@@ -227,20 +235,18 @@ try {
                     [System.IO.File]::WriteAllBytes($targetCmd, [System.IO.File]::ReadAllBytes($sourceScript))
                 }
             }
-            try { Copy-Item -Path $sourceScript -Destination $targetCmdV22 -Force -ErrorAction SilentlyContinue } catch {}
+            try { Copy-Item -Path $sourceScript -Destination $targetCmdV23 -Force -ErrorAction SilentlyContinue } catch {}
         } else {
-            $myRaw = if ($MyInvocation.MyCommand.Path -and (Test-Path $MyInvocation.MyCommand.Path)) {
-                [System.IO.File]::ReadAllText($MyInvocation.MyCommand.Path, [System.Text.Encoding]::UTF8)
-            } else { "" }
+            $myRaw = if ($raw) { $raw } else { "" }
             if ($myRaw) {
                 try { [System.IO.File]::WriteAllText($targetCmd, $myRaw, [System.Text.Encoding]::UTF8) } catch {}
-                try { [System.IO.File]::WriteAllText($targetCmdV22, $myRaw, [System.Text.Encoding]::UTF8) } catch {}
+                try { [System.IO.File]::WriteAllText($targetCmdV23, $myRaw, [System.Text.Encoding]::UTF8) } catch {}
             }
         }
 
-        # Purge older versioned CMDs in installDir (retain strictly 2 latest: v021 and v022)
+        # Purge older versioned CMDs in installDir (retain strictly 2 latest: v022 and v023)
         Get-ChildItem -Path $installDir -Filter "GIN-Agent_Windows_v*.cmd" -File -ErrorAction SilentlyContinue | Where-Object {
-            $_.Name -ne "GIN-Agent_Windows_v022.cmd" -and $_.Name -ne "GIN-Agent_Windows_v021.cmd"
+            $_.Name -ne "GIN-Agent_Windows_v023.cmd" -and $_.Name -ne "GIN-Agent_Windows_v022.cmd"
         } | ForEach-Object {
             try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
         }
@@ -252,9 +258,9 @@ try {
         $taskAction = "cmd.exe"
         $taskArgs = "/c `"`"$targetCmd`" /service $selectedRegion`""
 
-        schtasks.exe /delete /tn "$taskName" /f >$null 2>&1
-        schtasks.exe /create /tn "$taskName" /tr "$taskAction $taskArgs" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f >$null 2>&1
-        schtasks.exe /run /tn "$taskName" >$null 2>&1
+        schtasks.exe /delete /tn "$taskName" /f 2>&1 | Out-Null
+        schtasks.exe /create /tn "$taskName" /tr "$taskAction $taskArgs" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
+        schtasks.exe /run /tn "$taskName" 2>&1 | Out-Null
 
         # Fallback background execution
         Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$targetCmd`" /service $selectedRegion`"" -WindowStyle Hidden
@@ -263,22 +269,20 @@ try {
 
         Write-Host ""
         Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "  [+] GIN-Agent v022 успешно развернут как СИСТЕМНАЯ СЛУЖБА!" -ForegroundColor Green
+        Write-Host "  [+] GIN-Agent v023 успешно развернут как СИСТЕМНАЯ СЛУЖБА!" -ForegroundColor Green
         Write-Host "  [+] Выбранный регион: $regDesc" -ForegroundColor Cyan
         Write-Host "  [+] Совместимость: Windows 10 (32-bit / 64-bit), Windows 11." -ForegroundColor White
         Write-Host "  [+] Архитектура: единый автономный CMD (без внешних PS1 файлов)." -ForegroundColor White
         Write-Host "  [+] Служба запущена и работает в скрытом фоновом режиме." -ForegroundColor White
         Write-Host "  [+] Задача Windows: GIN-Agent-Service (Автозапуск при старте ОС, $selectedRegion)" -ForegroundColor Cyan
-        Write-Host "  [+] Окно закроется автоматически через 5 секунд." -ForegroundColor Yellow
         Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
         Write-Host ""
-
-        for ($i = 5; $i -ge 1; $i--) {
-            Write-Host -NoNewline "`r[*] Закрытие окна установщика через $i сек... "
-            Start-Sleep -Seconds 1
-        }
-        Write-Host "`r[✓] Установка завершена! Служба активна в фоне. До свидания.       " -ForegroundColor Green
-        Start-Sleep -Milliseconds 500
+        Write-Host "====================================================================" -ForegroundColor Green
+        Write-Host "  [✓] УСТАНОВКА ЗАВЕРШЕНА УСПЕШНО!" -ForegroundColor Green
+        Write-Host "  Для закрытия этого окна нажмите любую клавишу..." -ForegroundColor Yellow
+        Write-Host "====================================================================" -ForegroundColor Green
+        Write-Host ""
+        try { $null = [System.Console]::ReadKey($true) } catch { pause }
         exit 0
     }
 
@@ -486,7 +490,7 @@ try {
             rdp_ready   = $true
             region      = $region
             gateway     = $activeGatewayName
-            version     = "v022"
+            version     = "v023"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
@@ -520,7 +524,7 @@ try {
         if ($loopCount -ge 6) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v022&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v023&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -528,6 +532,16 @@ try {
     }
 
 } catch {
-    Write-Host "`n[FATAL ERROR] $($_.Exception.Message)" -ForegroundColor Red
-    if ($mode -ne "SERVICE") { pause }
+    Write-Host ""
+    Write-Host "====================================================================" -ForegroundColor Red
+    Write-Host "  [!] КРИТИЧЕСКАЯ ОШИБКА GIN-AGENT v023:" -ForegroundColor Red
+    Write-Host "  Сообщение: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  Строка:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
+    Write-Host "  Стек:      $($_.ScriptStackTrace)" -ForegroundColor DarkRed
+    Write-Host "====================================================================" -ForegroundColor Red
+    Write-Host ""
+    if ($mode -ne "SERVICE") {
+        Write-Host "  Нажмите любую клавишу для выхода..." -ForegroundColor Yellow
+        try { $null = [System.Console]::ReadKey($true) } catch { pause }
+    }
 }
