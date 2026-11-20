@@ -1,20 +1,18 @@
 {
-  "version": "v036",
+  "version": "v037",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v036_Setup.exe",
-  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v036.cmd",
+  "installer": "GIN-Dock-Wallpaper_v037_Setup.exe",
+  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v037.cmd",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v036_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v037_Setup.exe",
   "features": [
-    "Fixed Font Distortion: replaced OpenType variable font Bahnschrift with Tahoma, preventing text kerning bugs and letter overlapping",
-    "Active Theme Engine: fixed ThemeManager.GetTheme to correctly map selected theme buttons (Nordic Frost, Cyberpunk, Warm Sand, etc.) with real-time UI colors",
-    "Font Selector Relocation: moved 12 curated font preview buttons to Tab 1 (Главные) for intuitive centralized styling",
-    "Real-Time Live Dock Resizing: clicking 16px, 24px, 32px, 48px, 64px icon size buttons immediately resizes the dock bar and clears icon cache",
-    "Instant Mouse Hover Folder Opening: subfolders on the dock bar expand seamlessly on mouse glide without requiring mouse clicks",
-    "Localized Dock Placement Buttons: Russian UI now displays '⬆ Вверху' and '⬅ Слева' properly",
-    "Zero-Browser In-App Auto-Updater: direct in-place update engine with no web redirects"
+    "Full Settings Font Application: clicking any of the 12 font buttons instantly re-styles every label, button, and tab across the entire settings dialog",
+    "Dynamic Wallpaper Categories Localization: category checkbox titles now re-translate in real time on language switch (EN, RU, CS)",
+    "Dock Folder Hover Flicker Elimination: rock-solid folder menu expansion without blinking or auto-closing while hovering over folder or items",
+    "About Tab Localization: full translation for description, titles, and repository buttons across Russian, English, and Czech",
+    "Strict 2-Version Retention: kept strictly v036 and v037 in MEGA desktop and flash mirrors"
   ]
 }

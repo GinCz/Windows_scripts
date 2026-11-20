@@ -36,6 +36,12 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v037 (2026-11-20)
+- **Implemented Real-Time Settings Font Re-Styling**: Created `ApplyFontToForm(string fontName)` with recursive control styling preserving bold/regular styles, updating dialog controls immediately upon clicking any of the 12 font buttons on Tab 1.
+- **Fixed Dock Folder Flicker**: Diagnosed cause of dropdown blinking (interaction between ToolTip window, `AutoClose = true`, and mouse coordinate re-checks). Set `AutoClose = false`, removed tooltip on folder buttons, and created `IsCursorOverDropDownHierarchy` for stable hover navigation.
+- **Completed Tab 2 & Tab 4 Localization**: Connected all 13 wallpaper category checkboxes and the About tab controls to reactive dictionary lookups in `ApplyLocalization()`.
+- **Compiled & Published v037**: Produced binaries and setup scripts; updated MEGA cloud mirrors; purged obsolete `v035` keeping strictly `v036` and `v037`.
+
 ## Update: v036 (2026-11-20)
 - **Resolved WinForms Variable Font Bug**: Replaced `Bahnschrift` with `Tahoma` across the 12 font presets and stabilized dialog fonts on `Segoe UI` (9pt / 9.5pt), eliminating wide character gaps and overlapping letters.
 - **Fixed Theme Engine**: Corrected `ThemeManager.GetTheme` logic to prioritize explicit theme IDs before falling back to time-of-day modes, enabling immediate theme color changes when clicking theme buttons.

@@ -45,6 +45,14 @@
 - **Interactive Signature Footer**: Form footer features `VladiMIR+AI  |||  v034` with clickable links: `VladiMIR+AI` links to GitHub profile; clicking `v034` initiates the auto-update check.
 - **Deployment Streamlining**: Purged all unversioned files and shortcuts; retained strictly the 2 latest versions (`v033` and `v034`).
 
+## [v037] — 2026-11-20
+### 🎯 Universal Font Application, Dock Menu Flicker Elimination & Full Localization
+- **Universal Settings Font Styling**: Clicking any of the 12 font buttons on Tab 1 (Главные) instantly re-styles all controls, labels, checkboxes, buttons, and tab headers across the entire settings dialog in real time.
+- **Dock Folder Hover Flicker Fix**: Eliminated the rapid blinking/closing of folder menus when hovering. Set `AutoClose = false` on the dropdown, removed conflicting tooltip windows on folder buttons, and implemented smart hierarchical bounds detection so menus stay open solidly until moving to another folder or leaving the dock.
+- **Wallpaper Categories Localization**: Fixed category checkbox labels (`3D`, `Flowers`, `Ocean`, `Space`, `Nature`, `Animals`, `Cars`, `Trucks`, `Girls`, `City`, `Cyberpunk`, `Minimalism`, `Anime`) to update instantly in real time when toggling between Russian, English, and Czech.
+- **About Tab Full Localization**: Added translated descriptions and button labels for the About tab in Russian, English, and Czech.
+- **Version Lifecycle & Retention**: Promoted release to `v037`; purged `v035` across repository mirrors and MEGA storage; strictly retained the 2 latest versions (`v036` and `v037`).
+
 ## [v036] — 2026-11-20
 ### 🎨 Typography Fixes, Dynamic Theme Mapping, Centralized Font Engine & Hover Dock
 - **Font Rendering & Kerning Fix**: Resolved severe letter-spacing distortions and font crawl caused by OpenType variable fonts (`Bahnschrift`). Replaced with rock-solid TrueType/OpenType `Tahoma` and pinned dialog controls cleanly to `Segoe UI` (9pt / 9.5pt) matching the crisp aesthetic of GIN-VPN.
