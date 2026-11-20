@@ -83,10 +83,11 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 All native Windows applications are developed with zero external runtime dependencies, standalone architecture, and compiled with custom embedded Windows PE icons.
 
 > [!IMPORTANT]
-> **MEGA Desktop Auto-Sync Standard:** Only the **single latest compiled version** of each executable (`GIN-NetScan_vXXX.exe`, `GIN-VPN_vXXX.exe`) is maintained on the user's Desktop via cloud folder `/MEGA/DOCS/desktop/` (`D:\MEGA\DOCS\desktop\`). Outdated versions are automatically purged upon release. See [RULES.md](RULES.md).
+> **MEGA Desktop Auto-Sync Standard (Ironclad Rule):** The version number must **strictly increment upon every change or feature addition** (`vXXX`). The installer filename strictly includes the version (`<AppName>_vXXX_Setup.exe`). Upon compilation, every installer is **automatically deployed to the user's Desktop via cloud folder `/MEGA/DOCS/desktop/` (`D:\MEGA\DOCS\desktop\`)**. Strictly the 2 latest versions are maintained on the desktop. See [RULES.md](RULES.md) and [AGENTS.md](AGENTS.md).
 
 | Application / Package | Binary (.exe) / Launcher | Description & Key Architecture | Release & Status |
 | :--- | :--- | :--- | :---: |
+| 🖥️ **[GIN-Desktop](GIN-Desktop/)** | [**`GIN-Desktop_v043_Setup.exe`**](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Desktop/GIN-Desktop_v043_Setup.exe) | Unified lightweight desktop companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Live Hardware Monitor (CPU/RAM/GPU), Real-Time Weather HUD (Open-Meteo/wttr.in) & 00:03 midnight refresh. | 🟢 **`v043`** |
 | 🎙️ **[GIN-Voice](Windows/GIN-Voice/README.md)** | [**`GIN-Voice.exe` (v032)**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe) | Ultra-fast native Win32 voice typing with Groq Whisper Large v3 + Qwen 27B AI Code-Switching post-processor. 0.15s latency, multilingual transliteration auto-repair (Czech/English/Russian), live customizable HUD typography, 0% CPU. | 🟢 **`v032`** |
 | 🌐 **[GIN-NetScan](Windows/GIN-NetScan/README.md)** | `GIN-NetScan_v025.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v025`** |
 | 🛡️ **[GIN-VPN](Windows/VPN/GIN-VPN/README.md)** | `GIN-VPN_v013.exe`<br>`GIN-VPN.ps1` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v013`** |

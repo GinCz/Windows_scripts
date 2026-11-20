@@ -157,4 +157,13 @@ if os.path.exists(old_mirror):
                 except Exception as e:
                     pass
 
+# Deploy to Vladimir's Desktop in MEGA cloud (D:\MEGA\DOCS\desktop\ via DE-222)
+sync_script = os.path.join(os.path.dirname(ROOT_DIR), "scripts", "sync_mega_desktop.sh")
+if os.path.exists(sync_script):
+    print(f"==> Deploying to Vladimir's Desktop in MEGA cloud ({sync_script})...")
+    try:
+        subprocess.run([sync_script, SETUP_EXE, "GIN-Desktop"], check=True)
+    except Exception as e:
+        print(f"⚠️ Warning: Auto-sync to MEGA Desktop failed: {e}")
+
 print(f"🎉 Build pipeline completed successfully for {VERSION}!")
