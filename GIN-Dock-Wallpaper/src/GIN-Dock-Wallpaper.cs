@@ -19,8 +19,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyProduct("GIN-Dock-Wallpaper")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vladimir Bulantsev")]
-[assembly: AssemblyVersion("0.34.0.0")]
-[assembly: AssemblyFileVersion("0.34.0.0")]
+[assembly: AssemblyVersion("0.35.0.0")]
+[assembly: AssemblyFileVersion("0.35.0.0")]
 
 namespace GINDockWallpaper {
 
@@ -624,6 +624,7 @@ namespace GINDockWallpaper {
         public string ThemeName = "WarmSand";
         public bool StartWithWindows = false;
         public bool CheckUpdatesOnStartup = true;
+        public bool EnableSound = true;
 
         public string DockPosition = "Top"; // "Top", "Left", "Off"
         public int DockIconSize = 32;
@@ -682,6 +683,7 @@ namespace GINDockWallpaper {
                     cfg.ThemeName = GetString(json, "ThemeName", cfg.ThemeName);
                     cfg.StartWithWindows = GetBool(json, "StartWithWindows", cfg.StartWithWindows);
                     cfg.CheckUpdatesOnStartup = GetBool(json, "CheckUpdatesOnStartup", cfg.CheckUpdatesOnStartup);
+                    cfg.EnableSound = GetBool(json, "EnableSound", cfg.EnableSound);
 
                     cfg.DockPosition = GetString(json, "DockPosition", cfg.DockPosition);
                     cfg.DockIconSize = GetInt(json, "DockIconSize", cfg.DockIconSize);
@@ -1088,7 +1090,7 @@ namespace GINDockWallpaper {
             string targetJpg = Path.Combine(Config.CacheDir, "wallpaper_" + DateTime.Now.Ticks + ".jpg");
 
             using (WebClient wc = new WebClient()) {
-                wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v034 (Windows; WinAPI)");
+                wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v035 (Windows; WinAPI)");
                 string json = wc.DownloadString(apiUrl);
 
                 int pIdx = json.IndexOf("\"path\":\"");
@@ -1285,6 +1287,7 @@ namespace GINDockWallpaper {
         private List<DockItem> _shortcuts = new List<DockItem>();
         private List<Control> _dockControls = new List<Control>();
 
+        private Button _brandBtn;
         private Panel _itemsPanel;
         private ToolStripDropDown _activeDropDown = null;
         private System.Windows.Forms.Timer _watchdogTimer;
@@ -1303,79 +1306,38 @@ namespace GINDockWallpaper {
         protected override CreateParams CreateParams {
             get {
                 CreateParams cp = base.CreateParams;
-                cp.ExStyle |= WS_EX_NOACTIVATE;
-                cp.ExStyle |= WS_EX_TOOLWINDOW;
-                cp.ExStyle |= WS_EX_TOPMOST;
+                cp.ExStyle |= (WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
                 return cp;
             }
-        }
-
-        protected override bool ShowWithoutActivation {
-            get { return true; }
         }
 
         public DockBarForm(Config config, Action openSettingsAction) {
             _config = config;
             _openSettingsAction = openSettingsAction;
-            InitializeComponent();
-            LoadItems();
-            SetupFileSystemWatcher();
-            SetupWatchdog();
-        }
 
-        private void InitializeComponent() {
             this.FormBorderStyle = FormBorderStyle.None;
             this.ShowInTaskbar = false;
             this.TopMost = true;
             this.StartPosition = FormStartPosition.Manual;
             this.DoubleBuffered = true;
-            this.KeyPreview = true;
-
-            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
-            this.BackColor = theme.Background;
 
             _toolTip = new ToolTip();
-            _toolTip.BackColor = theme.CardBackground;
-            _toolTip.ForeColor = theme.TextPrimary;
+            _toolTip.AutoPopDelay = 5000;
+            _toolTip.InitialDelay = 300;
+            _toolTip.ReshowDelay = 100;
 
-            Button brandBtn = new Button();
-            brandBtn.Text = "⚡ GIN";
-            brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
-            brandBtn.ForeColor = theme.BrandText;
-            brandBtn.BackColor = theme.BrandBadge;
-            brandBtn.FlatStyle = FlatStyle.Flat;
-            brandBtn.FlatAppearance.BorderSize = 1;
-            brandBtn.FlatAppearance.BorderColor = theme.Border;
-            brandBtn.Cursor = Cursors.Hand;
-            brandBtn.Click += (s, e) => ShowMainMenu(brandBtn);
-            _toolTip.SetToolTip(brandBtn, "GIN Dock Wallpaper v034 | Click for Menu");
-
-            bool isTop = (_config.DockPosition == "Top");
-            int barSize = Math.Max(40, _config.DockIconSize + 16);
-            _config.BarHeight = barSize;
-
-            if (isTop) {
-                this.Height = barSize;
-                brandBtn.Size = new Size(68, barSize - 10);
-                brandBtn.Location = new Point(5, 5);
-            } else {
-                this.Width = barSize;
-                brandBtn.Size = new Size(barSize - 10, 36);
-                brandBtn.Location = new Point(5, 5);
-            }
-            this.Controls.Add(brandBtn);
+            _brandBtn = new Button();
+            _brandBtn.FlatStyle = FlatStyle.Flat;
+            _brandBtn.FlatAppearance.BorderSize = 0;
+            _brandBtn.Text = "⚡ GIN";
+            _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            _brandBtn.Cursor = Cursors.Hand;
+            _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v035 | Click for Menu");
+            this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
             _itemsPanel.BackColor = Color.Transparent;
-            if (isTop) {
-                _itemsPanel.Location = new Point(78, 0);
-                _itemsPanel.Height = barSize;
-                _itemsPanel.Width = Screen.PrimaryScreen.Bounds.Width - 90;
-            } else {
-                _itemsPanel.Location = new Point(0, 46);
-                _itemsPanel.Width = barSize;
-                _itemsPanel.Height = Screen.PrimaryScreen.Bounds.Height - 60;
-            }
             _itemsPanel.MouseWheel += ItemsPanel_MouseWheel;
             this.Controls.Add(_itemsPanel);
 
@@ -1383,6 +1345,15 @@ namespace GINDockWallpaper {
             this.KeyDown += (s, e) => {
                 if (e.KeyCode == Keys.Escape) HideDock();
             };
+
+            _watchdogTimer = new System.Windows.Forms.Timer();
+            _watchdogTimer.Interval = 100;
+            _watchdogTimer.Tick += WatchdogTimer_Tick;
+            _watchdogTimer.Start();
+
+            SetupFileSystemWatcher();
+            LoadItems();
+            HideDockImmediate();
         }
 
         private void ItemsPanel_MouseWheel(object sender, MouseEventArgs e) {
@@ -1447,9 +1418,24 @@ namespace GINDockWallpaper {
 
             bool isTop = (_config.DockPosition == "Top");
             int cursor = 0;
-            int iconSz = _config.DockIconSize;
-            int itemSpan = Math.Max(36, iconSz + 8);
-            _config.BarHeight = itemSpan + 10;
+            int iconSz = Math.Max(16, Math.Min(64, _config.DockIconSize));
+            int itemSpan = Math.Max(36, iconSz + 10);
+            int barSize = Math.Max(42, iconSz + 16);
+            _config.BarHeight = barSize;
+
+            _brandBtn.BackColor = theme.Accent;
+            _brandBtn.ForeColor = Color.Black;
+            if (isTop) {
+                _brandBtn.Size = new Size(68, barSize - 10);
+                _brandBtn.Location = new Point(5, 5);
+                _itemsPanel.Location = new Point(78, 0);
+                _itemsPanel.Height = barSize;
+            } else {
+                _brandBtn.Size = new Size(barSize - 10, 36);
+                _brandBtn.Location = new Point(5, 5);
+                _itemsPanel.Location = new Point(0, 46);
+                _itemsPanel.Width = barSize;
+            }
 
             Font folderFont = new Font(_config.DockFolderFontFamily ?? "Segoe UI", _config.DockFolderFontSize, FontStyle.Regular);
             Font itemFont = new Font(_config.DockItemFontFamily ?? "Segoe UI", _config.DockItemFontSize, FontStyle.Regular);
@@ -1463,7 +1449,7 @@ namespace GINDockWallpaper {
                 btn.ForeColor = theme.TextPrimary;
                 btn.Font = folderFont;
                 btn.Cursor = Cursors.Hand;
-                btn.Image = folder.GetIcon(Math.Min(24, iconSz));
+                btn.Image = folder.GetIcon(iconSz);
                 btn.ImageAlign = ContentAlignment.MiddleLeft;
                 btn.TextAlign = ContentAlignment.MiddleLeft;
                 btn.TextImageRelation = TextImageRelation.ImageBeforeText;
@@ -1483,7 +1469,7 @@ namespace GINDockWallpaper {
                     }
                 } else {
                     btn.Width = itemSpan;
-                    btn.Height = showLabel ? 32 : itemSpan;
+                    btn.Height = showLabel ? (iconSz + 18) : (iconSz + 14);
                     btn.Text = showLabel ? folder.Name : "";
                 }
 
@@ -1554,11 +1540,11 @@ namespace GINDockWallpaper {
                             btn.Width = (int)size.Width + iconSz + 24;
                         }
                     } else {
-                        btn.Width = iconSz + 12;
+                        btn.Width = iconSz + 16;
                     }
                 } else {
                     btn.Width = itemSpan;
-                    btn.Height = showLabel ? (iconSz + 16) : (iconSz + 10);
+                    btn.Height = showLabel ? (iconSz + 18) : (iconSz + 14);
                     btn.Text = showLabel ? item.Name : "";
                 }
 
@@ -1628,80 +1614,62 @@ namespace GINDockWallpaper {
             }
         }
 
-        private void OpenFolderDropDown(Button parentBtn, DockItem folder) {
+        private void OpenFolderDropDown(Button anchor, DockItem folder) {
             CloseActiveDropDown();
 
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
-            ContextMenuStrip cms = new ContextMenuStrip();
-            cms.Renderer = new DynamicMenuRenderer(theme);
-            cms.ShowImageMargin = true;
-            cms.DropShadowEnabled = true;
+            ToolStripDropDown dropDown = new ToolStripDropDown();
+            dropDown.AutoClose = true;
+            dropDown.Renderer = new DynamicMenuRenderer(theme);
 
-            PopulateFolderMenuItems(cms.Items, folder.TargetFolder);
+            PopulateFolderMenu(dropDown.Items, folder.TargetFolder, theme);
 
-            if (cms.Items.Count > 0) cms.Items.Add(new ToolStripSeparator());
-            ToolStripMenuItem openFolderItem = new ToolStripMenuItem("📂 " + I18n.T("OpenExplorer") + ": " + folder.Name);
-            openFolderItem.ForeColor = theme.Accent;
-            openFolderItem.Click += (s, e) => {
+            if (dropDown.Items.Count == 0) {
+                ToolStripMenuItem empty = new ToolStripMenuItem(I18n.T("EmptyFolder"));
+                empty.Enabled = false;
+                dropDown.Items.Add(empty);
+            }
+
+            dropDown.Items.Add(new ToolStripSeparator());
+            ToolStripMenuItem openExp = new ToolStripMenuItem("📂 " + I18n.T("OpenInExplorer"));
+            openExp.Click += (s, e) => {
                 ShellHelper.OpenInExplorer(folder.TargetFolder);
                 HideDock();
             };
-            cms.Items.Add(openFolderItem);
+            dropDown.Items.Add(openExp);
 
-            _activeDropDown = cms;
-            cms.Closed += (s, e) => {
-                if (_activeDropDown == cms) _activeDropDown = null;
+            dropDown.Closed += (s, e) => {
+                if (_activeDropDown == dropDown) _activeDropDown = null;
             };
 
-            bool isTop = (_config.DockPosition == "Top");
-            if (isTop) {
-                Point screenPt = parentBtn.PointToScreen(new Point(0, parentBtn.Height + 2));
-                cms.Show(screenPt, ToolStripDropDownDirection.BelowRight);
+            _activeDropDown = dropDown;
+            if (_config.DockPosition == "Top") {
+                dropDown.Show(anchor, new Point(0, anchor.Height + 2));
             } else {
-                Point screenPt = parentBtn.PointToScreen(new Point(parentBtn.Width + 2, 0));
-                cms.Show(screenPt, ToolStripDropDownDirection.Right);
+                dropDown.Show(anchor, new Point(anchor.Width + 2, 0));
             }
         }
 
-        private void PopulateFolderMenuItems(ToolStripItemCollection targetList, string folderPath) {
-            if (!Directory.Exists(folderPath)) return;
-
+        private void PopulateFolderMenu(ToolStripItemCollection targetList, string folderPath, ColorTheme theme) {
             try {
+                int iconSz = Math.Min(32, Math.Max(16, _config.DockIconSize));
                 string[] subDirs = Directory.GetDirectories(folderPath);
                 Array.Sort(subDirs, (a, b) => string.Compare(Path.GetFileName(a), Path.GetFileName(b), StringComparison.OrdinalIgnoreCase));
 
-                foreach (string dir in subDirs) {
-                    string dirName = Path.GetFileName(dir);
+                foreach (string subDir in subDirs) {
+                    string dirName = Path.GetFileName(subDir);
                     ToolStripMenuItem subMenuItem = new ToolStripMenuItem(dirName);
-                    subMenuItem.Image = ShellHelper.GetIconImage(dir, 16);
-                    subMenuItem.DropDownDirection = ToolStripDropDownDirection.Right;
+                    subMenuItem.Image = ShellHelper.GetIconImage(subDir, iconSz);
 
-                    string currentDir = dir;
-                    bool populated = false;
-                    subMenuItem.DropDownOpening += (s, e) => {
-                        if (!populated) {
-                            PopulateFolderMenuItems(subMenuItem.DropDownItems, currentDir);
-                            if (subMenuItem.DropDownItems.Count == 0) {
-                                subMenuItem.DropDownItems.Add(new ToolStripMenuItem("(Empty)") { Enabled = false });
-                            }
-                            subMenuItem.DropDownItems.Add(new ToolStripSeparator());
-                            ToolStripMenuItem openSub = new ToolStripMenuItem("📂 Open Folder");
-                            openSub.Click += (cs, ce) => {
-                                ShellHelper.OpenInExplorer(currentDir);
-                                HideDock();
-                            };
-                            subMenuItem.DropDownItems.Add(openSub);
-                            populated = true;
-                        }
-                    };
+                    string currentSubDir = subDir;
+                    PopulateFolderMenu(subMenuItem.DropDownItems, currentSubDir, theme);
 
                     subMenuItem.MouseDown += (s, e) => {
                         if (e.Button == MouseButtons.Middle) {
-                            ShellHelper.OpenInExplorer(currentDir);
+                            ShellHelper.OpenInExplorer(currentSubDir);
                             HideDock();
                         }
                     };
-
                     targetList.Add(subMenuItem);
                 }
 
@@ -1715,7 +1683,7 @@ namespace GINDockWallpaper {
                 foreach (string file in files) {
                     string fileName = Path.GetFileNameWithoutExtension(file);
                     ToolStripMenuItem fileItem = new ToolStripMenuItem(fileName);
-                    fileItem.Image = ShellHelper.GetIconImage(file, 16);
+                    fileItem.Image = ShellHelper.GetIconImage(file, iconSz);
 
                     string currentFile = file;
                     fileItem.Click += (s, e) => {
@@ -1736,50 +1704,36 @@ namespace GINDockWallpaper {
 
         private void CloseActiveDropDown() {
             if (_activeDropDown != null) {
-                try { _activeDropDown.Close(); } catch { }
+                try {
+                    _activeDropDown.Close();
+                } catch { }
                 _activeDropDown = null;
             }
         }
 
-        private void SetupWatchdog() {
-            _watchdogTimer = new System.Windows.Forms.Timer();
-            _watchdogTimer.Interval = 40;
-            _watchdogTimer.Tick += WatchdogTimer_Tick;
-            if (_config.EnableDock && _config.DockPosition != "Off") _watchdogTimer.Start();
-        }
-
         private void WatchdogTimer_Tick(object sender, EventArgs e) {
-            if (!_config.EnableDock || _config.DockPosition == "Off") return;
+            if (!_config.EnableDock) {
+                if (_isDockVisible) HideDock();
+                return;
+            }
 
-            Point p = Cursor.Position;
+            Point cursor = Cursor.Position;
+            bool inHotCorner = (cursor.X <= _config.HotCornerWidth && cursor.Y <= _config.HotCornerHeight);
 
             if (!_isDockVisible) {
-                bool trigger = (p.X <= _config.HotCornerWidth && p.Y <= _config.HotCornerHeight);
-                if (trigger) ShowDock();
-            } else {
-                bool insideDock = this.Bounds.Contains(p);
-                bool insideDropDown = false;
-
-                if (_activeDropDown != null && _activeDropDown.Visible) {
-                    insideDropDown = _activeDropDown.Bounds.Contains(p);
-                    if (!insideDropDown) {
-                        foreach (ToolStripItem item in _activeDropDown.Items) {
-                            ToolStripMenuItem mi = item as ToolStripMenuItem;
-                            if (mi != null && mi.DropDown != null && mi.DropDown.Visible) {
-                                if (mi.DropDown.Bounds.Contains(p)) {
-                                    insideDropDown = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                if (inHotCorner) {
+                    ShowDock();
                 }
+            } else {
+                bool overDock = this.Bounds.Contains(cursor);
+                bool overDropDown = (_activeDropDown != null && _activeDropDown.Visible && _activeDropDown.Bounds.Contains(cursor));
 
-                if (insideDock || insideDropDown) {
+                if (overDock || overDropDown) {
                     _outOfBoundsTicks = 0;
                 } else {
                     _outOfBoundsTicks++;
-                    if (_outOfBoundsTicks * _watchdogTimer.Interval >= _config.AutoHideDelayMs) {
+                    int thresholdTicks = Math.Max(2, _config.AutoHideDelayMs / 100);
+                    if (_outOfBoundsTicks >= thresholdTicks) {
                         HideDock();
                     }
                 }
@@ -1787,21 +1741,28 @@ namespace GINDockWallpaper {
         }
 
         public void ShowDock() {
-            if (!_config.EnableDock || _config.DockPosition == "Off") return;
-            if (!_isDockVisible) {
-                _isDockVisible = true;
-                _outOfBoundsTicks = 0;
-                this.Show();
-                this.BringToFront();
-            }
+            if (!_config.EnableDock) return;
+            UpdateDockGeometry();
+            this.Visible = true;
+            this.BringToFront();
+            _isDockVisible = true;
+            _outOfBoundsTicks = 0;
         }
 
         public void HideDock() {
-            if (_isDockVisible) {
-                CloseActiveDropDown();
-                _isDockVisible = false;
-                this.Hide();
-            }
+            CloseActiveDropDown();
+            this.Visible = false;
+            _isDockVisible = false;
+            _outOfBoundsTicks = 0;
+            _scrollOffset = 0;
+            RelayoutItems();
+            NativeMethods.TrimMemory();
+        }
+
+        private void HideDockImmediate() {
+            this.Visible = false;
+            _isDockVisible = false;
+            _outOfBoundsTicks = 0;
         }
 
         private void ShowMainMenu(Control anchor) {
@@ -1809,42 +1770,16 @@ namespace GINDockWallpaper {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem header = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v034");
-            header.Enabled = false;
-            header.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
-            header.ForeColor = theme.Accent;
-            menu.Items.Add(header);
-            menu.Items.Add(new ToolStripSeparator());
-
-            ToolStripMenuItem openFolder = new ToolStripMenuItem("📂 " + I18n.T("OpenFolder"));
-            openFolder.Click += (s, e) => {
-                ShellHelper.OpenInExplorer(_config.RootFolder);
-                HideDock();
-            };
-            menu.Items.Add(openFolder);
-
-            ToolStripMenuItem chooseFolder = new ToolStripMenuItem("📁 " + I18n.T("Browse"));
-            chooseFolder.Click += (s, e) => {
-                using (FolderBrowserDialog fbd = new FolderBrowserDialog()) {
-                    fbd.SelectedPath = _config.RootFolder;
-                    fbd.Description = I18n.T("RootFolder");
-                    if (fbd.ShowDialog() == DialogResult.OK) {
-                        _config.RootFolder = fbd.SelectedPath;
-                        _config.Save();
-                        SetupFileSystemWatcher();
-                        LoadItems();
-                    }
-                }
-            };
-            menu.Items.Add(chooseFolder);
-
-            ToolStripMenuItem reload = new ToolStripMenuItem("🔄 " + I18n.T("Reload"));
-            reload.Click += (s, e) => LoadItems();
-            menu.Items.Add(reload);
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v035");
+            title.Enabled = false;
+            title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
+            title.ForeColor = theme.Accent;
+            menu.Items.Add(title);
 
             menu.Items.Add(new ToolStripSeparator());
 
             ToolStripMenuItem settings = new ToolStripMenuItem("⚙️ " + I18n.T("Settings"));
+            settings.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             settings.Click += (s, e) => {
                 HideDock();
                 if (_openSettingsAction != null) _openSettingsAction();
@@ -1912,45 +1847,60 @@ namespace GINDockWallpaper {
     }
 
     // ==========================================
-    // SETTINGS FORM (RICH TABBED + ACCORDION)
+    // SETTINGS FORM (GIN-VPN HERITAGE UI)
     // ==========================================
     public class SettingsForm : Form {
         private Config _config;
         private Action _onConfigChanged;
         private WallpaperEngine _wallpaperEngine;
 
+        // Top Bar
+        private Panel _topBar;
+        private Label _lblHeaderTitle;
+        private Button _btnModeDay;
+        private Button _btnModeEvening;
+        private Button _btnModeNight;
+        private Button _btnLangEN;
+        private Button _btnLangRU;
+        private Button _btnLangCS;
+        private Button _btnSound;
+
+        // Tab Control
         private TabControl _tabs;
         private TabPage _tabMain;
         private TabPage _tabWall;
         private TabPage _tabDock;
         private TabPage _tabAbout;
 
-        private Label _lblDayEveningNight;
-        private ComboBox _cmbDayEveningNight;
-        private Label _lblLang;
-        private ComboBox _cmbLang;
+        // Main Tab
         private CheckBox _chkEnableDock;
         private CheckBox _chkEnableWall;
         private CheckBox _chkAutoStart;
         private CheckBox _chkAutoUpdate;
-        private Label _lblTheme;
-        private ComboBox _cmbTheme;
+        private Label _lblThemesHeader;
+        private List<Button> _themeButtons = new List<Button>();
 
+        // Wallpaper Tab
         private Label _lblWallThemesTitle;
+        private CheckBox _chkCatAll;
         private Dictionary<string, CheckBox> _catCheckBoxes = new Dictionary<string, CheckBox>();
         private bool _isUpdatingAll = false;
-        private Label _lblWallInt;
-        private ComboBox _cmbWallInt;
+        private Label _lblIntervalTitle;
+        private Button _btnInt1h;
+        private Button _btnInt3h;
+        private Button _btnInt6h;
+        private Button _btnInt24h;
         private CheckBox _chkShowCal;
-        private Label _lblCalFont;
-        private ComboBox _cmbCalFont;
         private Label _lblCalScale;
         private TrackBar _tbCalScale;
+        private Label _lblFontsTitle;
+        private List<Button> _fontButtons = new List<Button>();
         private Button _btnNextWall;
-        private Button _btnSaveWall;
 
+        // Dock Tab
         private Label _lblDockPlacement;
-        private ComboBox _cmbDockPlacement;
+        private Button _btnDockTop;
+        private Button _btnDockLeft;
         private Label _lblRoot;
         private TextBox _txtRoot;
         private Button _btnBrowse;
@@ -1961,31 +1911,26 @@ namespace GINDockWallpaper {
         private Label _lblDelay;
         private TrackBar _tbDelay;
         private Label _lblIconSize;
-        private ComboBox _cmbIconSize;
-
-        private Button _btnFontAccordion;
-        private Panel _panelFontAccordion;
-        private bool _isAccordionExpanded = false;
-        private Label _lblFolderFont;
-        private ComboBox _cmbFolderFont;
+        private List<Button> _iconSizeButtons = new List<Button>();
         private Label _lblFolderFontSize;
         private TrackBar _tbFolderFontSize;
-        private Label _lblItemFont;
-        private ComboBox _cmbItemFont;
         private Label _lblItemFontSize;
         private TrackBar _tbItemFontSize;
 
-        // Bottom footer
-        private LinkLabel _lblBrandLink;
-        private Button _btnSave;
-        private Button _btnApply;
-        private Button _btnCancel;
-
-        // About tab
+        // About Tab
         private Label _lblAboutTitle;
         private Label _lblAboutDesc;
         private Button _btnCheckUpdate;
         private Button _btnOpenGitHub;
+
+        // Bottom Footer
+        private Panel _bottomBar;
+        private Button _btnApply;
+        private Button _btnSave;
+        private Button _btnCancel;
+        private Label _lblAuthor;
+        private Label _lblSep;
+        private Label _lblVer;
 
         public SettingsForm(Config config, Action onConfigChanged, WallpaperEngine wallpaperEngine) {
             _config = config;
@@ -1993,192 +1938,261 @@ namespace GINDockWallpaper {
             _wallpaperEngine = wallpaperEngine;
             InitializeComponent();
             ApplyLocalization();
+            ApplyThemeColors();
+        }
+
+        private void PlayClickSound() {
+            if (_config.EnableSound) {
+                try { System.Media.SystemSounds.Asterisk.Play(); } catch { }
+            }
         }
 
         private void InitializeComponent() {
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
 
             this.Text = "⚡ " + I18n.T("AppTitle") + " — " + I18n.T("Settings");
-            this.Size = new Size(740, 580);
+            this.Size = new Size(760, 650);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.BackColor = theme.Background;
             this.ForeColor = theme.TextPrimary;
-            this.Font = new Font("Segoe UI", 9f);
+            this.Font = new Font(_config.CalendarFontFamily ?? "Segoe UI", 9f);
 
-            _tabs = new TabControl();
-            _tabs.Location = new Point(12, 12);
-            _tabs.Size = new Size(700, 480);
+            // ----------------------------------------
+            // 1. TOP HEADER BAR (GIN-VPN Heritage)
+            // ----------------------------------------
+            _topBar = new Panel { Location = new Point(12, 10), Size = new Size(720, 36), BackColor = Color.Transparent };
+
+            _lblHeaderTitle = new Label {
+                Text = "⚡ GIN Dock Wallpaper by VladiMIR+AI",
+                Font = new Font("Segoe UI", 11.5f, FontStyle.Bold),
+                Location = new Point(4, 6),
+                AutoSize = true,
+                ForeColor = theme.Accent
+            };
+
+            _btnModeDay = new Button { Text = "☼", Size = new Size(36, 28), Location = new Point(410, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnModeEvening = new Button { Text = "☁", Size = new Size(36, 28), Location = new Point(450, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnModeNight = new Button { Text = "☾", Size = new Size(36, 28), Location = new Point(490, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+
+            _btnModeDay.Click += (s, e) => { _config.DayEveningNightMode = "Day"; ApplyThemeColors(); PlayClickSound(); };
+            _btnModeEvening.Click += (s, e) => { _config.DayEveningNightMode = "Evening"; ApplyThemeColors(); PlayClickSound(); };
+            _btnModeNight.Click += (s, e) => { _config.DayEveningNightMode = "Night"; ApplyThemeColors(); PlayClickSound(); };
+
+            _btnLangEN = new Button { Text = "EN", Size = new Size(38, 28), Location = new Point(534, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnLangRU = new Button { Text = "RU", Size = new Size(38, 28), Location = new Point(576, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnLangCS = new Button { Text = "CS", Size = new Size(38, 28), Location = new Point(618, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+
+            _btnLangEN.Click += (s, e) => { _config.Language = "en"; I18n.SetLanguage("en"); ApplyLocalization(); ApplyThemeColors(); PlayClickSound(); };
+            _btnLangRU.Click += (s, e) => { _config.Language = "ru"; I18n.SetLanguage("ru"); ApplyLocalization(); ApplyThemeColors(); PlayClickSound(); };
+            _btnLangCS.Click += (s, e) => { _config.Language = "cs"; I18n.SetLanguage("cs"); ApplyLocalization(); ApplyThemeColors(); PlayClickSound(); };
+
+            _btnSound = new Button { Text = "♪", Size = new Size(34, 28), Location = new Point(664, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnSound.Click += (s, e) => {
+                _config.EnableSound = !_config.EnableSound;
+                ApplyThemeColors();
+                PlayClickSound();
+            };
+
+            _topBar.Controls.AddRange(new Control[] {
+                _lblHeaderTitle, _btnModeDay, _btnModeEvening, _btnModeNight,
+                _btnLangEN, _btnLangRU, _btnLangCS, _btnSound
+            });
+            this.Controls.Add(_topBar);
+
+            // ----------------------------------------
+            // 2. TABS CONTAINER
+            // ----------------------------------------
+            _tabs = new TabControl { Location = new Point(12, 52), Size = new Size(720, 500) };
 
             // =====================================
             // TAB 1: MAIN
             // =====================================
             _tabMain = new TabPage();
-            _tabMain.BackColor = theme.CardBackground;
+            _chkEnableDock = new CheckBox { Checked = _config.EnableDock, Location = new Point(25, 20), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _chkEnableWall = new CheckBox { Checked = _config.EnableWallpaper, Location = new Point(25, 55), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _chkAutoStart = new CheckBox { Checked = _config.StartWithWindows, Location = new Point(25, 90), AutoSize = true };
+            _chkAutoUpdate = new CheckBox { Checked = _config.CheckUpdatesOnStartup, Location = new Point(25, 125), AutoSize = true };
 
-            _lblDayEveningNight = new Label { Location = new Point(25, 25), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbDayEveningNight = new ComboBox { Location = new Point(280, 22), Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbDayEveningNight.Items.AddRange(new string[] { I18n.T("ModeAuto"), I18n.T("ModeDay"), I18n.T("ModeEvening"), I18n.T("ModeNight") });
-            SelectDayNightIndex();
+            _lblThemesHeader = new Label { Location = new Point(25, 170), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
 
-            _lblLang = new Label { Location = new Point(25, 65), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbLang = new ComboBox { Location = new Point(280, 62), Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
-            PopulateLanguageList();
-            SelectLanguageIndex(_config.Language);
-            _cmbLang.SelectedIndexChanged += (s, e) => {
-                string newLang = GetSelectedLanguageCode(_cmbLang.SelectedIndex);
-                if (newLang != _config.Language) {
-                    _config.Language = newLang;
-                    I18n.SetLanguage(newLang);
-                    ApplyLocalization();
-                    if (_onConfigChanged != null) _onConfigChanged();
-                }
+            string[] themeIds = new string[] {
+                "WarmSand", "Midnight", "Cyberpunk", "NordicFrost", "Emerald",
+                "Navy", "TokyoNeon", "Glass", "Titanium", "Daylight"
+            };
+            string[] themeNames = new string[] {
+                "Warm Sand", "Midnight OLED", "Cyberpunk", "Nordic Frost", "Emerald Forest",
+                "Deep Space Navy", "Tokyo Neon", "Pure Glass", "Titanium", "Daylight"
             };
 
-            _chkEnableDock = new CheckBox { Checked = _config.EnableDock, Location = new Point(25, 115), AutoSize = true, ForeColor = theme.TextPrimary };
-            _chkEnableWall = new CheckBox { Checked = _config.EnableWallpaper, Location = new Point(25, 150), AutoSize = true, ForeColor = theme.TextPrimary };
-
-            _lblTheme = new Label { Location = new Point(25, 195), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbTheme = new ComboBox { Location = new Point(280, 192), Width = 340, DropDownStyle = ComboBoxStyle.DropDownList };
-            foreach (var th in ThemeManager.Themes.Values) {
-                _cmbTheme.Items.Add(th.Name);
+            for (int i = 0; i < themeIds.Length; i++) {
+                int col = i % 5;
+                int row = i / 5;
+                string tId = themeIds[i];
+                Button bTheme = new Button {
+                    Text = themeNames[i],
+                    Tag = tId,
+                    Size = new Size(126, 42),
+                    Location = new Point(25 + col * 134, 200 + row * 48),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
+                };
+                bTheme.Click += (s, e) => {
+                    _config.ThemeName = (string)((Button)s).Tag;
+                    ApplyThemeColors();
+                    PlayClickSound();
+                };
+                _themeButtons.Add(bTheme);
+                _tabMain.Controls.Add(bTheme);
             }
-            SelectThemeIndex(_config.ThemeName);
-
-            _chkAutoStart = new CheckBox { Checked = _config.StartWithWindows, Location = new Point(25, 245), AutoSize = true, ForeColor = theme.TextPrimary };
-            _chkAutoUpdate = new CheckBox { Checked = _config.CheckUpdatesOnStartup, Location = new Point(25, 280), AutoSize = true, ForeColor = theme.TextPrimary };
 
             _tabMain.Controls.AddRange(new Control[] {
-                _lblDayEveningNight, _cmbDayEveningNight,
-                _lblLang, _cmbLang,
-                _chkEnableDock, _chkEnableWall,
-                _lblTheme, _cmbTheme,
-                _chkAutoStart, _chkAutoUpdate
+                _chkEnableDock, _chkEnableWall, _chkAutoStart, _chkAutoUpdate, _lblThemesHeader
             });
             _tabs.TabPages.Add(_tabMain);
 
             // =====================================
-            // TAB 2: WALLPAPER
+            // TAB 2: WALLPAPER & CALENDAR
             // =====================================
             _tabWall = new TabPage();
-            _tabWall.BackColor = theme.CardBackground;
-            _tabWall.AutoScroll = true;
 
-            _lblWallThemesTitle = new Label { Location = new Point(20, 15), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold), ForeColor = theme.Accent };
+            _lblWallThemesTitle = new Label { Location = new Point(20, 10), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
             _tabWall.Controls.Add(_lblWallThemesTitle);
 
+            _chkCatAll = new CheckBox { Text = "🎲 " + I18n.T("CatAll"), Location = new Point(25, 34), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _chkCatAll.CheckedChanged += ChkCatAll_CheckedChanged;
+            _tabWall.Controls.Add(_chkCatAll);
+
             string[] catKeys = new string[] {
-                "all", "3d", "flowers", "ocean", "space", "nature", "animals",
-                "cars", "trucks", "girls", "city", "cyberpunk", "minimalism", "anime"
+                "3d", "flowers", "ocean", "space", "nature", "animals", "cars",
+                "trucks", "girls", "city", "cyberpunk", "minimalism", "anime"
+            };
+            string[] catNames = new string[] {
+                "Cat3D", "CatFlowers", "CatOcean", "CatSpace", "CatNature", "CatAnimals", "CatCars",
+                "CatTrucks", "CatGirls", "CatCity", "CatCyberpunk", "CatMinimalism", "CatAnime"
             };
 
             string activeCats = (_config.WallpaperCategories ?? "all").ToLowerInvariant();
             for (int i = 0; i < catKeys.Length; i++) {
                 string key = catKeys[i];
-                int col = i % 2;
-                int row = i / 2;
-                int x = 25 + col * 330;
-                int y = 45 + row * 26;
-
+                int col = i / 7;
+                int row = i % 7;
                 CheckBox cb = new CheckBox {
+                    Text = I18n.T(catNames[i]),
                     Tag = key,
-                    Location = new Point(x, y),
-                    Width = 320,
-                    Checked = activeCats.Contains(key),
-                    ForeColor = theme.TextPrimary
+                    Location = new Point(col == 0 ? 25 : 360, 60 + row * 22),
+                    AutoSize = true
                 };
-
-                if (key == "all") {
-                    cb.CheckedChanged += (s, e) => {
-                        if (_isUpdatingAll) return;
-                        _isUpdatingAll = true;
-                        bool chk = cb.Checked;
-                        foreach (var kvp in _catCheckBoxes) {
-                            if (kvp.Key != "all") kvp.Value.Checked = chk;
-                        }
-                        _isUpdatingAll = false;
-                    };
-                } else {
-                    cb.CheckedChanged += (s, e) => {
-                        if (_isUpdatingAll) return;
-                        _isUpdatingAll = true;
-                        bool allOn = true;
-                        foreach (var kvp in _catCheckBoxes) {
-                            if (kvp.Key != "all" && !kvp.Value.Checked) {
-                                allOn = false;
-                                break;
-                            }
-                        }
-                        if (_catCheckBoxes.ContainsKey("all")) {
-                            _catCheckBoxes["all"].Checked = allOn;
-                        }
-                        _isUpdatingAll = false;
-                    };
-                }
-
+                cb.Checked = (activeCats.Contains("all") || activeCats.Contains(key));
+                cb.CheckedChanged += ChildCategory_CheckedChanged;
                 _catCheckBoxes[key] = cb;
                 _tabWall.Controls.Add(cb);
             }
+            SyncMasterCheckboxState();
 
-            int wallOffY = 235;
+            // Interval Buttons
+            _lblIntervalTitle = new Label { Location = new Point(20, 222), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _btnInt1h = new Button { Text = "1 " + I18n.T("Hour"), Tag = 60, Size = new Size(115, 30), Location = new Point(25, 244), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnInt3h = new Button { Text = "3 " + I18n.T("Hours"), Tag = 180, Size = new Size(115, 30), Location = new Point(148, 244), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnInt6h = new Button { Text = "6 " + I18n.T("Hours"), Tag = 360, Size = new Size(115, 30), Location = new Point(271, 244), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnInt24h = new Button { Text = "24 " + I18n.T("Hours"), Tag = 1440, Size = new Size(115, 30), Location = new Point(394, 244), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
-            _lblWallInt = new Label { Location = new Point(20, wallOffY), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbWallInt = new ComboBox { Location = new Point(260, wallOffY - 3), Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbWallInt.Items.AddRange(new string[] { "Every 15 minutes", "Every 30 minutes", "Every 1 hour", "Every 3 hours", "Every 6 hours", "Every 12 hours", "Daily (24h)" });
-            SelectIntervalIndex(_config.WallpaperIntervalMinutes);
-            _tabWall.Controls.AddRange(new Control[] { _lblWallInt, _cmbWallInt });
+            EventHandler intClick = (s, e) => {
+                _config.WallpaperIntervalMinutes = (int)((Button)s).Tag;
+                UpdateIntervalButtonStyles();
+                PlayClickSound();
+            };
+            _btnInt1h.Click += intClick;
+            _btnInt3h.Click += intClick;
+            _btnInt6h.Click += intClick;
+            _btnInt24h.Click += intClick;
 
-            _chkShowCal = new CheckBox { Checked = _config.ShowCalendar, Location = new Point(20, wallOffY + 35), AutoSize = true, ForeColor = theme.TextPrimary };
-            _tabWall.Controls.Add(_chkShowCal);
+            _tabWall.Controls.AddRange(new Control[] { _lblIntervalTitle, _btnInt1h, _btnInt3h, _btnInt6h, _btnInt24h });
 
-            _lblCalFont = new Label { Location = new Point(20, wallOffY + 70), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbCalFont = new ComboBox { Location = new Point(260, wallOffY + 67), Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbCalFont.Items.AddRange(FontDirectory.CuratedFonts);
-            SelectFontInCombo(_cmbCalFont, _config.CalendarFontFamily);
-            _tabWall.Controls.AddRange(new Control[] { _lblCalFont, _cmbCalFont });
+            // Calendar HUD
+            _chkShowCal = new CheckBox { Checked = _config.ShowCalendar, Location = new Point(25, 285), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _lblCalScale = new Label { Location = new Point(320, 287), AutoSize = true };
+            _tbCalScale = new TrackBar { Location = new Point(480, 280), Width = 190, Minimum = 6, Maximum = 20, Value = Math.Max(6, Math.Min(20, (int)(_config.CalendarScale * 10f))), TickFrequency = 2 };
+            _tbCalScale.ValueChanged += (s, e) => {
+                _lblCalScale.Text = I18n.T("CalendarScale") + " (" + (_tbCalScale.Value * 10) + "%)";
+            };
 
-            _lblCalScale = new Label { Location = new Point(20, wallOffY + 105), AutoSize = true, ForeColor = theme.TextSecondary };
-            _tbCalScale = new TrackBar { Location = new Point(260, wallOffY + 100), Width = 220, Minimum = 7, Maximum = 18, Value = (int)(_config.CalendarScale * 10) };
-            _tbCalScale.ValueChanged += (s, e) => _lblCalScale.Text = I18n.T("CalendarScale") + " " + (_tbCalScale.Value / 10.0f).ToString("0.0") + "x";
-            _tabWall.Controls.AddRange(new Control[] { _lblCalScale, _tbCalScale });
+            _tabWall.Controls.AddRange(new Control[] { _chkShowCal, _lblCalScale, _tbCalScale });
 
-            _btnNextWall = new Button { Location = new Point(20, wallOffY + 145), Width = 230, Height = 32 };
+            // 12 Curated Font Buttons with Live Preview
+            _lblFontsTitle = new Label { Location = new Point(20, 325), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _tabWall.Controls.Add(_lblFontsTitle);
+
+            string[] curatedFonts = new string[] {
+                "Segoe UI", "Bahnschrift", "Arial", "Verdana",
+                "Georgia", "Corbel", "Consolas", "Trebuchet MS",
+                "Cambria", "Century Gothic", "Candara", "Constantia"
+            };
+
+            for (int i = 0; i < curatedFonts.Length; i++) {
+                int col = i % 4;
+                int row = i / 4;
+                string fontName = curatedFonts[i];
+                Button bFont = new Button {
+                    Text = fontName,
+                    Tag = fontName,
+                    Size = new Size(158, 34),
+                    Location = new Point(25 + col * 164, 348 + row * 38),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
+                };
+                try {
+                    bFont.Font = new Font(fontName, 9.5f, FontStyle.Regular);
+                } catch { }
+
+                bFont.Click += (s, e) => {
+                    string chosen = (string)((Button)s).Tag;
+                    _config.CalendarFontFamily = chosen;
+                    _config.DockFolderFontFamily = chosen;
+                    _config.DockItemFontFamily = chosen;
+                    ApplyFormFont(chosen);
+                    UpdateFontButtonStyles();
+                    PlayClickSound();
+                };
+                _fontButtons.Add(bFont);
+                _tabWall.Controls.Add(bFont);
+            }
+
+            _btnNextWall = new Button {
+                Text = "🖼️ " + I18n.T("NextWallpaper"),
+                Location = new Point(25, 466),
+                Width = 270,
+                Height = 30,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
             _btnNextWall.Click += (s, e) => {
                 if (_wallpaperEngine != null) {
                     _wallpaperEngine.TriggerNextWallpaperAsync();
-                    MessageBox.Show("Downloading fresh 4K wallpaper...", "GIN Dock Wallpaper", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    PlayClickSound();
                 }
             };
-
-            _btnSaveWall = new Button { Location = new Point(270, wallOffY + 145), Width = 280, Height = 32 };
-            _btnSaveWall.Click += (s, e) => {
-                if (_wallpaperEngine != null) _wallpaperEngine.SaveActiveWallpaperToPictures();
-            };
-            _tabWall.Controls.AddRange(new Control[] { _btnNextWall, _btnSaveWall });
+            _tabWall.Controls.Add(_btnNextWall);
 
             _tabs.TabPages.Add(_tabWall);
 
             // =====================================
-            // TAB 3: DOCK
+            // TAB 3: DOCK BAR
             // =====================================
             _tabDock = new TabPage();
-            _tabDock.BackColor = theme.CardBackground;
-            _tabDock.AutoScroll = true;
 
-            _lblDockPlacement = new Label { Location = new Point(20, 20), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbDockPlacement = new ComboBox { Location = new Point(260, 17), Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbDockPlacement.Items.Add(I18n.T("PlacementTop"));
-            _cmbDockPlacement.Items.Add(I18n.T("PlacementLeft"));
-            _cmbDockPlacement.Items.Add(I18n.T("PlacementOff"));
-            if (!_config.EnableDock || _config.DockPosition == "Off") _cmbDockPlacement.SelectedIndex = 2;
-            else if (_config.DockPosition == "Left") _cmbDockPlacement.SelectedIndex = 1;
-            else _cmbDockPlacement.SelectedIndex = 0;
+            _lblDockPlacement = new Label { Location = new Point(20, 15), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            _btnDockTop = new Button { Text = "⬆ " + I18n.T("DockTop"), Size = new Size(160, 32), Location = new Point(25, 38), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnDockLeft = new Button { Text = "⬅ " + I18n.T("DockLeft"), Size = new Size(160, 32), Location = new Point(195, 38), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
-            _lblRoot = new Label { Location = new Point(20, 55), AutoSize = true, ForeColor = theme.TextSecondary };
-            _txtRoot = new TextBox { Text = _config.RootFolder, Location = new Point(20, 75), Width = 480 };
-            _btnBrowse = new Button { Location = new Point(510, 73), Width = 110, Height = 26 };
+            _btnDockTop.Click += (s, e) => { _config.DockPosition = "Top"; UpdateDockPlacementButtons(); PlayClickSound(); };
+            _btnDockLeft.Click += (s, e) => { _config.DockPosition = "Left"; UpdateDockPlacementButtons(); PlayClickSound(); };
+
+            _lblRoot = new Label { Location = new Point(20, 85), AutoSize = true };
+            _txtRoot = new TextBox { Location = new Point(25, 107), Width = 530, Text = _config.RootFolder };
+            _btnBrowse = new Button { Location = new Point(565, 105), Width = 110, Height = 26, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             _btnBrowse.Click += (s, e) => {
                 using (FolderBrowserDialog fbd = new FolderBrowserDialog()) {
                     fbd.SelectedPath = _txtRoot.Text;
@@ -2186,78 +2200,53 @@ namespace GINDockWallpaper {
                 }
             };
 
-            _lblSort = new Label { Location = new Point(20, 115), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbSort = new ComboBox { Location = new Point(260, 112), Width = 320, DropDownStyle = ComboBoxStyle.DropDownList };
-            PopulateSortList();
-            SelectSortIndex(_config.SortingMode);
+            _lblSort = new Label { Location = new Point(20, 145), AutoSize = true };
+            _cmbSort = new ComboBox { Location = new Point(25, 167), Width = 310, DropDownStyle = ComboBoxStyle.DropDownList };
 
-            _lblShowLabels = new Label { Location = new Point(20, 155), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbShowLabels = new ComboBox { Location = new Point(260, 152), Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbShowLabels.Items.AddRange(new string[] { I18n.T("LabelsFoldersOnly"), I18n.T("LabelsAll"), I18n.T("LabelsNone") });
-            _cmbShowLabels.SelectedIndex = (_config.ShowLabels == "All" ? 1 : (_config.ShowLabels == "None" ? 2 : 0));
+            _lblShowLabels = new Label { Location = new Point(365, 145), AutoSize = true };
+            _cmbShowLabels = new ComboBox { Location = new Point(370, 167), Width = 305, DropDownStyle = ComboBoxStyle.DropDownList };
 
-            _lblIconSize = new Label { Location = new Point(20, 195), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbIconSize = new ComboBox { Location = new Point(260, 192), Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbIconSize.Items.AddRange(new object[] { "16 px (Small)", "24 px (Compact)", "32 px (Standard)", "48 px (Large)", "64 px (Extra Large)" });
-            SelectIconSizeIndex(_config.DockIconSize);
-
-            _lblDelay = new Label { Location = new Point(20, 235), AutoSize = true, ForeColor = theme.TextSecondary };
-            _tbDelay = new TrackBar { Location = new Point(260, 230), Width = 240, Minimum = 200, Maximum = 1500, TickFrequency = 100, Value = Math.Max(200, Math.Min(1500, _config.AutoHideDelayMs)) };
+            _lblDelay = new Label { Location = new Point(20, 205), AutoSize = true };
+            _tbDelay = new TrackBar { Location = new Point(25, 227), Width = 310, Minimum = 200, Maximum = 1500, TickFrequency = 100, Value = Math.Max(200, Math.Min(1500, _config.AutoHideDelayMs)) };
             _tbDelay.ValueChanged += (s, e) => _lblDelay.Text = I18n.T("AutoHideDelay") + " (" + _tbDelay.Value + " ms)";
 
-            // ACCORDION FOR FONTS
-            _btnFontAccordion = new Button {
-                Text = "▼ " + I18n.T("FontAccordionBtn"),
-                Location = new Point(20, 280),
-                Width = 600,
-                Height = 30,
-                FlatStyle = FlatStyle.Flat,
-                ForeColor = theme.Accent,
-                BackColor = theme.BrandBadge,
-                Cursor = Cursors.Hand
-            };
-            _btnFontAccordion.Click += (s, e) => ToggleFontAccordion();
+            // Dock Icon Size Buttons (16, 24, 32, 48, 64)
+            _lblIconSize = new Label { Location = new Point(20, 275), AutoSize = true, Font = new Font(this.Font, FontStyle.Bold) };
+            int[] sizes = new int[] { 16, 24, 32, 48, 64 };
+            for (int i = 0; i < sizes.Length; i++) {
+                int sz = sizes[i];
+                Button bSz = new Button {
+                    Text = sz + " px",
+                    Tag = sz,
+                    Size = new Size(115, 32),
+                    Location = new Point(25 + i * 125, 298),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
+                };
+                bSz.Click += (s, e) => {
+                    _config.DockIconSize = (int)((Button)s).Tag;
+                    UpdateIconSizeButtonStyles();
+                    PlayClickSound();
+                };
+                _iconSizeButtons.Add(bSz);
+                _tabDock.Controls.Add(bSz);
+            }
 
-            _panelFontAccordion = new Panel {
-                Location = new Point(20, 315),
-                Width = 600,
-                Height = 120,
-                BorderStyle = BorderStyle.FixedSingle,
-                BackColor = theme.Background,
-                Visible = false
-            };
+            // Typographic sliders
+            _lblFolderFontSize = new Label { Location = new Point(20, 350), AutoSize = true };
+            _tbFolderFontSize = new TrackBar { Location = new Point(25, 372), Width = 310, Minimum = 7, Maximum = 16, Value = Math.Max(7, Math.Min(16, (int)_config.DockFolderFontSize)) };
+            _tbFolderFontSize.ValueChanged += (s, e) => _lblFolderFontSize.Text = I18n.T("FolderFontSize") + " (" + _tbFolderFontSize.Value + " pt)";
 
-            _lblFolderFont = new Label { Location = new Point(15, 12), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbFolderFont = new ComboBox { Location = new Point(240, 10), Width = 180, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbFolderFont.Items.AddRange(FontDirectory.CuratedFonts);
-            SelectFontInCombo(_cmbFolderFont, _config.DockFolderFontFamily);
-
-            _lblFolderFontSize = new Label { Location = new Point(440, 12), AutoSize = true, ForeColor = theme.TextSecondary };
-            _tbFolderFontSize = new TrackBar { Location = new Point(490, 8), Width = 100, Minimum = 7, Maximum = 20, Value = (int)Math.Max(7, Math.Min(20, _config.DockFolderFontSize)) };
-            _tbFolderFontSize.ValueChanged += (s, e) => _lblFolderFontSize.Text = _tbFolderFontSize.Value + " pt";
-
-            _lblItemFont = new Label { Location = new Point(15, 62), AutoSize = true, ForeColor = theme.TextSecondary };
-            _cmbItemFont = new ComboBox { Location = new Point(240, 60), Width = 180, DropDownStyle = ComboBoxStyle.DropDownList };
-            _cmbItemFont.Items.AddRange(FontDirectory.CuratedFonts);
-            SelectFontInCombo(_cmbItemFont, _config.DockItemFontFamily);
-
-            _lblItemFontSize = new Label { Location = new Point(440, 62), AutoSize = true, ForeColor = theme.TextSecondary };
-            _tbItemFontSize = new TrackBar { Location = new Point(490, 58), Width = 100, Minimum = 7, Maximum = 20, Value = (int)Math.Max(7, Math.Min(20, _config.DockItemFontSize)) };
-            _tbItemFontSize.ValueChanged += (s, e) => _lblItemFontSize.Text = _tbItemFontSize.Value + " pt";
-
-            _panelFontAccordion.Controls.AddRange(new Control[] {
-                _lblFolderFont, _cmbFolderFont, _lblFolderFontSize, _tbFolderFontSize,
-                _lblItemFont, _cmbItemFont, _lblItemFontSize, _tbItemFontSize
-            });
+            _lblItemFontSize = new Label { Location = new Point(365, 350), AutoSize = true };
+            _tbItemFontSize = new TrackBar { Location = new Point(370, 372), Width = 305, Minimum = 7, Maximum = 16, Value = Math.Max(7, Math.Min(16, (int)_config.DockItemFontSize)) };
+            _tbItemFontSize.ValueChanged += (s, e) => _lblItemFontSize.Text = I18n.T("ItemFontSize") + " (" + _tbItemFontSize.Value + " pt)";
 
             _tabDock.Controls.AddRange(new Control[] {
-                _lblDockPlacement, _cmbDockPlacement,
+                _lblDockPlacement, _btnDockTop, _btnDockLeft,
                 _lblRoot, _txtRoot, _btnBrowse,
-                _lblSort, _cmbSort,
-                _lblShowLabels, _cmbShowLabels,
-                _lblIconSize, _cmbIconSize,
-                _lblDelay, _tbDelay,
-                _btnFontAccordion, _panelFontAccordion
+                _lblSort, _cmbSort, _lblShowLabels, _cmbShowLabels,
+                _lblDelay, _tbDelay, _lblIconSize,
+                _lblFolderFontSize, _tbFolderFontSize, _lblItemFontSize, _tbItemFontSize
             });
             _tabs.TabPages.Add(_tabDock);
 
@@ -2265,20 +2254,19 @@ namespace GINDockWallpaper {
             // TAB 4: ABOUT
             // =====================================
             _tabAbout = new TabPage();
-            _tabAbout.BackColor = theme.CardBackground;
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v034", Font = new Font("Segoe UI", 12f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v035", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
-                Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Windows Architecture\nPlatform: Native WinAPI & GDI+ (Idle: ~2-4 MB RAM)\n\nDual-Feature: Hot-Corner Dock Bar + 4K Dynamic Wallpaper & Live Calendar",
-                Location = new Point(25, 65),
+                Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
+                Location = new Point(25, 70),
                 AutoSize = true,
-                ForeColor = theme.TextSecondary
+                Font = new Font("Segoe UI", 9.5f)
             };
 
-            _btnCheckUpdate = new Button { Location = new Point(25, 175), Width = 240, Height = 32 };
+            _btnCheckUpdate = new Button { Location = new Point(25, 210), Width = 260, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             _btnCheckUpdate.Click += (s, e) => RunAutoUpdateWorkflow(this, true);
 
-            _btnOpenGitHub = new Button { Text = "🌐 GitHub Open Source Repository", Location = new Point(280, 175), Width = 280, Height = 32 };
+            _btnOpenGitHub = new Button { Text = "🌐 GitHub Open Source Repository", Location = new Point(300, 210), Width = 280, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             _btnOpenGitHub.Click += (s, e) => {
                 try { Process.Start("https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper"); } catch { }
             };
@@ -2288,161 +2276,334 @@ namespace GINDockWallpaper {
 
             this.Controls.Add(_tabs);
 
-            // =====================================
-            // SIGNATURE FOOTER BRAND: VladiMIR+AI ||| v034
-            // =====================================
-            _lblBrandLink = new LinkLabel {
-                Text = "VladiMIR+AI  |||  v034",
-                Location = new Point(20, 508),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
-                LinkColor = theme.Accent,
-                ActiveLinkColor = theme.AccentHover
-            };
-            _lblBrandLink.Links.Add(0, 11, "https://github.com/GinCz");
-            _lblBrandLink.Links.Add(17, 4, "update");
-            _lblBrandLink.LinkClicked += (s, e) => {
-                if (e.Link.LinkData.ToString() == "update") {
-                    RunAutoUpdateWorkflow(this, true);
-                } else {
-                    try { Process.Start(e.Link.LinkData.ToString()); } catch { }
-                }
-            };
-            this.Controls.Add(_lblBrandLink);
+            // ----------------------------------------
+            // 3. BOTTOM FOOTER BAR (With GIN-VPN Signature)
+            // ----------------------------------------
+            _bottomBar = new Panel { Location = new Point(12, 560), Size = new Size(720, 45), BackColor = Color.Transparent };
 
-            // =====================================
-            // BOTTOM BUTTONS: Save & Close, Apply, Cancel
-            // =====================================
-            _btnSave = new Button { Location = new Point(350, 500), Width = 130, Height = 34, DialogResult = DialogResult.OK };
-            _btnSave.Click += (s, e) => {
-                CommitSettings(false);
-                this.Close();
-            };
+            _btnApply = new Button { Text = "Применить", Location = new Point(0, 6), Width = 115, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnApply.Click += (s, e) => { CommitSettings(true); PlayClickSound(); };
 
-            _btnApply = new Button { Location = new Point(490, 500), Width = 110, Height = 34 };
-            _btnApply.Click += (s, e) => {
-                CommitSettings(true); // true = immediately apply wallpaper & dock!
-            };
+            _btnSave = new Button { Text = "Сохранить и закрыть", Location = new Point(125, 6), Width = 155, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.OK };
+            _btnSave.Click += (s, e) => { CommitSettings(false); this.Close(); };
 
-            _btnCancel = new Button { Location = new Point(610, 500), Width = 100, Height = 34, DialogResult = DialogResult.Cancel };
+            _btnCancel = new Button { Text = "Отмена", Location = new Point(290, 6), Width = 95, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel };
             _btnCancel.Click += (s, e) => this.Close();
 
-            this.Controls.AddRange(new Control[] { _btnSave, _btnApply, _btnCancel });
+            // Right signature: VladiMIR+AI ||| v035 (Clean, Gold, No underline!)
+            _lblAuthor = new Label {
+                Text = "VladiMIR+AI",
+                Location = new Point(530, 11),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(235, 175, 55),
+                Cursor = Cursors.Hand
+            };
+            _lblAuthor.Click += (s, e) => {
+                try { Process.Start("https://github.com/GinCz"); } catch { }
+            };
+
+            _lblSep = new Label {
+                Text = " ||| ",
+                Location = new Point(626, 11),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(160, 160, 160)
+            };
+
+            _lblVer = new Label {
+                Text = "v035",
+                Location = new Point(656, 11),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(235, 175, 55),
+                Cursor = Cursors.Hand
+            };
+            _lblVer.Click += (s, e) => {
+                RunAutoUpdateWorkflow(this, true);
+            };
+
+            _bottomBar.Controls.AddRange(new Control[] {
+                _btnApply, _btnSave, _btnCancel, _lblAuthor, _lblSep, _lblVer
+            });
+            this.Controls.Add(_bottomBar);
         }
 
-        private void ToggleFontAccordion() {
-            _isAccordionExpanded = !_isAccordionExpanded;
-            _panelFontAccordion.Visible = _isAccordionExpanded;
-            _btnFontAccordion.Text = (_isAccordionExpanded ? "▲ " : "▼ ") + I18n.T("FontAccordionBtn");
+        private void ChkCatAll_CheckedChanged(object sender, EventArgs e) {
+            if (_isUpdatingAll) return;
+            _isUpdatingAll = true;
+            bool isChecked = _chkCatAll.Checked;
+            foreach (var cb in _catCheckBoxes.Values) {
+                cb.Checked = isChecked;
+            }
+            _isUpdatingAll = false;
+        }
 
-            if (_isAccordionExpanded) {
-                this.Height = 670;
-                _tabs.Height = 570;
-                _lblBrandLink.Location = new Point(20, 598);
-                _btnSave.Location = new Point(_btnSave.Location.X, 590);
-                _btnApply.Location = new Point(_btnApply.Location.X, 590);
-                _btnCancel.Location = new Point(_btnCancel.Location.X, 590);
+        private void ChildCategory_CheckedChanged(object sender, EventArgs e) {
+            if (_isUpdatingAll) return;
+            SyncMasterCheckboxState();
+        }
+
+        private void SyncMasterCheckboxState() {
+            _isUpdatingAll = true;
+            bool allChecked = true;
+            foreach (var cb in _catCheckBoxes.Values) {
+                if (!cb.Checked) {
+                    allChecked = false;
+                    break;
+                }
+            }
+            _chkCatAll.Checked = allChecked;
+            _isUpdatingAll = false;
+        }
+
+        private void ApplyFormFont(string fontName) {
+            try {
+                Font fBase = new Font(fontName, 9f, FontStyle.Regular);
+                Font fBold = new Font(fontName, 9f, FontStyle.Bold);
+                this.Font = fBase;
+                RecurseControlsFont(this, fBase, fBold);
+            } catch { }
+        }
+
+        private void RecurseControlsFont(Control parent, Font fBase, Font fBold) {
+            foreach (Control c in parent.Controls) {
+                if (c == _lblHeaderTitle || c == _lblAboutTitle) continue;
+                if (c.Font != null && c.Font.Bold) c.Font = fBold;
+                else c.Font = fBase;
+                if (c.HasChildren) RecurseControlsFont(c, fBase, fBold);
+            }
+        }
+
+        private void ApplyThemeColors() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+
+            this.BackColor = theme.Background;
+            this.ForeColor = theme.TextPrimary;
+
+            _lblHeaderTitle.ForeColor = theme.Accent;
+
+            // Day / Evening / Night toggle styles
+            StyleModeButton(_btnModeDay, _config.DayEveningNightMode == "Day", theme);
+            StyleModeButton(_btnModeEvening, _config.DayEveningNightMode == "Evening", theme);
+            StyleModeButton(_btnModeNight, _config.DayEveningNightMode == "Night", theme);
+
+            // Language toggle styles
+            string curLang = (_config.Language ?? "en").ToLowerInvariant();
+            StyleModeButton(_btnLangEN, curLang == "en", theme);
+            StyleModeButton(_btnLangRU, curLang == "ru", theme);
+            StyleModeButton(_btnLangCS, curLang == "cs", theme);
+
+            // Sound button style
+            StyleModeButton(_btnSound, _config.EnableSound, theme);
+
+            // Tabs styling
+            _tabMain.BackColor = theme.CardBackground;
+            _tabWall.BackColor = theme.CardBackground;
+            _tabDock.BackColor = theme.CardBackground;
+            _tabAbout.BackColor = theme.CardBackground;
+
+            // Action Buttons
+            _btnApply.BackColor = theme.Accent;
+            _btnApply.ForeColor = Color.Black;
+            _btnApply.FlatAppearance.BorderColor = theme.Accent;
+
+            _btnSave.BackColor = theme.CardBackground;
+            _btnSave.ForeColor = theme.TextPrimary;
+            _btnSave.FlatAppearance.BorderColor = theme.Border;
+
+            _btnCancel.BackColor = theme.CardBackground;
+            _btnCancel.ForeColor = theme.TextSecondary;
+            _btnCancel.FlatAppearance.BorderColor = theme.Border;
+
+            _btnNextWall.BackColor = theme.Accent;
+            _btnNextWall.ForeColor = Color.Black;
+            _btnNextWall.FlatAppearance.BorderColor = theme.Accent;
+
+            _btnCheckUpdate.BackColor = theme.Accent;
+            _btnCheckUpdate.ForeColor = Color.Black;
+            _btnCheckUpdate.FlatAppearance.BorderColor = theme.Accent;
+
+            _btnOpenGitHub.BackColor = theme.CardBackground;
+            _btnOpenGitHub.ForeColor = theme.TextPrimary;
+            _btnOpenGitHub.FlatAppearance.BorderColor = theme.Border;
+
+            _btnBrowse.BackColor = theme.CardBackground;
+            _btnBrowse.ForeColor = theme.TextPrimary;
+            _btnBrowse.FlatAppearance.BorderColor = theme.Border;
+
+            // Theme Buttons
+            foreach (Button b in _themeButtons) {
+                bool isActive = string.Equals((string)b.Tag, _config.ThemeName, StringComparison.OrdinalIgnoreCase);
+                StyleToggleButton(b, isActive, theme);
+            }
+
+            // Interval buttons
+            UpdateIntervalButtonStyles();
+
+            // Font preview buttons
+            UpdateFontButtonStyles();
+
+            // Dock placement buttons
+            UpdateDockPlacementButtons();
+
+            // Icon size buttons
+            UpdateIconSizeButtonStyles();
+
+            // Inputs
+            _txtRoot.BackColor = theme.Background;
+            _txtRoot.ForeColor = theme.TextPrimary;
+            _cmbSort.BackColor = theme.Background;
+            _cmbSort.ForeColor = theme.TextPrimary;
+            _cmbShowLabels.BackColor = theme.Background;
+            _cmbShowLabels.ForeColor = theme.TextPrimary;
+        }
+
+        private void StyleModeButton(Button btn, bool isActive, ColorTheme theme) {
+            if (isActive) {
+                btn.BackColor = theme.Accent;
+                btn.ForeColor = Color.Black;
+                btn.FlatAppearance.BorderColor = theme.Accent;
+                btn.FlatAppearance.BorderSize = 1;
             } else {
-                this.Height = 580;
-                _tabs.Height = 480;
-                _lblBrandLink.Location = new Point(20, 508);
-                _btnSave.Location = new Point(_btnSave.Location.X, 500);
-                _btnApply.Location = new Point(_btnApply.Location.X, 500);
-                _btnCancel.Location = new Point(_btnCancel.Location.X, 500);
+                btn.BackColor = theme.CardBackground;
+                btn.ForeColor = theme.TextSecondary;
+                btn.FlatAppearance.BorderColor = theme.Border;
+                btn.FlatAppearance.BorderSize = 1;
+            }
+        }
+
+        private void StyleToggleButton(Button btn, bool isActive, ColorTheme theme) {
+            if (isActive) {
+                btn.BackColor = theme.Accent;
+                btn.ForeColor = Color.Black;
+                btn.FlatAppearance.BorderColor = theme.Accent;
+                btn.FlatAppearance.BorderSize = 2;
+                btn.Font = new Font(btn.Font, FontStyle.Bold);
+            } else {
+                btn.BackColor = theme.CardBackground;
+                btn.ForeColor = theme.TextPrimary;
+                btn.FlatAppearance.BorderColor = theme.Border;
+                btn.FlatAppearance.BorderSize = 1;
+                btn.Font = new Font(btn.Font, FontStyle.Regular);
+            }
+        }
+
+        private void UpdateIntervalButtonStyles() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            int cur = _config.WallpaperIntervalMinutes;
+            StyleToggleButton(_btnInt1h, cur <= 60, theme);
+            StyleToggleButton(_btnInt3h, cur == 180, theme);
+            StyleToggleButton(_btnInt6h, cur == 360, theme);
+            StyleToggleButton(_btnInt24h, cur >= 1440, theme);
+        }
+
+        private void UpdateFontButtonStyles() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            string curFont = _config.CalendarFontFamily ?? "Segoe UI";
+            foreach (Button b in _fontButtons) {
+                bool isActive = string.Equals((string)b.Tag, curFont, StringComparison.OrdinalIgnoreCase);
+                StyleToggleButton(b, isActive, theme);
+            }
+        }
+
+        private void UpdateDockPlacementButtons() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            bool isTop = (_config.DockPosition == "Top");
+            StyleToggleButton(_btnDockTop, isTop, theme);
+            StyleToggleButton(_btnDockLeft, !isTop, theme);
+        }
+
+        private void UpdateIconSizeButtonStyles() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            int curSz = _config.DockIconSize;
+            foreach (Button b in _iconSizeButtons) {
+                bool isActive = ((int)b.Tag == curSz);
+                StyleToggleButton(b, isActive, theme);
             }
         }
 
         private void ApplyLocalization() {
-            this.Text = "⚡ " + I18n.T("AppTitle") + " — " + I18n.T("Settings");
             _tabMain.Text = I18n.T("TabMain");
             _tabWall.Text = I18n.T("TabWallpaper");
             _tabDock.Text = I18n.T("TabDock");
             _tabAbout.Text = I18n.T("TabAbout");
 
-            _lblDayEveningNight.Text = I18n.T("DayEveningNight");
-            _lblLang.Text = I18n.T("Language");
-            _chkEnableDock.Text = I18n.T("EnableDock");
-            _chkEnableWall.Text = I18n.T("EnableWallpaper");
-            _lblTheme.Text = I18n.T("ColorTheme");
-            _chkAutoStart.Text = I18n.T("AutoStart");
-            _chkAutoUpdate.Text = I18n.T("AutoUpdate");
+            _chkEnableDock.Text = "⚡ " + I18n.T("EnableDock");
+            _chkEnableWall.Text = "🖼️ " + I18n.T("EnableWallpaper");
+            _chkAutoStart.Text = "🚀 " + I18n.T("AutoStart");
+            _chkAutoUpdate.Text = "⬆️ " + I18n.T("AutoUpdate");
+            _lblThemesHeader.Text = "🎨 " + I18n.T("ColorTheme");
 
             _lblWallThemesTitle.Text = I18n.T("WallThemesTitle");
-            if (_catCheckBoxes.ContainsKey("all")) _catCheckBoxes["all"].Text = I18n.T("CatAll");
-            if (_catCheckBoxes.ContainsKey("3d")) _catCheckBoxes["3d"].Text = I18n.T("Cat3D");
-            if (_catCheckBoxes.ContainsKey("flowers")) _catCheckBoxes["flowers"].Text = I18n.T("CatFlowers");
-            if (_catCheckBoxes.ContainsKey("ocean")) _catCheckBoxes["ocean"].Text = I18n.T("CatOcean");
-            if (_catCheckBoxes.ContainsKey("space")) _catCheckBoxes["space"].Text = I18n.T("CatSpace");
-            if (_catCheckBoxes.ContainsKey("nature")) _catCheckBoxes["nature"].Text = I18n.T("CatNature");
-            if (_catCheckBoxes.ContainsKey("animals")) _catCheckBoxes["animals"].Text = I18n.T("CatAnimals");
-            if (_catCheckBoxes.ContainsKey("cars")) _catCheckBoxes["cars"].Text = I18n.T("CatCars");
-            if (_catCheckBoxes.ContainsKey("trucks")) _catCheckBoxes["trucks"].Text = I18n.T("CatTrucks");
-            if (_catCheckBoxes.ContainsKey("girls")) _catCheckBoxes["girls"].Text = I18n.T("CatGirls");
-            if (_catCheckBoxes.ContainsKey("city")) _catCheckBoxes["city"].Text = I18n.T("CatCity");
-            if (_catCheckBoxes.ContainsKey("cyberpunk")) _catCheckBoxes["cyberpunk"].Text = I18n.T("CatCyberpunk");
-            if (_catCheckBoxes.ContainsKey("minimalism")) _catCheckBoxes["minimalism"].Text = I18n.T("CatMinimal");
-            if (_catCheckBoxes.ContainsKey("anime")) _catCheckBoxes["anime"].Text = I18n.T("CatAnime");
+            _chkCatAll.Text = "🎲 " + I18n.T("CatAll");
+            _lblIntervalTitle.Text = "⏱️ " + I18n.T("WallpaperInterval");
+            _btnInt1h.Text = "1 " + I18n.T("Hour");
+            _btnInt3h.Text = "3 " + I18n.T("Hours");
+            _btnInt6h.Text = "6 " + I18n.T("Hours");
+            _btnInt24h.Text = "24 " + I18n.T("Hours");
 
-            _lblWallInt.Text = I18n.T("WallInterval");
-            _chkShowCal.Text = I18n.T("ShowCalendar");
-            _lblCalFont.Text = I18n.T("CalendarFont");
-            _lblCalScale.Text = I18n.T("CalendarScale") + " " + (_tbCalScale.Value / 10.0f).ToString("0.0") + "x";
-            _btnNextWall.Text = I18n.T("BtnNextWall");
-            _btnSaveWall.Text = I18n.T("BtnSaveWall");
+            _chkShowCal.Text = "📅 " + I18n.T("ShowCalendar");
+            _lblCalScale.Text = I18n.T("CalendarScale") + " (" + (_tbCalScale.Value * 10) + "%)";
+            _lblFontsTitle.Text = "🔤 " + I18n.T("SelectFontWithPreview");
+            _btnNextWall.Text = "🖼️ " + I18n.T("NextWallpaper");
 
-            _lblDockPlacement.Text = I18n.T("DockPlacement");
-            _cmbDockPlacement.Items[0] = I18n.T("PlacementTop");
-            _cmbDockPlacement.Items[1] = I18n.T("PlacementLeft");
-            _cmbDockPlacement.Items[2] = I18n.T("PlacementOff");
+            _lblDockPlacement.Text = "📍 " + I18n.T("DockPlacement");
+            _btnDockTop.Text = "⬆ " + I18n.T("DockTop");
+            _btnDockLeft.Text = "⬅ " + I18n.T("DockLeft");
 
             _lblRoot.Text = I18n.T("RootFolder");
             _btnBrowse.Text = I18n.T("Browse");
             _lblSort.Text = I18n.T("SortingMode");
             PopulateSortList();
-            SelectSortIndex(_config.SortingMode);
 
             _lblShowLabels.Text = I18n.T("ShowLabels");
-            _cmbShowLabels.Items[0] = I18n.T("LabelsFoldersOnly");
-            _cmbShowLabels.Items[1] = I18n.T("LabelsAll");
-            _cmbShowLabels.Items[2] = I18n.T("LabelsNone");
+            PopulateShowLabelsList();
 
-            _lblIconSize.Text = I18n.T("DockIconSize");
             _lblDelay.Text = I18n.T("AutoHideDelay") + " (" + _tbDelay.Value + " ms)";
+            _lblIconSize.Text = "🔍 " + I18n.T("DockIconSize");
 
-            _btnFontAccordion.Text = (_isAccordionExpanded ? "▲ " : "▼ ") + I18n.T("FontAccordionBtn");
-            _lblFolderFont.Text = I18n.T("FolderFontFamily");
-            _lblFolderFontSize.Text = _tbFolderFontSize.Value + " pt";
-            _lblItemFont.Text = I18n.T("ItemFontFamily");
-            _lblItemFontSize.Text = _tbItemFontSize.Value + " pt";
+            _lblFolderFontSize.Text = I18n.T("FolderFontSize") + " (" + _tbFolderFontSize.Value + " pt)";
+            _lblItemFontSize.Text = I18n.T("ItemFontSize") + " (" + _tbItemFontSize.Value + " pt)";
 
-            _btnSave.Text = I18n.T("Save");
             _btnApply.Text = I18n.T("Apply");
+            _btnSave.Text = I18n.T("Save");
             _btnCancel.Text = I18n.T("Cancel");
             _btnCheckUpdate.Text = "⬆️ " + I18n.T("CheckUpdates");
         }
 
+        private void PopulateSortList() {
+            string cur = _config.SortingMode;
+            _cmbSort.Items.Clear();
+            _cmbSort.Items.Add(I18n.T("SortAlphaAZ"));
+            _cmbSort.Items.Add(I18n.T("SortAlphaZA"));
+            _cmbSort.Items.Add(I18n.T("SortFoldersFirst"));
+            _cmbSort.Items.Add(I18n.T("SortFileType"));
+            _cmbSort.Items.Add(I18n.T("SortDateModified"));
+
+            if (cur == "AlphaZA") _cmbSort.SelectedIndex = 1;
+            else if (cur == "FoldersFirst") _cmbSort.SelectedIndex = 2;
+            else if (cur == "FileType") _cmbSort.SelectedIndex = 3;
+            else if (cur == "DateModified") _cmbSort.SelectedIndex = 4;
+            else _cmbSort.SelectedIndex = 0;
+        }
+
+        private void PopulateShowLabelsList() {
+            _cmbShowLabels.Items.Clear();
+            _cmbShowLabels.Items.Add(I18n.T("LabelsFoldersOnly"));
+            _cmbShowLabels.Items.Add(I18n.T("LabelsAll"));
+            _cmbShowLabels.Items.Add(I18n.T("LabelsNone"));
+
+            if (_config.ShowLabels == "All") _cmbShowLabels.SelectedIndex = 1;
+            else if (_config.ShowLabels == "None") _cmbShowLabels.SelectedIndex = 2;
+            else _cmbShowLabels.SelectedIndex = 0;
+        }
+
         private void CommitSettings(bool triggerImmediateApply) {
-            _config.DayEveningNightMode = GetDayNightCode(_cmbDayEveningNight.SelectedIndex);
-            _config.Language = GetSelectedLanguageCode(_cmbLang.SelectedIndex);
-            _config.ThemeName = GetThemeIdByIndex(_cmbTheme.SelectedIndex);
+            _config.EnableDock = _chkEnableDock.Checked;
             _config.EnableWallpaper = _chkEnableWall.Checked;
             _config.StartWithWindows = _chkAutoStart.Checked;
             _config.CheckUpdatesOnStartup = _chkAutoUpdate.Checked;
-
-            // Dock placement
-            if (_cmbDockPlacement.SelectedIndex == 2) {
-                _config.EnableDock = false;
-                _config.DockPosition = "Off";
-            } else if (_cmbDockPlacement.SelectedIndex == 1) {
-                _config.EnableDock = true;
-                _config.DockPosition = "Left";
-            } else {
-                _config.EnableDock = true;
-                _config.DockPosition = "Top";
-            }
-            if (_chkEnableDock.Checked == false) {
-                _config.EnableDock = false;
-            }
 
             // Categories
             List<string> selectedCats = new List<string>();
@@ -2451,20 +2612,23 @@ namespace GINDockWallpaper {
             }
             if (selectedCats.Count == 0) selectedCats.Add("all");
             _config.WallpaperCategories = string.Join(",", selectedCats.ToArray());
-            _config.WallpaperIntervalMinutes = GetIntervalMinutesByIndex(_cmbWallInt.SelectedIndex);
+
             _config.ShowCalendar = _chkShowCal.Checked;
-            _config.CalendarFontFamily = _cmbCalFont.SelectedItem != null ? _cmbCalFont.SelectedItem.ToString() : "Segoe UI";
             _config.CalendarScale = _tbCalScale.Value / 10.0f;
 
             _config.RootFolder = _txtRoot.Text;
-            _config.SortingMode = GetSortCodeByIndex(_cmbSort.SelectedIndex);
-            _config.ShowLabels = (_cmbShowLabels.SelectedIndex == 1 ? "All" : (_cmbShowLabels.SelectedIndex == 2 ? "None" : "FoldersOnly"));
-            _config.DockIconSize = GetIconSizeBySelection(_cmbIconSize.SelectedIndex);
-            _config.AutoHideDelayMs = _tbDelay.Value;
+            if (_cmbSort.SelectedIndex == 1) _config.SortingMode = "AlphaZA";
+            else if (_cmbSort.SelectedIndex == 2) _config.SortingMode = "FoldersFirst";
+            else if (_cmbSort.SelectedIndex == 3) _config.SortingMode = "FileType";
+            else if (_cmbSort.SelectedIndex == 4) _config.SortingMode = "DateModified";
+            else _config.SortingMode = "AlphaAZ";
 
-            _config.DockFolderFontFamily = _cmbFolderFont.SelectedItem != null ? _cmbFolderFont.SelectedItem.ToString() : "Segoe UI";
+            if (_cmbShowLabels.SelectedIndex == 1) _config.ShowLabels = "All";
+            else if (_cmbShowLabels.SelectedIndex == 2) _config.ShowLabels = "None";
+            else _config.ShowLabels = "FoldersOnly";
+
+            _config.AutoHideDelayMs = _tbDelay.Value;
             _config.DockFolderFontSize = _tbFolderFontSize.Value;
-            _config.DockItemFontFamily = _cmbItemFont.SelectedItem != null ? _cmbItemFont.SelectedItem.ToString() : "Segoe UI";
             _config.DockItemFontSize = _tbItemFontSize.Value;
 
             SetAutoStartRegistry(_config.StartWithWindows);
@@ -2479,147 +2643,6 @@ namespace GINDockWallpaper {
             }
 
             if (_onConfigChanged != null) _onConfigChanged();
-        }
-
-        private void PopulateLanguageList() {
-            _cmbLang.Items.Clear();
-            _cmbLang.Items.Add("English (EN)");
-            _cmbLang.Items.Add("Русский (RU)");
-            _cmbLang.Items.Add("Čeština (CS)");
-            _cmbLang.Items.Add("Deutsch (DE)");
-            _cmbLang.Items.Add("Français (FR)");
-            _cmbLang.Items.Add("Español (ES)");
-            _cmbLang.Items.Add("Italiano (IT)");
-            _cmbLang.Items.Add("Português (PT)");
-            _cmbLang.Items.Add("Polski (PL)");
-            _cmbLang.Items.Add("Українська (UK)");
-            _cmbLang.Items.Add("简体中文 (ZH)");
-            _cmbLang.Items.Add("日本語 (JA)");
-        }
-
-        private void SelectLanguageIndex(string lang) {
-            string l = (lang ?? "en").ToLowerInvariant();
-            if (l == "ru") _cmbLang.SelectedIndex = 1;
-            else if (l == "cs") _cmbLang.SelectedIndex = 2;
-            else if (l == "de") _cmbLang.SelectedIndex = 3;
-            else if (l == "fr") _cmbLang.SelectedIndex = 4;
-            else if (l == "es") _cmbLang.SelectedIndex = 5;
-            else if (l == "it") _cmbLang.SelectedIndex = 6;
-            else if (l == "pt") _cmbLang.SelectedIndex = 7;
-            else if (l == "pl") _cmbLang.SelectedIndex = 8;
-            else if (l == "uk") _cmbLang.SelectedIndex = 9;
-            else if (l == "zh") _cmbLang.SelectedIndex = 10;
-            else if (l == "ja") _cmbLang.SelectedIndex = 11;
-            else _cmbLang.SelectedIndex = 0;
-        }
-
-        private string GetSelectedLanguageCode(int idx) {
-            string[] codes = new string[] { "en", "ru", "cs", "de", "fr", "es", "it", "pt", "pl", "uk", "zh", "ja" };
-            if (idx >= 0 && idx < codes.Length) return codes[idx];
-            return "en";
-        }
-
-        private void SelectDayNightIndex() {
-            string m = _config.DayEveningNightMode;
-            if (m == "Day") _cmbDayEveningNight.SelectedIndex = 1;
-            else if (m == "Evening") _cmbDayEveningNight.SelectedIndex = 2;
-            else if (m == "Night") _cmbDayEveningNight.SelectedIndex = 3;
-            else _cmbDayEveningNight.SelectedIndex = 0;
-        }
-
-        private string GetDayNightCode(int idx) {
-            if (idx == 1) return "Day";
-            if (idx == 2) return "Evening";
-            if (idx == 3) return "Night";
-            return "Auto";
-        }
-
-        private void SelectThemeIndex(string themeId) {
-            int i = 0;
-            foreach (var th in ThemeManager.Themes.Values) {
-                if (string.Equals(th.Id, themeId, StringComparison.OrdinalIgnoreCase)) {
-                    _cmbTheme.SelectedIndex = i;
-                    return;
-                }
-                i++;
-            }
-            if (_cmbTheme.Items.Count > 0) _cmbTheme.SelectedIndex = 0;
-        }
-
-        private string GetThemeIdByIndex(int idx) {
-            int i = 0;
-            foreach (var th in ThemeManager.Themes.Values) {
-                if (i == idx) return th.Id;
-                i++;
-            }
-            return "WarmSand";
-        }
-
-        private void PopulateSortList() {
-            _cmbSort.Items.Clear();
-            _cmbSort.Items.AddRange(new string[] {
-                I18n.T("SortAlphaAZ"),
-                I18n.T("SortAlphaZA"),
-                I18n.T("SortFoldersFirst"),
-                I18n.T("SortFileType"),
-                I18n.T("SortDateModified")
-            });
-        }
-
-        private void SelectSortIndex(string mode) {
-            if (mode == "AlphaZA") _cmbSort.SelectedIndex = 1;
-            else if (mode == "FoldersFirst") _cmbSort.SelectedIndex = 2;
-            else if (mode == "FileType") _cmbSort.SelectedIndex = 3;
-            else if (mode == "DateModified") _cmbSort.SelectedIndex = 4;
-            else _cmbSort.SelectedIndex = 0;
-        }
-
-        private string GetSortCodeByIndex(int idx) {
-            string[] codes = new string[] { "AlphaAZ", "AlphaZA", "FoldersFirst", "FileType", "DateModified" };
-            if (idx >= 0 && idx < codes.Length) return codes[idx];
-            return "AlphaAZ";
-        }
-
-        private void SelectIntervalIndex(int mins) {
-            if (mins <= 15) _cmbWallInt.SelectedIndex = 0;
-            else if (mins <= 30) _cmbWallInt.SelectedIndex = 1;
-            else if (mins <= 60) _cmbWallInt.SelectedIndex = 2;
-            else if (mins <= 180) _cmbWallInt.SelectedIndex = 3;
-            else if (mins <= 360) _cmbWallInt.SelectedIndex = 4;
-            else if (mins <= 720) _cmbWallInt.SelectedIndex = 5;
-            else _cmbWallInt.SelectedIndex = 6;
-        }
-
-        private int GetIntervalMinutesByIndex(int idx) {
-            int[] vals = new int[] { 15, 30, 60, 180, 360, 720, 1440 };
-            if (idx >= 0 && idx < vals.Length) return vals[idx];
-            return 60;
-        }
-
-        private void SelectIconSizeIndex(int sz) {
-            if (sz <= 16) _cmbIconSize.SelectedIndex = 0;
-            else if (sz <= 24) _cmbIconSize.SelectedIndex = 1;
-            else if (sz <= 32) _cmbIconSize.SelectedIndex = 2;
-            else if (sz <= 48) _cmbIconSize.SelectedIndex = 3;
-            else _cmbIconSize.SelectedIndex = 4;
-        }
-
-        private int GetIconSizeBySelection(int idx) {
-            if (idx == 0) return 16;
-            if (idx == 1) return 24;
-            if (idx == 2) return 32;
-            if (idx == 3) return 48;
-            return 64;
-        }
-
-        private void SelectFontInCombo(ComboBox cmb, string fontName) {
-            if (string.IsNullOrEmpty(fontName)) {
-                if (cmb.Items.Count > 0) cmb.SelectedIndex = 0;
-                return;
-            }
-            int idx = cmb.FindStringExact(fontName);
-            if (idx != -1) cmb.SelectedIndex = idx;
-            else if (cmb.Items.Count > 0) cmb.SelectedIndex = 0;
         }
 
         private void SetAutoStartRegistry(bool enable) {
@@ -2646,10 +2669,9 @@ namespace GINDockWallpaper {
                             int q1 = json.IndexOf("\"", vIdx + 10);
                             int q2 = json.IndexOf("\"", q1 + 1);
                             string remoteVer = json.Substring(q1 + 1, q2 - q1 - 1);
-                            string currentVer = "v034";
+                            string currentVer = "v035";
 
                             if (string.Compare(remoteVer, currentVer, StringComparison.OrdinalIgnoreCase) > 0) {
-                                // Extract download URL
                                 string downloadUrl = "";
                                 int dIdx = json.IndexOf("\"download_url\":");
                                 if (dIdx != -1) {
@@ -2663,7 +2685,7 @@ namespace GINDockWallpaper {
                                 }
 
                                 DialogResult dr = MessageBox.Show(
-                                    I18n.T("UpdateAvailable") + remoteVer + "\n" + I18n.T("DownloadNow"),
+                                    I18n.T("UpdateAvailable") + " (" + remoteVer + ")!\n\n" + I18n.T("DownloadNow"),
                                     "GIN Dock Wallpaper Update",
                                     MessageBoxButtons.YesNo,
                                     MessageBoxIcon.Question
@@ -2687,7 +2709,7 @@ namespace GINDockWallpaper {
                                 }
                             } else if (showUpToDateNotice) {
                                 MessageBox.Show(
-                                    I18n.T("UpToDate") + currentVer,
+                                    I18n.T("UpToDate") + " (" + currentVer + ").\n" + I18n.T("NoUpdatesNeeded"),
                                     "GIN Dock Wallpaper",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Information
@@ -2719,15 +2741,14 @@ namespace GINDockWallpaper {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v034";
+            _trayIcon.Text = "GIN Dock Wallpaper v035";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
                 if (File.Exists(icoPath)) {
                     _trayIcon.Icon = new Icon(icoPath);
-                    _dockForm.Icon = _trayIcon.Icon;
                 } else {
-                    _trayIcon.Icon = SystemIcons.Application;
+                    _trayIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
                 }
             } catch {
                 _trayIcon.Icon = SystemIcons.Application;
@@ -2760,7 +2781,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v034");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v035");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2839,7 +2860,7 @@ namespace GINDockWallpaper {
             using (Mutex mutex = new Mutex(true, "GIN_Dock_Wallpaper_SingleInstance_Mutex", out createdNew)) {
                 if (!createdNew) {
                     MessageBox.Show(
-                        "GIN Dock Wallpaper is already running in the background!\nLook for the Sand 'G' icon in your system tray (bottom-right).",
+                        "GIN Dock Wallpaper is already running in the background!\nLook for the Sand G icon in your system tray (bottom-right).",
                         "GIN Dock Wallpaper",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Information

@@ -1,20 +1,21 @@
 {
-  "version": "v034",
+  "version": "v035",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v034_Setup.exe",
-  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v034.cmd",
+  "installer": "GIN-Dock-Wallpaper_v035_Setup.exe",
+  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v035.cmd",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v034_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v035_Setup.exe",
   "features": [
-    "One-Click Seamless Auto-Updater: downloads setup directly to %TEMP%, prompts confirmation, runs installer, and restarts silently without redirecting to browser",
-    "System Tray Double-Click: instant trigger for next 4K wallpaper download and live calendar HUD render",
-    "Wallpaper Categories Select-All Checkbox: master All checkbox dynamically checks/unchecks all 13 wallpaper themes",
-    "Immediate Apply Button: clicking Apply instantly regenerates wallpaper and updates dock settings in real-time",
-    "Dock Placement Options: choose between Top, Left, or Off",
-    "Signature Brand Footer: VladiMIR+AI opens GitHub profile; clicking version runs auto-update check",
-    "Accordion Font Chooser & Icon Sizing: expandable curated font panel with 12 fonts and separate folder/item sizes"
+    "Zero-Browser In-App Auto-Updater: downloads setup directly to %TEMP%, prompts confirmation, executes installer and restarts without opening browser",
+    "GIN-VPN Header Bar: Day (☼), Evening (☁), Night (☾) toggle buttons, Language (EN, RU, CS) buttons, and Audio toggle (♪) button",
+    "Dock Placement Buttons: stylish Top and Left buttons instead of dropdown list",
+    "Theme Selector Buttons: 10 curated themes in a responsive grid with instant real-time UI styling",
+    "Wallpaper Interval Buttons: 1 hour, 3 hours, 6 hours, 24 hours quick switch buttons",
+    "12 Font Preview Buttons: each button rendered in its own font with live real-time UI font application",
+    "Real Dock Icon Sizing: 16px, 24px, 32px, 48px, 64px button toggles with actual icon & geometry scaling",
+    "GIN-VPN Signature Footer: bottom-right clean gold VladiMIR+AI ||| v035 without underline"
   ]
 }

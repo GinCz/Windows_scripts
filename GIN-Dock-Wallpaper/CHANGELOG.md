@@ -44,3 +44,16 @@
 - **Dock Placement Options**: Expanded dock placement to include `Top`, `Left`, and `Off`.
 - **Interactive Signature Footer**: Form footer features `VladiMIR+AI  |||  v034` with clickable links: `VladiMIR+AI` links to GitHub profile; clicking `v034` initiates the auto-update check.
 - **Deployment Streamlining**: Purged all unversioned files and shortcuts; retained strictly the 2 latest versions (`v033` and `v034`).
+
+## [v035] — 2026-11-20
+### 💎 GIN-VPN Heritage UI, Interactive Buttons, Zero-Browser Auto-Updater & Real Icon Sizing
+- **GIN-VPN Styled Top Bar**: Integrated top header bar featuring Day (`☼`), Evening (`☁`), and Night (`☾`) mode buttons, Language switcher (`EN`, `RU`, `CS`), and Sound effects toggle (`♪`).
+- **Zero-Browser In-App Auto-Updater**: Strictly eliminated any browser redirects on "Проверить обновление" / update checks. Directly queries `version.json`, prompts update confirmation, downloads `%TEMP%\GIN-Dock-Wallpaper_<version>_Setup.exe`, executes it, and cleanly restarts.
+- **Button-Driven Controls**:
+  - **Dock Placement**: Sleek `⬆ Сверху (Top)` and `⬅ Слева (Left)` toggle buttons replacing dropdown.
+  - **Color Themes**: 10 responsive theme buttons with live, instant re-coloring of the Settings form on click.
+  - **Wallpaper Interval**: 4 quick toggle buttons (`1 час`, `3 часа`, `6 часов`, `24 часа`).
+  - **12 Curated Font Buttons with Live Preview**: Each button rendered in its own typeface; clicking immediately styles the entire Settings dialog in real time.
+- **Real Dock Icon Sizing & Geometry**: 5 icon size buttons (`16 px`, `24 px`, `32 px`, `48 px`, `64 px`) with actual dynamic scaling of folder icons and shortcuts without clamp, adapting dock bar height and panel layout.
+- **GIN-VPN Signature Footer**: Bottom-right clean gold typography `VladiMIR+AI ||| v035` without underline; left side hosts `Применить`, `Сохранить и закрыть`, and `Отмена`.
+- **Deployment Retention**: Purged `v033`; retained strictly the 2 latest versions (`v034` and `v035`).

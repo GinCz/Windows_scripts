@@ -35,3 +35,13 @@
 - Added "Off" dock placement state alongside "Top" and "Left".
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
+
+## Update: v035 (2026-11-20)
+- Transformed SettingsForm to GIN-VPN visual design language:
+  - Top header bar with Day (`☼`), Evening (`☁`), Night (`☾`) mode buttons, Language (`EN`, `RU`, `CS`), and Sound (`♪`) toggle.
+  - Replaced dropdowns with responsive toggle buttons: Dock placement (Top, Left), Wallpaper interval (1h, 3h, 6h, 24h), and 10 Theme buttons.
+  - Implemented 12 curated Font buttons with typography preview that immediately style the whole Settings form live on click.
+  - Fixed dock icon scaling: implemented 5 icon size buttons (16, 24, 32, 48, 64 px) with true un-clamped folder and shortcut icon rendering and dynamic dock bar height resizing.
+  - Repositioned brand footer to bottom-right: `VladiMIR+AI ||| v035` in clean amber/gold typography without underline, matching GIN-VPN.
+  - Guaranteed zero browser redirects during update checking: strictly downloads to `%TEMP%` and executes installer.
+  - Purged v033 from deployment targets; retained strictly v034 and v035.
