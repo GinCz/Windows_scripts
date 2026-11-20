@@ -162,14 +162,21 @@ try {
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "[*] Stopping and removing all previous agent versions..." -ForegroundColor Yellow
 
-        # 1. Stop and remove all running scheduled task instances
-        $oldTasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog")
+        # 1. Stop and remove any legacy Windows Services (sc.exe)
+        $oldServices = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
+        foreach ($s in $oldServices) {
+            try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
+            try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
+        }
+
+        # 2. Stop and remove all running scheduled task instances
+        $oldTasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
         foreach ($ot in $oldTasks) {
             try { schtasks.exe /end /tn $ot 2>&1 | Out-Null } catch {}
             try { schtasks.exe /delete /tn $ot /f 2>&1 | Out-Null } catch {}
         }
 
-        # 2. Terminate previous agent processes safely
+        # 3. Terminate previous agent processes safely
         $currentPid = $PID
         $parentPid = 0
         try {
@@ -177,25 +184,13 @@ try {
             if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
         } catch {}
 
-        # Kill previous powershell instances running GIN-Agent
+        # Kill previous powershell and cmd instances running GIN-Agent
         try {
-            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue | Where-Object {
+            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
                 $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
                     $_.CommandLine -like "*GIN-Agent*" -or
                     $_.CommandLine -like "*agent-api*" -or
                     $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*"
-                )
-            } | ForEach-Object {
-                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
-            }
-        } catch {}
-
-        # Kill previous background cmd instances running the service
-        try {
-            Get-CimInstance Win32_Process -Filter "Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
-                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    $_.CommandLine -like "*ProgramData\GIN-Agent*" -or
-                    $_.CommandLine -like "*GIN-Agent.cmd* /service*"
                 )
             } | ForEach-Object {
                 try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
@@ -209,14 +204,12 @@ try {
             New-Item -Path $installDir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
         }
 
-        # Purge obsolete PS1 files from previous versions
-        Get-ChildItem -Path $installDir -Filter "*.ps1" -File -ErrorAction SilentlyContinue | ForEach-Object {
-            try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
-        }
-
-        # Clear ReadOnly flag on existing target if set
-        if (Test-Path $targetCmd) {
-            try { (Get-Item $targetCmd -Force).IsReadOnly = $false } catch {}
+        # Clean purge of ALL obsolete files in installDir for a clean installation
+        Get-ChildItem -Path $installDir -File -ErrorAction SilentlyContinue | ForEach-Object {
+            try {
+                $_.IsReadOnly = $false
+                Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
+            } catch {}
         }
 
         # Save selected region configuration
@@ -229,17 +222,12 @@ try {
         }
 
         if ($sourceScript -and (Test-Path $sourceScript)) {
-            try { Remove-Item -Path $targetCmd -Force -ErrorAction SilentlyContinue } catch {}
             try {
                 Copy-Item -Path $sourceScript -Destination $targetCmd -Force -ErrorAction Stop
             } catch {
                 try {
-                    $bakFile = "$targetCmd.old.$([System.IO.Path]::GetRandomFileName())"
-                    Move-Item -Path $targetCmd -Destination $bakFile -Force -ErrorAction SilentlyContinue
-                    Copy-Item -Path $sourceScript -Destination $targetCmd -Force -ErrorAction Stop
-                } catch {
                     [System.IO.File]::WriteAllBytes($targetCmd, [System.IO.File]::ReadAllBytes($sourceScript))
-                }
+                } catch {}
             }
             try { Copy-Item -Path $sourceScript -Destination $targetCmdV24 -Force -ErrorAction SilentlyContinue } catch {}
         } else {
@@ -249,45 +237,82 @@ try {
             }
         }
 
-        # Purge older versioned CMDs in installDir (retain strictly 2 latest: v023 and v024)
-        Get-ChildItem -Path $installDir -Filter "GIN-Agent_Windows_v*.cmd" -File -ErrorAction SilentlyContinue | Where-Object {
-            $_.Name -ne "GIN-Agent_Windows_v024.cmd" -and $_.Name -ne "GIN-Agent_Windows_v023.cmd"
-        } | ForEach-Object {
-            try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
-        }
-
         # Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
-        Write-Host "[*] Registering background service GIN-Agent ($selectedRegion)..." -ForegroundColor Cyan
+        Write-Host "[*] Registering permanent SYSTEM background service ($selectedRegion)..." -ForegroundColor Cyan
 
         $taskName = "GIN-Agent-Service"
-        $taskAction = "cmd.exe"
-        $taskArgs = "/c `"`"$targetCmd`" /service $selectedRegion`""
+        $taskCmd = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
 
         schtasks.exe /delete /tn "$taskName" /f 2>&1 | Out-Null
-        schtasks.exe /create /tn "$taskName" /tr "$taskAction $taskArgs" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
+        schtasks.exe /create /tn "$taskName" /tr "$taskCmd" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
         schtasks.exe /run /tn "$taskName" 2>&1 | Out-Null
 
-        # Fallback background execution
-        Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$targetCmd`" /service $selectedRegion`"" -WindowStyle Hidden
+        # Wait up to 3s to verify background service running under SYSTEM
+        $serviceStarted = $false
+        for ($w = 0; $w -lt 6; $w++) {
+            Start-Sleep -Milliseconds 500
+            $runningProc = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
+                    $_.CommandLine -like "*$targetCmd* /service*" -or
+                    $_.CommandLine -like "*GIN-Agent.cmd* /service*"
+                )
+            }
+            if ($runningProc) {
+                $serviceStarted = $true
+                break
+            }
+        }
+
+        # If schtasks could not start it (e.g. non-SYSTEM environment), launch detached via WMI
+        # Note: WMI Win32_Process.Create spawns under WmiPrvSE/services, completely detached from console!
+        if (-not $serviceStarted) {
+            Write-Host "[*] Launching detached background worker via WMI..." -ForegroundColor Yellow
+            try {
+                [void](Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+                    CommandLine = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
+                } -ErrorAction SilentlyContinue)
+            } catch {}
+        }
 
         $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
 
         Write-Host ""
         Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "  [+] GIN-Agent v024 deployed as SYSTEM SERVICE successfully!" -ForegroundColor Green
+        Write-Host "  [+] GIN-Agent v024 deployed cleanly as a permanent background service!" -ForegroundColor Green
         Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
+        Write-Host "  [+] Service is fully detached: closing this window will NOT stop it." -ForegroundColor Green
         Write-Host "  [+] Compatibility: Windows 10 (32-bit / 64-bit), Windows 11." -ForegroundColor White
         Write-Host "  [+] Architecture: standalone single CMD file (no external PS1)." -ForegroundColor White
-        Write-Host "  [+] Service is running in silent background mode." -ForegroundColor White
         Write-Host "  [+] Task: GIN-Agent-Service (Auto-start on OS boot, $selectedRegion)" -ForegroundColor Cyan
         Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
         Write-Host ""
         Write-Host "====================================================================" -ForegroundColor Green
         Write-Host "  [OK] INSTALLATION COMPLETED SUCCESSFULLY!" -ForegroundColor Green
-        Write-Host "  Press any key to close this window..." -ForegroundColor Yellow
         Write-Host "====================================================================" -ForegroundColor Green
         Write-Host ""
-        try { $null = [System.Console]::ReadKey($true) } catch { pause }
+
+        # Auto-close countdown (5s) or instant close on any keypress
+        $closeCountdown = 5
+        try {
+            while ($closeCountdown -gt 0) {
+                Write-Host -NoNewline "`r[*] Auto-closing window in $closeCountdown sec (press any key to close immediately)... "
+                $sw = [System.Diagnostics.Stopwatch]::StartNew()
+                $keyHit = $false
+                while ($sw.ElapsedMilliseconds -lt 1000) {
+                    if ([System.Console]::KeyAvailable) {
+                        $null = [System.Console]::ReadKey($true)
+                        $keyHit = $true
+                        break
+                    }
+                    Start-Sleep -Milliseconds 50
+                }
+                if ($keyHit) { break }
+                $closeCountdown--
+            }
+        } catch {
+            Start-Sleep -Seconds 5
+        }
+        Write-Host ""
         exit 0
     }
 
