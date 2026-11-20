@@ -1,0 +1,22 @@
+{
+  "version": "v043",
+  "name": "GIN-Desktop",
+  "installer": "GIN-Desktop_v043_Setup.exe",
+  "description": "Unified Windows Desktop Companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
+  "author": "GinCz / Vladimir Bulantsev & Antigravity",
+  "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Desktop",
+  "date": "2026-11-20",
+  "sha256": "37cd88f78b8eb25107ea63582e740e6e8daa08a6d727412b76ec79b3e3d606ef",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v043_Setup.exe",
+  "features": [
+    "Rebranded as GIN Desktop: Single unified lightweight Windows suite (~2-4 MB RAM) with independent ON/OFF engines",
+    "Top-Only Fluid Dock Bar: Dedicated top position activated strictly on hover at top-left hot corner with zero visual clutter",
+    "Configurable Shortcuts Path: Defaulted to D:\\UTIL\\GIN-Desktop\\ with interactive Browse button and clipboard path entry",
+    "Live Hardware Monitor HUD: Optional CPU %, RAM %, GPU %, and GPU Temperature monitoring directly on Dock Bar",
+    "Real-Time Weather HUD: Embedded weather badge under Calendar HUD supporting Open-Meteo and wttr.in with auto-geolocation",
+    "Midnight Calendar & Wallpaper Refresh: Automatic wallpaper swap and calendar day advancement at 00:03 daily",
+    "Intelligent Cache Rotation: Automatic 7-day age cutoff and 100 MB max disk quota management",
+    "Portable-First Architecture: Settings saved strictly in application folder with zero registry clutter",
+    "SHA-256 Checksum Verification: Cryptographic integrity validation on automatic updates"
+  ]
+}

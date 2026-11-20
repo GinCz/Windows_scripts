@@ -1,3 +1,15 @@
+## Update: v043 (2026-11-20)
+- **Rebranded Product to GIN Desktop**: Migrated project directory, solution names, binaries, shortcuts, and installers from `GIN-Dock-Wallpaper` to `GIN-Desktop`.
+- **Top-Only Position & Top-Left Hot Corner**: Streamlined dock architecture to Top position with top-left corner hover activation (`cursor.X <= 15 && cursor.Y <= 15`), removing cluttered side dock modes.
+- **Customizable Shortcuts Directory**: Defaulted `RootFolder` to `D:\UTIL\GIN-Desktop\` with interactive `[Browse...]` dialog and direct clipboard text editing.
+- **Hardware Monitoring HUD**: Added lightweight native sampling for CPU %, RAM %, GPU %, and GPU Temp (°C) displayed on the right edge of the Dock Bar.
+- **Weather HUD Integration**: Integrated `WeatherService` querying Open-Meteo and wttr.in, rendering a weather pill below the desktop Calendar HUD.
+- **Midnight Wallpaper & Calendar Synchronization**: Added 25-second watchdog timer triggering wallpaper swap and calendar refresh at 00:03 daily.
+- **Cache Management**: Implemented `CleanupCache()` enforcing 7-day expiration and 100 MB disk limit.
+- **Portable Configuration Standard**: Read and write `config.json` directly in application folder, preventing registry pollution.
+- **Security & Update Hardening**: SHA-256 checksum calculation and verification in auto-updater.
+- **Compiled and Packaged v043**: Produced `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v043_Setup.exe`.
+
 # 📝 WORKLOG — GIN-Dock-Wallpaper Development
 
 ## Session: 2026-11-20

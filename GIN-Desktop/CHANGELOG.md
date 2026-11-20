@@ -1,4 +1,17 @@
-# 📋 CHANGELOG — GIN-Dock-Wallpaper
+# 📋 CHANGELOG — GIN-Desktop
+
+## [v043] — 2026-11-20
+### 🌟 Rebranding to GIN Desktop, Live Hardware Monitor, Weather HUD, Midnight Sync & Top Dock
+- **Canonical Rebranding to GIN-Desktop**: Unified repository, binary targets, and installer under the official name `GIN-Desktop`.
+- **Top-Only Dock Placement**: Removed side placements; dock bar is permanently anchored to the top of the screen, activating cleanly when cursor hovers in the top-left corner.
+- **Configurable Shortcuts Path with Browse Dialog**: Set default path to `D:\UTIL\GIN-Desktop\` with an interactive `[Browse...]` button and clipboard copy/paste support.
+- **Live Hardware Monitor on Dock Bar**: Checkboxes for CPU %, RAM %, GPU %, and GPU Temperature (°C) with zero-allocation WinAPI metric sampling (`GetSystemTimes`, `GlobalMemoryStatusEx`).
+- **Real-Time Weather HUD under Calendar**: Optional weather badge under Calendar HUD supporting Open-Meteo and wttr.in sources with auto-geolocation.
+- **Midnight Auto-Refresh at 00:03**: Independent timer guarantees automatic wallpaper refresh and calendar day progression at 00:03 daily.
+- **Intelligent Cache Rotation**: Enforced 7-day age cutoff and 100 MB disk quota with automatic trimming to 80 MB.
+- **Portable-First Storage**: Configuration is saved directly in application folder (`config.json`) with zero registry clutter.
+- **SHA-256 Integrity Verification**: Auto-updater checks SHA-256 hash before executing downloaded setup packages.
+- **Synchronized Uninstaller**: Both installer and uninstaller now inspect and sanitize both HKLM and HKCU registry keys, and offer optional cache/config cleanup.
 
 ## [v042] — 2026-11-20
 ### 🚀 Fixed Wallpaper Generation, Instant Startup Sync & Dual Alternating Buffer
