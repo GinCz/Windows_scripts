@@ -34,3 +34,13 @@
 - **Font Selection Accordion**: Expandable panel stretching window vertically with 12 curated fonts for Dock Folders, Dock Items, and Wallpaper Calendar.
 - **Real-Time Localization Fix**: Switching language in the dropdown instantly translates the entire Settings dialog and System Tray menu in real time without restart.
 - **Dedicated Apply Button**: Added `Apply` button alongside `Save & Close` and `Cancel` to immediately commit changes without dismissing the dialog.
+
+## [v034] — 2026-11-20
+### 🚀 1-Click Auto-Update, Tray Double-Click, Category Select-All & Immediate Apply
+- **One-Click Seamless Auto-Updater**: Checking for updates (via tray menu or footer) downloads the new setup executable directly to `%TEMP%`, prompts confirmation with changelog, launches the installer, and cleanly restarts without opening browser URLs.
+- **System Tray Double-Click**: Double-clicking the sand 'G' icon in the system tray immediately fetches a fresh 4K wallpaper, renders the live calendar HUD, and updates the desktop background.
+- **Select-All Wallpaper Categories Checkbox**: The master "Все" ("All") checkbox dynamically checks or unchecks all 13 wallpaper theme categories; toggling child checkboxes reactively updates the master checkbox.
+- **Immediate Apply Execution**: Clicking "Применить" (`Apply`) immediately downloads a new 4K wallpaper, renders the calendar HUD, and refreshes desktop and dock state on the fly.
+- **Dock Placement Options**: Expanded dock placement to include `Top`, `Left`, and `Off`.
+- **Interactive Signature Footer**: Form footer features `VladiMIR+AI  |||  v034` with clickable links: `VladiMIR+AI` links to GitHub profile; clicking `v034` initiates the auto-update check.
+- **Deployment Streamlining**: Purged all unversioned files and shortcuts; retained strictly the 2 latest versions (`v033` and `v034`).

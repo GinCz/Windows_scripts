@@ -26,3 +26,12 @@
 - Fixed language switching reactivity: real-time re-localization of all UI elements and context menu on dropdown change.
 - Added Apply button to allow testing changes without closing settings.
 - Uploaded v033 installers to MEGA Desktop and Flash drive; purged obsolete v002 files.
+
+## Update: v034 (2026-11-20)
+- Re-architected Auto-Update mechanism: eliminated browser redirect; implemented background download to `%TEMP%`, update confirmation prompt, installer execution, and silent app restart.
+- Implemented double-click on system tray icon to immediately fetch a fresh 4K wallpaper and update the calendar HUD.
+- Implemented master "Все" / "All" checkbox logic across wallpaper categories with bi-directional synchronization.
+- Wired "Apply" button to immediately trigger new wallpaper download, calendar HUD rendering, and dock update on click.
+- Added "Off" dock placement state alongside "Top" and "Left".
+- Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
+- Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).

@@ -10,8 +10,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyProduct("GIN Dock Wallpaper")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vladimir Bulantsev")]
-[assembly: AssemblyVersion("0.32.0.0")]
-[assembly: AssemblyFileVersion("0.32.0.0")]
+[assembly: AssemblyVersion("0.34.0.0")]
+[assembly: AssemblyFileVersion("0.34.0.0")]
 
 namespace GINDockWallpaper {
     static class Uninstaller {
@@ -55,12 +55,16 @@ namespace GINDockWallpaper {
                 // 3. Remove Desktop & Start Menu shortcuts
                 try {
                     string desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                    string deskLnk = Path.Combine(desktop, "GIN Dock Wallpaper.lnk");
-                    if (File.Exists(deskLnk)) File.Delete(deskLnk);
+                    foreach (string f in Directory.GetFiles(desktop, "*GIN*Dock*.lnk")) {
+                        try { File.Delete(f); } catch { }
+                    }
 
                     string pubDesktop = Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory);
-                    string pubLnk = Path.Combine(pubDesktop, "GIN Dock Wallpaper.lnk");
-                    if (File.Exists(pubLnk)) File.Delete(pubLnk);
+                    if (Directory.Exists(pubDesktop)) {
+                        foreach (string f in Directory.GetFiles(pubDesktop, "*GIN*Dock*.lnk")) {
+                            try { File.Delete(f); } catch { }
+                        }
+                    }
 
                     string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "GIN Dock Wallpaper");
                     if (Directory.Exists(startMenu)) Directory.Delete(startMenu, true);

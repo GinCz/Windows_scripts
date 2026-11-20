@@ -19,8 +19,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyProduct("GIN-Dock-Wallpaper")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vladimir Bulantsev")]
-[assembly: AssemblyVersion("0.33.0.0")]
-[assembly: AssemblyFileVersion("0.33.0.0")]
+[assembly: AssemblyVersion("0.34.0.0")]
+[assembly: AssemblyFileVersion("0.34.0.0")]
 
 namespace GINDockWallpaper {
 
@@ -334,7 +334,6 @@ namespace GINDockWallpaper {
         private static readonly Dictionary<string, Dictionary<string, string>> Dictionaries = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
         static I18n() {
-            // English
             var en = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 { "AppTitle", "GIN Dock Wallpaper" },
                 { "ShowDock", "Show Dock" },
@@ -383,6 +382,7 @@ namespace GINDockWallpaper {
                 { "DockPlacement", "Dock Bar Placement:" },
                 { "PlacementTop", "Top (Slide Down)" },
                 { "PlacementLeft", "Left (Slide Right)" },
+                { "PlacementOff", "Disabled (Dock Off)" },
                 { "RootFolder", "Dock Root Folder:" },
                 { "Browse", "Browse..." },
                 { "OpenExplorer", "Open in Explorer" },
@@ -409,11 +409,10 @@ namespace GINDockWallpaper {
                 { "Cancel", "Cancel" },
                 { "UpToDate", "You are running the latest version: " },
                 { "UpdateAvailable", "New version available: " },
-                { "DownloadNow", "Download update now?" }
+                { "DownloadNow", "Download and update automatically now?" }
             };
             Dictionaries["en"] = en;
 
-            // Russian (Русский)
             var ru = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 { "AppTitle", "GIN Dock Wallpaper" },
                 { "ShowDock", "Показать докер" },
@@ -462,6 +461,7 @@ namespace GINDockWallpaper {
                 { "DockPlacement", "Расположение панели Dock:" },
                 { "PlacementTop", "Сверху (выезжает вниз)" },
                 { "PlacementLeft", "Слева (выезжает вправо)" },
+                { "PlacementOff", "Выключено (Отключить докер)" },
                 { "RootFolder", "Корневая папка докера:" },
                 { "Browse", "Обзор..." },
                 { "OpenExplorer", "Открыть в Проводнике" },
@@ -486,13 +486,12 @@ namespace GINDockWallpaper {
                 { "Save", "Сохранить и закрыть" },
                 { "Apply", "Применить" },
                 { "Cancel", "Отмена" },
-                { "UpToDate", "У вас установлена последняя версия: " },
-                { "UpdateAvailable", "Доступна новая версия: " },
-                { "DownloadNow", "Скачать обновление сейчас?" }
+                { "UpToDate", "У вас установлена самая последняя версия: " },
+                { "UpdateAvailable", "Обнаружена новая версия: " },
+                { "DownloadNow", "Загрузить и обновить программу автоматически прямо сейчас?" }
             };
             Dictionaries["ru"] = ru;
 
-            // Czech (Čeština)
             var cs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
                 { "AppTitle", "GIN Dock Wallpaper" },
                 { "ShowDock", "Zobrazit Dock" },
@@ -541,6 +540,7 @@ namespace GINDockWallpaper {
                 { "DockPlacement", "Umístění panelu Dock:" },
                 { "PlacementTop", "Nahoře (vysunutí dolů)" },
                 { "PlacementLeft", "Vlevo (vysunutí doprava)" },
+                { "PlacementOff", "Vypnuto (deaktivovat Dock)" },
                 { "RootFolder", "Kořenová složka Docku:" },
                 { "Browse", "Procházet..." },
                 { "OpenExplorer", "Otevřít v Průzkumníku" },
@@ -567,7 +567,7 @@ namespace GINDockWallpaper {
                 { "Cancel", "Zrušit" },
                 { "UpToDate", "Máte nejnovější verzi: " },
                 { "UpdateAvailable", "K dispozici je nová verze: " },
-                { "DownloadNow", "Stáhnout aktualizaci nyní?" }
+                { "DownloadNow", "Stáhnout a automaticky aktualizovat nyní?" }
             };
             Dictionaries["cs"] = cs;
 
@@ -625,7 +625,7 @@ namespace GINDockWallpaper {
         public bool StartWithWindows = false;
         public bool CheckUpdatesOnStartup = true;
 
-        public string DockPosition = "Top";
+        public string DockPosition = "Top"; // "Top", "Left", "Off"
         public int DockIconSize = 32;
         public string DockFolderFontFamily = "Segoe UI";
         public float DockFolderFontSize = 9.0f;
@@ -638,7 +638,7 @@ namespace GINDockWallpaper {
         public int HotCornerHeight = 15;
         public int BarHeight = 48;
 
-        public string WallpaperCategories = "all,nature,cyberpunk,space,3d,ocean,flowers,animals,cars,trucks,girls,city,minimalism,anime";
+        public string WallpaperCategories = "all,3d,flowers,ocean,space,nature,animals,cars,trucks,girls,city,cyberpunk,minimalism,anime";
         public int WallpaperIntervalMinutes = 60;
         public bool ShowCalendar = true;
         public string CalendarFontFamily = "Segoe UI";
@@ -1088,7 +1088,7 @@ namespace GINDockWallpaper {
             string targetJpg = Path.Combine(Config.CacheDir, "wallpaper_" + DateTime.Now.Ticks + ".jpg");
 
             using (WebClient wc = new WebClient()) {
-                wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v033 (Windows; WinAPI)");
+                wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v034 (Windows; WinAPI)");
                 string json = wc.DownloadString(apiUrl);
 
                 int pIdx = json.IndexOf("\"path\":\"");
@@ -1348,7 +1348,7 @@ namespace GINDockWallpaper {
             brandBtn.FlatAppearance.BorderColor = theme.Border;
             brandBtn.Cursor = Cursors.Hand;
             brandBtn.Click += (s, e) => ShowMainMenu(brandBtn);
-            _toolTip.SetToolTip(brandBtn, "GIN Dock Wallpaper v033 | Click for Menu");
+            _toolTip.SetToolTip(brandBtn, "GIN Dock Wallpaper v034 | Click for Menu");
 
             bool isTop = (_config.DockPosition == "Top");
             int barSize = Math.Max(40, _config.DockIconSize + 16);
@@ -1745,11 +1745,11 @@ namespace GINDockWallpaper {
             _watchdogTimer = new System.Windows.Forms.Timer();
             _watchdogTimer.Interval = 40;
             _watchdogTimer.Tick += WatchdogTimer_Tick;
-            if (_config.EnableDock) _watchdogTimer.Start();
+            if (_config.EnableDock && _config.DockPosition != "Off") _watchdogTimer.Start();
         }
 
         private void WatchdogTimer_Tick(object sender, EventArgs e) {
-            if (!_config.EnableDock) return;
+            if (!_config.EnableDock || _config.DockPosition == "Off") return;
 
             Point p = Cursor.Position;
 
@@ -1787,7 +1787,7 @@ namespace GINDockWallpaper {
         }
 
         public void ShowDock() {
-            if (!_config.EnableDock) return;
+            if (!_config.EnableDock || _config.DockPosition == "Off") return;
             if (!_isDockVisible) {
                 _isDockVisible = true;
                 _outOfBoundsTicks = 0;
@@ -1809,7 +1809,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem header = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v033");
+            ToolStripMenuItem header = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v034");
             header.Enabled = false;
             header.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             header.ForeColor = theme.Accent;
@@ -1938,6 +1938,7 @@ namespace GINDockWallpaper {
 
         private Label _lblWallThemesTitle;
         private Dictionary<string, CheckBox> _catCheckBoxes = new Dictionary<string, CheckBox>();
+        private bool _isUpdatingAll = false;
         private Label _lblWallInt;
         private ComboBox _cmbWallInt;
         private CheckBox _chkShowCal;
@@ -1974,10 +1975,13 @@ namespace GINDockWallpaper {
         private Label _lblItemFontSize;
         private TrackBar _tbItemFontSize;
 
+        // Bottom footer
+        private LinkLabel _lblBrandLink;
         private Button _btnSave;
         private Button _btnApply;
         private Button _btnCancel;
 
+        // About tab
         private Label _lblAboutTitle;
         private Label _lblAboutDesc;
         private Button _btnCheckUpdate;
@@ -2008,7 +2012,9 @@ namespace GINDockWallpaper {
             _tabs.Location = new Point(12, 12);
             _tabs.Size = new Size(700, 480);
 
+            // =====================================
             // TAB 1: MAIN
+            // =====================================
             _tabMain = new TabPage();
             _tabMain.BackColor = theme.CardBackground;
 
@@ -2053,7 +2059,9 @@ namespace GINDockWallpaper {
             });
             _tabs.TabPages.Add(_tabMain);
 
+            // =====================================
             // TAB 2: WALLPAPER
+            // =====================================
             _tabWall = new TabPage();
             _tabWall.BackColor = theme.CardBackground;
             _tabWall.AutoScroll = true;
@@ -2081,6 +2089,35 @@ namespace GINDockWallpaper {
                     Checked = activeCats.Contains(key),
                     ForeColor = theme.TextPrimary
                 };
+
+                if (key == "all") {
+                    cb.CheckedChanged += (s, e) => {
+                        if (_isUpdatingAll) return;
+                        _isUpdatingAll = true;
+                        bool chk = cb.Checked;
+                        foreach (var kvp in _catCheckBoxes) {
+                            if (kvp.Key != "all") kvp.Value.Checked = chk;
+                        }
+                        _isUpdatingAll = false;
+                    };
+                } else {
+                    cb.CheckedChanged += (s, e) => {
+                        if (_isUpdatingAll) return;
+                        _isUpdatingAll = true;
+                        bool allOn = true;
+                        foreach (var kvp in _catCheckBoxes) {
+                            if (kvp.Key != "all" && !kvp.Value.Checked) {
+                                allOn = false;
+                                break;
+                            }
+                        }
+                        if (_catCheckBoxes.ContainsKey("all")) {
+                            _catCheckBoxes["all"].Checked = allOn;
+                        }
+                        _isUpdatingAll = false;
+                    };
+                }
+
                 _catCheckBoxes[key] = cb;
                 _tabWall.Controls.Add(cb);
             }
@@ -2123,7 +2160,9 @@ namespace GINDockWallpaper {
 
             _tabs.TabPages.Add(_tabWall);
 
+            // =====================================
             // TAB 3: DOCK
+            // =====================================
             _tabDock = new TabPage();
             _tabDock.BackColor = theme.CardBackground;
             _tabDock.AutoScroll = true;
@@ -2132,7 +2171,10 @@ namespace GINDockWallpaper {
             _cmbDockPlacement = new ComboBox { Location = new Point(260, 17), Width = 220, DropDownStyle = ComboBoxStyle.DropDownList };
             _cmbDockPlacement.Items.Add(I18n.T("PlacementTop"));
             _cmbDockPlacement.Items.Add(I18n.T("PlacementLeft"));
-            _cmbDockPlacement.SelectedIndex = (_config.DockPosition == "Left" ? 1 : 0);
+            _cmbDockPlacement.Items.Add(I18n.T("PlacementOff"));
+            if (!_config.EnableDock || _config.DockPosition == "Off") _cmbDockPlacement.SelectedIndex = 2;
+            else if (_config.DockPosition == "Left") _cmbDockPlacement.SelectedIndex = 1;
+            else _cmbDockPlacement.SelectedIndex = 0;
 
             _lblRoot = new Label { Location = new Point(20, 55), AutoSize = true, ForeColor = theme.TextSecondary };
             _txtRoot = new TextBox { Text = _config.RootFolder, Location = new Point(20, 75), Width = 480 };
@@ -2219,11 +2261,13 @@ namespace GINDockWallpaper {
             });
             _tabs.TabPages.Add(_tabDock);
 
+            // =====================================
             // TAB 4: ABOUT
+            // =====================================
             _tabAbout = new TabPage();
             _tabAbout.BackColor = theme.CardBackground;
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v033", Font = new Font("Segoe UI", 12f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v034", Font = new Font("Segoe UI", 12f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Windows Architecture\nPlatform: Native WinAPI & GDI+ (Idle: ~2-4 MB RAM)\n\nDual-Feature: Hot-Corner Dock Bar + 4K Dynamic Wallpaper & Live Calendar",
                 Location = new Point(25, 65),
@@ -2231,10 +2275,10 @@ namespace GINDockWallpaper {
                 ForeColor = theme.TextSecondary
             };
 
-            _btnCheckUpdate = new Button { Location = new Point(25, 175), Width = 220, Height = 32 };
-            _btnCheckUpdate.Click += (s, e) => CheckUpdateRoutine(true);
+            _btnCheckUpdate = new Button { Location = new Point(25, 175), Width = 240, Height = 32 };
+            _btnCheckUpdate.Click += (s, e) => RunAutoUpdateWorkflow(this, true);
 
-            _btnOpenGitHub = new Button { Text = "🌐 GitHub Open Source Repository", Location = new Point(260, 175), Width = 280, Height = 32 };
+            _btnOpenGitHub = new Button { Text = "🌐 GitHub Open Source Repository", Location = new Point(280, 175), Width = 280, Height = 32 };
             _btnOpenGitHub.Click += (s, e) => {
                 try { Process.Start("https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper"); } catch { }
             };
@@ -2244,16 +2288,40 @@ namespace GINDockWallpaper {
 
             this.Controls.Add(_tabs);
 
+            // =====================================
+            // SIGNATURE FOOTER BRAND: VladiMIR+AI ||| v034
+            // =====================================
+            _lblBrandLink = new LinkLabel {
+                Text = "VladiMIR+AI  |||  v034",
+                Location = new Point(20, 508),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                LinkColor = theme.Accent,
+                ActiveLinkColor = theme.AccentHover
+            };
+            _lblBrandLink.Links.Add(0, 11, "https://github.com/GinCz");
+            _lblBrandLink.Links.Add(17, 4, "update");
+            _lblBrandLink.LinkClicked += (s, e) => {
+                if (e.Link.LinkData.ToString() == "update") {
+                    RunAutoUpdateWorkflow(this, true);
+                } else {
+                    try { Process.Start(e.Link.LinkData.ToString()); } catch { }
+                }
+            };
+            this.Controls.Add(_lblBrandLink);
+
+            // =====================================
             // BOTTOM BUTTONS: Save & Close, Apply, Cancel
+            // =====================================
             _btnSave = new Button { Location = new Point(350, 500), Width = 130, Height = 34, DialogResult = DialogResult.OK };
             _btnSave.Click += (s, e) => {
-                CommitSettings();
+                CommitSettings(false);
                 this.Close();
             };
 
             _btnApply = new Button { Location = new Point(490, 500), Width = 110, Height = 34 };
             _btnApply.Click += (s, e) => {
-                CommitSettings();
+                CommitSettings(true); // true = immediately apply wallpaper & dock!
             };
 
             _btnCancel = new Button { Location = new Point(610, 500), Width = 100, Height = 34, DialogResult = DialogResult.Cancel };
@@ -2270,12 +2338,14 @@ namespace GINDockWallpaper {
             if (_isAccordionExpanded) {
                 this.Height = 670;
                 _tabs.Height = 570;
+                _lblBrandLink.Location = new Point(20, 598);
                 _btnSave.Location = new Point(_btnSave.Location.X, 590);
                 _btnApply.Location = new Point(_btnApply.Location.X, 590);
                 _btnCancel.Location = new Point(_btnCancel.Location.X, 590);
             } else {
                 this.Height = 580;
                 _tabs.Height = 480;
+                _lblBrandLink.Location = new Point(20, 508);
                 _btnSave.Location = new Point(_btnSave.Location.X, 500);
                 _btnApply.Location = new Point(_btnApply.Location.X, 500);
                 _btnCancel.Location = new Point(_btnCancel.Location.X, 500);
@@ -2323,6 +2393,8 @@ namespace GINDockWallpaper {
             _lblDockPlacement.Text = I18n.T("DockPlacement");
             _cmbDockPlacement.Items[0] = I18n.T("PlacementTop");
             _cmbDockPlacement.Items[1] = I18n.T("PlacementLeft");
+            _cmbDockPlacement.Items[2] = I18n.T("PlacementOff");
+
             _lblRoot.Text = I18n.T("RootFolder");
             _btnBrowse.Text = I18n.T("Browse");
             _lblSort.Text = I18n.T("SortingMode");
@@ -2349,15 +2421,30 @@ namespace GINDockWallpaper {
             _btnCheckUpdate.Text = "⬆️ " + I18n.T("CheckUpdates");
         }
 
-        private void CommitSettings() {
+        private void CommitSettings(bool triggerImmediateApply) {
             _config.DayEveningNightMode = GetDayNightCode(_cmbDayEveningNight.SelectedIndex);
             _config.Language = GetSelectedLanguageCode(_cmbLang.SelectedIndex);
             _config.ThemeName = GetThemeIdByIndex(_cmbTheme.SelectedIndex);
-            _config.EnableDock = _chkEnableDock.Checked;
             _config.EnableWallpaper = _chkEnableWall.Checked;
             _config.StartWithWindows = _chkAutoStart.Checked;
             _config.CheckUpdatesOnStartup = _chkAutoUpdate.Checked;
 
+            // Dock placement
+            if (_cmbDockPlacement.SelectedIndex == 2) {
+                _config.EnableDock = false;
+                _config.DockPosition = "Off";
+            } else if (_cmbDockPlacement.SelectedIndex == 1) {
+                _config.EnableDock = true;
+                _config.DockPosition = "Left";
+            } else {
+                _config.EnableDock = true;
+                _config.DockPosition = "Top";
+            }
+            if (_chkEnableDock.Checked == false) {
+                _config.EnableDock = false;
+            }
+
+            // Categories
             List<string> selectedCats = new List<string>();
             foreach (var kvp in _catCheckBoxes) {
                 if (kvp.Value.Checked) selectedCats.Add(kvp.Key);
@@ -2369,7 +2456,6 @@ namespace GINDockWallpaper {
             _config.CalendarFontFamily = _cmbCalFont.SelectedItem != null ? _cmbCalFont.SelectedItem.ToString() : "Segoe UI";
             _config.CalendarScale = _tbCalScale.Value / 10.0f;
 
-            _config.DockPosition = (_cmbDockPlacement.SelectedIndex == 1 ? "Left" : "Top");
             _config.RootFolder = _txtRoot.Text;
             _config.SortingMode = GetSortCodeByIndex(_cmbSort.SelectedIndex);
             _config.ShowLabels = (_cmbShowLabels.SelectedIndex == 1 ? "All" : (_cmbShowLabels.SelectedIndex == 2 ? "None" : "FoldersOnly"));
@@ -2387,6 +2473,9 @@ namespace GINDockWallpaper {
             if (_wallpaperEngine != null) {
                 _wallpaperEngine.SetEnabled(_config.EnableWallpaper);
                 _wallpaperEngine.UpdateInterval();
+                if (triggerImmediateApply && _config.EnableWallpaper) {
+                    _wallpaperEngine.TriggerNextWallpaperAsync();
+                }
             }
 
             if (_onConfigChanged != null) _onConfigChanged();
@@ -2544,31 +2633,59 @@ namespace GINDockWallpaper {
             } catch { }
         }
 
-        public static void CheckUpdateRoutine(bool showUpToDate) {
+        public static void RunAutoUpdateWorkflow(Form parentForm, bool showUpToDateNotice) {
             ThreadPool.QueueUserWorkItem(_ => {
                 try {
                     string url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/version.json";
                     using (WebClient wc = new WebClient()) {
                         wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper");
                         string json = wc.DownloadString(url);
+
                         int vIdx = json.IndexOf("\"version\":");
                         if (vIdx != -1) {
                             int q1 = json.IndexOf("\"", vIdx + 10);
                             int q2 = json.IndexOf("\"", q1 + 1);
                             string remoteVer = json.Substring(q1 + 1, q2 - q1 - 1);
-                            string currentVer = "v033";
+                            string currentVer = "v034";
 
                             if (string.Compare(remoteVer, currentVer, StringComparison.OrdinalIgnoreCase) > 0) {
+                                // Extract download URL
+                                string downloadUrl = "";
+                                int dIdx = json.IndexOf("\"download_url\":");
+                                if (dIdx != -1) {
+                                    int dq1 = json.IndexOf("\"", dIdx + 15);
+                                    int dq2 = json.IndexOf("\"", dq1 + 1);
+                                    downloadUrl = json.Substring(dq1 + 1, dq2 - dq1 - 1);
+                                }
+
+                                if (string.IsNullOrEmpty(downloadUrl)) {
+                                    downloadUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_" + remoteVer + "_Setup.exe";
+                                }
+
                                 DialogResult dr = MessageBox.Show(
                                     I18n.T("UpdateAvailable") + remoteVer + "\n" + I18n.T("DownloadNow"),
                                     "GIN Dock Wallpaper Update",
                                     MessageBoxButtons.YesNo,
                                     MessageBoxIcon.Question
                                 );
+
                                 if (dr == DialogResult.Yes) {
-                                    Process.Start("https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper");
+                                    string tempSetup = Path.Combine(Path.GetTempPath(), "GIN-Dock-Wallpaper_" + remoteVer + "_Setup.exe");
+                                    using (WebClient dlClient = new WebClient()) {
+                                        dlClient.Headers.Add("User-Agent", "GIN-Dock-Wallpaper");
+                                        dlClient.DownloadFile(downloadUrl, tempSetup);
+                                    }
+
+                                    if (File.Exists(tempSetup)) {
+                                        ProcessStartInfo psi = new ProcessStartInfo {
+                                            FileName = tempSetup,
+                                            UseShellExecute = true
+                                        };
+                                        Process.Start(psi);
+                                        Application.Exit();
+                                    }
                                 }
-                            } else if (showUpToDate) {
+                            } else if (showUpToDateNotice) {
                                 MessageBox.Show(
                                     I18n.T("UpToDate") + currentVer,
                                     "GIN Dock Wallpaper",
@@ -2579,8 +2696,8 @@ namespace GINDockWallpaper {
                         }
                     }
                 } catch (Exception ex) {
-                    if (showUpToDate) {
-                        MessageBox.Show("Failed to check for updates:\n" + ex.Message, "GIN Dock Wallpaper", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (showUpToDateNotice) {
+                        MessageBox.Show("Update check failed:\n" + ex.Message, "GIN Dock Wallpaper", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
             });
@@ -2602,7 +2719,7 @@ namespace GINDockWallpaper {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v033";
+            _trayIcon.Text = "GIN Dock Wallpaper v034";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -2619,14 +2736,20 @@ namespace GINDockWallpaper {
             BuildTrayMenu();
 
             _trayIcon.Visible = true;
-            _trayIcon.DoubleClick += (s, e) => ShowSettings();
+
+            // Double Click immediately triggers Next Wallpaper Now and updates calendar
+            _trayIcon.DoubleClick += (s, e) => {
+                if (_wallpaperEngine != null && _config.EnableWallpaper) {
+                    _wallpaperEngine.TriggerNextWallpaperAsync();
+                }
+            };
 
             I18n.LanguageChanged += () => {
                 BuildTrayMenu();
             };
 
             if (_config.CheckUpdatesOnStartup) {
-                SettingsForm.CheckUpdateRoutine(false);
+                SettingsForm.RunAutoUpdateWorkflow(null, false);
             }
 
             NativeMethods.TrimMemory();
@@ -2637,7 +2760,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v033");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v034");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2649,13 +2772,13 @@ namespace GINDockWallpaper {
             settings.Click += (s, e) => ShowSettings();
             trayMenu.Items.Add(settings);
 
-            ToolStripMenuItem showDock = new ToolStripMenuItem("🚀 " + I18n.T("ShowDock"));
-            showDock.Click += (s, e) => _dockForm.ShowDock();
-            trayMenu.Items.Add(showDock);
-
             ToolStripMenuItem nextWall = new ToolStripMenuItem("🖼️ " + I18n.T("NextWallpaper"));
             nextWall.Click += (s, e) => _wallpaperEngine.TriggerNextWallpaperAsync();
             trayMenu.Items.Add(nextWall);
+
+            ToolStripMenuItem showDock = new ToolStripMenuItem("🚀 " + I18n.T("ShowDock"));
+            showDock.Click += (s, e) => _dockForm.ShowDock();
+            trayMenu.Items.Add(showDock);
 
             ToolStripMenuItem openFolder = new ToolStripMenuItem("📂 " + I18n.T("OpenFolder"));
             openFolder.Click += (s, e) => ShellHelper.OpenInExplorer(_config.RootFolder);
@@ -2669,7 +2792,7 @@ namespace GINDockWallpaper {
             trayMenu.Items.Add(reload);
 
             ToolStripMenuItem checkUpd = new ToolStripMenuItem("⬆️ " + I18n.T("CheckUpdates"));
-            checkUpd.Click += (s, e) => SettingsForm.CheckUpdateRoutine(true);
+            checkUpd.Click += (s, e) => SettingsForm.RunAutoUpdateWorkflow(null, true);
             trayMenu.Items.Add(checkUpd);
 
             trayMenu.Items.Add(new ToolStripSeparator());
