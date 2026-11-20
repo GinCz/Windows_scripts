@@ -1,6 +1,17 @@
 # 📋 CHANGELOG — GIN-Dock-Wallpaper
 
-## [v039] — 2026-11-20
+## [v040] — 2026-11-20
+### 📐 Settings Form Height Calibration, Compact Layout & Footer Restoration
+- **Settings Form Height Recalibration**: Fixed critical vertical cutoff where the bottom footer bar (`_bottomBar`) containing `Применить`, `Сохранить и закрыть`, `Отмена` and `VladiMIR+AI ||| v040` was pushed past the window boundary.
+- **Harmonized 656px Client Window Height**: Recalibrated form geometry with exact `ClientSize = new Size(760, 656)` (outer window ~694px), ensuring full visibility on any standard 1080p, 1080p@125% DPI, and 1366x768 screens.
+- **Tab 2 (Wallpaper & Calendar) Compact Spacing**:
+  - Tightened category row rhythm to 19px while preserving the 2 wide 330px columns.
+  - Aligned interval, calendar scale, and font selection grid to eliminate wasted vertical gaps.
+  - Positioned `Следующие обои` and `Сохранить картинку` neatly within view above the bottom footer.
+- **Tab 3 (Docker) Vertical Realignment**: Tightened placement, path, sorting, icon sizes, and brand icon selector within 412px, eliminating large empty gaps and restoring immediate visibility of action buttons.
+- **AutoScroll Safety on All Tabs**: Enabled native `AutoScroll = true` on `_tabWall`, `_tabDock`, `_tabMain`, and `_tabAbout` to guarantee that no control is ever clipped or unreachable regardless of Windows system DPI scaling (125%, 150%, 175%).
+- **Full 20-Category Localization Fix**: Updated `ApplyLocalization()` so that all 20 wallpaper categories (including Dark Horse, Macro, Architecture, Aircraft, Retrowave, Fantasy, Underwater) properly switch across English, Russian, and Czech.
+- **Pure Standalone Distribution**: Built 666KB standalone installer `GIN-Dock-Wallpaper_v040_Setup.exe`.
 ### 🌟 24 Curated Fonts, Calendar Toggle Off, Modernized Dock Icon & Animated Download Glow
 - **Zero-CMD Standalone Distribution**: Discontinued hybrid `.cmd` scripts per user request; all installations and updates are now distributed strictly as ultra-compact native ~660KB executable installers (`GIN-Dock-Wallpaper_v039_Setup.exe`).
 - **24 Curated Artistic & Graphic Fonts**: Doubled the font palette on Tab 2 (Wallpaper & Calendar) from 12 to 24 curated typefaces, adding flourishing script, graphic, and display fonts (`Gabriola`, `Ink Free`, `Impact`, `Comic Sans MS`, `Sitka Banner`, `Palatino Linotype`, `Garamond`, `Franklin Gothic Medium`, etc.).

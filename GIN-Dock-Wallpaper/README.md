@@ -1,4 +1,4 @@
-# ⚡ GIN-Dock-Wallpaper `v039` (Universal Release)
+# ⚡ GIN-Dock-Wallpaper `v040` (Universal Release)
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 <br/>
 
-[![Download Setup](https://img.shields.io/badge/🚀%20Download-GIN--Dock--Wallpaper%20v039%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v039_Setup.exe)
+[![Download Setup](https://img.shields.io/badge/🚀%20Download-GIN--Dock--Wallpaper%20v040%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v040_Setup.exe)
 
 </div>
 

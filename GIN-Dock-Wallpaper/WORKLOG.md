@@ -36,6 +36,14 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v040 (2026-11-20)
+- **Settings Form Height Recalibration**: Resolved issue where bottom footer bar containing `Применить`, `Сохранить и закрыть`, `Отмена`, and `VladiMIR+AI ||| v040` was positioned below form boundaries (Y=715 vs height 670).
+- **Exact ClientSize Standard**: Set `this.ClientSize = new Size(760, 656)` (outer window ~694px) to ensure perfect fit across 1080p, 1080p@125% DPI, and 1366x768 laptop displays.
+- **Compact Spacing on Tab 2 & Tab 3**: Compacted vertical intervals for categories, interval buttons, calendar scale, font selector, and dock settings, ensuring all controls are visible without clipping.
+- **AutoScroll Resilience**: Added `AutoScroll = true` to all TabPages as defensive insurance against extreme Windows display scaling (150%+).
+- **Category Localization Fix**: Reconciled `ApplyLocalization()` dictionary to cover all 20 categories.
+- **Standalone Installer Build**: Compiled standalone `GIN-Dock-Wallpaper_v040_Setup.exe` (666KB), updated mirrors, and synced to MEGA Desktop (retaining v039 and v040).
+
 ## Update: v039 (2026-11-20)
 - **Zero-CMD Distribution**: Eliminated all `.cmd` hybrid installers per user directive; distributed strictly as 660KB single-file binary installer `GIN-Dock-Wallpaper_v039_Setup.exe`.
 - **24 Curated Fonts**: Expanded fonts palette from 12 to 24 curated typefaces, integrating expressive calligraphic and display typography (`Gabriola`, `Ink Free`, `Impact`, `Comic Sans MS`, `Sitka Banner`, `Palatino Linotype`, `Garamond`, etc.).
