@@ -1,5 +1,18 @@
 # 📋 CHANGELOG — GIN-Dock-Wallpaper
 
+## [v038] — 2026-11-20
+### 🎨 Relocated Fonts to Wallpaper Tab, Direct Desktop Wallpaper Generation & 4-Button Calendar Scale
+- **Relocated Font Palette to Wallpaper & Calendar Tab**: Moved the 12 curated font buttons from Settings Tab 1 to Tab 2 (Обои и Календарь), returning Tab 1 to a clean, focused toggle and theme-selection dashboard.
+- **Direct Desktop Wallpaper Generation on Font Selection**: Clicking any of the 12 font buttons preserves standard clean dialog typography in the settings window, updates `CalendarFontFamily`, and immediately triggers generation of a new 4K desktop wallpaper displaying the calendar HUD in the newly chosen typeface.
+- **4-Button Responsive Calendar Scale**: Replaced the scale trackbar with 4 intuitive scale buttons:
+  - `Маленький` (Small: 0.75x)
+  - `Средний` (Medium: 1.0x)
+  - `Большой` (Large: 1.3x)
+  - `Крупный` (Huge / Extra Large: 1.6x)
+  Clicking any scale button immediately generates a new wallpaper and redraws the calendar in the requested scale.
+- **Non-Dropping Wallpaper Engine Queue**: Enhanced `TriggerNextWallpaperAsync` with non-blocking queued requests, ensuring rapid sequential clicks between fonts and scales are never dropped and always produce the final selected visual state on the desktop.
+- **Strict 2-Version Retention**: Promoted release to `v038`; purged obsolete `v036` releases across local repositories and MEGA cloud storage, retaining strictly `v037` and `v038`.
+
 ## [v032] — 2026-11-20
 ### 🌟 Major Release: Unified Dock & Dynamic 4K Wallpaper Engine
 - **Product Merger**: Combined `GIN-Dock` and `GIN-Wallpaper` into a single, cohesive application: `GIN-Dock-Wallpaper`.

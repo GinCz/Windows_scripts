@@ -36,6 +36,24 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v038 (2026-11-20)
+- **Relocated Font Palette to Wallpaper & Calendar Tab**:
+  - Moved the 12 curated font buttons (`Segoe UI`, `Tahoma`, `Arial`, `Verdana`, `Georgia`, `Corbel`, `Consolas`, `Trebuchet MS`, `Cambria`, `Century Gothic`, `Candara`, `Calibri`) from Tab 1 to Tab 2 (`_tabWall`).
+  - Returned Tab 1 (Главные) to a clean, focused control center for main toggles and the 10 theme presets.
+- **Direct Wallpaper & Calendar Generation on Font Click**:
+  - Clicking a font button no longer alters GUI fonts of the settings dialog.
+  - Updates `CalendarFontFamily`, saves configuration, updates button active highlight, and immediately calls `TriggerNextWallpaperAsync()` to generate a fresh 4K wallpaper with the calendar HUD rendered in the chosen typeface.
+- **4-Button Responsive Calendar Scale**:
+  - Replaced trackbar with 4 responsive toggle buttons: `Маленький` (0.75x), `Средний` (1.0x), `Большой` (1.3x), `Крупный` (1.6x).
+  - Clicking any scale button immediately saves the scale and triggers `TriggerNextWallpaperAsync()` to generate a new wallpaper and redraw the calendar at the requested scale.
+- **Defensive Queueing in WallpaperEngine**:
+  - Added `_queuedRequest` in `WallpaperEngine` so rapid clicks between fonts and scales are never dropped while a download is in progress.
+  - Added fallback to `_lastDownloadedPath` if an image download fails or experiences network lag, ensuring the calendar HUD is always redrawn immediately.
+- **Build & Cloud Deployment**:
+  - Compiled `Uninstall.exe`, `GIN-Dock-Wallpaper.exe`, `GIN-Dock-Wallpaper_v038_Setup.exe`, and `GIN-Dock-Wallpaper_Setup_v038.cmd`.
+  - Mirrored release artifacts to `Windows_scripts/GIN-Dock-Wallpaper/` and `Windows_scripts/GIN-Wallpaper/`.
+  - Purged obsolete `v036` releases across local mirrors and MEGA storage; strictly retained the 2 latest versions (`v037` and `v038`).
+
 ## Update: v037 (2026-11-20)
 - **Implemented Real-Time Settings Font Re-Styling**: Created `ApplyFontToForm(string fontName)` with recursive control styling preserving bold/regular styles, updating dialog controls immediately upon clicking any of the 12 font buttons on Tab 1.
 - **Fixed Dock Folder Flicker**: Diagnosed cause of dropdown blinking (interaction between ToolTip window, `AutoClose = true`, and mouse coordinate re-checks). Set `AutoClose = false`, removed tooltip on folder buttons, and created `IsCursorOverDropDownHierarchy` for stable hover navigation.

@@ -1,4 +1,4 @@
-# ⚡ GIN-Dock-Wallpaper `v037` (Universal Release)
+# ⚡ GIN-Dock-Wallpaper `v038` (Universal Release)
 
 <div align="center">
 
@@ -14,8 +14,8 @@
 
 <br/>
 
-[![Download Setup](https://img.shields.io/badge/🚀%20Download-GIN--Dock--Wallpaper%20v037%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v037_Setup.exe)
-[![Alternative Script Setup](https://img.shields.io/badge/📦%201--Click-GIN--Dock--Wallpaper%20Setup%20v037.cmd-2196F3?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_Setup_v037.cmd)
+[![Download Setup](https://img.shields.io/badge/🚀%20Download-GIN--Dock--Wallpaper%20v038%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v038_Setup.exe)
+[![Alternative Script Setup](https://img.shields.io/badge/📦%201--Click-GIN--Dock--Wallpaper%20Setup%20v038.cmd-2196F3?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_Setup_v038.cmd)
 
 </div>
 

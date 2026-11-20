@@ -1,18 +1,18 @@
 {
-  "version": "v037",
+  "version": "v038",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v037_Setup.exe",
-  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v037.cmd",
+  "installer": "GIN-Dock-Wallpaper_v038_Setup.exe",
+  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v038.cmd",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v037_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v038_Setup.exe",
   "features": [
-    "Full Settings Font Application: clicking any of the 12 font buttons instantly re-styles every label, button, and tab across the entire settings dialog",
-    "Dynamic Wallpaper Categories Localization: category checkbox titles now re-translate in real time on language switch (EN, RU, CS)",
-    "Dock Folder Hover Flicker Elimination: rock-solid folder menu expansion without blinking or auto-closing while hovering over folder or items",
-    "About Tab Localization: full translation for description, titles, and repository buttons across Russian, English, and Czech",
-    "Strict 2-Version Retention: kept strictly v036 and v037 in MEGA desktop and flash mirrors"
+    "Fonts Relocation to Wallpaper & Calendar Tab: 12 curated font buttons moved from Settings Tab 1 to Tab 2",
+    "Direct Desktop Wallpaper & Calendar Generation on Font Click: clicking a font button keeps settings window fonts clean and immediately generates a fresh 4K wallpaper with the newly selected font",
+    "4-Button Responsive Calendar Scale: replaced trackbar with 4 dedicated scale buttons (Small, Medium, Large, Huge) that instantly regenerate wallpaper HUD in the selected scale",
+    "Non-Dropping Wallpaper Queue: rapid font or scale clicks are queued without drops or socket hangs",
+    "Strict 2-Version Retention: kept strictly v037 and v038 in MEGA desktop and git repositories"
   ]
 }
