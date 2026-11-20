@@ -36,6 +36,15 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v036 (2026-11-20)
+- **Resolved WinForms Variable Font Bug**: Replaced `Bahnschrift` with `Tahoma` across the 12 font presets and stabilized dialog fonts on `Segoe UI` (9pt / 9.5pt), eliminating wide character gaps and overlapping letters.
+- **Fixed Theme Engine**: Corrected `ThemeManager.GetTheme` logic to prioritize explicit theme IDs before falling back to time-of-day modes, enabling immediate theme color changes when clicking theme buttons.
+- **Relocated Font Engine**: Moved the 12 live preview font buttons from Tab 2 to Tab 1 (Главные), streamlining configuration.
+- **Live Real-Time Dock Resizing**: Added dynamic callback on icon size button clicks (`16`, `24`, `32`, `48`, `64` px) that clears shell icon cache and updates the dock instantly.
+- **Hover-To-Open Dock Folders**: Implemented cursor tracking and `_folderMap` inspection in `DockBarForm` to display folder dropdowns automatically on hover without mouse clicks.
+- **Localization Polish**: Verified and fixed dock position translations (`⬆ Вверху`, `⬅ Слева`).
+- **Compiled & Released v036**: Produced `GIN-Dock-Wallpaper.exe`, `Uninstall.exe`, `GIN-Dock-Wallpaper_v036_Setup.exe`, and `GIN-Dock-Wallpaper_Setup_v036.cmd`. Synchronized to `GIN-Wallpaper` and MEGA cloud, purging obsolete `v034`.
+
 ## Update: v035 (2026-11-20)
 - Transformed SettingsForm to GIN-VPN visual design language:
   - Top header bar with Day (`☼`), Evening (`☁`), Night (`☾`) mode buttons, Language (`EN`, `RU`, `CS`), and Sound (`♪`) toggle.

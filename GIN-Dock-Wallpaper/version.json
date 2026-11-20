@@ -1,21 +1,20 @@
 {
-  "version": "v035",
+  "version": "v036",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v035_Setup.exe",
-  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v035.cmd",
+  "installer": "GIN-Dock-Wallpaper_v036_Setup.exe",
+  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v036.cmd",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v035_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v036_Setup.exe",
   "features": [
-    "Zero-Browser In-App Auto-Updater: downloads setup directly to %TEMP%, prompts confirmation, executes installer and restarts without opening browser",
-    "GIN-VPN Header Bar: Day (☼), Evening (☁), Night (☾) toggle buttons, Language (EN, RU, CS) buttons, and Audio toggle (♪) button",
-    "Dock Placement Buttons: stylish Top and Left buttons instead of dropdown list",
-    "Theme Selector Buttons: 10 curated themes in a responsive grid with instant real-time UI styling",
-    "Wallpaper Interval Buttons: 1 hour, 3 hours, 6 hours, 24 hours quick switch buttons",
-    "12 Font Preview Buttons: each button rendered in its own font with live real-time UI font application",
-    "Real Dock Icon Sizing: 16px, 24px, 32px, 48px, 64px button toggles with actual icon & geometry scaling",
-    "GIN-VPN Signature Footer: bottom-right clean gold VladiMIR+AI ||| v035 without underline"
+    "Fixed Font Distortion: replaced OpenType variable font Bahnschrift with Tahoma, preventing text kerning bugs and letter overlapping",
+    "Active Theme Engine: fixed ThemeManager.GetTheme to correctly map selected theme buttons (Nordic Frost, Cyberpunk, Warm Sand, etc.) with real-time UI colors",
+    "Font Selector Relocation: moved 12 curated font preview buttons to Tab 1 (Главные) for intuitive centralized styling",
+    "Real-Time Live Dock Resizing: clicking 16px, 24px, 32px, 48px, 64px icon size buttons immediately resizes the dock bar and clears icon cache",
+    "Instant Mouse Hover Folder Opening: subfolders on the dock bar expand seamlessly on mouse glide without requiring mouse clicks",
+    "Localized Dock Placement Buttons: Russian UI now displays '⬆ Вверху' and '⬅ Слева' properly",
+    "Zero-Browser In-App Auto-Updater: direct in-place update engine with no web redirects"
   ]
 }

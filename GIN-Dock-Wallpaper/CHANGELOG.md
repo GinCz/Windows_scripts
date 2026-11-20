@@ -45,6 +45,16 @@
 - **Interactive Signature Footer**: Form footer features `VladiMIR+AI  |||  v034` with clickable links: `VladiMIR+AI` links to GitHub profile; clicking `v034` initiates the auto-update check.
 - **Deployment Streamlining**: Purged all unversioned files and shortcuts; retained strictly the 2 latest versions (`v033` and `v034`).
 
+## [v036] — 2026-11-20
+### 🎨 Typography Fixes, Dynamic Theme Mapping, Centralized Font Engine & Hover Dock
+- **Font Rendering & Kerning Fix**: Resolved severe letter-spacing distortions and font crawl caused by OpenType variable fonts (`Bahnschrift`). Replaced with rock-solid TrueType/OpenType `Tahoma` and pinned dialog controls cleanly to `Segoe UI` (9pt / 9.5pt) matching the crisp aesthetic of GIN-VPN.
+- **Active Theme Engine**: Fixed `ThemeManager.GetTheme` to perform exact and prefix case-insensitive lookup against selected theme IDs (`Nordic Frost`, `Cyberpunk`, `Warm Sand`, `Midnight OLED`, etc.), ensuring full real-time window restyling on click and upon `Apply`.
+- **Centralized Font Selector on Tab 1 (Главные)**: Moved the 12 curated font preview buttons to the main settings tab for unified typography control, completely decluttering Tab 2 (Wallpaper & Calendar).
+- **Instant Real-Time Dock Resizing**: Clicking icon size buttons (`16 px`, `24 px`, `32 px`, `48 px`, `64 px`) now immediately flushes icon caches (`ShellHelper.ClearCache()`), triggers real-time dock bar recreation, and dynamically adjusts dock bar thickness on the desktop.
+- **Fluid Mouse Hover Folder Opening**: Folders on the dock bar now open automatically and effortlessly as the cursor glides over them, eliminating the need to left-click.
+- **Localized Dock Placement Buttons**: Corrected Russian button text to clean standard `⬆ Вверху` and `⬅ Слева` (replacing untranslated identifiers).
+- **Deployment & Version Integrity**: Retained strictly the 2 latest versions (`v035` and `v036`); purged `v034` across repository mirrors and MEGA storage.
+
 ## [v035] — 2026-11-20
 ### 💎 GIN-VPN Heritage UI, Interactive Buttons, Zero-Browser Auto-Updater & Real Icon Sizing
 - **GIN-VPN Styled Top Bar**: Integrated top header bar featuring Day (`☼`), Evening (`☁`), and Night (`☾`) mode buttons, Language switcher (`EN`, `RU`, `CS`), and Sound effects toggle (`♪`).
