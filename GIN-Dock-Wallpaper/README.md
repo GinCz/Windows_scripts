@@ -1,4 +1,4 @@
-# ⚡ GIN-Dock-Wallpaper `v041` (Universal Release)
+# ⚡ GIN-Dock-Wallpaper `v042` (Universal Release)
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 <br/>
 
-[![Download Setup](https://img.shields.io/badge/🚀%20Download-GIN--Dock--Wallpaper%20v041%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v041_Setup.exe)
+[![Download Setup](https://img.shields.io/badge/🚀%20Download-GIN--Dock--Wallpaper%20v042%20Setup.exe-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v042_Setup.exe)
 
 </div>
 
@@ -75,8 +75,7 @@ Access settings at any time by **right-clicking the Sand 'G' tray icon** or by c
 ## 🚀 Installation & Uninstallation
 
 ### Installation
-- **Binary Installer**: Download and execute [GIN-Dock-Wallpaper_v032_Setup.exe](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v032_Setup.exe).
-- **1-Click Script**: Or execute [GIN-Dock-Wallpaper_Setup_v032.cmd](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_Setup_v032.cmd) with administrator privileges.
+- **Binary Installer**: Download and execute [GIN-Dock-Wallpaper_v042_Setup.exe](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v042_Setup.exe).
 
 ### Uninstallation
 1. Open Windows **Settings → Installed Apps (Add or Remove Programs)** and select **GIN Dock Wallpaper**, or

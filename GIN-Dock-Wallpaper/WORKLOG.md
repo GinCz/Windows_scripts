@@ -36,6 +36,16 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v042 (2026-11-20)
+- **Resolved Wallpaper Generation & Startup Sync**: Fixed defect where wallpaper engine only ran after timer elapsed; added automatic startup trigger (`TriggerNextWallpaperAsync`) 800ms after launch so desktop refreshes immediately.
+- **Configured TLS 1.2 / TLS 1.3 Security Protocols**: Set `ServicePointManager.SecurityProtocol` to guarantee HTTPS connectivity with Cloudflare-protected Wallhaven API, Unsplash, and Picsum endpoints.
+- **Multi-Tier Resilient 4K Downloader**: Engineered 6-tier fallback pipeline (Wallhaven Search with random candidate selection -> Lorem Picsum UHD CDN -> Curated Unsplash 4K pool -> Local Cache -> Existing Windows wallpaper -> Dark Gradient) with custom `TimeoutWebClient` (8-10s timeout).
+- **Screen-Calibrated Wallpaper & HUD Rendering**: Wallpapers are dynamically scaled and cropped to the primary display resolution before overlaying the Calendar HUD, preventing clipping or distortion from Windows Fill scaling.
+- **Dual Alternating Desktop Slots**: Replaced static file path with alternating slots (`active_desktop_hud_A.jpg` and `active_desktop_hud_B.jpg`), preventing GDI+ file lock exceptions and forcing Windows to immediately repaint the desktop.
+- **Automated Cache Purge**: Added cleanup logic to limit cached wallpapers and purge stale temporary files.
+- **Legacy GIN-Wallpaper Cleaner**: Installer terminates legacy processes (`GIN-Wallpaper-Calend`, `GIN-Wallpaper`), removes obsolete autostart registry entries, and cleans old desktop shortcuts.
+- **Standalone Installer Build**: Compiled standalone `GIN-Dock-Wallpaper_v042_Setup.exe` (700KB), updated mirrors, and synced to MEGA Desktop (retaining strictly v041 and v042).
+
 ## Update: v041 (2026-11-20)
 - **Eliminated Tab Scrollbars**: Disabled `AutoScroll` across all tab pages to completely remove the vertical scrollbar.
 - **Compacted Tab 2 Vertical Rhythm**: Reduced spacing across categories, intervals, calendar scale, and font selection grid; all controls end at `Y=508px`, fitting comfortably within the 530px TabPage client height.

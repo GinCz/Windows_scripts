@@ -17,10 +17,10 @@ using Microsoft.Win32;
 [assembly: AssemblyTitle("GIN-Dock-Wallpaper")]
 [assembly: AssemblyDescription("Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Dock-Wallpaper")]
+[assembly: AssemblyProduct("GIN-Dock-Wallpaper_v042")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vladimir Bulantsev")]
-[assembly: AssemblyVersion("0.39.0.0")]
-[assembly: AssemblyFileVersion("0.39.0.0")]
+[assembly: AssemblyVersion("0.42.0.0")]
+[assembly: AssemblyFileVersion("0.42.0.0")]
 
 namespace GINDockWallpaper {
 
@@ -347,7 +347,7 @@ namespace GINDockWallpaper {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v041" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v042" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -450,7 +450,7 @@ namespace GINDockWallpaper {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v041" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v042" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -553,7 +553,7 @@ namespace GINDockWallpaper {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v041" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v042" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1043,6 +1043,23 @@ namespace GINDockWallpaper {
     // ==========================================
     // WALLPAPER & CALENDAR ENGINE
     // ==========================================
+    public class TimeoutWebClient : WebClient {
+        private int _timeoutMs;
+        public TimeoutWebClient(int timeoutMs = 8000) {
+            _timeoutMs = timeoutMs;
+        }
+        protected override WebRequest GetWebRequest(Uri address) {
+            WebRequest req = base.GetWebRequest(address);
+            if (req != null) {
+                req.Timeout = _timeoutMs;
+                if (req is HttpWebRequest) {
+                    ((HttpWebRequest)req).ReadWriteTimeout = _timeoutMs;
+                }
+            }
+            return req;
+        }
+    }
+
     public class WallpaperEngine {
         private Config _config;
         private System.Windows.Forms.Timer _timer;
@@ -1063,6 +1080,10 @@ namespace GINDockWallpaper {
             };
             if (_config.EnableWallpaper) {
                 _timer.Start();
+                ThreadPool.QueueUserWorkItem(_ => {
+                    Thread.Sleep(800);
+                    TriggerNextWallpaperAsync();
+                });
             }
         }
 
@@ -1076,6 +1097,7 @@ namespace GINDockWallpaper {
             if (enable) {
                 UpdateInterval();
                 _timer.Start();
+                TriggerNextWallpaperAsync();
             } else {
                 _timer.Stop();
             }
@@ -1097,13 +1119,29 @@ namespace GINDockWallpaper {
                     if (string.IsNullOrEmpty(downloadedFile) || !File.Exists(downloadedFile)) {
                         downloadedFile = _lastDownloadedPath;
                     }
+                    if (string.IsNullOrEmpty(downloadedFile) || !File.Exists(downloadedFile)) {
+                        downloadedFile = GetFallbackWallpaper();
+                    }
+
                     if (!string.IsNullOrEmpty(downloadedFile) && File.Exists(downloadedFile)) {
                         _lastDownloadedPath = downloadedFile;
 
                         string finalWallpaper = downloadedFile;
                         if (_config.ShowCalendar) {
                             finalWallpaper = RenderCalendarOnWallpaper(downloadedFile);
+                        } else {
+                            finalWallpaper = ScaleWallpaperToScreen(downloadedFile);
                         }
+                        CleanupOldWallpapers();
+
+                        try {
+                            using (RegistryKey rk = Registry.CurrentUser.OpenSubKey(@"Control Panel\Desktop", true)) {
+                                if (rk != null) {
+                                    rk.SetValue("WallpaperStyle", "10"); // Fill
+                                    rk.SetValue("TileWallpaper", "0");
+                                }
+                            }
+                        } catch { }
 
                         NativeMethods.SystemParametersInfo(
                             NativeMethods.SPI_SETDESKWALLPAPER,
@@ -1128,6 +1166,46 @@ namespace GINDockWallpaper {
                     }
                 }
             });
+        }
+
+        private string GetFallbackWallpaper() {
+            try {
+                if (Directory.Exists(Config.CacheDir)) {
+                    string[] cached = Directory.GetFiles(Config.CacheDir, "wallpaper_*.jpg");
+                    if (cached.Length > 0) {
+                        List<string> valid = new List<string>();
+                        foreach (string f in cached) {
+                            try {
+                                if (new FileInfo(f).Length > 20000) valid.Add(f);
+                            } catch { }
+                        }
+                        if (valid.Count > 0) {
+                            return valid[new Random().Next(valid.Count)];
+                        }
+                    }
+                }
+                string cur = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Control Panel\Desktop", "Wallpaper", null) as string;
+                if (!string.IsNullOrEmpty(cur) && File.Exists(cur) && new FileInfo(cur).Length > 10000) {
+                    return cur;
+                }
+            } catch { }
+
+            string gradPath = Path.Combine(Config.CacheDir, "wallpaper_gradient_default.jpg");
+            try {
+                int w = Screen.PrimaryScreen.Bounds.Width;
+                int h = Screen.PrimaryScreen.Bounds.Height;
+                if (w < 800) w = 1920;
+                if (h < 600) h = 1080;
+                using (Bitmap bmp = new Bitmap(w, h))
+                using (Graphics g = Graphics.FromImage(bmp))
+                using (LinearGradientBrush lgb = new LinearGradientBrush(new Rectangle(0, 0, w, h), Color.FromArgb(20, 24, 34), Color.FromArgb(10, 12, 16), 45f)) {
+                    g.FillRectangle(lgb, 0, 0, w, h);
+                    bmp.Save(gradPath, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    return gradPath;
+                }
+            } catch { }
+
+            return null;
         }
 
         public void SaveActiveWallpaperToPictures() {
@@ -1182,6 +1260,8 @@ namespace GINDockWallpaper {
                     queries.Add("cyberpunk neon");
                     queries.Add("3d abstract");
                     queries.Add("ocean waves");
+                    queries.Add("supercar luxury");
+                    queries.Add("mountains forest");
                 }
             }
 
@@ -1194,47 +1274,203 @@ namespace GINDockWallpaper {
 
             string targetJpg = Path.Combine(Config.CacheDir, "wallpaper_" + DateTime.Now.Ticks + ".jpg");
 
-            using (WebClient wc = new WebClient()) {
-                wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v037 (Windows; WinAPI)");
-                string json = wc.DownloadString(apiUrl);
+            // Tier 1: Wallhaven Search API
+            try {
+                using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
+                    wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v042 (Windows; WinAPI)");
+                    string json = wc.DownloadString(apiUrl);
+                    int pIdx = json.IndexOf("\"path\":\"");
+                    if (pIdx != -1) {
+                        pIdx += 8;
+                        int pEnd = json.IndexOf("\"", pIdx);
+                        if (pEnd != -1) {
+                            string imgUrl = json.Substring(pIdx, pEnd - pIdx).Replace("\\/", "/");
+                            wc.DownloadFile(imgUrl, targetJpg);
+                            if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
+                                return targetJpg;
+                            }
+                        }
+                    }
+                }
+            } catch { }
 
-                int pIdx = json.IndexOf("\"path\":\"");
-                if (pIdx != -1) {
-                    pIdx += 8;
-                    int pEnd = json.IndexOf("\"", pIdx);
-                    if (pEnd != -1) {
-                        string imgUrl = json.Substring(pIdx, pEnd - pIdx).Replace("\\/", "/");
-                        wc.DownloadFile(imgUrl, targetJpg);
+            // Tier 2: Lorem Picsum (Ultra-resilient, fast global CDN, no API key required)
+            try {
+                int seedVal = new Random().Next(1, 100000);
+                string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
+                using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
+                    wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v042 (Windows; WinAPI)");
+                    wc.DownloadFile(picsumUrl, targetJpg);
+                    if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
                     }
                 }
+            } catch { }
 
-                string unsplashUrl = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2560&q=80";
-                wc.DownloadFile(unsplashUrl, targetJpg);
-                return targetJpg;
-            }
+            // Tier 3: Curated Unsplash 4K CDN Pool
+            string[] unsplashPool = new string[] {
+                "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?auto=format&fit=crop&w=2560&q=80",
+                "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=2560&q=80"
+            };
+            try {
+                string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
+                using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
+                    wc.Headers.Add("User-Agent", "GIN-Dock-Wallpaper/v042 (Windows; WinAPI)");
+                    wc.DownloadFile(randUnsplash, targetJpg);
+                    if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
+                        return targetJpg;
+                    }
+                }
+            } catch { }
+
+            // Tier 4: Cached wallpapers
+            try {
+                if (Directory.Exists(Config.CacheDir)) {
+                    string[] cached = Directory.GetFiles(Config.CacheDir, "wallpaper_*.jpg");
+                    if (cached.Length > 0) {
+                        List<string> valid = new List<string>();
+                        foreach (string f in cached) {
+                            try {
+                                if (new FileInfo(f).Length > 25000) valid.Add(f);
+                            } catch { }
+                        }
+                        if (valid.Count > 0) {
+                            return valid[new Random().Next(valid.Count)];
+                        }
+                    }
+                }
+            } catch { }
+
+            // Tier 5: Current Windows desktop wallpaper
+            try {
+                string curWall = Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\Control Panel\Desktop", "Wallpaper", null) as string;
+                if (!string.IsNullOrEmpty(curWall) && File.Exists(curWall) && new FileInfo(curWall).Length > 10000) {
+                    return curWall;
+                }
+            } catch { }
+
+            // Tier 6: High-res generated dark gradient bitmap
+            try {
+                int w = Screen.PrimaryScreen.Bounds.Width;
+                int h = Screen.PrimaryScreen.Bounds.Height;
+                if (w < 800) w = 1920;
+                if (h < 600) h = 1080;
+                using (Bitmap bmp = new Bitmap(w, h))
+                using (Graphics g = Graphics.FromImage(bmp))
+                using (LinearGradientBrush lgb = new LinearGradientBrush(new Rectangle(0, 0, w, h), Color.FromArgb(20, 24, 34), Color.FromArgb(10, 12, 16), 45f)) {
+                    g.FillRectangle(lgb, 0, 0, w, h);
+                    bmp.Save(targetJpg, System.Drawing.Imaging.ImageFormat.Jpeg);
+                    return targetJpg;
+                }
+            } catch { }
+
+            return null;
         }
 
-        private string RenderCalendarOnWallpaper(string originalImagePath) {
-            string outputJpg = Path.Combine(Config.CacheDir, "active_desktop_hud.jpg");
+        private static int _hudSlot = 0;
+
+        private static void CleanupOldWallpapers() {
+            try {
+                if (!Directory.Exists(Config.CacheDir)) return;
+                string[] files = Directory.GetFiles(Config.CacheDir, "active_desktop_hud_*.jpg");
+                foreach (string f in files) {
+                    try {
+                        string name = Path.GetFileName(f);
+                        if (!name.Equals("active_desktop_hud_A.jpg", StringComparison.OrdinalIgnoreCase) &&
+                            !name.Equals("active_desktop_hud_B.jpg", StringComparison.OrdinalIgnoreCase)) {
+                            File.Delete(f);
+                        }
+                    } catch { }
+                }
+                string[] walls = Directory.GetFiles(Config.CacheDir, "wallpaper_*.jpg");
+                if (walls.Length > 6) {
+                    Array.Sort(walls);
+                    for (int i = 0; i < walls.Length - 4; i++) {
+                        try { File.Delete(walls[i]); } catch { }
+                    }
+                }
+            } catch { }
+        }
+
+        private string ScaleWallpaperToScreen(string originalImagePath) {
+            _hudSlot = 1 - _hudSlot;
+            string outName = (_hudSlot == 0) ? "active_desktop_hud_A.jpg" : "active_desktop_hud_B.jpg";
+            string outputJpg = Path.Combine(Config.CacheDir, outName);
+
+            int screenW = Screen.PrimaryScreen.Bounds.Width;
+            int screenH = Screen.PrimaryScreen.Bounds.Height;
+            if (screenW < 800) screenW = 1920;
+            if (screenH < 600) screenH = 1080;
 
             using (Image original = Image.FromFile(originalImagePath))
-            using (Bitmap bmp = new Bitmap(original.Width, original.Height))
+            using (Bitmap bmp = new Bitmap(screenW, screenH))
             using (Graphics g = Graphics.FromImage(bmp)) {
                 g.SmoothingMode = SmoothingMode.HighQuality;
                 g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+                float scaleX = (float)screenW / original.Width;
+                float scaleY = (float)screenH / original.Height;
+                float coverScale = Math.Max(scaleX, scaleY);
+
+                int drawW = (int)Math.Ceiling(original.Width * coverScale);
+                int drawH = (int)Math.Ceiling(original.Height * coverScale);
+                int drawX = (screenW - drawW) / 2;
+                int drawY = (screenH - drawH) / 2;
+
+                g.DrawImage(original, drawX, drawY, drawW, drawH);
+
+                try { if (File.Exists(outputJpg)) File.Delete(outputJpg); } catch { }
+                bmp.Save(outputJpg, System.Drawing.Imaging.ImageFormat.Jpeg);
+            }
+            return outputJpg;
+        }
+
+        private string RenderCalendarOnWallpaper(string originalImagePath) {
+            _hudSlot = 1 - _hudSlot;
+            string outName = (_hudSlot == 0) ? "active_desktop_hud_A.jpg" : "active_desktop_hud_B.jpg";
+            string outputJpg = Path.Combine(Config.CacheDir, outName);
+
+            int screenW = Screen.PrimaryScreen.Bounds.Width;
+            int screenH = Screen.PrimaryScreen.Bounds.Height;
+            if (screenW < 800) screenW = 1920;
+            if (screenH < 600) screenH = 1080;
+
+            using (Image original = Image.FromFile(originalImagePath))
+            using (Bitmap bmp = new Bitmap(screenW, screenH))
+            using (Graphics g = Graphics.FromImage(bmp)) {
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                 g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
 
-                g.DrawImage(original, 0, 0, original.Width, original.Height);
+                float scaleX = (float)screenW / original.Width;
+                float scaleY = (float)screenH / original.Height;
+                float coverScale = Math.Max(scaleX, scaleY);
+
+                int drawW = (int)Math.Ceiling(original.Width * coverScale);
+                int drawH = (int)Math.Ceiling(original.Height * coverScale);
+                int drawX = (screenW - drawW) / 2;
+                int drawY = (screenH - drawH) / 2;
+
+                g.DrawImage(original, drawX, drawY, drawW, drawH);
 
                 DateTime now = DateTime.Now;
                 ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
 
                 float scale = Math.Max(0.6f, Math.Min(2.0f, _config.CalendarScale));
-                int cardW = (int)(Math.Max(260, (int)(original.Width * 0.16f)) * scale);
+                int cardW = (int)(Math.Max(260, (int)(screenW * 0.16f)) * scale);
                 int cardH = (int)(cardW * 0.82f);
                 int margin = 30;
-                int cardX = original.Width - cardW - margin;
+                int cardX = screenW - cardW - margin;
                 int cardY = margin + 40;
 
                 Rectangle cardRect = new Rectangle(cardX, cardY, cardW, cardH);
@@ -1298,8 +1534,17 @@ namespace GINDockWallpaper {
                     }
                 }
 
+                try { if (File.Exists(outputJpg)) File.Delete(outputJpg); } catch { }
                 bmp.Save(outputJpg, System.Drawing.Imaging.ImageFormat.Jpeg);
             }
+
+            try {
+                foreach (string oldHud in Directory.GetFiles(Config.CacheDir, "active_desktop_hud_*.jpg")) {
+                    if (!oldHud.Equals(outputJpg, StringComparison.OrdinalIgnoreCase)) {
+                        try { File.Delete(oldHud); } catch { }
+                    }
+                }
+            } catch { }
 
             return outputJpg;
         }
@@ -1440,7 +1685,7 @@ namespace GINDockWallpaper {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v041 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v042 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -1976,7 +2221,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v041");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v042");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2585,7 +2830,7 @@ namespace GINDockWallpaper {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v041", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v042", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -2620,7 +2865,7 @@ namespace GINDockWallpaper {
             _btnCancel = new Button { Text = "Отмена", Location = new Point(304, 3), Width = 95, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel, Font = new Font("Segoe UI", 9.5f) };
             _btnCancel.Click += (s, e) => this.Close();
 
-            // Right signature: VladiMIR+AI ||| v041 (Clean, Gold, No underline!)
+            // Right signature: VladiMIR+AI ||| v042 (Clean, Gold, No underline!)
             _lblAuthor = new Label {
                 Text = "VladiMIR+AI",
                 Location = new Point(540, 9),
@@ -2642,7 +2887,7 @@ namespace GINDockWallpaper {
             };
 
             _lblVer = new Label {
-                Text = "v041",
+                Text = "v042",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -3073,7 +3318,7 @@ namespace GINDockWallpaper {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v041";
+        public const string CURRENT_VERSION = "v042";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -3222,7 +3467,7 @@ namespace GINDockWallpaper {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v041";
+            _trayIcon.Text = "GIN Dock Wallpaper v042";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -3273,7 +3518,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v041");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v042");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -3346,6 +3591,16 @@ namespace GINDockWallpaper {
         public static void Main(string[] args) {
             if (args != null && args.Length > 0 && (args[0].Equals("--uninstall", StringComparison.OrdinalIgnoreCase) || args[0].Equals("/uninstall", StringComparison.OrdinalIgnoreCase))) {
                 return;
+            }
+
+            try {
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)12288 | (SecurityProtocolType)3072 | (SecurityProtocolType)768 | SecurityProtocolType.Tls;
+                ServicePointManager.Expect100Continue = false;
+                ServicePointManager.DefaultConnectionLimit = 20;
+            } catch {
+                try {
+                    ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072 | SecurityProtocolType.Tls;
+                } catch { }
             }
 
             bool createdNew;

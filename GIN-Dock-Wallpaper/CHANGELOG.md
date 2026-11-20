@@ -1,5 +1,18 @@
 # 📋 CHANGELOG — GIN-Dock-Wallpaper
 
+## [v042] — 2026-11-20
+### 🚀 Fixed Wallpaper Generation, Instant Startup Sync & Dual Alternating Buffer
+- **Instant Wallpaper & Calendar Sync on Launch**: Fixed issue where the wallpaper engine waited for the full timer interval before running; `TriggerNextWallpaperAsync()` now executes automatically 800ms after startup so the desktop updates immediately.
+- **Modern TLS 1.2 / TLS 1.3 Security Protocol**: Configured `ServicePointManager.SecurityProtocol` for compatibility with Cloudflare-protected APIs (Wallhaven.cc, Unsplash, Picsum), eliminating silent TLS handshake failures on Windows 10/11.
+- **Multi-Tier Resilient 4K Downloader with Timeout**:
+  - Replaced blocking `WebClient` with custom `TimeoutWebClient` (8–10s timeout).
+  - Implemented 6-tier download pipeline: Wallhaven Random Search (collecting full page candidates) ➔ Lorem Picsum UHD CDN ➔ Curated Unsplash 4K pool ➔ Local Cache ➔ Existing Windows wallpaper ➔ Native Dark Gradient fallback.
+- **Screen-Calibrated Wallpaper & HUD Rendering**: Source wallpapers are now dynamically scaled and center-cropped to the primary monitor resolution in memory before overlaying the Calendar HUD, preventing clipping or distortion caused by Windows Fill scaling.
+- **Dual Alternating Desktop Slots (`active_desktop_hud_A.jpg` / `B.jpg`)**: Switched to alternating slots to completely eliminate GDI+ file-locking exceptions and force Windows Desktop to instantly recognize path changes and repaint.
+- **Automated Cache Purge**: Added background cleanup routines keeping only active and recent temporary files, preventing unbounded cache growth.
+- **Legacy GIN-Wallpaper Cleaner**: Installer now halts leftover `GIN-Wallpaper` / `GIN-Wallpaper-Calend` processes, removes stale autostart registry entries, and cleans up legacy desktop shortcuts.
+- **Rebuilt Native Standalone Installer**: Updated compilation pipeline to inject the freshly built executable payload into `GIN-Dock-Wallpaper_v042_Setup.exe` (700KB).
+
 ## [v041] — 2026-11-20
 ### 🚫 Complete Elimination of Scrollbars & Clean Geometry Fit
 - **Eliminated Tab Scrollbars**: Disabled `AutoScroll` across all tabs (`_tabWall`, `_tabDock`, `_tabMain`, `_tabAbout`), ensuring that no ugly vertical scrollbars ever appear on the right side of the settings dialog.

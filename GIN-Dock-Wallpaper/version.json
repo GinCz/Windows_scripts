@@ -1,17 +1,18 @@
 {
-  "version": "v041",
+  "version": "v042",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v041_Setup.exe",
+  "installer": "GIN-Dock-Wallpaper_v042_Setup.exe",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v041_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v042_Setup.exe",
   "features": [
-    "Zero-Scrollbar Pure Fit: Removed AutoScroll across all tabs and compacted vertical coordinates so all controls, fonts, and action buttons fit cleanly with zero scrollbars",
-    "Compact Tab 2 Vertical Rhythm: Reduced category row step to 18px and font grid step to 25px; wallpaper action buttons now end at Y=508px well inside the tab frame",
-    "Full-Width Action Buttons: Expanded 'Сохранить текущие обои в Изображения' to 350px width preventing any text cutoff",
-    "24 Curated Fonts & Calendar Scale: Expanded calligraphic and graphic typography with clean 'Off' toggle and preview buttons",
-    "Pure Standalone Binary Distribution: Zero external scripts; 666KB native WinAPI setup installer"
+    "Fixed Wallpaper Generation & Startup Sync: Restored automatic instant download and wallpaper change upon launch without waiting for the 60-minute timer",
+    "Enabled Modern TLS 1.2/1.3 Protocols: Initialized ServicePointManager.SecurityProtocol to guarantee 100% success on Cloudflare-protected Wallhaven API, Unsplash, and Picsum endpoints",
+    "Multi-Tier Resilient 4K Downloader: Implemented 6-tier fallback engine (Wallhaven Random Search -> Wallhaven Pool -> Picsum UHD -> Unsplash 4K -> Local Cache -> Generated Gradient) ensuring zero failures even offline",
+    "Screen-Calibrated Calendar HUD: Dynamically scales source wallpaper to primary screen resolution in memory before rendering HUD, eliminating distortion and clipping",
+    "Dual Alternating Desktop Slots: Alternates between active_desktop_hud_A.jpg and active_desktop_hud_B.jpg to bypass Windows Desktop path caching and eliminate GDI+ file locking",
+    "Legacy GIN-Wallpaper Cleaner: Automatically terminates leftover GIN-Wallpaper processes, cleans obsolete autostart registry entries, and purges old desktop shortcuts"
   ]
 }
