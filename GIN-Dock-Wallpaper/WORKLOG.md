@@ -17,3 +17,12 @@
   - Built standalone installer `GIN-Dock-Wallpaper_v032_Setup.exe` with base64 payload embedding.
   - Built hybrid polyglot script installer `GIN-Dock-Wallpaper_Setup_v032.cmd`.
 - **Public Repository Setup**: Created comprehensive documentation, build scripts (`build.cmd`, `build.sh`), and `version.json` in `Windows_scripts/GIN-Dock-Wallpaper`.
+
+## Update: v033 (2026-11-20)
+- Redesigned Settings dialog architecture with 4 dedicated tabs: Main, Wallpaper & Calendar, Dock Bar, and About.
+- Integrated all 14 Wallpaper categories from legacy GIN-Wallpaper into dedicated checkboxes.
+- Implemented vertical Font Accordion with 12 curated fonts and independent font size / family controls for folders and items.
+- Added icon size configuration (16px to 64px) for the dock.
+- Fixed language switching reactivity: real-time re-localization of all UI elements and context menu on dropdown change.
+- Added Apply button to allow testing changes without closing settings.
+- Uploaded v033 installers to MEGA Desktop and Flash drive; purged obsolete v002 files.

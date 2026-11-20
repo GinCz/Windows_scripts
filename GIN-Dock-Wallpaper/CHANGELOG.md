@@ -25,3 +25,12 @@
   - Added dedicated `Uninstall.exe` and `uninstall.cmd` inside the program folder.
 - **Update Checking**:
   - Added auto-update check on startup and manual check via system tray menu.
+
+## [v033] — 2026-11-20
+### 🌟 Tab Restructuring, 14 Wallpaper Themes, Font Accordion & Real-Time I18n
+- **Dedicated Main Tab**: Features Day / Evening / Night time-of-day switcher, real-time Language selector, feature toggles, and autostart.
+- **Dedicated Wallpaper Tab**: Fully restored all 14 curated categories with multi-select checkboxes (All Random, 3D, Flowers, Ocean, Space, Nature, Animals, Cars, Trucks, Fashion/Girls, City, Cyberpunk, Minimalism, Anime), interval, and calendar HUD controls.
+- **Dedicated Dock Tab**: Complete dock controls with placement, root folder, icon size selector (16, 24, 32, 48, 64 px), sorting, and auto-hide delay.
+- **Font Selection Accordion**: Expandable panel stretching window vertically with 12 curated fonts for Dock Folders, Dock Items, and Wallpaper Calendar.
+- **Real-Time Localization Fix**: Switching language in the dropdown instantly translates the entire Settings dialog and System Tray menu in real time without restart.
+- **Dedicated Apply Button**: Added `Apply` button alongside `Save & Close` and `Cancel` to immediately commit changes without dismissing the dialog.

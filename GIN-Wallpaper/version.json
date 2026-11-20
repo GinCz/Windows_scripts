@@ -1,20 +1,19 @@
 {
-  "version": "v032",
+  "version": "v033",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v032_Setup.exe",
-  "description": "Smart Desktop Wallpaper with Calendar & Hot-Corner Dock Bar for Windows 10/11",
+  "installer": "GIN-Dock-Wallpaper_v033_Setup.exe",
+  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v033.cmd",
+  "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v032_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v033_Setup.exe",
   "features": [
-    "Unified GIN-Dock & GIN-Wallpaper into GIN-Dock-Wallpaper v032",
-    "Individual feature toggles: Enable/Disable Dock bar and Wallpaper engine separately",
-    "Top and Left dock bar placement options",
-    "Dual font size controls for folders and open items",
-    "12 distinct color themes & Day/Night mode",
-    "12-language multilingual localization dropdown",
-    "Single sand-colored 'G' tray icon",
-    "Dedicated uninstaller included"
+    "Dedicated Main Tab: Time of day mode (Day, Evening, Night, Auto) and instant real-time language switcher",
+    "Dedicated Wallpaper Tab: All 14 wallpaper categories preserved with checkboxes, interval, calendar font, and scaling",
+    "Dedicated Dock Tab: Dock placement, root folder, icon size selector (16/24/32/48/64 px), sorting, and auto-hide delay",
+    "Font Accordion Selector: Expandable panel with 12 curated fonts for Dock Folders, Dock Items, and Wallpaper Calendar",
+    "Real-Time Localization: Immediate dynamic translation of Settings window and System Tray context menu on language switch",
+    "Apply Button Added: Dedicated Apply button to commit and test changes without closing the settings window"
   ]
 }

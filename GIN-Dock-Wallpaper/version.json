@@ -1,27 +1,19 @@
 {
-  "version": "v032",
+  "version": "v033",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v032_Setup.exe",
-  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v032.cmd",
+  "installer": "GIN-Dock-Wallpaper_v033_Setup.exe",
+  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v033.cmd",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://github.com/GinCz/Windows_scripts/raw/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v032_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v033_Setup.exe",
   "features": [
-    "Unified Dock + Dynamic 4K Wallpaper: Seamless integration of hot-corner app dock and 4K wallpaper calendar engine",
-    "Independent Feature Toggles: Freely enable/disable Dock bar or Wallpaper engine based on user preference",
-    "Top or Left Placement: Choose between sliding down from screen top or sliding right from screen left",
-    "Clean Minimalist Brand Button: Removed extraneous left arrow icon next to GIN logo for an uncluttered modern UI",
-    "Dual Font Size Controls: Independent font size sliders for Folders (7-16 pt) and open items/app icons (7-16 pt)",
-    "Flexible Sorting Options: Alphabetical (A-Z, default), Reverse (Z-A), Folders First, File Type, and Date Modified",
-    "12 Signature Color Themes: Warm Sand (Default), Midnight OLED, Cyberpunk Amber, Nordic Frost, Emerald Forest, Deep Space Navy, Solarized Desert, Tokyo Neon, Pure Glass, Rose Gold, Titanium, and Daylight Light",
-    "Day / Night Mode: Toggle between Daylight and Dark styles, or auto-sync with Windows system dark theme",
-    "12-Language Multilingual Localization: English (default), Russian, Czech, German, French, Spanish, Italian, Portuguese, Polish, Ukrainian, Chinese, and Japanese",
-    "Curated 4K Wallpaper Engine: Official Wallhaven API integration with 8 curated categories and high-definition Unsplash fallback",
-    "Anti-Aliased Live Calendar HUD: Real-time desktop calendar overlay with current date highlighting and day/night theme matching",
-    "Single Sand-Colored 'G' Tray Icon: Unified custom icon across application, tray, installer, and uninstaller",
-    "Dedicated Uninstaller: Full Uninstall.exe and uninstall.cmd inside install directory with clean registry/shortcut cleanup",
-    "Ultra-Low Memory Footprint: Native WinAPI/GDI+ architecture idling at ~2-4 MB RAM with automatic memory trimming"
+    "Dedicated Main Tab: Time of day mode (Day, Evening, Night, Auto) and instant real-time language switcher",
+    "Dedicated Wallpaper Tab: All 14 wallpaper categories preserved with checkboxes, interval, calendar font, and scaling",
+    "Dedicated Dock Tab: Dock placement, root folder, icon size selector (16/24/32/48/64 px), sorting, and auto-hide delay",
+    "Font Accordion Selector: Expandable panel with 12 curated fonts for Dock Folders, Dock Items, and Wallpaper Calendar",
+    "Real-Time Localization: Immediate dynamic translation of Settings window and System Tray context menu on language switch",
+    "Apply Button Added: Dedicated Apply button to commit and test changes without closing the settings window"
   ]
 }
