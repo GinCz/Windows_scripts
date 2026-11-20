@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v020
+title GIN-Agent v022
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
@@ -19,7 +19,11 @@ if %errorlevel% equ 0 goto :RUN_INSTALLER
 
 if not defined GIN_AGENT_ELEVATED (
     set GIN_AGENT_ELEVATED=1
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process '%~f0' -ArgumentList '%GIN_AGENT_REGION%' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    if defined GIN_AGENT_REGION (
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -ArgumentList '%GIN_AGENT_REGION%' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    ) else (
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    )
     if not errorlevel 1 exit /b 0
 )
 
@@ -36,17 +40,22 @@ goto :EXEC_PS
 set "GIN_AGENT_SCRIPT=%~f0"
 
 set "PS_EXE=powershell.exe"
-if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" (
+    set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+) else if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
+    set "PS_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+)
 
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText($env:GIN_AGENT_SCRIPT, [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
 
 exit /b 0
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v020 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v022 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
+# Supported Platforms: Windows 10 (32-bit & 64-bit), Windows 11 (64-bit / ARM64)
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
@@ -62,7 +71,7 @@ try {
 
     $installDir = "$env:ProgramData\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdV20 = "$installDir\GIN-Agent_Windows_v020.cmd"
+    $targetCmdV22 = "$installDir\GIN-Agent_Windows_v022.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
     $serviceDesc = "Provides resilient background diagnostic connection and RDP shadow support for Vladimir Bulantsev (GinCz)."
@@ -82,7 +91,7 @@ try {
     if ($mode -ne "SERVICE") {
         Write-Host ""
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v020 - ВЫБОР РЕГИОНА / GATEWAY SELECTION         " -ForegroundColor Cyan
+        Write-Host "         GIN-AGENT v022 - ВЫБОР РЕГИОНА / GATEWAY SELECTION         " -ForegroundColor Cyan
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "  [1] Европа (Server_222 / Global)   [По умолчанию через 5 сек]" -ForegroundColor Green
         Write-Host "  [2] Россия (Сервер 109 FirstVDS)" -ForegroundColor Yellow
@@ -129,16 +138,61 @@ try {
         Write-Host ""
 
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v020 - СИСТЕМНАЯ СЛУЖБА РАЗВЕРТЫВАНИЯ            " -ForegroundColor Green
+        Write-Host "         GIN-AGENT v022 - СИСТЕМНАЯ СЛУЖБА РАЗВЕРТЫВАНИЯ            " -ForegroundColor Green
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "[*] Завершение предыдущих сессий агента..." -ForegroundColor Yellow
+        Write-Host "[*] Полная остановка и удаление предыдущих версий агента..." -ForegroundColor Yellow
 
-        $currentPid = $PID
-        Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" -ErrorAction SilentlyContinue | Where-Object {
-            $_.ProcessId -ne $currentPid -and ($_.CommandLine -like "*GIN-Agent*" -or $_.CommandLine -like "*agent-api*")
-        } | ForEach-Object {
-            try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+        # 1. Stop and remove any running scheduled task instances (Service & Watchdogs)
+        $oldTasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog")
+        foreach ($ot in $oldTasks) {
+            try { schtasks.exe /end /tn $ot >$null 2>&1 } catch {}
+            try { schtasks.exe /delete /tn $ot /f >$null 2>&1 } catch {}
         }
+
+        # 2. Kill all background agent processes (both cmd.exe and powershell.exe)
+        $currentPid = $PID
+        $parentPid = 0
+        try {
+            $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
+            if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
+        } catch {}
+
+        # Scan and terminate all previous GIN-Agent powershell and cmd instances
+        try {
+            Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
+                    ($_.Name -eq "powershell.exe" -and (
+                        $_.CommandLine -like "*GIN-Agent*" -or
+                        $_.CommandLine -like "*agent-api*" -or
+                        $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*" -or
+                        $_.CommandLine -like "*remote.gincz.com/agent-api*"
+                    )) -or
+                    ($_.Name -eq "cmd.exe" -and (
+                        $_.CommandLine -like "*ProgramData\GIN-Agent*" -or
+                        $_.CommandLine -like "*GIN-Agent*.cmd*" -or
+                        $_.CommandLine -like "*/service*"
+                    ))
+                )
+            } | ForEach-Object {
+                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+            }
+        } catch {}
+
+        # Supplementary safety check via Get-Process
+        try {
+            Get-Process powershell -ErrorAction SilentlyContinue | Where-Object {
+                $_.Id -ne $currentPid -and $_.Id -ne $parentPid
+            } | ForEach-Object {
+                try {
+                    $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $($_.Id)" -ErrorAction SilentlyContinue).CommandLine
+                    if ($cmdLine -and ($cmdLine -like "*GIN-Agent*" -or $cmdLine -like "*agent-api*")) {
+                        Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+                    }
+                } catch {}
+            }
+        } catch {}
+
+        Start-Sleep -Milliseconds 800
 
         # Deploy Directory and CMD file (Zero PS1 files)
         if (-not (Test-Path $installDir)) {
@@ -150,29 +204,49 @@ try {
             try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
         }
 
+        # Clear ReadOnly flag on existing target if set
+        if (Test-Path $targetCmd) {
+            try { (Get-Item $targetCmd -Force).IsReadOnly = $false } catch {}
+        }
+
         # Save selected region configuration
         [System.IO.File]::WriteAllText("$installDir\region.txt", $selectedRegion, [System.Text.Encoding]::UTF8)
 
-        # Copy the single CMD file to installation target
+        # Copy the single CMD file to installation target with safe overwrite
         $sourceScript = $env:GIN_AGENT_SCRIPT
         if ($sourceScript -and (Test-Path $sourceScript)) {
-            Copy-Item -Path $sourceScript -Destination $targetCmd -Force -ErrorAction SilentlyContinue
-            Copy-Item -Path $sourceScript -Destination $targetCmdV20 -Force -ErrorAction SilentlyContinue
+            try { Remove-Item -Path $targetCmd -Force -ErrorAction SilentlyContinue } catch {}
+            try {
+                Copy-Item -Path $sourceScript -Destination $targetCmd -Force -ErrorAction Stop
+            } catch {
+                try {
+                    $bakFile = "$targetCmd.old.$([System.IO.Path]::GetRandomFileName())"
+                    Move-Item -Path $targetCmd -Destination $bakFile -Force -ErrorAction SilentlyContinue
+                    Copy-Item -Path $sourceScript -Destination $targetCmd -Force -ErrorAction Stop
+                } catch {
+                    [System.IO.File]::WriteAllBytes($targetCmd, [System.IO.File]::ReadAllBytes($sourceScript))
+                }
+            }
+            try { Copy-Item -Path $sourceScript -Destination $targetCmdV22 -Force -ErrorAction SilentlyContinue } catch {}
         } else {
-            $myRaw = [System.IO.File]::ReadAllText($MyInvocation.MyCommand.Path, [System.Text.Encoding]::UTF8)
-            [System.IO.File]::WriteAllText($targetCmd, $myRaw, [System.Text.Encoding]::UTF8)
-            [System.IO.File]::WriteAllText($targetCmdV20, $myRaw, [System.Text.Encoding]::UTF8)
+            $myRaw = if ($MyInvocation.MyCommand.Path -and (Test-Path $MyInvocation.MyCommand.Path)) {
+                [System.IO.File]::ReadAllText($MyInvocation.MyCommand.Path, [System.Text.Encoding]::UTF8)
+            } else { "" }
+            if ($myRaw) {
+                try { [System.IO.File]::WriteAllText($targetCmd, $myRaw, [System.Text.Encoding]::UTF8) } catch {}
+                try { [System.IO.File]::WriteAllText($targetCmdV22, $myRaw, [System.Text.Encoding]::UTF8) } catch {}
+            }
         }
 
-        # Purge older versioned CMDs in installDir (retain v019 and v020 per retention rules)
+        # Purge older versioned CMDs in installDir (retain strictly 2 latest: v021 and v022)
         Get-ChildItem -Path $installDir -Filter "GIN-Agent_Windows_v*.cmd" -File -ErrorAction SilentlyContinue | Where-Object {
-            $_.Name -ne "GIN-Agent_Windows_v020.cmd" -and $_.Name -ne "GIN-Agent_Windows_v018.cmd"
+            $_.Name -ne "GIN-Agent_Windows_v022.cmd" -and $_.Name -ne "GIN-Agent_Windows_v021.cmd"
         } | ForEach-Object {
             try { Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
         }
 
         # Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
-        Write-Host "[*] Регистрация фоновой службы GIN-Agent ($selectedRegion)..." -ForegroundColor Cyan
+        Write-Host "[*] Регистрация чистой фоновой службы GIN-Agent ($selectedRegion)..." -ForegroundColor Cyan
 
         $taskName = "GIN-Agent-Service"
         $taskAction = "cmd.exe"
@@ -189,8 +263,9 @@ try {
 
         Write-Host ""
         Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "  [+] GIN-Agent v019 успешно развернут как СИСТЕМНАЯ СЛУЖБА!" -ForegroundColor Green
+        Write-Host "  [+] GIN-Agent v022 успешно развернут как СИСТЕМНАЯ СЛУЖБА!" -ForegroundColor Green
         Write-Host "  [+] Выбранный регион: $regDesc" -ForegroundColor Cyan
+        Write-Host "  [+] Совместимость: Windows 10 (32-bit / 64-bit), Windows 11." -ForegroundColor White
         Write-Host "  [+] Архитектура: единый автономный CMD (без внешних PS1 файлов)." -ForegroundColor White
         Write-Host "  [+] Служба запущена и работает в скрытом фоновом режиме." -ForegroundColor White
         Write-Host "  [+] Задача Windows: GIN-Agent-Service (Автозапуск при старте ОС, $selectedRegion)" -ForegroundColor Cyan
@@ -411,7 +486,7 @@ try {
             rdp_ready   = $true
             region      = $region
             gateway     = $activeGatewayName
-            version     = "v020"
+            version     = "v022"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
@@ -445,7 +520,7 @@ try {
         if ($loopCount -ge 6) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v020&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v022&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
