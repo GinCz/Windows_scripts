@@ -1,18 +1,20 @@
 {
-  "version": "v038",
+  "version": "v039",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v038_Setup.exe",
-  "installer_cmd": "GIN-Dock-Wallpaper_Setup_v038.cmd",
+  "installer": "GIN-Dock-Wallpaper_v039_Setup.exe",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v038_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v039_Setup.exe",
   "features": [
-    "Fonts Relocation to Wallpaper & Calendar Tab: 12 curated font buttons moved from Settings Tab 1 to Tab 2",
-    "Direct Desktop Wallpaper & Calendar Generation on Font Click: clicking a font button keeps settings window fonts clean and immediately generates a fresh 4K wallpaper with the newly selected font",
-    "4-Button Responsive Calendar Scale: replaced trackbar with 4 dedicated scale buttons (Small, Medium, Large, Huge) that instantly regenerate wallpaper HUD in the selected scale",
-    "Non-Dropping Wallpaper Queue: rapid font or scale clicks are queued without drops or socket hangs",
-    "Strict 2-Version Retention: kept strictly v037 and v038 in MEGA desktop and git repositories"
+    "24 Curated Artistic & Graphic Fonts: Expanded font collection with calligraphic, handwritten, and display typography (Gabriola, Ink Free, Impact, Sitka Banner, etc.)",
+    "Streamlined Calendar Controls with 'Off' Toggle: Clean 'Календарь:' header with 5 full-width buttons (Нет, Маленький, Средний, Большой, Крупный)",
+    "Dock Brand Button Modernization: Removed 'GIN' text; added 20 selectable icons (Windows Start, Rocket, Diamond, Crown, etc.) in Docker settings",
+    "Wallpaper Download Animated Tray & Dock Glow: System tray and dock brand icon animate with a pulsing cyan halo during 4K wallpaper retrieval",
+    "2-Column Wallpaper Themes Layout: Fixed category text overlap and expanded with 'Dark Horse' (Темная лошадка), Macro, Aviation, Retrowave, Fantasy, and Deep Sea",
+    "Deterministic Top-Left Window Placement: Settings window opens with ~2 cm margin from top-left of working area",
+    "Reliable Auto-Update Engine: Numeric version comparison and CDN cache-busting query",
+    "Zero-CMD Distribution: Pure standalone 650KB installer"
   ]
 }

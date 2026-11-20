@@ -1,5 +1,25 @@
 # 📋 CHANGELOG — GIN-Dock-Wallpaper
 
+## [v039] — 2026-11-20
+### 🌟 24 Curated Fonts, Calendar Toggle Off, Modernized Dock Icon & Animated Download Glow
+- **Zero-CMD Standalone Distribution**: Discontinued hybrid `.cmd` scripts per user request; all installations and updates are now distributed strictly as ultra-compact native ~660KB executable installers (`GIN-Dock-Wallpaper_v039_Setup.exe`).
+- **24 Curated Artistic & Graphic Fonts**: Doubled the font palette on Tab 2 (Wallpaper & Calendar) from 12 to 24 curated typefaces, adding flourishing script, graphic, and display fonts (`Gabriola`, `Ink Free`, `Impact`, `Comic Sans MS`, `Sitka Banner`, `Palatino Linotype`, `Garamond`, `Franklin Gothic Medium`, etc.).
+- **Streamlined Calendar HUD Controls with "Off" Toggle**:
+  - Simplified header to clean `Календарь:` (removing redundant word `Масштаб`).
+  - Added dedicated `[ Нет ]` (`Off`) button allowing complete deactivation of the calendar HUD on the desktop wallpaper.
+  - Stretched the 5 buttons (`Нет`, `Маленький`, `Средний`, `Большой`, `Крупный`) evenly across the full dialog width.
+- **Modernized Dock Button & 20 Selectable Brand Icons**:
+  - Removed `GIN` text from the dock bar button.
+  - Replaced fixed lightning symbol with 20 selectable icons in Tab 3 (Docker Settings): `⊞` (Windows Start), `🚀`, `⚡`, `💎`, `🌟`, `🏠`, `⚙️`, `🧭`, `🍀`, `🔥`, `👑`, `🎯`, `🛸`, `🛡️`, `🎮`, `💻`, `💡`, `✨`, `🌀`, `⚓`.
+  - Clicking any icon immediately updates the dock bar on the desktop.
+- **Pulsing Cyan Glow Animation During Wallpaper Downloads**:
+  - Implemented real-time breathing halo animation on the System Tray icon and dock brand button during wallpaper retrieval and rendering.
+- **Expanded Wallpaper Themes & 2-Column Wide Layout**:
+  - Eliminated text overlap and column clipping by re-architecting category checkboxes into 2 wide 330px columns.
+  - Added new themes including `🐴 Тёмная лошадка (Таинственное)` (`Dark Horse`), `🔍 Макро и текстуры`, `🏛️ Архитектура и города`, `✈️ Авиация и истребители`, `🌴 Ретровейв и 80-е`, `🐉 Фэнтези и миры`, and `🐬 Подводный океан`.
+- **Top-Left Initial Window Placement**: Configured SettingsForm to automatically open in the upper-left quadrant with a comfortable ~2 cm (~75px) margin from the screen edge.
+- **Reliable Auto-Update Engine**: Replaced string comparison with integer version parsing and added cache-busting `?_t=` parameter to `version.json` queries to bypass GitHub CDN caching.
+
 ## [v038] — 2026-11-20
 ### 🎨 Relocated Fonts to Wallpaper Tab, Direct Desktop Wallpaper Generation & 4-Button Calendar Scale
 - **Relocated Font Palette to Wallpaper & Calendar Tab**: Moved the 12 curated font buttons from Settings Tab 1 to Tab 2 (Обои и Календарь), returning Tab 1 to a clean, focused toggle and theme-selection dashboard.

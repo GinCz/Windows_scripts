@@ -36,6 +36,26 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v039 (2026-11-20)
+- **Zero-CMD Distribution**: Eliminated all `.cmd` hybrid installers per user directive; distributed strictly as 660KB single-file binary installer `GIN-Dock-Wallpaper_v039_Setup.exe`.
+- **24 Curated Fonts**: Expanded fonts palette from 12 to 24 curated typefaces, integrating expressive calligraphic and display typography (`Gabriola`, `Ink Free`, `Impact`, `Comic Sans MS`, `Sitka Banner`, `Palatino Linotype`, `Garamond`, etc.).
+- **Calendar HUD 5-Button Scale & Deactivation**:
+  - Simplified label to `Календарь:`.
+  - Added `[ Нет ]` button to turn off calendar HUD without losing chosen font or scale settings.
+  - Stretched buttons evenly across dialog width to eliminate text cutoff.
+- **Dock Brand Button Customization**:
+  - Removed `GIN` text from the dock button.
+  - Implemented 20 selectable icons (`⊞`, `🚀`, `⚡`, `💎`, `🌟`, `🏠`, `⚙️`, etc.) in Tab 3.
+- **Pulsing Cyan Download Animation**:
+  - Added `DownloadStateChanged` event in `WallpaperEngine`.
+  - Implemented 75ms pulsing cyan halo animation on the System Tray icon and Dock bar button while new 4K wallpapers are being downloaded and processed.
+- **2-Column Wallpaper Themes & Dark Horse Expansion**:
+  - Restructured category checkboxes into 2 wide 330px columns, resolving column overlap.
+  - Added `🐴 Тёмная лошадка` (`Dark Horse`), `🔍 Макро`, `🏛️ Архитектура`, `✈️ Авиация`, `🌴 Ретровейв`, `🐉 Фэнтези`, `🐬 Подводный мир`.
+- **Top-Left Placement**: Window opens with ~75px (~2 cm) top and left margin.
+- **Auto-Update Engine Hardening**: Added integer version parsing and cache-busting ticks.
+- **Cloud & Repo Mirroring**: Mirrored release artifacts, purged obsolete `.cmd` files and `v037`, retaining strictly `v038` and `v039`.
+
 ## Update: v038 (2026-11-20)
 - **Relocated Font Palette to Wallpaper & Calendar Tab**:
   - Moved the 12 curated font buttons (`Segoe UI`, `Tahoma`, `Arial`, `Verdana`, `Georgia`, `Corbel`, `Consolas`, `Trebuchet MS`, `Cambria`, `Century Gothic`, `Candara`, `Calibri`) from Tab 1 to Tab 2 (`_tabWall`).
