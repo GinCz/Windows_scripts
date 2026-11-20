@@ -36,6 +36,12 @@
 - Formatted signature footer `VladiMIR+AI  |||  v034` with interactive link and auto-update trigger.
 - Enforced strict Rule 15 and user rule: deleted unversioned files from MEGA Desktop; strictly retained only 2 latest versioned installers (`v033` and `v034`).
 
+## Update: v041 (2026-11-20)
+- **Eliminated Tab Scrollbars**: Disabled `AutoScroll` across all tab pages to completely remove the vertical scrollbar.
+- **Compacted Tab 2 Vertical Rhythm**: Reduced spacing across categories, intervals, calendar scale, and font selection grid; all controls end at `Y=508px`, fitting comfortably within the 530px TabPage client height.
+- **Button Width Calibration**: Expanded `Сохранить текущие обои в Изображения` to 350px width at `Point(355, 480)`.
+- **Standalone Installer Build**: Compiled standalone `GIN-Dock-Wallpaper_v041_Setup.exe` (666KB), updated mirrors, and synced to MEGA Desktop (retaining v040 and v041).
+
 ## Update: v040 (2026-11-20)
 - **Settings Form Height Recalibration**: Resolved issue where bottom footer bar containing `Применить`, `Сохранить и закрыть`, `Отмена`, and `VladiMIR+AI ||| v040` was positioned below form boundaries (Y=715 vs height 670).
 - **Exact ClientSize Standard**: Set `this.ClientSize = new Size(760, 656)` (outer window ~694px) to ensure perfect fit across 1080p, 1080p@125% DPI, and 1366x768 laptop displays.

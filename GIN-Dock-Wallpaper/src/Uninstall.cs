@@ -10,8 +10,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyProduct("GIN Dock Wallpaper")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vladimir Bulantsev")]
-[assembly: AssemblyVersion("0.40.0.0")]
-[assembly: AssemblyFileVersion("0.40.0.0")]
+[assembly: AssemblyVersion("0.41.0.0")]
+[assembly: AssemblyFileVersion("0.41.0.0")]
 
 namespace GINDockWallpaper {
     static class Uninstaller {

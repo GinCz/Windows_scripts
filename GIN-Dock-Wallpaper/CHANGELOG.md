@@ -1,5 +1,17 @@
 # 📋 CHANGELOG — GIN-Dock-Wallpaper
 
+## [v041] — 2026-11-20
+### 🚫 Complete Elimination of Scrollbars & Clean Geometry Fit
+- **Eliminated Tab Scrollbars**: Disabled `AutoScroll` across all tabs (`_tabWall`, `_tabDock`, `_tabMain`, `_tabAbout`), ensuring that no ugly vertical scrollbars ever appear on the right side of the settings dialog.
+- **Harmonized Tab 2 Vertical Rhythm**:
+  - Tightened category row step from 19px to 18px (`yPos = 42 + row * 18`), saving 10px.
+  - Aligned interval title and buttons to `Y = 226..271px`.
+  - Aligned calendar title and 5 buttons to `Y = 276..301px`.
+  - Aligned font selector title to `Y = 307px` and 24 font preview buttons to `Y = 326..474px` (step 25px, height 23px).
+  - Placed `Следующие обои сейчас` and `Сохранить текущие обои в Изображения` at `Y = 480px` (ending at 508px, leaving a comfortable 22px margin above the tab bottom).
+- **Extended Button Width**: Expanded `Сохранить текущие обои в Изображения` to 350px width (`Location = (355, 480)`), preventing text truncation.
+- **Pure Standalone Distribution**: Built 666KB standalone installer `GIN-Dock-Wallpaper_v041_Setup.exe`.
+
 ## [v040] — 2026-11-20
 ### 📐 Settings Form Height Calibration, Compact Layout & Footer Restoration
 - **Settings Form Height Recalibration**: Fixed critical vertical cutoff where the bottom footer bar (`_bottomBar`) containing `Применить`, `Сохранить и закрыть`, `Отмена` and `VladiMIR+AI ||| v040` was pushed past the window boundary.

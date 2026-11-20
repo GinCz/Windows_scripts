@@ -347,7 +347,7 @@ namespace GINDockWallpaper {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v040" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v041" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -450,7 +450,7 @@ namespace GINDockWallpaper {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v040" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v041" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -553,7 +553,7 @@ namespace GINDockWallpaper {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v040" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v041" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1440,7 +1440,7 @@ namespace GINDockWallpaper {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v040 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v041 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -1976,7 +1976,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v040");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v041");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2226,7 +2226,7 @@ namespace GINDockWallpaper {
             // =====================================
             // TAB 1: MAIN (TOGGLES + THEMES + FONTS)
             // =====================================
-            _tabMain = new TabPage { Text = I18n.T("TabMain"), AutoScroll = true };
+            _tabMain = new TabPage { Text = I18n.T("TabMain") };
             _chkEnableDock = new CheckBox { Checked = _config.EnableDock, Location = new Point(25, 20), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _chkEnableWall = new CheckBox { Checked = _config.EnableWallpaper, Location = new Point(25, 52), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _chkAutoStart = new CheckBox { Checked = _config.StartWithWindows, Location = new Point(25, 84), AutoSize = true, Font = new Font("Segoe UI", 9.5f) };
@@ -2275,12 +2275,12 @@ namespace GINDockWallpaper {
             // =====================================
             // TAB 2: WALLPAPER & CALENDAR
             // =====================================
-            _tabWall = new TabPage { Text = I18n.T("TabWallpaper"), AutoScroll = true };
+            _tabWall = new TabPage { Text = I18n.T("TabWallpaper") };
 
-            _lblWallThemesTitle = new Label { Location = new Point(20, 8), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _lblWallThemesTitle = new Label { Location = new Point(20, 6), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _tabWall.Controls.Add(_lblWallThemesTitle);
 
-            _chkCatAll = new CheckBox { Text = "🎲 " + I18n.T("CatAll"), Location = new Point(25, 26), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _chkCatAll = new CheckBox { Text = "🎲 " + I18n.T("CatAll"), Location = new Point(25, 24), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _chkCatAll.CheckedChanged += ChkCatAll_CheckedChanged;
             _tabWall.Controls.Add(_chkCatAll);
 
@@ -2300,7 +2300,7 @@ namespace GINDockWallpaper {
                 int col = i / 10;
                 int row = i % 10;
                 int xPos = (col == 0) ? 25 : 370;
-                int yPos = 46 + row * 19;
+                int yPos = 42 + row * 18;
                 CheckBox cb = new CheckBox {
                     Text = I18n.T(catNames[i]),
                     Tag = key,
@@ -2317,11 +2317,11 @@ namespace GINDockWallpaper {
             SyncMasterCheckboxState();
 
             // Interval Buttons
-            _lblIntervalTitle = new Label { Location = new Point(20, 240), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
-            _btnInt1h = new Button { Text = "1 " + I18n.T("Hour"), Tag = 60, Size = new Size(125, 26), Location = new Point(25, 260), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnInt3h = new Button { Text = "3 " + I18n.T("Hours"), Tag = 180, Size = new Size(125, 26), Location = new Point(160, 260), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnInt6h = new Button { Text = "6 " + I18n.T("Hours"), Tag = 360, Size = new Size(125, 26), Location = new Point(295, 260), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnInt24h = new Button { Text = "24 " + I18n.T("Hours"), Tag = 1440, Size = new Size(125, 26), Location = new Point(430, 260), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _lblIntervalTitle = new Label { Location = new Point(20, 226), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _btnInt1h = new Button { Text = "1 " + I18n.T("Hour"), Tag = 60, Size = new Size(125, 25), Location = new Point(25, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnInt3h = new Button { Text = "3 " + I18n.T("Hours"), Tag = 180, Size = new Size(125, 25), Location = new Point(160, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnInt6h = new Button { Text = "6 " + I18n.T("Hours"), Tag = 360, Size = new Size(125, 25), Location = new Point(295, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnInt24h = new Button { Text = "24 " + I18n.T("Hours"), Tag = 1440, Size = new Size(125, 25), Location = new Point(430, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
             EventHandler intClick = (s, e) => {
                 _config.WallpaperIntervalMinutes = (int)((Button)s).Tag;
@@ -2336,13 +2336,13 @@ namespace GINDockWallpaper {
             _tabWall.Controls.AddRange(new Control[] { _lblIntervalTitle, _btnInt1h, _btnInt3h, _btnInt6h, _btnInt24h });
 
             // Calendar Section (Clean "Календарь:" + 5 Full-Width Buttons)
-            _lblCalTitle = new Label { Text = "📅 " + I18n.T("Calendar") + ":", Location = new Point(25, 296), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _lblCalTitle = new Label { Text = "📅 " + I18n.T("Calendar") + ":", Location = new Point(25, 280), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
 
-            _btnScaleNone = new Button { Text = I18n.T("CalScaleNone"), Tag = 0.0f, Size = new Size(108, 26), Location = new Point(135, 292), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleSmall = new Button { Text = I18n.T("CalScaleSmall"), Tag = 0.75f, Size = new Size(108, 26), Location = new Point(250, 292), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleMed = new Button { Text = I18n.T("CalScaleMedium"), Tag = 1.0f, Size = new Size(108, 26), Location = new Point(365, 292), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleLarge = new Button { Text = I18n.T("CalScaleLarge"), Tag = 1.3f, Size = new Size(108, 26), Location = new Point(480, 292), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleHuge = new Button { Text = I18n.T("CalScaleHuge"), Tag = 1.6f, Size = new Size(108, 26), Location = new Point(595, 292), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleNone = new Button { Text = I18n.T("CalScaleNone"), Tag = 0.0f, Size = new Size(108, 25), Location = new Point(135, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleSmall = new Button { Text = I18n.T("CalScaleSmall"), Tag = 0.75f, Size = new Size(108, 25), Location = new Point(250, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleMed = new Button { Text = I18n.T("CalScaleMedium"), Tag = 1.0f, Size = new Size(108, 25), Location = new Point(365, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleLarge = new Button { Text = I18n.T("CalScaleLarge"), Tag = 1.3f, Size = new Size(108, 25), Location = new Point(480, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleHuge = new Button { Text = I18n.T("CalScaleHuge"), Tag = 1.6f, Size = new Size(108, 25), Location = new Point(595, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
 
             _btnScaleNone.Click += (s, e) => {
                 _config.ShowCalendar = false;
@@ -2373,7 +2373,7 @@ namespace GINDockWallpaper {
             _tabWall.Controls.AddRange(new Control[] { _lblCalTitle, _btnScaleNone, _btnScaleSmall, _btnScaleMed, _btnScaleLarge, _btnScaleHuge });
 
             // 24 Curated Artistic & Graphic Font Buttons
-            _lblFontsHeader = new Label { Location = new Point(20, 324), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _lblFontsHeader = new Label { Location = new Point(20, 307), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _tabWall.Controls.Add(_lblFontsHeader);
 
             string[] curatedFonts = new string[] {
@@ -2392,8 +2392,8 @@ namespace GINDockWallpaper {
                 Button bFont = new Button {
                     Text = fontName,
                     Tag = fontName,
-                    Size = new Size(160, 24),
-                    Location = new Point(25 + col * 170, 344 + row * 26),
+                    Size = new Size(160, 23),
+                    Location = new Point(25 + col * 170, 326 + row * 25),
                     FlatStyle = FlatStyle.Flat,
                     Cursor = Cursors.Hand
                 };
@@ -2421,8 +2421,8 @@ namespace GINDockWallpaper {
 
             _btnNextWall = new Button {
                 Text = "🖼️ " + I18n.T("NextWallpaper"),
-                Location = new Point(25, 506),
-                Width = 320,
+                Location = new Point(25, 480),
+                Width = 325,
                 Height = 28,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
@@ -2437,8 +2437,8 @@ namespace GINDockWallpaper {
 
             _btnSavePic = new Button {
                 Text = "💾 " + I18n.T("BtnSaveWall"),
-                Location = new Point(360, 506),
-                Width = 310,
+                Location = new Point(355, 480),
+                Width = 350,
                 Height = 28,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
@@ -2457,7 +2457,7 @@ namespace GINDockWallpaper {
             // =====================================
             // TAB 3: DOCK BAR (FLUID CONTROLS)
             // =====================================
-            _tabDock = new TabPage { Text = I18n.T("TabDock"), AutoScroll = true };
+            _tabDock = new TabPage { Text = I18n.T("TabDock") };
 
             _lblDockPlacement = new Label { Location = new Point(20, 10), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _btnDockTop = new Button { Size = new Size(160, 30), Location = new Point(25, 30), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
@@ -2583,9 +2583,9 @@ namespace GINDockWallpaper {
             // =====================================
             // TAB 4: ABOUT
             // =====================================
-            _tabAbout = new TabPage { Text = I18n.T("TabAbout"), AutoScroll = true };
+            _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v040", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v041", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -2620,7 +2620,7 @@ namespace GINDockWallpaper {
             _btnCancel = new Button { Text = "Отмена", Location = new Point(304, 3), Width = 95, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel, Font = new Font("Segoe UI", 9.5f) };
             _btnCancel.Click += (s, e) => this.Close();
 
-            // Right signature: VladiMIR+AI ||| v040 (Clean, Gold, No underline!)
+            // Right signature: VladiMIR+AI ||| v041 (Clean, Gold, No underline!)
             _lblAuthor = new Label {
                 Text = "VladiMIR+AI",
                 Location = new Point(540, 9),
@@ -2642,7 +2642,7 @@ namespace GINDockWallpaper {
             };
 
             _lblVer = new Label {
-                Text = "v040",
+                Text = "v041",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -3073,7 +3073,7 @@ namespace GINDockWallpaper {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v040";
+        public const string CURRENT_VERSION = "v041";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -3222,7 +3222,7 @@ namespace GINDockWallpaper {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v040";
+            _trayIcon.Text = "GIN Dock Wallpaper v041";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -3273,7 +3273,7 @@ namespace GINDockWallpaper {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v040");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v041");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;

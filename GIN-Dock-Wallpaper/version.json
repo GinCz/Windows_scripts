@@ -1,17 +1,16 @@
 {
-  "version": "v040",
+  "version": "v041",
   "name": "GIN-Dock-Wallpaper",
-  "installer": "GIN-Dock-Wallpaper_v040_Setup.exe",
+  "installer": "GIN-Dock-Wallpaper_v041_Setup.exe",
   "description": "Unified Smart Hot-Corner Dock Bar & 4K Wallpaper Calendar HUD Engine for Windows 10/11",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Dock-Wallpaper",
   "date": "2026-11-20",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v040_Setup.exe",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Dock-Wallpaper/GIN-Dock-Wallpaper_v041_Setup.exe",
   "features": [
-    "Settings Height Calibration & Compact Vertical Layout: Fixed bottom bar cutoff and missing Apply/Save/Cancel footer buttons across all screen resolutions",
-    "AutoScroll Safety: Added auto-scroll resilience to all tab pages ensuring zero content clipping under high DPI scaling",
-    "Tightened Vertical Rhythm: Harmonized category spacing, font grid, and dock controls within a clean 656px client height",
-    "Category Localization Fix: All 20 wallpaper categories now dynamically localize across English, Russian, and Czech",
+    "Zero-Scrollbar Pure Fit: Removed AutoScroll across all tabs and compacted vertical coordinates so all controls, fonts, and action buttons fit cleanly with zero scrollbars",
+    "Compact Tab 2 Vertical Rhythm: Reduced category row step to 18px and font grid step to 25px; wallpaper action buttons now end at Y=508px well inside the tab frame",
+    "Full-Width Action Buttons: Expanded 'Сохранить текущие обои в Изображения' to 350px width preventing any text cutoff",
     "24 Curated Fonts & Calendar Scale: Expanded calligraphic and graphic typography with clean 'Off' toggle and preview buttons",
     "Pure Standalone Binary Distribution: Zero external scripts; 666KB native WinAPI setup installer"
   ]
