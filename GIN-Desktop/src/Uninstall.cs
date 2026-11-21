@@ -5,16 +5,16 @@ using System.Reflection;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v048")]
-[assembly: AssemblyDescription("GIN-Desktop_v048")]
+[assembly: AssemblyTitle("GIN-Desktop_v049")]
+[assembly: AssemblyDescription("GIN-Desktop_v049")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v048")]
+[assembly: AssemblyProduct("GIN-Desktop_v049")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.48.0.0")]
-[assembly: AssemblyFileVersion("0.48.0.0")]
+[assembly: AssemblyVersion("0.49.0.0")]
+[assembly: AssemblyFileVersion("0.49.0.0")]
 
 namespace GINDesktop {
     static class Uninstaller {
@@ -81,6 +81,17 @@ namespace GINDesktop {
 
                     string startMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "GIN Desktop");
                     if (Directory.Exists(startMenu)) Directory.Delete(startMenu, true);
+
+                    string singleLnk = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "GIN Desktop.lnk");
+                    if (File.Exists(singleLnk)) { try { File.Delete(singleLnk); } catch { } }
+
+                    string commonPrograms = Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms);
+                    if (Directory.Exists(commonPrograms)) {
+                        string commonLnk = Path.Combine(commonPrograms, "GIN Desktop.lnk");
+                        if (File.Exists(commonLnk)) { try { File.Delete(commonLnk); } catch { } }
+                        string commonDir = Path.Combine(commonPrograms, "GIN Desktop");
+                        if (Directory.Exists(commonDir)) { try { Directory.Delete(commonDir, true); } catch { } }
+                    }
 
                     string oldStartMenu = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "GIN Dock Wallpaper");
                     if (Directory.Exists(oldStartMenu)) Directory.Delete(oldStartMenu, true);

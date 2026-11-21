@@ -1,3 +1,16 @@
+## Update: v049 (2026-11-21)
+- **Single Clean Start Menu Shortcut**:
+  - Configured `installer_setup.cs` to create strictly ONE direct shortcut `GIN Desktop.lnk` in the Windows Start Menu Programs root (`Environment.SpecialFolder.Programs`).
+  - Completely eliminated the subfolder `Programs\GIN Desktop\` and removed the redundant `Uninstall GIN Desktop.lnk` from Start Menu.
+  - Automatically cleans up any legacy Start Menu folders (`GIN Desktop` and `GIN Dock Wallpaper`) during install and update.
+- **Direct Program Folder Quick Access**:
+  - Added `📁 Открыть папку программы` / `Open Program Folder` directly into both the Tray context menu and Dock brand menu for 1-click access to the application directory and `Uninstall.exe`.
+- **Uninstaller Start Menu Cleanup**:
+  - Updated `Uninstall.cs` to cleanly purge the single `GIN Desktop.lnk` shortcut from `Programs` root and common programs.
+- **Compiled and Packaged v049**:
+  - Compiled binaries `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v049_Setup.exe`.
+  - Deployed `GIN-Desktop_v049_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one installer version.
+
 ## Update: v048 (2026-11-21)
 - **Restoration of GIN-Wallpaper Celestial Shimmer Chime**:
   - Re-introduced the signature celestial shimmer chime (F#4, A#4, C#5, F5 notes with 40ms attack and warm exponential decay) from `GIN-Wallpaper`.

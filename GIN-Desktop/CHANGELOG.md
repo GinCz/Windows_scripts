@@ -1,5 +1,18 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v049] — 2026-11-21
+### 📂 Single Clean Start Menu Shortcut & Direct Program Folder Quick Access
+- **Single Clean Shortcut in Windows Start Menu**:
+  - The installer now creates strictly ONE direct shortcut (`GIN Desktop.lnk`) in the root of `%AppData%\Microsoft\Windows\Start Menu\Programs\`.
+  - Eliminated the separate `Programs\GIN Desktop\` subfolder and removed the redundant `Uninstall GIN Desktop.lnk` from the Start Menu.
+  - Automatically cleans up any legacy Start Menu directories (`GIN Desktop` and `GIN Dock Wallpaper`) during install and update.
+- **Direct Program Folder Access in Tray & Dock Menus**:
+  - Added `📁 Открыть папку программы` / `📁 Otevřít složku programu` / `📁 Open Program Folder` directly to the system tray context menu and the Dock brand button menu.
+  - One-click opens the installation directory in Windows Explorer where `Uninstall.exe` and program binaries reside.
+- **Uninstaller Cleanup Overhaul**:
+  - `Uninstall.exe` now completely purges the single shortcut in `Programs` root as well as any legacy directories.
+- **Single Versioned Setup on MEGA Desktop**: Build pipeline strictly delivers `GIN-Desktop_v049_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one versioned setup file.
+
 ## [v048] — 2026-11-21
 ### 🔔 GIN-Wallpaper Celestial Shimmer Sound Restoration & Explicit Localized Sound Button
 - **Restoration of GIN-Wallpaper Celestial Shimmer Chime**:

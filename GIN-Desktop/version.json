@@ -1,13 +1,13 @@
 {
-  "version": "v048",
+  "version": "v049",
   "name": "GIN-Desktop",
-  "installer": "GIN-Desktop_v048_Setup.exe",
+  "installer": "GIN-Desktop_v049_Setup.exe",
   "description": "Unified Windows Desktop Companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Desktop",
   "date": "2026-11-21",
-  "sha256": "39afc30e34a5702be94f20c8353bc146689707ec8c35832f7fb6d700142b7589",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v048_Setup.exe",
+  "sha256": "c3b8e47b8b2712b5fc620b59272c7b8038a5af485a7aa9dc0a858f05074de5c5",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v049_Setup.exe",
   "features": [
     "Localized City Name in Weather HUD: Weather badge under the Calendar HUD displays the live localized city name (e.g. Прага: ☀ +18°C · Ясно / Praha / Prague) with clear SettingsForm labeling",
     "Silent Tray HUD Auto-Updater: Zero-popup quiet update workflow with subtle non-activating HUD toast near system tray and gentle pure-sine audio blips identical to GIN-Voice",
