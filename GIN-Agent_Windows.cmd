@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v024
+title GIN-Agent v026
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
@@ -63,7 +63,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v024 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v026 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -73,7 +73,7 @@ exit /b %PS_ERR%
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
 # Interactive Gateway Selector: 1. Europe (Default after 5s) / 2. Russia (Server 109)
 # ZERO External PS1 Files - 100% Standalone Polyglot CMD Architecture
-# FIX v024: All console output converted to ASCII/English to prevent Win32 error
+# FIX v026: All console output converted to ASCII/English to prevent Win32 error
 #           0x1F on systems with non-Unicode console codepage (Czech/Slovak/etc.)
 # ==============================================================================
 
@@ -91,7 +91,7 @@ try {
 
     $installDir = "$env:ProgramData\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdV24 = "$installDir\GIN-Agent_Windows_v024.cmd"
+    $targetCmdV25 = "$installDir\GIN-Agent_Windows_v026.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
     $serviceDesc = "Provides resilient background diagnostic connection and RDP shadow support for Vladimir Bulantsev (GinCz)."
@@ -109,9 +109,36 @@ try {
     # MODE 1: INSTALLER (Interactive Region Selection & Service Deployment)
     # ==========================================================================
     if ($mode -ne "SERVICE") {
+    # Disable QuickEdit Mode to prevent console freezing on mouse clicks
+    try {
+        $cs = @"
+using System;
+using System.Runtime.InteropServices;
+public class QuickEditFix {
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern IntPtr GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll")]
+    static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    [DllImport("kernel32.dll")]
+    static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+    public static void Disable() {
+        IntPtr h = GetStdHandle(-10);
+        uint m;
+        if (GetConsoleMode(h, out m)) {
+            m &= ~0x0040u; // disable ENABLE_QUICK_EDIT_MODE
+            m |= 0x0080u;  // enable ENABLE_EXTENDED_FLAGS
+            SetConsoleMode(h, m);
+        }
+    }
+}
+"@
+        Add-Type -TypeDefinition $cs -ErrorAction SilentlyContinue
+        [QuickEditFix]::Disable()
+    } catch {}
+
         Write-Host ""
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v024 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+        Write-Host "         GIN-AGENT v026 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
         Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -120,7 +147,7 @@ try {
         $selectedRegion = $env:GIN_AGENT_REGION
         if (-not $selectedRegion) {
             $selectedRegion = "EU"
-            $secondsLeft = 5
+            $secondsLeft = 1
             try {
                 while ($secondsLeft -gt 0) {
                     Write-Host -NoNewline "`r[*] Select region [1/2] (default [1] in $secondsLeft sec): "
@@ -158,7 +185,7 @@ try {
         Write-Host ""
 
         Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v024 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+        Write-Host "         GIN-AGENT v026 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
         Write-Host "====================================================================" -ForegroundColor Cyan
         Write-Host "[*] Stopping and removing all previous agent versions..." -ForegroundColor Yellow
 
@@ -229,11 +256,11 @@ try {
                     [System.IO.File]::WriteAllBytes($targetCmd, [System.IO.File]::ReadAllBytes($sourceScript))
                 } catch {}
             }
-            try { Copy-Item -Path $sourceScript -Destination $targetCmdV24 -Force -ErrorAction SilentlyContinue } catch {}
+            try { Copy-Item -Path $sourceScript -Destination $targetCmdV25 -Force -ErrorAction SilentlyContinue } catch {}
         } else {
             if ($raw) {
                 try { [System.IO.File]::WriteAllText($targetCmd, $raw, [System.Text.Encoding]::UTF8) } catch {}
-                try { [System.IO.File]::WriteAllText($targetCmdV24, $raw, [System.Text.Encoding]::UTF8) } catch {}
+                try { [System.IO.File]::WriteAllText($targetCmdV25, $raw, [System.Text.Encoding]::UTF8) } catch {}
             }
         }
 
@@ -278,7 +305,7 @@ try {
 
         Write-Host ""
         Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "  [+] GIN-Agent v024 deployed cleanly as a permanent background service!" -ForegroundColor Green
+        Write-Host "  [+] GIN-Agent v026 deployed cleanly as a permanent background service!" -ForegroundColor Green
         Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
         Write-Host "  [+] Service is fully detached: closing this window will NOT stop it." -ForegroundColor Green
         Write-Host "  [+] Compatibility: Windows 10 (32-bit / 64-bit), Windows 11." -ForegroundColor White
@@ -291,28 +318,9 @@ try {
         Write-Host "====================================================================" -ForegroundColor Green
         Write-Host ""
 
-        # Auto-close countdown (5s) or instant close on any keypress
-        $closeCountdown = 5
-        try {
-            while ($closeCountdown -gt 0) {
-                Write-Host -NoNewline "`r[*] Auto-closing window in $closeCountdown sec (press any key to close immediately)... "
-                $sw = [System.Diagnostics.Stopwatch]::StartNew()
-                $keyHit = $false
-                while ($sw.ElapsedMilliseconds -lt 1000) {
-                    if ([System.Console]::KeyAvailable) {
-                        $null = [System.Console]::ReadKey($true)
-                        $keyHit = $true
-                        break
-                    }
-                    Start-Sleep -Milliseconds 50
-                }
-                if ($keyHit) { break }
-                $closeCountdown--
-            }
-        } catch {
-            Start-Sleep -Seconds 5
-        }
-        Write-Host ""
+        # Instant autonomous clean close (Zero keypresses, zero hanging)
+        Write-Host "[*] Deployment finished. Window closing automatically..." -ForegroundColor DarkGray
+        Start-Sleep -Milliseconds 600
         exit 0
     }
 
@@ -320,7 +328,7 @@ try {
     # MODE 2: SERVICE WORKER (Background execution loop)
     # ==========================================================================
     $token = "GinCz-Remote-2026"
-    $headers = @{ "Token" = $token; "X-Host" = $env:COMPUTERNAME }
+    $headers = @{ "Token" = $token; "X-Host" = $env:COMPUTERNAME; "X-Pin" = $pin }
 
     # Singleton Mutex to prevent duplicate service instances
     $createdNew = $false
@@ -386,6 +394,77 @@ try {
         if (-not (Test-Path $tsPolicy)) { New-Item -Path $tsPolicy -Force -ErrorAction SilentlyContinue | Out-Null }
         Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
+    } catch {}
+
+        # -------------------------------------------------------------------------
+    # 1. HARDWARE GIN-PIN CALCULATION (Deterministic WMI)
+    # -------------------------------------------------------------------------
+    $pin = "100-000-001"
+    try {
+        $uuid = (Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue).UUID
+        $board = (Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue).SerialNumber
+        if (-not $uuid) { $uuid = $env:COMPUTERNAME }
+        if (-not $board) { $board = "DefaultBoard" }
+        $rawPin = "hw_win_${uuid}_${board}"
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        $bytes = [System.Text.Encoding]::UTF8.GetBytes($rawPin)
+        $digest = $sha.ComputeHash($bytes)
+        if ([BitConverter]::IsLittleEndian) { [Array]::Reverse($digest, 0, 8) }
+        $num = [Math]::Abs([BitConverter]::ToInt64($digest, 0))
+        $code = ($num % 900000000) + 100000000
+        $dStr = $code.ToString("D9")
+        $pin = "$($dStr.Substring(0,3))-$($dStr.Substring(3,3))-$($dStr.Substring(6,3))"
+    } catch {}
+
+    # -------------------------------------------------------------------------
+    # 2. CLONE AUTO-DETECTION & RUSTDESK ID RE-INITIALIZATION
+    # -------------------------------------------------------------------------
+    $pinFile = "$installDir\hardware_pin.txt"
+    $isCloned = $false
+    if (Test-Path $pinFile) {
+        try {
+            $savedPin = (Get-Content -Path $pinFile -Raw -ErrorAction SilentlyContinue).Trim()
+            if ($savedPin -and $savedPin -ne $pin) {
+                $isCloned = $true
+            }
+        } catch {}
+    }
+
+    if ($isCloned) {
+        try {
+            Stop-Service RustDesk -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 1
+
+            $allTomlFiles = @(
+                "$env:APPDATA\RustDesk\config\RustDesk.toml",
+                "$env:APPDATA\RustDesk\config\rustdesk.toml",
+                "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml",
+                "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\rustdesk.toml"
+            )
+            Get-ChildItem "$env:SystemDrive\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                $allTomlFiles += "$($_.FullName)\AppData\Roaming\RustDesk\config\RustDesk.toml"
+                $allTomlFiles += "$($_.FullName)\AppData\Roaming\RustDesk\config\rustdesk.toml"
+            }
+
+            foreach ($tf in $allTomlFiles) {
+                if (Test-Path $tf) {
+                    try {
+                        $c = Get-Content -Path $tf -Raw -ErrorAction SilentlyContinue
+                        if ($c) {
+                            $newC = $c -replace '(?m)^\s*id\s*=.*(\r?\n)?', ''
+                            [System.IO.File]::WriteAllText($tf, $newC, [System.Text.Encoding]::UTF8)
+                        }
+                    } catch {}
+                }
+            }
+
+            Restart-Service RustDesk -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+        } catch {}
+    }
+
+    try {
+        [System.IO.File]::WriteAllText($pinFile, $pin, [System.Text.Encoding]::UTF8)
     } catch {}
 
     # ULTARIX Policy: Enforce RustDesk unattended password 'Ultarix-22'
@@ -516,7 +595,7 @@ try {
             rdp_ready   = $true
             region      = $region
             gateway     = $activeGatewayName
-            version     = "v024"
+            version     = "v026"
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
     } catch {}
@@ -525,7 +604,7 @@ try {
     $loopCount = 0
     while ($true) {
         try {
-            $pollUrl = "$serverUrl/poll?h=$([System.Uri]::EscapeDataString($env:COMPUTERNAME))"
+            $pollUrl = "$serverUrl/poll?h=$([System.Uri]::EscapeDataString($env:COMPUTERNAME))&pin=$pin"
             $resp = Invoke-RestMethod -Uri $pollUrl -Method Get -Headers $headers -TimeoutSec 15 -ErrorAction SilentlyContinue
             if ($resp -and $resp.command) {
                 $cmdId = $resp.id
@@ -550,7 +629,7 @@ try {
         if ($loopCount -ge 6) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v024&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v026&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -560,13 +639,40 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v024:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v026:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "  Stack:   $($_.ScriptStackTrace)" -ForegroundColor DarkRed
     Write-Host "====================================================================" -ForegroundColor Red
     Write-Host ""
     if ($mode -ne "SERVICE") {
+    # Disable QuickEdit Mode to prevent console freezing on mouse clicks
+    try {
+        $cs = @"
+using System;
+using System.Runtime.InteropServices;
+public class QuickEditFix {
+    [DllImport("kernel32.dll", SetLastError = true)]
+    static extern IntPtr GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll")]
+    static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    [DllImport("kernel32.dll")]
+    static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+    public static void Disable() {
+        IntPtr h = GetStdHandle(-10);
+        uint m;
+        if (GetConsoleMode(h, out m)) {
+            m &= ~0x0040u; // disable ENABLE_QUICK_EDIT_MODE
+            m |= 0x0080u;  // enable ENABLE_EXTENDED_FLAGS
+            SetConsoleMode(h, m);
+        }
+    }
+}
+"@
+        Add-Type -TypeDefinition $cs -ErrorAction SilentlyContinue
+        [QuickEditFix]::Disable()
+    } catch {}
+
         Write-Host "  Press any key to exit..." -ForegroundColor Yellow
         try { $null = [System.Console]::ReadKey($true) } catch { pause }
     }
