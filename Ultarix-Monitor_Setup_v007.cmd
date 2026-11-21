@@ -30,7 +30,7 @@ exit /b 0
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (Win10 x86 / x64)
 # Author  : VladiMIR + Antigravity AI
-# Version : v006 (v2.6.2 - 2026-11)
+# Version : v007 (v2.6.3 - 2026-11)
 # Target  : All employee workstations (32-bit & 64-bit Windows)
 # Format  : U-002, U-003, ..., U-010, U-507, ULPS1 (Zero Duplicates)
 # Cloud   : https://ultarix.gincz.com/ (Direct Push every 10s)
@@ -128,13 +128,14 @@ $agentCode = @'
 # ==============================================================================
 # ULTARIX s.r.o. - Background Activity Collector Daemon
 # Runs silently 24/7 without windows or tray icons
-# Version: v002 (v2.5.1)
+# Version: v007 (Mon_v007)
 # ==============================================================================
 try { [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 -bor 12288 } catch { try { [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 } catch {} }
 
 $PollIntervalSec = 5
 $IdleThresholdSec = 180
 $CloudPushIntervalSec = 10
+$MonitorVersion = "Mon_v007"
 $CloudUrl = "https://ultarix.gincz.com/api/push"
 $ApiToken = "Ultarix-Monitor-2026"
 $ServerShares = @("\\ulps1\UTIL\UltarixMonitor\logs", "\\ulps1\UTIL\Ultarix-Monitor\logs")
@@ -229,6 +230,7 @@ function Push-ToCloud($currentStatusObj, $todayObj) {
     try {
         $payload = [PSCustomObject]@{
             computer = $comp
+            version = $MonitorVersion
             current_status = $currentStatusObj
             today = $todayObj
         }
@@ -453,6 +455,7 @@ function Write-Pulse($p, $t, $st, $d, $idle) {
     $hb = [PSCustomObject]@{
         timestamp = $now
         computer = $comp; user = $user; process = $p; window = $t
+        version = $MonitorVersion
         state = $st; duration_sec = $d; idle_sec = $idle
     }
     $j = $hb | ConvertTo-Json -Compress
@@ -572,6 +575,7 @@ try {
     $firstHb = [PSCustomObject]@{
         timestamp = $now
         computer = $canonName
+        version = "Mon_v007"
         user = $env:USERNAME
         process = "explorer"
         window = "Plocha Windows"
@@ -581,6 +585,7 @@ try {
     }
     $firstPayload = [PSCustomObject]@{
         computer = $canonName
+        version = "Mon_v007"
         current_status = $firstHb
         today = $null
     }
