@@ -14,15 +14,15 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v045")]
-[assembly: AssemblyDescription("GIN-Desktop_v045")]
+[assembly: AssemblyTitle("GIN-Desktop_v046")]
+[assembly: AssemblyDescription("GIN-Desktop_v046")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyProduct("GIN-Desktop_v045")]
+[assembly: AssemblyProduct("GIN-Desktop_v046")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.45.0.0")]
-[assembly: AssemblyFileVersion("0.45.0.0")]
+[assembly: AssemblyVersion("0.46.0.0")]
+[assembly: AssemblyFileVersion("0.46.0.0")]
 
 namespace GINDesktop {
 
@@ -198,15 +198,24 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v046 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
                         string loc = (string.IsNullOrEmpty(city) || city.Equals("Auto", StringComparison.OrdinalIgnoreCase)) ? "" : Uri.EscapeDataString(city);
                         string langParam = (curLang == "ru") ? "ru" : ((curLang == "cs") ? "cs" : "en");
-                        string url = "https://wttr.in/" + loc + "?format=%c+%t+(%C)&m&lang=" + langParam;
+                        string url = "https://wttr.in/" + loc + "?format=%l:+%c+%t+(%C)&m&lang=" + langParam;
                         string res = wc.DownloadString(url).Trim();
                         if (!string.IsNullOrEmpty(res) && !res.Contains("<html")) {
+                            // Strip redundant regions after comma in %l e.g. "Frankfurt am Main, Hesse, DE: ☀️" -> "Frankfurt am Main: ☀️"
+                            int colonIdx = res.IndexOf(':');
+                            if (colonIdx != -1) {
+                                string rawLoc = res.Substring(0, colonIdx);
+                                int commaIdx = rawLoc.IndexOf(',');
+                                if (commaIdx != -1) {
+                                    res = rawLoc.Substring(0, commaIdx).Trim() + res.Substring(colonIdx);
+                                }
+                            }
                             res = SanitizeWeatherString(res);
                             _cachedWeather = res;
                             _cachedLanguage = curLang;
@@ -219,10 +228,26 @@ namespace GINDesktop {
 
                     // Open-Meteo default
                     string targetCity = (string.IsNullOrEmpty(city) || city.Equals("Auto", StringComparison.OrdinalIgnoreCase)) ? "Prague" : city;
+                    string resolvedCity = (curLang == "ru" ? "Прага" : (curLang == "cs" ? "Praha" : "Prague"));
+                    if (!string.IsNullOrEmpty(city) && !city.Equals("Auto", StringComparison.OrdinalIgnoreCase)) {
+                        resolvedCity = city;
+                    }
+
                     double lat = 50.08, lon = 14.43;
                     try {
-                        string geoUrl = "https://geocoding-api.open-meteo.com/v1/search?name=" + Uri.EscapeDataString(targetCity) + "&count=1&language=en&format=json";
+                        string langParam = (curLang == "ru") ? "ru" : ((curLang == "cs") ? "cs" : "en");
+                        string geoUrl = "https://geocoding-api.open-meteo.com/v1/search?name=" + Uri.EscapeDataString(targetCity) + "&count=1&language=" + langParam + "&format=json";
                         string geoJson = wc.DownloadString(geoUrl);
+
+                        int nameIdx = geoJson.IndexOf("\"name\":");
+                        if (nameIdx != -1) {
+                            int q1 = geoJson.IndexOf("\"", nameIdx + 7);
+                            int q2 = geoJson.IndexOf("\"", q1 + 1);
+                            if (q1 != -1 && q2 != -1) {
+                                resolvedCity = geoJson.Substring(q1 + 1, q2 - q1 - 1).Trim();
+                            }
+                        }
+
                         int latIdx = geoJson.IndexOf("\"latitude\":");
                         if (latIdx != -1) {
                             latIdx += 11;
@@ -261,7 +286,7 @@ namespace GINDesktop {
                     string icon = GetWeatherIcon(code);
                     string desc = GetWeatherDescription(code);
                     string sign = temp > 0 ? "+" : "";
-                    string formatted = string.Format("{0} {1}{2:0}°C · {3}", icon, sign, temp, desc);
+                    string formatted = string.Format("{0}: {1} {2}{3:0}°C · {4}", resolvedCity, icon, sign, temp, desc);
                     formatted = SanitizeWeatherString(formatted);
 
                     _cachedWeather = formatted;
@@ -273,8 +298,9 @@ namespace GINDesktop {
                 }
             } catch { }
 
+            string fallbackCity = curLang == "ru" ? "Прага" : (curLang == "cs" ? "Praha" : "Prague");
             string fallbackDesc = curLang == "ru" ? "Ясно" : (curLang == "cs" ? "Jasno" : "Clear");
-            return _cachedWeather ?? ("☀ +18°C · " + fallbackDesc);
+            return _cachedWeather ?? (fallbackCity + ": ☀ +18°C · " + fallbackDesc);
         }
 
         private static string SanitizeWeatherString(string input) {
@@ -584,7 +610,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v045" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v046" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -692,7 +718,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v045" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v046" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -800,7 +826,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v045" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v046" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1627,7 +1653,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v046 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1649,7 +1675,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v046 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1673,7 +1699,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v046 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2069,7 +2095,7 @@ namespace GINDesktop {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v045 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v046 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -2660,7 +2686,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v045");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v046");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -3381,7 +3407,7 @@ namespace GINDesktop {
                 if (_wallpaperEngine != null) _wallpaperEngine.TriggerNextWallpaperAsync();
             };
 
-            ComboBox cmbWeatherSrc = new ComboBox { Location = new Point(367, 608), Width = 145, Height = 28, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
+            ComboBox cmbWeatherSrc = new ComboBox { Location = new Point(248, 608), Width = 130, Height = 28, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
             cmbWeatherSrc.Items.AddRange(new string[] { "Open-Meteo", "wttr.in" });
             cmbWeatherSrc.SelectedItem = _config.WeatherSource;
             cmbWeatherSrc.SelectedIndexChanged += (s, e) => {
@@ -3391,14 +3417,16 @@ namespace GINDesktop {
                 if (_wallpaperEngine != null) _wallpaperEngine.TriggerNextWallpaperAsync();
             };
 
-            TextBox txtWeatherCity = new TextBox { Location = new Point(522, 608), Width = 181, Height = 28, Text = _config.WeatherCity, Font = new Font("Segoe UI", 9f) };
+            Label lblWeatherCity = new Label { Text = "📍 " + (I18n.CurrentLanguage == "ru" ? "Город:" : (I18n.CurrentLanguage == "cs" ? "Město:" : "City:")), Location = new Point(392, 611), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+
+            TextBox txtWeatherCity = new TextBox { Location = new Point(468, 608), Width = 235, Height = 28, Text = _config.WeatherCity, Font = new Font("Segoe UI", 9f) };
             txtWeatherCity.TextChanged += (s, e) => {
                 _config.WeatherCity = txtWeatherCity.Text.Trim();
                 _config.Save();
                 WeatherService.InvalidateCache();
             };
 
-            _tabWall.Controls.AddRange(new Control[] { lblWeatherTitle, chkShowWeather, cmbWeatherSrc, txtWeatherCity });
+            _tabWall.Controls.AddRange(new Control[] { lblWeatherTitle, chkShowWeather, cmbWeatherSrc, lblWeatherCity, txtWeatherCity });
             _tabs.TabPages.Add(_tabWall);
 
             // =====================================
@@ -3544,7 +3572,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v045", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v046", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3601,7 +3629,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v045",
+                Text = "v046",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -4029,7 +4057,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v045";
+        public const string CURRENT_VERSION = "v046";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -4197,7 +4225,7 @@ namespace GINDesktop {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v045";
+            _trayIcon.Text = "GIN Dock Wallpaper v046";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -4264,7 +4292,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v045");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v046");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;

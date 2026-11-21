@@ -1,5 +1,15 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v046] — 2026-11-21
+### 📍 City Name in Weather HUD, Localized Geocoding & Dedicated City Settings Field
+- **Explicit Localized City Name in Weather Badge**: The weather pill rendered directly under the Calendar HUD on the desktop wallpaper now explicitly includes the city name, fully localized according to the current UI language (e.g. `Прага: ☀ +18°C · Ясно` in Russian, `Praha: ☀ +18°C · Jasno` in Czech, and `Prague: ☀ +18°C · Clear` in English).
+- **Intelligent Multilingual Geocoding**:
+  - Open-Meteo queries geocoding with the active language code (`language=ru/cs/en`), extracting and displaying the city's native localized name.
+  - wttr.in format is enhanced with `%l:` and sanitized to remove redundant administrative regional suffixes after commas, keeping clean readability.
+  - Dynamic fallback gracefully handles offline states with localized city defaults (`Прага` / `Praha` / `Prague`).
+- **Dedicated City Label in Settings Form**: Positioned an explicit `📍 Город:` / `📍 Město:` / `📍 City:` label before the city input box on the Wallpaper tab, providing clear ergonomics and visual affordance.
+- **Single Versioned Setup on MEGA Desktop**: Build pipeline strictly delivers `GIN-Desktop_v046_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one versioned setup file and purging obsolete installers.
+
 ## [v045] — 2026-11-21
 ### 🔔 Silent Tray HUD Auto-Updater, Pure-Sine Gentle Sounds, Dynamic Version Transition & Clean Desktop Integrity
 - **Silent Non-Activating Tray HUD**: Eliminated intrusive modal MessageBox dialogs for update checks. Implemented `TrayNotificationHUD` positioned right above the system tray in the bottom-right corner, featuring smooth fade-in/fade-out, gold accent border, and non-activating window style (`WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST`).

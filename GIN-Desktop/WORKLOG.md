@@ -1,3 +1,15 @@
+## Update: v046 (2026-11-21)
+- **City Display in Weather HUD**:
+  - Enhanced `WeatherService.GetCurrentWeather()` to format weather with the localized city name prefix: `{resolvedCity}: {icon} {sign}{temp}°C · {desc}`.
+  - Implemented multilingual city name lookup for Open-Meteo (`language=ru/cs/en`) converting English/search city names into native localized equivalents (`Прага` / `Praha` / `Prague`).
+  - Added clean location parsing for `wttr.in` (`%l:` format) with automated stripping of extraneous region and country codes after commas.
+  - Provided graceful localized offline fallback strings with city names.
+- **Settings Form UI Ergonomics**:
+  - Inserted explicit `📍 Город:` / `📍 Město:` / `📍 City:` label directly preceding `txtWeatherCity` in the Wallpaper settings tab.
+- **Compiled and Packaged v046**:
+  - Compiled binaries `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v046_Setup.exe`.
+  - Deployed `GIN-Desktop_v046_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one installer version.
+
 ## Update: v045 (2026-11-21)
 - **Silent Tray HUD Auto-Updater**:
   - Implemented `TrayNotificationHUD` borderless, non-activating form (`WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST`) positioned near system tray.
