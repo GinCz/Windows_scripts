@@ -1,5 +1,19 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v051] — 2026-11-21
+### 🌐 Full Multi-Language Dynamic Localization & Weather HUD UI Fix
+- **Dynamic Translation Switching for Weather & Hardware**:
+  - Resolved the bug where switching the interface language to English or Czech left the Weather HUD title in Russian (`Погода:`).
+  - Promoted local weather and hardware controls in `SettingsForm` (`_lblWeatherTitle`, `_chkShowWeather`, `_lblWeatherCity`, `_lblHwTitle`, `_chkHw`) to class member fields, enabling dynamic updates in `ApplyLocalization()`.
+  - Added full translation keys for `Weather`, `EnableWeather`, `WeatherCity`, `Hardware`, `Enable`, `SoundOn`, `SoundOff`, `EmptyFolder`, and `OpenInExplorer` across English, Russian, and Czech dictionaries (and automatic fallbacks).
+  - Ensured the settings window title (`this.Text`) updates immediately upon language change (`⚡ GIN Dock Wallpaper — Settings...` / `Настройки...` / `Nastavení...`).
+- **Eliminated UI Overlap in Settings Wallpaper Tab**:
+  - Resolved physical collision between `chkShowWeather` (at X=215) and `cmbWeatherSrc` (at X=248) which had caused the dropdown box to overlay the checkbox text.
+  - Re-spaced controls cleanly across the 678px container with proportional, non-overlapping coordinates: Title (X=25) ➔ CheckBox (X=135) ➔ Source Combo (X=275) ➔ City Label (X=405) ➔ City TextBox (X=470 to X=703).
+- **Automated Build & MEGA Desktop Delivery**:
+  - Increment version to `v051`.
+  - Built `GIN-Desktop_v051_Setup.exe` and delivered directly to Vladimir's MEGA Desktop (`/MEGA/DOCS/desktop/`), retaining strictly the latest active installer.
+
 ## [v050] — 2026-11-21
 ### 🛠️ Critical Windows .NET Framework Installer Launch & Compatibility Fix
 - **Fixed Silent Launch Failure on Windows 10/11**:

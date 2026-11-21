@@ -1,3 +1,11 @@
+## Update: v051 (2026-11-21)
+- **Full Multi-Language Dynamic Localization & Weather HUD UI Fix**:
+  - Fixed dynamic translation switching across all UI controls including Weather HUD (`Weather:`, `Enable Weather`, `City:`), Hardware Monitor, and SettingsForm title bar.
+  - Promoted local variables to form fields in `SettingsForm` for full dynamic reactivity in `ApplyLocalization()`.
+  - Added missing dictionary keys (`Weather`, `EnableWeather`, `WeatherCity`, `Hardware`, `Enable`, `SoundOn`, `SoundOff`, `EmptyFolder`, `OpenInExplorer`) to EN, RU, CS dictionaries.
+  - Resolved UI control overlap between the weather toggle checkbox and the source selection dropdown.
+  - Compiled and packaged `GIN-Desktop_v051_Setup.exe`, automatically synced to Vladimir's Desktop via MEGA.
+
 ## Update: v050 (2026-11-21)
 - **Critical Windows .NET Framework Installer Launch Fix**:
   - Diagnosed and resolved the root cause of `GIN-Desktop_vXXX_Setup.exe` failing to launch or install silently on clean Windows workstations (`KK-02`, laptops):

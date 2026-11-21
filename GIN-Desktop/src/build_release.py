@@ -10,7 +10,7 @@ import subprocess
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
-VERSION = "v050"
+VERSION = "v051"
 APP_EXE = os.path.join(SCRIPT_DIR, "GIN-Desktop.exe")
 UNINST_EXE = os.path.join(SCRIPT_DIR, "Uninstall.exe")
 ICO_FILE = os.path.join(SCRIPT_DIR, "app.ico")
@@ -111,6 +111,7 @@ v_data = {
     "sha256": setup_sha256,
     "download_url": f"https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_{VERSION}_Setup.exe",
     "features": [
+        "Full Multi-Language Dynamic Localization: Fixed dynamic translation switching across all UI controls including Weather HUD ('Weather:', 'Enable Weather', 'City:'), Hardware Monitor, and Form title bar. Resolved layout overlapping between weather checkbox and source dropdown.",
         "Localized City Name in Weather HUD: Weather badge under the Calendar HUD displays the live localized city name (e.g. Прага: ☀ +18°C · Ясно / Praha / Prague) with clear SettingsForm labeling",
         "Silent Tray HUD Auto-Updater: Zero-popup quiet update workflow with subtle non-activating HUD toast near system tray and gentle pure-sine audio blips identical to GIN-Voice",
         "Seamless Transition Pipeline: Live version transition (e.g. 44 ➔ 45) in tray HUD with automatic background download, process termination, service halt, and instant restart",
@@ -141,10 +142,10 @@ if os.path.exists(old_mirror):
         json.dump(v_data, f, indent=2, ensure_ascii=False)
     print(f"✅ Mirrored to {old_mirror}")
 
-# Retain strictly 2 latest versions in ROOT_DIR: v049 and v050
+# Retain strictly 2 latest versions in ROOT_DIR: v050 and v051
 for f in os.listdir(ROOT_DIR):
     if f.endswith("_Setup.exe"):
-        if not (VERSION in f or "v049" in f):
+        if not (VERSION in f or "v050" in f):
             try:
                 os.remove(os.path.join(ROOT_DIR, f))
                 print(f"Purged obsolete release: {f}")
@@ -154,7 +155,7 @@ for f in os.listdir(ROOT_DIR):
 if os.path.exists(old_mirror):
     for f in os.listdir(old_mirror):
         if f.endswith("_Setup.exe"):
-            if not (VERSION in f or "v049" in f):
+            if not (VERSION in f or "v050" in f):
                 try:
                     os.remove(os.path.join(old_mirror, f))
                     print(f"Purged obsolete mirror release: {f}")

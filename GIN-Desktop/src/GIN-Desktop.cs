@@ -14,14 +14,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v050")]
-[assembly: AssemblyDescription("GIN-Desktop_v050")]
+[assembly: AssemblyTitle("GIN-Desktop_v051")]
+[assembly: AssemblyDescription("GIN-Desktop_v051")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v050")]
+[assembly: AssemblyProduct("GIN-Desktop_v051")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.50.0.0")]
-[assembly: AssemblyFileVersion("0.50.0.0")]
+[assembly: AssemblyVersion("0.51.0.0")]
+[assembly: AssemblyFileVersion("0.51.0.0")]
 
 namespace GINDesktop {
 
@@ -200,7 +200,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v050 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v051 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -613,7 +613,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v050" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v051" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -702,6 +702,15 @@ namespace GINDesktop {
                 { "Save", "Save & Close" },
                 { "Apply", "Apply" },
                 { "Cancel", "Cancel" },
+                { "Weather", "Weather:" },
+                { "EnableWeather", "Enable Weather" },
+                { "WeatherCity", "City:" },
+                { "Hardware", "Hardware:" },
+                { "Enable", "Enable" },
+                { "SoundOn", "Sound ON" },
+                { "SoundOff", "Sound OFF" },
+                { "EmptyFolder", "(Empty Folder)" },
+                { "OpenInExplorer", "Open in Explorer" },
                 { "UpToDate", "You are running the latest version: " },
                 { "UpdateAvailable", "New version available: " },
                 { "DownloadNow", "Download and update automatically now?" }
@@ -722,7 +731,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v050" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v051" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -811,6 +820,15 @@ namespace GINDesktop {
                 { "Save", "Сохранить и закрыть" },
                 { "Apply", "Применить" },
                 { "Cancel", "Отмена" },
+                { "Weather", "Погода:" },
+                { "EnableWeather", "Включить погоду" },
+                { "WeatherCity", "Город:" },
+                { "Hardware", "Железо:" },
+                { "Enable", "Включить" },
+                { "SoundOn", "Со звуком" },
+                { "SoundOff", "Без звука" },
+                { "EmptyFolder", "(Пустая папка)" },
+                { "OpenInExplorer", "Открыть в Проводнике" },
                 { "UpToDate", "У вас установлена самая последняя версия: " },
                 { "UpdateAvailable", "Обнаружена новая версия: " },
                 { "DownloadNow", "Загрузить и обновить программу автоматически прямо сейчас?" }
@@ -831,7 +849,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v050" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v051" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -920,6 +938,15 @@ namespace GINDesktop {
                 { "Save", "Uložit a zavřít" },
                 { "Apply", "Použít" },
                 { "Cancel", "Zrušit" },
+                { "Weather", "Počasí:" },
+                { "EnableWeather", "Povolit počasí" },
+                { "WeatherCity", "Město:" },
+                { "Hardware", "Hardware:" },
+                { "Enable", "Povolit" },
+                { "SoundOn", "Se zvukem" },
+                { "SoundOff", "Bez zvuku" },
+                { "EmptyFolder", "(Prázdná složka)" },
+                { "OpenInExplorer", "Otevřít v Průzkumníku" },
                 { "UpToDate", "Máte nejnovější verzi: " },
                 { "UpdateAvailable", "K dispozici je nová verze: " },
                 { "DownloadNow", "Stáhnout a automaticky aktualizovat nyní?" }
@@ -1695,7 +1722,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v050 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v051 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1717,7 +1744,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v050 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v051 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1741,7 +1768,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v050 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v051 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2169,7 +2196,7 @@ namespace GINDesktop {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v050 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v051 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -2725,7 +2752,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v050");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v051");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -3147,6 +3174,19 @@ namespace GINDesktop {
         private Label _lblBrandIconTitle;
         private List<Button> _brandIconButtons = new List<Button>();
 
+        // Weather HUD & Hardware
+        private Label _lblWeatherTitle;
+        private CheckBox _chkShowWeather;
+        private ComboBox _cmbWeatherSrc;
+        private Label _lblWeatherCity;
+        private TextBox _txtWeatherCity;
+        private Label _lblHwTitle;
+        private CheckBox _chkHw;
+        private CheckBox _chkCpu;
+        private CheckBox _chkRam;
+        private CheckBox _chkGpu;
+        private CheckBox _chkGpuTemp;
+
         // Dock Tab
         private Label _lblRoot;
         private TextBox _txtRoot;
@@ -3196,12 +3236,7 @@ namespace GINDesktop {
 
         private void UpdateSoundButtonText() {
             if (_btnSound == null) return;
-            string lang = (_config.Language ?? "en").ToLowerInvariant();
-            if (_config.EnableSound) {
-                _btnSound.Text = (lang == "ru") ? "🔊 Со звуком" : (lang == "cs") ? "🔊 Se zvukem" : "🔊 Sound ON";
-            } else {
-                _btnSound.Text = (lang == "ru") ? "🔇 Без звука" : (lang == "cs") ? "🔇 Bez zvuku" : "🔇 Sound OFF";
-            }
+            _btnSound.Text = _config.EnableSound ? ("🔊 " + I18n.T("SoundOn")) : ("🔇 " + I18n.T("SoundOff"));
         }
 
         private void InitializeComponent() {
@@ -3550,62 +3585,62 @@ namespace GINDesktop {
             _tabWall.Controls.Add(sep5);
 
             // Weather HUD section (Beautiful spacing & margins!)
-            Label lblWeatherTitle = new Label { Text = "🌤️ " + (I18n.CurrentLanguage == "ru" ? "Погода:" : (I18n.CurrentLanguage == "cs" ? "Počasí:" : "Weather HUD:")), Location = new Point(25, 611), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
-            CheckBox chkShowWeather = new CheckBox { Text = (I18n.CurrentLanguage == "ru" ? "Включить погоду" : (I18n.CurrentLanguage == "cs" ? "Povolit počasí" : "Enable Weather")), Checked = _config.ShowWeather, Location = new Point(215, 610), AutoSize = true, Font = new Font("Segoe UI", 9f) };
-            chkShowWeather.CheckedChanged += (s, e) => {
-                _config.ShowWeather = chkShowWeather.Checked;
+            _lblWeatherTitle = new Label { Location = new Point(25, 611), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _chkShowWeather = new CheckBox { Checked = _config.ShowWeather, Location = new Point(135, 610), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _chkShowWeather.CheckedChanged += (s, e) => {
+                _config.ShowWeather = _chkShowWeather.Checked;
                 _config.Save();
                 WeatherService.InvalidateCache();
                 if (_wallpaperEngine != null) _wallpaperEngine.TriggerNextWallpaperAsync();
             };
 
-            ComboBox cmbWeatherSrc = new ComboBox { Location = new Point(248, 608), Width = 130, Height = 28, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
-            cmbWeatherSrc.Items.AddRange(new string[] { "Open-Meteo", "wttr.in" });
-            cmbWeatherSrc.SelectedItem = _config.WeatherSource;
-            cmbWeatherSrc.SelectedIndexChanged += (s, e) => {
-                _config.WeatherSource = cmbWeatherSrc.SelectedItem.ToString();
+            _cmbWeatherSrc = new ComboBox { Location = new Point(275, 608), Width = 115, Height = 28, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
+            _cmbWeatherSrc.Items.AddRange(new string[] { "Open-Meteo", "wttr.in" });
+            _cmbWeatherSrc.SelectedItem = _config.WeatherSource;
+            _cmbWeatherSrc.SelectedIndexChanged += (s, e) => {
+                _config.WeatherSource = _cmbWeatherSrc.SelectedItem.ToString();
                 _config.Save();
                 WeatherService.InvalidateCache();
                 if (_wallpaperEngine != null) _wallpaperEngine.TriggerNextWallpaperAsync();
             };
 
-            Label lblWeatherCity = new Label { Text = "📍 " + (I18n.CurrentLanguage == "ru" ? "Город:" : (I18n.CurrentLanguage == "cs" ? "Město:" : "City:")), Location = new Point(392, 611), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _lblWeatherCity = new Label { Location = new Point(405, 611), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
 
-            TextBox txtWeatherCity = new TextBox { Location = new Point(468, 608), Width = 235, Height = 28, Text = _config.WeatherCity, Font = new Font("Segoe UI", 9f) };
-            txtWeatherCity.TextChanged += (s, e) => {
-                _config.WeatherCity = txtWeatherCity.Text.Trim();
+            _txtWeatherCity = new TextBox { Location = new Point(470, 608), Width = 233, Height = 28, Text = _config.WeatherCity, Font = new Font("Segoe UI", 9f) };
+            _txtWeatherCity.TextChanged += (s, e) => {
+                _config.WeatherCity = _txtWeatherCity.Text.Trim();
                 _config.Save();
                 WeatherService.InvalidateCache();
             };
 
             // Hardware Monitoring section under Weather in Wallpaper Tab
-            Label lblHwTitle = new Label { Text = "⚡ " + (I18n.CurrentLanguage == "ru" ? "Железо:" : (I18n.CurrentLanguage == "cs" ? "Hardware:" : "Hardware:")), Location = new Point(25, 646), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
-            CheckBox chkHw = new CheckBox { Text = (I18n.CurrentLanguage == "ru" ? "Включить" : (I18n.CurrentLanguage == "cs" ? "Povolit" : "Enable")), Checked = _config.EnableHardwareMonitor, Location = new Point(145, 645), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
-            CheckBox chkCpu = new CheckBox { Text = "CPU %", Checked = _config.ShowCpuUsage, Location = new Point(248, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
-            CheckBox chkRam = new CheckBox { Text = "RAM %", Checked = _config.ShowRamUsage, Location = new Point(340, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
-            CheckBox chkGpu = new CheckBox { Text = "GPU %", Checked = _config.ShowGpuUsage, Location = new Point(432, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
-            CheckBox chkGpuTemp = new CheckBox { Text = (I18n.CurrentLanguage == "ru" ? "GPU °C" : "GPU °C"), Checked = _config.ShowGpuTemp, Location = new Point(524, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _lblHwTitle = new Label { Location = new Point(25, 646), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _chkHw = new CheckBox { Checked = _config.EnableHardwareMonitor, Location = new Point(135, 645), AutoSize = true, Font = new Font("Segoe UI", 9f, FontStyle.Bold) };
+            _chkCpu = new CheckBox { Text = "CPU %", Checked = _config.ShowCpuUsage, Location = new Point(240, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _chkRam = new CheckBox { Text = "RAM %", Checked = _config.ShowRamUsage, Location = new Point(325, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _chkGpu = new CheckBox { Text = "GPU %", Checked = _config.ShowGpuUsage, Location = new Point(410, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _chkGpuTemp = new CheckBox { Text = "GPU °C", Checked = _config.ShowGpuTemp, Location = new Point(495, 645), AutoSize = true, Font = new Font("Segoe UI", 9f) };
 
             Action updateHwAndWallpaper = () => {
-                _config.EnableHardwareMonitor = chkHw.Checked;
-                _config.ShowCpuUsage = chkCpu.Checked;
-                _config.ShowRamUsage = chkRam.Checked;
-                _config.ShowGpuUsage = chkGpu.Checked;
-                _config.ShowGpuTemp = chkGpuTemp.Checked;
+                _config.EnableHardwareMonitor = _chkHw.Checked;
+                _config.ShowCpuUsage = _chkCpu.Checked;
+                _config.ShowRamUsage = _chkRam.Checked;
+                _config.ShowGpuUsage = _chkGpu.Checked;
+                _config.ShowGpuTemp = _chkGpuTemp.Checked;
                 _config.Save();
                 if (_wallpaperEngine != null) _wallpaperEngine.RefreshActiveWallpaperHUD();
                 if (_onConfigChanged != null) _onConfigChanged();
             };
 
-            chkHw.CheckedChanged += (s, e) => updateHwAndWallpaper();
-            chkCpu.CheckedChanged += (s, e) => updateHwAndWallpaper();
-            chkRam.CheckedChanged += (s, e) => updateHwAndWallpaper();
-            chkGpu.CheckedChanged += (s, e) => updateHwAndWallpaper();
-            chkGpuTemp.CheckedChanged += (s, e) => updateHwAndWallpaper();
+            _chkHw.CheckedChanged += (s, e) => updateHwAndWallpaper();
+            _chkCpu.CheckedChanged += (s, e) => updateHwAndWallpaper();
+            _chkRam.CheckedChanged += (s, e) => updateHwAndWallpaper();
+            _chkGpu.CheckedChanged += (s, e) => updateHwAndWallpaper();
+            _chkGpuTemp.CheckedChanged += (s, e) => updateHwAndWallpaper();
 
             _tabWall.Controls.AddRange(new Control[] {
-                lblWeatherTitle, chkShowWeather, cmbWeatherSrc, lblWeatherCity, txtWeatherCity,
-                lblHwTitle, chkHw, chkCpu, chkRam, chkGpu, chkGpuTemp
+                _lblWeatherTitle, _chkShowWeather, _cmbWeatherSrc, _lblWeatherCity, _txtWeatherCity,
+                _lblHwTitle, _chkHw, _chkCpu, _chkRam, _chkGpu, _chkGpuTemp
             });
             _tabs.TabPages.Add(_tabWall);
 
@@ -3733,7 +3768,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v050", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v051", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3759,16 +3794,16 @@ namespace GINDesktop {
             // ----------------------------------------
             _bottomBar = new Panel { Location = new Point(12, 730), Size = new Size(736, 38), BackColor = Color.Transparent };
 
-            _btnApply = new Button { Text = "Применить", Location = new Point(0, 3), Width = 115, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _btnApply = new Button { Text = I18n.T("Apply"), Location = new Point(0, 3), Width = 115, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _btnApply.Click += (s, e) => { CommitSettings(true); PlayClickSound(); };
 
-            _btnSave = new Button { Text = "Сохранить и закрыть", Location = new Point(122, 3), Width = 175, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.OK, Font = new Font("Segoe UI", 9.5f) };
+            _btnSave = new Button { Text = I18n.T("Save"), Location = new Point(122, 3), Width = 175, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.OK, Font = new Font("Segoe UI", 9.5f) };
             _btnSave.Click += (s, e) => { CommitSettings(false); this.Close(); };
 
-            _btnCancel = new Button { Text = "Отмена", Location = new Point(304, 3), Width = 95, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel, Font = new Font("Segoe UI", 9.5f) };
+            _btnCancel = new Button { Text = I18n.T("Cancel"), Location = new Point(304, 3), Width = 95, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, DialogResult = DialogResult.Cancel, Font = new Font("Segoe UI", 9.5f) };
             _btnCancel.Click += (s, e) => this.Close();
 
-            // Right signature: VladiMIR+AI ||| v043 (Clean, Gold, No underline!)
+            // Right signature: VladiMIR+AI ||| v051 (Clean, Gold, No underline!)
             _lblAuthor = new Label {
                 Text = "VladiMIR+AI",
                 Location = new Point(540, 9),
@@ -3790,7 +3825,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v050",
+                Text = "v051",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -4062,6 +4097,7 @@ namespace GINDesktop {
         }
 
         private void ApplyLocalization() {
+            this.Text = "⚡ " + I18n.T("AppTitle") + " — " + I18n.T("Settings");
             UpdateSoundButtonText();
             _tabMain.Text = I18n.T("TabMain");
             _tabWall.Text = I18n.T("TabWallpaper");
@@ -4108,7 +4144,14 @@ namespace GINDesktop {
             if (_lblBrandIconTitle != null) _lblBrandIconTitle.Text = "🔘 " + I18n.T("DockBrandIcon");
             _lblIntervalTitle.Text = "⏱️ " + I18n.T("WallpaperInterval");
             _lblFontsHeader.Text = "🔤 " + I18n.T("SelectFontWithPreview");
-            _btnNextWall.Text = "🖼️ " + I18n.T("NextWallpaper");
+            if (_btnNextWall != null) _btnNextWall.Text = "🖼️ " + I18n.T("NextWallpaper");
+
+            if (_lblWeatherTitle != null) _lblWeatherTitle.Text = "🌤️ " + I18n.T("Weather");
+            if (_chkShowWeather != null) _chkShowWeather.Text = I18n.T("EnableWeather");
+            if (_lblWeatherCity != null) _lblWeatherCity.Text = "📍 " + I18n.T("WeatherCity");
+
+            if (_lblHwTitle != null) _lblHwTitle.Text = "⚡ " + I18n.T("Hardware");
+            if (_chkHw != null) _chkHw.Text = I18n.T("Enable");
 
 
 
@@ -4134,6 +4177,7 @@ namespace GINDesktop {
             if (_lblAboutTitle != null) _lblAboutTitle.Text = I18n.T("AboutTitle");
             if (_lblAboutDesc != null) _lblAboutDesc.Text = I18n.T("AboutDesc");
             if (_btnOpenGitHub != null) _btnOpenGitHub.Text = I18n.T("GitHubRepo");
+            if (_lblVer != null) _lblVer.Text = CURRENT_VERSION;
 
             _tabs.Invalidate();
         }
@@ -4220,7 +4264,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v050";
+        public const string CURRENT_VERSION = "v051";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -4388,7 +4432,7 @@ namespace GINDesktop {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v050";
+            _trayIcon.Text = "GIN Dock Wallpaper v051";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -4455,7 +4499,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v050");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v051");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
