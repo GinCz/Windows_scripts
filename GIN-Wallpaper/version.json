@@ -1,13 +1,13 @@
 {
-  "version": "v043",
+  "version": "v044",
   "name": "GIN-Desktop",
-  "installer": "GIN-Desktop_v043_Setup.exe",
+  "installer": "GIN-Desktop_v044_Setup.exe",
   "description": "Unified Windows Desktop Companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Desktop",
   "date": "2026-11-20",
-  "sha256": "37cd88f78b8eb25107ea63582e740e6e8daa08a6d727412b76ec79b3e3d606ef",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v043_Setup.exe",
+  "sha256": "a4be38eb2d79435150c8731e20d116c72e5deeeb9be414532d2670f3cec591cf",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v044_Setup.exe",
   "features": [
     "Rebranded as GIN Desktop: Single unified lightweight Windows suite (~2-4 MB RAM) with independent ON/OFF engines",
     "Top-Only Fluid Dock Bar: Dedicated top position activated strictly on hover at top-left hot corner with zero visual clutter",

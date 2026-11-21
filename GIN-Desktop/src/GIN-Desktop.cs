@@ -14,15 +14,15 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v043")]
-[assembly: AssemblyDescription("GIN-Desktop_v043")]
+[assembly: AssemblyTitle("GIN-Desktop_v044")]
+[assembly: AssemblyDescription("GIN-Desktop_v044")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyProduct("GIN-Desktop_v043")]
+[assembly: AssemblyProduct("GIN-Desktop_v044")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.43.0.0")]
-[assembly: AssemblyFileVersion("0.43.0.0")]
+[assembly: AssemblyVersion("0.44.0.0")]
+[assembly: AssemblyFileVersion("0.44.0.0")]
 
 namespace GINDesktop {
 
@@ -173,24 +173,45 @@ namespace GINDesktop {
     // ==========================================
     public static class WeatherService {
         private static string _cachedWeather = null;
+        private static string _cachedLanguage = null;
+        private static string _cachedSource = null;
+        private static string _cachedCity = null;
         private static DateTime _lastFetch = DateTime.MinValue;
 
+        public static void InvalidateCache() {
+            _cachedWeather = null;
+            _cachedLanguage = null;
+            _cachedSource = null;
+            _cachedCity = null;
+            _lastFetch = DateTime.MinValue;
+        }
+
         public static string GetCurrentWeather(string source, string city) {
-            if (_cachedWeather != null && (DateTime.Now - _lastFetch).TotalMinutes < 30) {
+            string curLang = (I18n.CurrentLanguage ?? "ru").ToLowerInvariant();
+            if (_cachedWeather != null &&
+                string.Equals(_cachedLanguage, curLang, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(_cachedSource, source, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(_cachedCity, city, StringComparison.OrdinalIgnoreCase) &&
+                (DateTime.Now - _lastFetch).TotalMinutes < 30) {
                 return _cachedWeather;
             }
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v043 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
                         string loc = (string.IsNullOrEmpty(city) || city.Equals("Auto", StringComparison.OrdinalIgnoreCase)) ? "" : Uri.EscapeDataString(city);
-                        string url = "https://wttr.in/" + loc + "?format=%c+%t+(%C)&m";
+                        string langParam = (curLang == "ru") ? "ru" : ((curLang == "cs") ? "cs" : "en");
+                        string url = "https://wttr.in/" + loc + "?format=%c+%t+(%C)&m&lang=" + langParam;
                         string res = wc.DownloadString(url).Trim();
                         if (!string.IsNullOrEmpty(res) && !res.Contains("<html")) {
+                            res = SanitizeWeatherString(res);
                             _cachedWeather = res;
+                            _cachedLanguage = curLang;
+                            _cachedSource = source;
+                            _cachedCity = city;
                             _lastFetch = DateTime.Now;
                             return _cachedWeather;
                         }
@@ -240,32 +261,50 @@ namespace GINDesktop {
                     string icon = GetWeatherIcon(code);
                     string desc = GetWeatherDescription(code);
                     string sign = temp > 0 ? "+" : "";
-                    _cachedWeather = string.Format("{0} {1}{2:0}°C · {3}", icon, sign, temp, desc);
+                    string formatted = string.Format("{0} {1}{2:0}°C · {3}", icon, sign, temp, desc);
+                    formatted = SanitizeWeatherString(formatted);
+
+                    _cachedWeather = formatted;
+                    _cachedLanguage = curLang;
+                    _cachedSource = source;
+                    _cachedCity = city;
                     _lastFetch = DateTime.Now;
                     return _cachedWeather;
                 }
             } catch { }
 
-            return _cachedWeather ?? ("🌤️ +18°C · " + (I18n.CurrentLanguage == "ru" ? "Ясно" : (I18n.CurrentLanguage == "cs" ? "Jasno" : "Clear")));
+            string fallbackDesc = curLang == "ru" ? "Ясно" : (curLang == "cs" ? "Jasno" : "Clear");
+            return _cachedWeather ?? ("☀ +18°C · " + fallbackDesc);
+        }
+
+        private static string SanitizeWeatherString(string input) {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input
+                .Replace("\uFE0F", "")
+                .Replace("\uFE0E", "")
+                .Replace("\u200D", "")
+                .Replace("\uFFFD", "")
+                .Trim();
         }
 
         private static string GetWeatherIcon(int code) {
-            if (code == 0) return "☀️";
-            if (code <= 3) return "⛅";
-            if (code <= 48) return "🌫️";
-            if (code <= 67) return "🌧️";
-            if (code <= 77) return "❄️";
-            if (code <= 82) return "🌦️";
-            return "⛈️";
+            if (code == 0) return "☀";      // U+2600 Clean sun (NO \uFE0F)
+            if (code <= 3) return "⛅";     // U+26C5 Sun behind cloud (NO \uFE0F)
+            if (code <= 48) return "☁";     // U+2601 Cloud / Fog (NO \uFE0F)
+            if (code <= 67) return "🌧";     // U+1F327 Rain
+            if (code <= 77) return "❄";     // U+2744 Snowflake (NO \uFE0F)
+            if (code <= 82) return "🌦";     // U+1F326 Sun behind rain
+            return "⚡";                     // U+26A1 Lightning / Storm (NO \uFE0F)
         }
 
         private static string GetWeatherDescription(int code) {
-            if (code == 0) return I18n.CurrentLanguage == "ru" ? "Ясно" : (I18n.CurrentLanguage == "cs" ? "Jasno" : "Clear");
-            if (code <= 3) return I18n.CurrentLanguage == "ru" ? "Переменная облачность" : (I18n.CurrentLanguage == "cs" ? "Polojasno" : "Partly Cloudy");
-            if (code <= 48) return I18n.CurrentLanguage == "ru" ? "Туман" : (I18n.CurrentLanguage == "cs" ? "Mlha" : "Fog");
-            if (code <= 67) return I18n.CurrentLanguage == "ru" ? "Дождь" : (I18n.CurrentLanguage == "cs" ? "Déšť" : "Rain");
-            if (code <= 77) return I18n.CurrentLanguage == "ru" ? "Снег" : (I18n.CurrentLanguage == "cs" ? "Sníh" : "Snow");
-            return I18n.CurrentLanguage == "ru" ? "Гроза" : (I18n.CurrentLanguage == "cs" ? "Bouřka" : "Storm");
+            string lang = (I18n.CurrentLanguage ?? "ru").ToLowerInvariant();
+            if (code == 0) return lang == "ru" ? "Ясно" : (lang == "cs" ? "Jasno" : "Clear");
+            if (code <= 3) return lang == "ru" ? "Переменная облачность" : (lang == "cs" ? "Polojasno" : "Partly Cloudy");
+            if (code <= 48) return lang == "ru" ? "Туман" : (lang == "cs" ? "Mlha" : "Fog");
+            if (code <= 67) return lang == "ru" ? "Дождь" : (lang == "cs" ? "Déšť" : "Rain");
+            if (code <= 77) return lang == "ru" ? "Снег" : (lang == "cs" ? "Sníh" : "Snow");
+            return lang == "ru" ? "Гроза" : (lang == "cs" ? "Bouřka" : "Storm");
         }
     }
 
@@ -545,7 +584,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v043" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v044" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -579,8 +618,13 @@ namespace GINDesktop {
                 { "CatMinimal", "🖤 Minimalism & Dark AMOLED" },
                 { "CatMinimalism", "🖤 Minimalism & Dark AMOLED" },
                 { "CatAnime", "⛩️ Anime & Digital Art" },
-                { "WallInterval", "Auto-Change Interval:" },
-                { "WallpaperInterval", "Wallpaper Change Interval:" },
+                { "WallInterval", "Interval:" },
+                { "WallpaperInterval", "Interval:" },
+                { "Int1h", "1 hour" },
+                { "Int3h", "3 hours" },
+                { "Int6h", "6 hours" },
+                { "Int12h", "12 hours" },
+                { "Int24h", "24 hours" },
                 { "SelectFontWithPreview", "Calendar Font (Click to apply live):" },
                 { "Calendar", "Calendar" },
                 { "CalScaleNone", "Off" },
@@ -648,7 +692,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v043" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v044" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -682,8 +726,13 @@ namespace GINDesktop {
                 { "CatMinimal", "🖤 Минимализм и Dark AMOLED" },
                 { "CatMinimalism", "🖤 Минимализм и Dark AMOLED" },
                 { "CatAnime", "⛩️ Аниме и Цифровой Арт" },
-                { "WallInterval", "Интервал смены обоев:" },
-                { "WallpaperInterval", "Интервал смены обоев:" },
+                { "WallInterval", "Интервал:" },
+                { "WallpaperInterval", "Интервал:" },
+                { "Int1h", "1 час" },
+                { "Int3h", "3 часа" },
+                { "Int6h", "6 часов" },
+                { "Int12h", "12 часов" },
+                { "Int24h", "24 часа" },
                 { "SelectFontWithPreview", "Шрифт календаря (выбор с предпросмотром):" },
                 { "Calendar", "Календарь" },
                 { "CalScaleNone", "Нет (Выкл)" },
@@ -751,7 +800,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v043" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v044" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -785,8 +834,13 @@ namespace GINDesktop {
                 { "CatMinimal", "🖤 Minimalismus" },
                 { "CatMinimalism", "🖤 Minimalismus" },
                 { "CatAnime", "⛩️ Anime a digitální umění" },
-                { "WallInterval", "Interval výměny tapety:" },
-                { "WallpaperInterval", "Interval výměny tapety:" },
+                { "WallInterval", "Interval:" },
+                { "WallpaperInterval", "Interval:" },
+                { "Int1h", "1 hodina" },
+                { "Int3h", "3 hodiny" },
+                { "Int6h", "6 hodin" },
+                { "Int12h", "12 hodin" },
+                { "Int24h", "24 hodin" },
                 { "SelectFontWithPreview", "Písmo kalendáře (živý náhled):" },
                 { "Calendar", "Kalendář" },
                 { "CalScaleNone", "Vypnuto" },
@@ -1573,7 +1627,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v043 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1595,7 +1649,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v043 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1619,7 +1673,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v043 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1778,15 +1832,27 @@ namespace GINDesktop {
                 }
 
                 string fontName = _config.CalendarFontFamily ?? "Segoe UI";
-                string monthTitle = now.ToString("MMMM yyyy", CultureInfo.CurrentCulture).ToUpperInvariant();
+
+                CultureInfo cult;
+                string[] days;
+                string curLang = (I18n.CurrentLanguage ?? "ru").ToLowerInvariant();
+                if (curLang == "ru") {
+                    cult = new CultureInfo("ru-RU");
+                    days = new string[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" };
+                } else if (curLang == "cs") {
+                    cult = new CultureInfo("cs-CZ");
+                    days = new string[] { "Po", "Út", "St", "Čt", "Pá", "So", "Ne" };
+                } else {
+                    cult = new CultureInfo("en-US");
+                    days = new string[] { "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su" };
+                }
+                string monthTitle = now.ToString("MMMM yyyy", cult).ToUpperInvariant();
                 float titleFontSize = Math.Max(10f, cardW * 0.052f);
 
                 using (Font titleFont = new Font(fontName, titleFontSize, FontStyle.Bold))
                 using (SolidBrush textBrush = new SolidBrush(theme.TextPrimary))
                 using (SolidBrush accentBrush = new SolidBrush(theme.Accent)) {
                     g.DrawString(monthTitle, titleFont, accentBrush, cardX + 16, cardY + 12);
-
-                    string[] days = new string[] { "Mo", "Tu", "We", "Th", "Fr", "Sa", "Su" };
                     float colW = (cardW - 32) / 7.0f;
                     float headerY = cardY + 16 + titleFontSize * 1.6f;
                     float dayFontSize = Math.Max(8f, cardW * 0.038f);
@@ -1841,7 +1907,7 @@ namespace GINDesktop {
                         using (GraphicsPath wPath = GetRoundedRect(weatherRect, 10))
                         using (SolidBrush wBgBrush = new SolidBrush(Color.FromArgb(170, theme.Background.R, theme.Background.G, theme.Background.B)))
                         using (Pen wPen = new Pen(Color.FromArgb(200, theme.Border.R, theme.Border.G, theme.Border.B), 1.2f))
-                        using (Font wFont = new Font(fontName, Math.Max(8.5f, cardW * 0.040f), FontStyle.Bold))
+                        using (Font wFont = new Font("Segoe UI", Math.Max(9.0f, cardW * 0.042f), FontStyle.Bold))
                         using (SolidBrush wTextBrush = new SolidBrush(theme.TextPrimary)) {
                             g.FillPath(wBgBrush, wPath);
                             g.DrawPath(wPen, wPath);
@@ -2003,7 +2069,7 @@ namespace GINDesktop {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v043 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v044 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -2594,7 +2660,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v043");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v044");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2715,7 +2781,9 @@ namespace GINDesktop {
         private Button _btnInt1h;
         private Button _btnInt3h;
         private Button _btnInt6h;
+        private Button _btnInt12h;
         private Button _btnInt24h;
+        private List<Panel> _separatorLines = new List<Panel>();
         private Label _lblCalTitle;
         private Button _btnScaleNone;
         private Button _btnScaleSmall;
@@ -2778,7 +2846,7 @@ namespace GINDesktop {
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
 
             this.Text = "⚡ " + I18n.T("AppTitle") + " — " + I18n.T("Settings");
-            this.ClientSize = new Size(760, 656);
+            this.ClientSize = new Size(760, 780);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -2812,9 +2880,21 @@ namespace GINDesktop {
             _btnLangRU = new Button { Text = "RU", Size = new Size(38, 26), Location = new Point(592, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             _btnLangCS = new Button { Text = "CS", Size = new Size(38, 26), Location = new Point(634, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
-            _btnLangEN.Click += (s, e) => { _config.Language = "en"; I18n.SetLanguage("en"); ApplyLocalization(); ApplyThemeColors(); PlayClickSound(); };
-            _btnLangRU.Click += (s, e) => { _config.Language = "ru"; I18n.SetLanguage("ru"); ApplyLocalization(); ApplyThemeColors(); PlayClickSound(); };
-            _btnLangCS.Click += (s, e) => { _config.Language = "cs"; I18n.SetLanguage("cs"); ApplyLocalization(); ApplyThemeColors(); PlayClickSound(); };
+            Action<string> changeLanguage = (lang) => {
+                _config.Language = lang;
+                I18n.SetLanguage(lang);
+                WeatherService.InvalidateCache();
+                ApplyLocalization();
+                ApplyThemeColors();
+                if (_wallpaperEngine != null) {
+                    _wallpaperEngine.TriggerNextWallpaperAsync();
+                }
+                if (_onConfigChanged != null) _onConfigChanged();
+                PlayClickSound();
+            };
+            _btnLangEN.Click += (s, e) => changeLanguage("en");
+            _btnLangRU.Click += (s, e) => changeLanguage("ru");
+            _btnLangCS.Click += (s, e) => changeLanguage("cs");
 
             _btnSound = new Button { Text = "♪", Size = new Size(34, 26), Location = new Point(680, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
             _btnSound.Click += (s, e) => {
@@ -2832,7 +2912,7 @@ namespace GINDesktop {
             // ----------------------------------------
             // 2. TABS CONTAINER (CLEAN OWNER DRAW)
             // ----------------------------------------
-            _tabs = new TabControl { Location = new Point(12, 42), Size = new Size(736, 565) };
+            _tabs = new TabControl { Location = new Point(12, 42), Size = new Size(736, 680) };
             _tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
             _tabs.SizeMode = TabSizeMode.Fixed;
             _tabs.ItemSize = new Size(175, 28);
@@ -2892,10 +2972,10 @@ namespace GINDesktop {
             // =====================================
             _tabWall = new TabPage { Text = I18n.T("TabWallpaper") };
 
-            _lblWallThemesTitle = new Label { Location = new Point(20, 6), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _lblWallThemesTitle = new Label { Location = new Point(20, 8), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _tabWall.Controls.Add(_lblWallThemesTitle);
 
-            _chkCatAll = new CheckBox { Text = "🎲 " + I18n.T("CatAll"), Location = new Point(25, 24), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _chkCatAll = new CheckBox { Text = "🎲 " + I18n.T("CatAll"), Location = new Point(25, 26), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _chkCatAll.CheckedChanged += ChkCatAll_CheckedChanged;
             _tabWall.Controls.Add(_chkCatAll);
 
@@ -2909,13 +2989,12 @@ namespace GINDesktop {
             };
 
             string activeCats = (_config.WallpaperCategories ?? "all").ToLowerInvariant();
-            // Two wide columns (Width = 330 each, avoiding all text cutoffs!)
             for (int i = 0; i < catKeys.Length; i++) {
                 string key = catKeys[i];
                 int col = i / 10;
                 int row = i % 10;
                 int xPos = (col == 0) ? 25 : 370;
-                int yPos = 42 + row * 18;
+                int yPos = 44 + row * 18;
                 CheckBox cb = new CheckBox {
                     Text = I18n.T(catNames[i]),
                     Tag = key,
@@ -2931,12 +3010,18 @@ namespace GINDesktop {
             }
             SyncMasterCheckboxState();
 
-            // Interval Buttons
-            _lblIntervalTitle = new Label { Location = new Point(20, 226), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
-            _btnInt1h = new Button { Text = "1 " + I18n.T("Hour"), Tag = 60, Size = new Size(125, 25), Location = new Point(25, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnInt3h = new Button { Text = "3 " + I18n.T("Hours"), Tag = 180, Size = new Size(125, 25), Location = new Point(160, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnInt6h = new Button { Text = "6 " + I18n.T("Hours"), Tag = 360, Size = new Size(125, 25), Location = new Point(295, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnInt24h = new Button { Text = "24 " + I18n.T("Hours"), Tag = 1440, Size = new Size(125, 25), Location = new Point(430, 246), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            // Separator 1: Between Categories and Interval
+            Panel sep1 = new Panel { Location = new Point(25, 230), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sep1);
+            _tabWall.Controls.Add(sep1);
+
+            // Interval Section: Clean single row (Label + 5 Buttons: 1h, 3h, 6h, 12h, 24h)
+            _lblIntervalTitle = new Label { Location = new Point(25, 243), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _btnInt1h = new Button { Text = I18n.T("Int1h"), Tag = 60, Size = new Size(108, 26), Location = new Point(135, 240), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnInt3h = new Button { Text = I18n.T("Int3h"), Tag = 180, Size = new Size(108, 26), Location = new Point(250, 240), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnInt6h = new Button { Text = I18n.T("Int6h"), Tag = 360, Size = new Size(108, 26), Location = new Point(365, 240), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnInt12h = new Button { Text = I18n.T("Int12h"), Tag = 720, Size = new Size(108, 26), Location = new Point(480, 240), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnInt24h = new Button { Text = I18n.T("Int24h"), Tag = 1440, Size = new Size(108, 26), Location = new Point(595, 240), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
 
             EventHandler intClick = (s, e) => {
                 _config.WallpaperIntervalMinutes = (int)((Button)s).Tag;
@@ -2946,18 +3031,24 @@ namespace GINDesktop {
             _btnInt1h.Click += intClick;
             _btnInt3h.Click += intClick;
             _btnInt6h.Click += intClick;
+            _btnInt12h.Click += intClick;
             _btnInt24h.Click += intClick;
 
-            _tabWall.Controls.AddRange(new Control[] { _lblIntervalTitle, _btnInt1h, _btnInt3h, _btnInt6h, _btnInt24h });
+            _tabWall.Controls.AddRange(new Control[] { _lblIntervalTitle, _btnInt1h, _btnInt3h, _btnInt6h, _btnInt12h, _btnInt24h });
 
-            // Calendar Section (Clean "Календарь:" + 5 Full-Width Buttons)
-            _lblCalTitle = new Label { Text = "📅 " + I18n.T("Calendar") + ":", Location = new Point(25, 280), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            // Separator 2: Between Interval and Calendar
+            Panel sep2 = new Panel { Location = new Point(25, 274), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sep2);
+            _tabWall.Controls.Add(sep2);
 
-            _btnScaleNone = new Button { Text = I18n.T("CalScaleNone"), Tag = 0.0f, Size = new Size(108, 25), Location = new Point(135, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleSmall = new Button { Text = I18n.T("CalScaleSmall"), Tag = 0.75f, Size = new Size(108, 25), Location = new Point(250, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleMed = new Button { Text = I18n.T("CalScaleMedium"), Tag = 1.0f, Size = new Size(108, 25), Location = new Point(365, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleLarge = new Button { Text = I18n.T("CalScaleLarge"), Tag = 1.3f, Size = new Size(108, 25), Location = new Point(480, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
-            _btnScaleHuge = new Button { Text = I18n.T("CalScaleHuge"), Tag = 1.6f, Size = new Size(108, 25), Location = new Point(595, 276), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            // Calendar Section: Clean single row (Label + 5 Buttons)
+            _lblCalTitle = new Label { Text = "📅 " + I18n.T("Calendar") + ":", Location = new Point(25, 287), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+
+            _btnScaleNone = new Button { Text = I18n.T("CalScaleNone"), Tag = 0.0f, Size = new Size(108, 26), Location = new Point(135, 284), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleSmall = new Button { Text = I18n.T("CalScaleSmall"), Tag = 0.75f, Size = new Size(108, 26), Location = new Point(250, 284), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleMed = new Button { Text = I18n.T("CalScaleMedium"), Tag = 1.0f, Size = new Size(108, 26), Location = new Point(365, 284), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleLarge = new Button { Text = I18n.T("CalScaleLarge"), Tag = 1.3f, Size = new Size(108, 26), Location = new Point(480, 284), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
+            _btnScaleHuge = new Button { Text = I18n.T("CalScaleHuge"), Tag = 1.6f, Size = new Size(108, 26), Location = new Point(595, 284), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9f) };
 
             _btnScaleNone.Click += (s, e) => {
                 _config.ShowCalendar = false;
@@ -2987,8 +3078,13 @@ namespace GINDesktop {
 
             _tabWall.Controls.AddRange(new Control[] { _lblCalTitle, _btnScaleNone, _btnScaleSmall, _btnScaleMed, _btnScaleLarge, _btnScaleHuge });
 
-            // 24 Curated Artistic & Graphic Font Buttons
-            _lblFontsHeader = new Label { Location = new Point(20, 307), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            // Separator 3: Between Calendar and Font Grid
+            Panel sep3 = new Panel { Location = new Point(25, 318), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sep3);
+            _tabWall.Controls.Add(sep3);
+
+            // 24 Curated Font Buttons with ample breathing room (4 cols x 6 rows, H=29)
+            _lblFontsHeader = new Label { Location = new Point(25, 326), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _tabWall.Controls.Add(_lblFontsHeader);
 
             string[] curatedFonts = new string[] {
@@ -3004,18 +3100,26 @@ namespace GINDesktop {
                 int col = i % 4;
                 int row = i / 4;
                 string fontName = curatedFonts[i];
+                int x = 25 + col * 171;
+                int y = 348 + row * 33;
                 Button bFont = new Button {
                     Text = fontName,
                     Tag = fontName,
-                    Size = new Size(160, 23),
-                    Location = new Point(25 + col * 170, 326 + row * 25),
+                    Size = new Size(165, 29),
+                    Location = new Point(x, y),
                     FlatStyle = FlatStyle.Flat,
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Padding = Padding.Empty
                 };
+                float fontSize = 9.0f;
+                if (fontName == "Gabriola") fontSize = 8.0f;
+                else if (fontName == "Impact" || fontName == "Sitka Banner" || fontName == "Palatino Linotype") fontSize = 8.5f;
+
                 try {
-                    bFont.Font = new Font(fontName, 9.5f, FontStyle.Regular);
+                    bFont.Font = new Font(fontName, fontSize, FontStyle.Regular);
                 } catch {
-                    bFont.Font = new Font("Segoe UI", 9.5f, FontStyle.Regular);
+                    bFont.Font = new Font("Segoe UI", fontSize, FontStyle.Regular);
                 }
 
                 bFont.Click += (s, e) => {
@@ -3034,11 +3138,16 @@ namespace GINDesktop {
                 _tabWall.Controls.Add(bFont);
             }
 
+            // Separator 4: Between Font Grid and Action Buttons
+            Panel sep4 = new Panel { Location = new Point(25, 550), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sep4);
+            _tabWall.Controls.Add(sep4);
+
             _btnNextWall = new Button {
                 Text = "🖼️ " + I18n.T("NextWallpaper"),
-                Location = new Point(25, 480),
-                Width = 325,
-                Height = 28,
+                Location = new Point(25, 558),
+                Width = 330,
+                Height = 32,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
                 Font = new Font("Segoe UI", 9.5f, FontStyle.Bold)
@@ -3052,9 +3161,9 @@ namespace GINDesktop {
 
             _btnSavePic = new Button {
                 Text = "💾 " + I18n.T("BtnSaveWall"),
-                Location = new Point(355, 480),
-                Width = 350,
-                Height = 28,
+                Location = new Point(367, 558),
+                Width = 336,
+                Height = 32,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
                 Font = new Font("Segoe UI", 9.5f)
@@ -3068,28 +3177,36 @@ namespace GINDesktop {
 
             _tabWall.Controls.AddRange(new Control[] { _btnNextWall, _btnSavePic });
 
-            // Weather HUD section
-            Label lblWeatherTitle = new Label { Text = "🌤️ " + (I18n.CurrentLanguage == "ru" ? "Погода под календарем:" : (I18n.CurrentLanguage == "cs" ? "Počasí:" : "Weather HUD:")), Location = new Point(25, 514), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
-            CheckBox chkShowWeather = new CheckBox { Text = (I18n.CurrentLanguage == "ru" ? "Включить погоду" : (I18n.CurrentLanguage == "cs" ? "Povolit počasí" : "Enable Weather")), Checked = _config.ShowWeather, Location = new Point(230, 513), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            // Separator 5: Between Action Buttons and Weather HUD
+            Panel sep5 = new Panel { Location = new Point(25, 598), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sep5);
+            _tabWall.Controls.Add(sep5);
+
+            // Weather HUD section (Beautiful spacing & margins!)
+            Label lblWeatherTitle = new Label { Text = "🌤️ " + (I18n.CurrentLanguage == "ru" ? "Погода:" : (I18n.CurrentLanguage == "cs" ? "Počasí:" : "Weather HUD:")), Location = new Point(25, 611), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            CheckBox chkShowWeather = new CheckBox { Text = (I18n.CurrentLanguage == "ru" ? "Включить погоду" : (I18n.CurrentLanguage == "cs" ? "Povolit počasí" : "Enable Weather")), Checked = _config.ShowWeather, Location = new Point(215, 610), AutoSize = true, Font = new Font("Segoe UI", 9f) };
             chkShowWeather.CheckedChanged += (s, e) => {
                 _config.ShowWeather = chkShowWeather.Checked;
                 _config.Save();
+                WeatherService.InvalidateCache();
                 if (_wallpaperEngine != null) _wallpaperEngine.TriggerNextWallpaperAsync();
             };
 
-            ComboBox cmbWeatherSrc = new ComboBox { Location = new Point(370, 511), Width = 150, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
+            ComboBox cmbWeatherSrc = new ComboBox { Location = new Point(367, 608), Width = 145, Height = 28, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
             cmbWeatherSrc.Items.AddRange(new string[] { "Open-Meteo", "wttr.in" });
             cmbWeatherSrc.SelectedItem = _config.WeatherSource;
             cmbWeatherSrc.SelectedIndexChanged += (s, e) => {
                 _config.WeatherSource = cmbWeatherSrc.SelectedItem.ToString();
                 _config.Save();
+                WeatherService.InvalidateCache();
                 if (_wallpaperEngine != null) _wallpaperEngine.TriggerNextWallpaperAsync();
             };
 
-            TextBox txtWeatherCity = new TextBox { Location = new Point(535, 511), Width = 170, Text = _config.WeatherCity, Font = new Font("Segoe UI", 9f) };
+            TextBox txtWeatherCity = new TextBox { Location = new Point(522, 608), Width = 181, Height = 28, Text = _config.WeatherCity, Font = new Font("Segoe UI", 9f) };
             txtWeatherCity.TextChanged += (s, e) => {
                 _config.WeatherCity = txtWeatherCity.Text.Trim();
                 _config.Save();
+                WeatherService.InvalidateCache();
             };
 
             _tabWall.Controls.AddRange(new Control[] { lblWeatherTitle, chkShowWeather, cmbWeatherSrc, txtWeatherCity });
@@ -3238,7 +3355,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v043", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v044", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3262,7 +3379,7 @@ namespace GINDesktop {
             // ----------------------------------------
             // 3. BOTTOM FOOTER BAR (With GIN-VPN Signature)
             // ----------------------------------------
-            _bottomBar = new Panel { Location = new Point(12, 612), Size = new Size(736, 38), BackColor = Color.Transparent };
+            _bottomBar = new Panel { Location = new Point(12, 730), Size = new Size(736, 38), BackColor = Color.Transparent };
 
             _btnApply = new Button { Text = "Применить", Location = new Point(0, 3), Width = 115, Height = 32, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
             _btnApply.Click += (s, e) => { CommitSettings(true); PlayClickSound(); };
@@ -3295,7 +3412,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v043",
+                Text = "v044",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -3476,6 +3593,11 @@ namespace GINDesktop {
             _cmbShowLabels.BackColor = theme.Background;
             _cmbShowLabels.ForeColor = theme.TextPrimary;
 
+            // Style Separator lines
+            foreach (Panel sep in _separatorLines) {
+                sep.BackColor = theme.Separator;
+            }
+
             // Force repaint of tab headers
             _tabs.Invalidate();
         }
@@ -3513,10 +3635,11 @@ namespace GINDesktop {
         private void UpdateIntervalButtonStyles() {
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
             int cur = _config.WallpaperIntervalMinutes;
-            StyleToggleButton(_btnInt1h, cur <= 60, theme);
-            StyleToggleButton(_btnInt3h, cur == 180, theme);
-            StyleToggleButton(_btnInt6h, cur == 360, theme);
-            StyleToggleButton(_btnInt24h, cur >= 1440, theme);
+            if (_btnInt1h != null) StyleToggleButton(_btnInt1h, cur <= 60, theme);
+            if (_btnInt3h != null) StyleToggleButton(_btnInt3h, cur == 180, theme);
+            if (_btnInt6h != null) StyleToggleButton(_btnInt6h, cur == 360, theme);
+            if (_btnInt12h != null) StyleToggleButton(_btnInt12h, cur == 720, theme);
+            if (_btnInt24h != null) StyleToggleButton(_btnInt24h, cur >= 1440, theme);
         }
 
         private void UpdateCalScaleButtonStyles() {
@@ -3589,10 +3712,11 @@ namespace GINDesktop {
                 }
             }
             _lblIntervalTitle.Text = "⏱️ " + I18n.T("WallpaperInterval");
-            _btnInt1h.Text = "1 " + I18n.T("Hour");
-            _btnInt3h.Text = "3 " + I18n.T("Hours");
-            _btnInt6h.Text = "6 " + I18n.T("Hours");
-            _btnInt24h.Text = "24 " + I18n.T("Hours");
+            if (_btnInt1h != null) _btnInt1h.Text = I18n.T("Int1h");
+            if (_btnInt3h != null) _btnInt3h.Text = I18n.T("Int3h");
+            if (_btnInt6h != null) _btnInt6h.Text = I18n.T("Int6h");
+            if (_btnInt12h != null) _btnInt12h.Text = I18n.T("Int12h");
+            if (_btnInt24h != null) _btnInt24h.Text = I18n.T("Int24h");
 
             if (_lblCalTitle != null) _lblCalTitle.Text = "📅 " + I18n.T("Calendar") + ":";
             if (_btnScaleNone != null) _btnScaleNone.Text = I18n.T("CalScaleNone");
@@ -3716,7 +3840,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v043";
+        public const string CURRENT_VERSION = "v044";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -3865,7 +3989,7 @@ namespace GINDesktop {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v043";
+            _trayIcon.Text = "GIN Dock Wallpaper v044";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -3916,7 +4040,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v043");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v044");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;

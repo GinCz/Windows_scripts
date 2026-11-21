@@ -1,3 +1,17 @@
+## Update: v044 (2026-11-21)
+- **UI Height Calibration & Form Sizing**: Expanded SettingsForm ClientSize to `760x780` and TabControl to `736x680`.
+- **Font Preview Grid Redesign**: Resized font preview buttons to `165x29` with `4px` vertical padding, `8.0f–9.0f` font sizing, centered text alignment, and zero border clipping for all 24 curated typefaces (specifically Gabriola, Impact, Sitka Banner, Palatino Linotype).
+- **Single-Row Interval Controls**: Condensed Wallpaper Interval into a single horizontal row (`1 час`, `3 часа`, `6 часов`, `12 часов`, `24 часа`) aligned symmetrically with Calendar scale buttons.
+- **Sleek Dividers**: Inserted 5 theme-aware horizontal separator lines between categories, interval, calendar, font grid, actions, and weather HUD.
+- **Weather HUD Margin Overhaul**: Positioned weather controls with 16px bottom breathing room.
+- **Unicode Glyph Sanitation**: Purged Variation Selectors `\uFE0F`/`\uFE0E`/`\u200D` causing square tofu box glyphs in GDI+ DrawString; switched to universal weather symbols.
+- **Multilingual Wallpaper & Weather Engine**:
+  - Implemented `WeatherService.InvalidateCache()`.
+  - Added language propagation to wttr.in (`&lang=`) and Open-Meteo description.
+  - Localized Calendar month and weekday headers to active language (`ru-RU`, `cs-CZ`, `en-US`).
+  - Added instant desktop wallpaper regeneration on language switch.
+- **Compiled and Packaged v044**: Produced `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v044_Setup.exe`. Deployed to Vladimir Desktop in MEGA.
+
 ## Update: v043 (2026-11-20)
 - **Rebranded Product to GIN Desktop**: Migrated project directory, solution names, binaries, shortcuts, and installers from `GIN-Dock-Wallpaper` to `GIN-Desktop`.
 - **Top-Only Position & Top-Left Hot Corner**: Streamlined dock architecture to Top position with top-left corner hover activation (`cursor.X <= 15 && cursor.Y <= 15`), removing cluttered side dock modes.

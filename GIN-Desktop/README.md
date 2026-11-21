@@ -1,4 +1,4 @@
-# ⚡ GIN-Desktop `v043` (Universal Release)
+# ⚡ GIN-Desktop `v044` (Universal Release)
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 <br/>
 
-[Download GIN-Desktop v043 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/GIN-Desktop/GIN-Desktop_v043_Setup.exe)
+[Download GIN-Desktop v044 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/GIN-Desktop/GIN-Desktop_v044_Setup.exe)
 
 </div>
 
@@ -33,7 +33,7 @@
 
 ---
 
-## 🚀 What's New in v043
+## 🚀 What's New in v044
 
 - **Rebranded as GIN Desktop**: Unified project architecture consolidating previous dock and wallpaper experiments under a clean product name.
 - **Top-Only Placement & Top-Left Hover**: Eliminated cluttered side placement; dock bar lives strictly at the top of the screen and activates on hovering the top-left corner.
@@ -50,4 +50,4 @@
 
 - **OS**: Windows 10 / 11 (32-bit or 64-bit)
 - **Runtime**: Built-in .NET Framework 4.5+ (Standard on all modern Windows installations)
-- **Installer**: Run `GIN-Desktop_v043_Setup.exe` for turnkey 1-click deployment.
+- **Installer**: Run `GIN-Desktop_v044_Setup.exe` for turnkey 1-click deployment.

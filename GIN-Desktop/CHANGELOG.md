@@ -1,5 +1,18 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v044] — 2026-11-21
+### 🎨 Spacious Breathable UI, Clean Font Buttons, Single-Row Intervals, Zero-Tofu Weather & Multilingual HUD Sync
+- **Spacious Breathable Settings UI & Height Calibration**: Increased form height to 780px and tabs container to 680px, completely eliminating vertical crampedness.
+- **Font Preview Buttons Ergonomics**: Expanded button height to 29px with 33px row spacing (4px gap), centered text alignment, and calibrated font sizes (8.0pt for Gabriola, 8.5pt for Impact/Sitka/Palatino, 9.0pt standard) to eliminate vertical clipping of font names.
+- **Streamlined Single-Row Wallpaper Interval**: Replaced verbose description with concise `⏱️ Интервал:` / `⏱️ Interval:` and aligned 5 duration buttons (`1 час`, `3 часа`, `6 часов`, `12 часов`, `24 часа`) symmetrically with the Calendar scale buttons below.
+- **Sleek Horizontal Section Dividers**: Added 5 thin 1px horizontal separator lines styled with `theme.Separator` between categories, interval, calendar, font preview, action buttons, and weather sections.
+- **Generous Weather HUD Bottom Margins**: Repositioned weather controls with ample breathing room (16px bottom margin) so controls no longer touch the tab boundary.
+- **Clean Unicode Weather Icons (Zero Tofu Boxes)**: Stripped Unicode Variation Selectors (`\uFE0F`, `\uFE0E`, `\u200D`, `\uFFFD`) and switched to standard Unicode weather glyphs (`☀`, `⛅`, `☁`, `🌧`, `❄`, `🌦`, `⚡`) rendered via crisp `Segoe UI Bold` font on desktop wallpaper.
+- **Dynamic Multilingual Weather & Calendar Synchronization**:
+  - Live language switching (EN / RU / CS) instantly invalidates cached weather and triggers immediate desktop wallpaper regeneration in the chosen language.
+  - Passes localized language parameter (`&lang=ru/cs/en`) to wttr.in and queries localized Open-Meteo descriptions.
+  - Dynamically localizes Calendar month (`MMMM yyyy`) and weekday headers (`Пн..Вс` / `Po..Ne` / `Mo..Su`) according to active language culture (`ru-RU`, `cs-CZ`, `en-US`).
+
 ## [v043] — 2026-11-20
 ### 🌟 Rebranding to GIN Desktop, Live Hardware Monitor, Weather HUD, Midnight Sync & Top Dock
 - **Canonical Rebranding to GIN-Desktop**: Unified repository, binary targets, and installer under the official name `GIN-Desktop`.
