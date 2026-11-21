@@ -1,3 +1,18 @@
+## Update: v048 (2026-11-21)
+- **Restoration of GIN-Wallpaper Celestial Shimmer Chime**:
+  - Re-introduced the signature celestial shimmer chime (F#4, A#4, C#5, F5 notes with 40ms attack and warm exponential decay) from `GIN-Wallpaper`.
+  - Added chime playback on every wallpaper transition in `WallpaperEngine.TriggerNextWallpaperAsync()` when sound is enabled.
+  - Startup suppression ensures that the initial wallpaper load on launch remains silent, playing on all subsequent wallpaper cycles.
+- **Explicit Localized Sound Toggle Button in Settings Form**:
+  - Upgraded the top header sound button to display explicit localized status: `🔊 Со звуком` / `🔇 Без звука` (RU), `🔊 Se zvukem` / `🔇 Bez zvuku` (CS), `🔊 Sound ON` / `🔇 Sound OFF` (EN).
+  - Toggling sound to ON immediately triggers the celestial chime as audible feedback.
+- **Asynchronous Audio Stability**:
+  - Resolved premature disposal bug in .NET `SoundPlayer` by utilizing `sp.PlaySync()` within background `ThreadPool` tasks.
+  - Upgraded button click feedback to use pure-sine in-memory wave generation (`GentleSound.PlayNotice()`), eliminating reliance on external Windows system sound schemes.
+- **Compiled and Packaged v048**:
+  - Compiled binaries `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v048_Setup.exe`.
+  - Deployed `GIN-Desktop_v048_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one installer version.
+
 ## Update: v047 (2026-11-21)
 - **Hardware Monitor Under Weather Badge**:
   - Moved hardware metrics rendering from Dock Bar to desktop wallpaper HUD, directly underneath the Weather badge.

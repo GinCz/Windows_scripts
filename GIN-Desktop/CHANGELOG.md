@@ -1,5 +1,24 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v048] — 2026-11-21
+### 🔔 GIN-Wallpaper Celestial Shimmer Sound Restoration & Explicit Localized Sound Button
+- **Restoration of GIN-Wallpaper Celestial Shimmer Chime**:
+  - Re-implemented the signature peaceful velvet bells chime from the original `GIN-Wallpaper` (F#4 369.99 Hz, A#4 466.16 Hz, C#5 554.37 Hz, F5 698.46 Hz harmonic progression with 40ms attack and warm exponential decay).
+  - The chime automatically plays upon every wallpaper transition (manual change, interval timer, midnight refresh) whenever sound is enabled.
+  - Startup behavior: keeps the initial launch silent (`_suppressFirstChime = true`), activating audible feedback on subsequent wallpaper swaps.
+- **Explicit Localized Sound Toggle Button**:
+  - Replaced the ambiguous single-glyph `♪` button in the top header with a full-width state button displaying clear localized status:
+    - Russian: `🔊 Со звуком` (ON) / `🔇 Без звука` (OFF)
+    - Czech: `🔊 Se zvukem` (ON) / `🔇 Bez zvuku` (OFF)
+    - English: `🔊 Sound ON` (ON) / `🔇 Sound OFF` (OFF)
+  - Seamlessly styled with active theme accent border/highlight when enabled and muted gray when disabled.
+  - Toggling sound to ON immediately triggers the celestial shimmer chime for instant audible confirmation.
+- **Non-Disposal Asynchronous Audio Engine**:
+  - Fixed Windows `.NET SoundPlayer` buffer truncation bug where disposing the `MemoryStream` immediately after calling asynchronous `sp.Play()` caused silence or audio driver aborts.
+  - Audio playback now utilizes `sp.PlaySync()` within dedicated background `ThreadPool` tasks, ensuring 100% full playback without premature disposal and zero UI latency.
+  - Replaced Windows system sound calls in `PlayClickSound()` with the clean in-memory sine wave `GentleSound.PlayNotice()` (350 Hz, 110 ms), guaranteeing audible feedback even on systems with disabled Windows system schemes.
+- **Single Versioned Setup on MEGA Desktop**: Build pipeline strictly delivers `GIN-Desktop_v048_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one versioned setup file.
+
 ## [v047] — 2026-11-21
 ### ⚡ Hardware Monitor Relocation to Wallpaper HUD, Top-Left Dock Activation Fix & Settings Layout Polish
 - **Hardware Monitor Under Weather Badge**:

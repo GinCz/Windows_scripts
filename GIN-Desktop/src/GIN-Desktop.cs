@@ -14,15 +14,15 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v047")]
-[assembly: AssemblyDescription("GIN-Desktop_v047")]
+[assembly: AssemblyTitle("GIN-Desktop_v048")]
+[assembly: AssemblyDescription("GIN-Desktop_v048")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyProduct("GIN-Desktop_v047")]
+[assembly: AssemblyProduct("GIN-Desktop_v048")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.47.0.0")]
-[assembly: AssemblyFileVersion("0.47.0.0")]
+[assembly: AssemblyVersion("0.48.0.0")]
+[assembly: AssemblyFileVersion("0.48.0.0")]
 
 namespace GINDesktop {
 
@@ -201,7 +201,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v047 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v048 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -613,7 +613,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v047" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v048" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -721,7 +721,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v047" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v048" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -829,7 +829,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v047" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v048" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1428,7 +1428,8 @@ namespace GINDesktop {
         private bool _isDownloading = false;
         private System.Windows.Forms.Timer _midnightTimer;
         private DateTime _lastMidnightTriggerDate = DateTime.MinValue;
-                private string _lastDownloadedPath = null;
+        private string _lastDownloadedPath = null;
+        private bool _suppressFirstChime = true;
 
         public event Action<string> WallpaperChanged;
         public event Action<bool> DownloadStateChanged;
@@ -1510,7 +1511,8 @@ namespace GINDesktop {
             }
         }
 
-        public void TriggerNextWallpaperAsync() {
+        public void TriggerNextWallpaperAsync(bool isManual = false) {
+            if (isManual) _suppressFirstChime = false;
             if (_isDownloading) {
                 _queuedRequest = true;
                 return;
@@ -1557,6 +1559,14 @@ namespace GINDesktop {
                         );
 
                         NativeMethods.TrimMemory();
+
+                        if (_config.EnableSound) {
+                            if (!_suppressFirstChime) {
+                                GentleSound.PlayWallpaperChime();
+                            } else {
+                                _suppressFirstChime = false;
+                            }
+                        }
 
                         if (WallpaperChanged != null) {
                             WallpaperChanged(finalWallpaper);
@@ -1683,7 +1693,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v047 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v048 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1705,7 +1715,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v047 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v048 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1729,7 +1739,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v047 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v048 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2121,8 +2131,6 @@ namespace GINDesktop {
         private int _totalItemsLength = 0;
         private ToolTip _toolTip;
         private FileSystemWatcher _fsWatcher;
-        private Label _hwBadgeLabel;
-        private System.Windows.Forms.Timer _hwTimer;
         private Action _openSettingsAction;
 
         private const int WS_EX_NOACTIVATE = 0x08000000;
@@ -2159,7 +2167,7 @@ namespace GINDesktop {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v047 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v048 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -2176,9 +2184,6 @@ namespace GINDesktop {
             _watchdogTimer.Interval = 50;
             _watchdogTimer.Tick += WatchdogTimer_Tick;
             _watchdogTimer.Start();
-
-            _hwTimer = new System.Windows.Forms.Timer { Interval = 2000 };
-            _hwTimer.Tick += (s, e) => { if (_isDockVisible && _config.EnableHardwareMonitor) UpdateHardwareMetrics(); };
             
             SetupFileSystemWatcher();
             LoadItems();
@@ -2222,21 +2227,6 @@ namespace GINDesktop {
                     _fsWatcher = null;
                 }
             } catch { }
-        }
-
-        private void UpdateHardwareMetrics() {
-            if (_hwBadgeLabel == null || !_config.EnableHardwareMonitor) return;
-            StringBuilder sb = new StringBuilder();
-            if (_config.ShowCpuUsage) sb.Append("CPU: " + SystemMetrics.GetCpuUsage() + "%  ");
-            if (_config.ShowRamUsage) sb.Append("RAM: " + SystemMetrics.GetRamUsage() + "%  ");
-            if (_config.ShowGpuUsage || _config.ShowGpuTemp) {
-                int gpu, temp;
-                SystemMetrics.GetGpuMetrics(out gpu, out temp);
-                if (_config.ShowGpuUsage) sb.Append("GPU: " + gpu + "%  ");
-                if (_config.ShowGpuTemp) sb.Append(temp + "°C");
-            }
-            _hwBadgeLabel.Text = sb.ToString().Trim();
-            _hwBadgeLabel.Location = new Point(this.Width - _hwBadgeLabel.PreferredWidth - 12, (_config.BarHeight - _hwBadgeLabel.PreferredHeight) / 2);
         }
 
         public void LoadItems() {
@@ -2467,8 +2457,6 @@ namespace GINDesktop {
             this.Location = new Point(screen.Bounds.Left, screen.Bounds.Top);
             _itemsPanel.Width = this.Width - 90;
             _itemsPanel.Height = this.Height;
-
-            if (_hwBadgeLabel != null) _hwBadgeLabel.Visible = false;
         }
 
         private void RelayoutItems() {
@@ -2735,7 +2723,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v047");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v048");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2816,9 +2804,92 @@ namespace GINDesktop {
     // ==========================================
 
     // ==========================================
-    // GENTLE SOUND GENERATOR (In-memory Pure Sine WAV, Identical to GIN-Voice)
+    // GENTLE SOUND GENERATOR & CELESTIAL SHIMMER CHIME (From GIN-Wallpaper)
     // ==========================================
     public static class GentleSound {
+        private struct ChimeNote {
+            public double freq;
+            public double start;
+            public double decay;
+            public double vol;
+            public ChimeNote(double f, double s, double d, double v) {
+                freq = f; start = s; decay = d; vol = v;
+            }
+        }
+
+        // Generates an extra-soft, warm, quiet celestial shimmer (peaceful velvet bells from GIN-Wallpaper)
+        private static byte[] CreateChimeWav() {
+            int sampleRate = 22050;
+            double duration = 1.2;
+            int totalSamples = (int)(sampleRate * duration);
+            double[] samples = new double[totalSamples];
+
+            ChimeNote[] notes = new ChimeNote[] {
+                new ChimeNote(369.99, 0.00, 1.1, 0.20), // F#4
+                new ChimeNote(466.16, 0.06, 1.2, 0.18), // A#4
+                new ChimeNote(554.37, 0.12, 1.3, 0.16), // C#5
+                new ChimeNote(698.46, 0.18, 1.4, 0.14)  // F5
+            };
+
+            foreach (ChimeNote n in notes) {
+                int sIdx = (int)(n.start * sampleRate);
+                for (int i = sIdx; i < totalSamples; i++) {
+                    double t = (double)(i - sIdx) / sampleRate;
+                    double attack = t / 0.040;
+                    if (attack > 1.0) attack = 1.0;
+                    double env = attack * Math.Exp(-t * (3.2 / n.decay));
+                    double val = Math.Sin(2.0 * Math.PI * n.freq * t);
+                    samples[i] += val * env * n.vol;
+                }
+            }
+
+            double maxVal = 0.0;
+            for (int i = 0; i < totalSamples; i++) {
+                double abs = Math.Abs(samples[i]);
+                if (abs > maxVal) maxVal = abs;
+            }
+            if (maxVal == 0.0) maxVal = 1.0;
+
+            double scaleAmp = 6000.0;
+            byte[] pcm = new byte[totalSamples * 2];
+            for (int i = 0; i < totalSamples; i++) {
+                short val = (short)((samples[i] / maxVal) * scaleAmp);
+                pcm[i * 2] = (byte)(val & 0xFF);
+                pcm[i * 2 + 1] = (byte)((val >> 8) & 0xFF);
+            }
+
+            int dataLen = pcm.Length;
+            byte[] wav = new byte[44 + dataLen];
+            Buffer.BlockCopy(System.Text.Encoding.ASCII.GetBytes("RIFF"), 0, wav, 0, 4);
+            int totalLen = 36 + dataLen;
+            wav[4] = (byte)(totalLen & 0xFF);
+            wav[5] = (byte)((totalLen >> 8) & 0xFF);
+            wav[6] = (byte)((totalLen >> 16) & 0xFF);
+            wav[7] = (byte)((totalLen >> 24) & 0xFF);
+            Buffer.BlockCopy(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "), 0, wav, 8, 8);
+            wav[16] = 16; wav[17] = 0; wav[18] = 0; wav[19] = 0;
+            wav[20] = 1; wav[21] = 0; // PCM
+            wav[22] = 1; wav[23] = 0; // Mono
+            wav[24] = (byte)(sampleRate & 0xFF);
+            wav[25] = (byte)((sampleRate >> 8) & 0xFF);
+            wav[26] = (byte)((sampleRate >> 16) & 0xFF);
+            wav[27] = (byte)((sampleRate >> 24) & 0xFF);
+            int byteRate = sampleRate * 2;
+            wav[28] = (byte)(byteRate & 0xFF);
+            wav[29] = (byte)((byteRate >> 8) & 0xFF);
+            wav[30] = (byte)((byteRate >> 16) & 0xFF);
+            wav[31] = (byte)((byteRate >> 24) & 0xFF);
+            wav[32] = 2; wav[33] = 0; // block align
+            wav[34] = 16; wav[35] = 0; // bits per sample
+            Buffer.BlockCopy(System.Text.Encoding.ASCII.GetBytes("data"), 0, wav, 36, 4);
+            wav[40] = (byte)(dataLen & 0xFF);
+            wav[41] = (byte)((dataLen >> 8) & 0xFF);
+            wav[42] = (byte)((dataLen >> 16) & 0xFF);
+            wav[43] = (byte)((dataLen >> 24) & 0xFF);
+            Buffer.BlockCopy(pcm, 0, wav, 44, dataLen);
+            return wav;
+        }
+
         private static byte[] CreateGentleWav(double freq, int durationMs, double volume) {
             int sampleRate = 44100;
             int numSamples = sampleRate * durationMs / 1000;
@@ -2864,6 +2935,7 @@ namespace GINDesktop {
 
         private static readonly byte[] WavNotice = CreateGentleWav(350.0, 110, 0.14);
         private static readonly byte[] WavSave = CreateGentleWav(620.0, 90, 0.15);
+        private static readonly byte[] WavChime = CreateChimeWav();
 
         public static void PlayNotice() {
             PlayWav(WavNotice);
@@ -2873,13 +2945,20 @@ namespace GINDesktop {
             PlayWav(WavSave);
         }
 
+        public static void PlayWallpaperChime() {
+            PlayWav(WavChime);
+        }
+
         private static void PlayWav(byte[] data) {
-            try {
-                using (MemoryStream ms = new MemoryStream(data))
-                using (System.Media.SoundPlayer sp = new System.Media.SoundPlayer(ms)) {
-                    sp.Play();
-                }
-            } catch { }
+            if (data == null || data.Length == 0) return;
+            ThreadPool.QueueUserWorkItem(_ => {
+                try {
+                    using (MemoryStream ms = new MemoryStream(data))
+                    using (System.Media.SoundPlayer sp = new System.Media.SoundPlayer(ms)) {
+                        sp.PlaySync();
+                    }
+                } catch { }
+            });
         }
     }
 
@@ -3102,7 +3181,17 @@ namespace GINDesktop {
 
         private void PlayClickSound() {
             if (_config.EnableSound) {
-                try { System.Media.SystemSounds.Asterisk.Play(); } catch { }
+                GentleSound.PlayNotice();
+            }
+        }
+
+        private void UpdateSoundButtonText() {
+            if (_btnSound == null) return;
+            string lang = (_config.Language ?? "en").ToLowerInvariant();
+            if (_config.EnableSound) {
+                _btnSound.Text = (lang == "ru") ? "🔊 Со звуком" : (lang == "cs") ? "🔊 Se zvukem" : "🔊 Sound ON";
+            } else {
+                _btnSound.Text = (lang == "ru") ? "🔇 Без звука" : (lang == "cs") ? "🔇 Bez zvuku" : "🔇 Sound OFF";
             }
         }
 
@@ -3132,17 +3221,17 @@ namespace GINDesktop {
                 ForeColor = theme.Accent
             };
 
-            _btnModeDay = new Button { Text = "☼", Size = new Size(36, 26), Location = new Point(426, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnModeEvening = new Button { Text = "☁", Size = new Size(36, 26), Location = new Point(466, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnModeNight = new Button { Text = "☾", Size = new Size(36, 26), Location = new Point(506, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnModeDay = new Button { Text = "☼", Size = new Size(36, 26), Location = new Point(362, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnModeEvening = new Button { Text = "☁", Size = new Size(36, 26), Location = new Point(402, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnModeNight = new Button { Text = "☾", Size = new Size(36, 26), Location = new Point(442, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
             _btnModeDay.Click += (s, e) => { _config.DayEveningNightMode = "Day"; _config.ThemeName = "DaylightLight"; ApplyThemeColors(); if (_onConfigChanged != null) _onConfigChanged(); PlayClickSound(); };
             _btnModeEvening.Click += (s, e) => { _config.DayEveningNightMode = "Evening"; _config.ThemeName = "WarmSand"; ApplyThemeColors(); if (_onConfigChanged != null) _onConfigChanged(); PlayClickSound(); };
             _btnModeNight.Click += (s, e) => { _config.DayEveningNightMode = "Night"; _config.ThemeName = "MidnightOLED"; ApplyThemeColors(); if (_onConfigChanged != null) _onConfigChanged(); PlayClickSound(); };
 
-            _btnLangEN = new Button { Text = "EN", Size = new Size(38, 26), Location = new Point(550, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnLangRU = new Button { Text = "RU", Size = new Size(38, 26), Location = new Point(592, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-            _btnLangCS = new Button { Text = "CS", Size = new Size(38, 26), Location = new Point(634, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnLangEN = new Button { Text = "EN", Size = new Size(38, 26), Location = new Point(488, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnLangRU = new Button { Text = "RU", Size = new Size(38, 26), Location = new Point(530, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnLangCS = new Button { Text = "CS", Size = new Size(38, 26), Location = new Point(572, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 
             Action<string> changeLanguage = (lang) => {
                 _config.Language = lang;
@@ -3160,11 +3249,16 @@ namespace GINDesktop {
             _btnLangRU.Click += (s, e) => changeLanguage("ru");
             _btnLangCS.Click += (s, e) => changeLanguage("cs");
 
-            _btnSound = new Button { Text = "♪", Size = new Size(34, 26), Location = new Point(680, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+            _btnSound = new Button { Text = "🔊 Со звуком", Size = new Size(116, 26), Location = new Point(615, 4), FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Font = new Font("Segoe UI", 8.5f) };
+            UpdateSoundButtonText();
             _btnSound.Click += (s, e) => {
                 _config.EnableSound = !_config.EnableSound;
+                _config.Save();
+                UpdateSoundButtonText();
                 ApplyThemeColors();
-                PlayClickSound();
+                if (_config.EnableSound) {
+                    GentleSound.PlayWallpaperChime();
+                }
             };
 
             _topBar.Controls.AddRange(new Control[] {
@@ -3630,7 +3724,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v047", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v048", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3687,7 +3781,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v047",
+                Text = "v048",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -3797,6 +3891,7 @@ namespace GINDesktop {
             StyleModeButton(_btnLangCS, curLang == "cs", theme);
 
             // Sound button style
+            UpdateSoundButtonText();
             StyleModeButton(_btnSound, _config.EnableSound, theme);
 
             // Tabs styling
@@ -3958,6 +4053,7 @@ namespace GINDesktop {
         }
 
         private void ApplyLocalization() {
+            UpdateSoundButtonText();
             _tabMain.Text = I18n.T("TabMain");
             _tabWall.Text = I18n.T("TabWallpaper");
             _tabDock.Text = I18n.T("TabDock");
@@ -4115,7 +4211,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v047";
+        public const string CURRENT_VERSION = "v048";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -4283,7 +4379,7 @@ namespace GINDesktop {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v047";
+            _trayIcon.Text = "GIN Dock Wallpaper v048";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -4350,7 +4446,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v047");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v048");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
