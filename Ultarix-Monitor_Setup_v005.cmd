@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title ULTARIX - Client Monitor Setup v002 [VladiMIR + Antigravity]
+title ULTARIX - Client Monitor Setup v005 [VladiMIR + Antigravity]
 
 :: Enable UNC support
 reg add "HKCU\Software\Microsoft\Command Processor" /v "DisableUNCCheck" /t REG_DWORD /d 1 /f >nul 2>&1
@@ -30,7 +30,7 @@ exit /b 0
 # ==============================================================================
 # ULTARIX s.r.o. - Client Activity Monitor Agent (Win10 x86 / x64)
 # Author  : VladiMIR + Antigravity AI
-# Version : v002 (v2.5.1 - 2026-11)
+# Version : v005 (v2.6.1 - 2026-11)
 # Target  : All employee workstations (32-bit & 64-bit Windows)
 # Format  : U-002, U-003, ..., U-010, U-507, ULPS1 (Zero Duplicates)
 # Cloud   : https://ultarix.gincz.com/ (Direct Push every 10s)
@@ -260,8 +260,8 @@ function Update-DayJs($date) {
         if ($null -eq $lines -or $lines.Count -le 1) { return $null }
 
         $appMap = @{}
-        $totSec = 0
-        $idleSec = 0
+        $parsedLines = @()
+        $lastActiveIdx = -1
 
         for ($i = 1; $i -lt $lines.Count; $i++) {
             $line = $lines[$i]
@@ -282,38 +282,84 @@ function Update-DayJs($date) {
                 $st = "ACTIVE"
             }
 
-            $totSec += $dur
-            if ($st -eq "IDLE" -or $proc -eq "IDLE_PAUSE") {
-                $idleSec += $dur
+            $rec = @{ dur = $dur; proc = $proc; win = $win; st = $st }
+            $parsedLines += $rec
+
+        $firstActiveIdx = -1
+        $lastActiveIdx = -1
+        for ($i = 0; $i -lt $parsedLines.Count; $i++) {
+            $rec = $parsedLines[$i]
+            $st = $rec.st
+            $proc = $rec.proc
+            if ($st -eq "ACTIVE" -and $proc -ne "IDLE_PAUSE" -and $proc -ne "Unknown" -and $proc -ne "") {
+                if ($firstActiveIdx -lt 0) { $firstActiveIdx = $i }
+                $lastActiveIdx = $i
             }
+        }
 
-            if (-not $appMap.ContainsKey($proc)) {
-                $icon = "📱"; $color = "blue"; $disp = $proc
-                $pLower = $proc.ToLower()
-                if ($pLower -like "*stereo*") { $icon = "🦔"; $color = "orange"; $disp = "$proc (STEREO — Ježek)" }
-                elseif ($pLower -like "*ekonom*") { $icon = "💼"; $color = "blue"; $disp = "$proc (Ekonom.win)" }
-                elseif ($pLower -like "*chrome*") { $icon = "🌐"; $color = "purple"; $disp = "$proc (Google Chrome)" }
-                elseif ($pLower -like "*firefox*") { $icon = "🦊"; $color = "orange"; $disp = "$proc (Mozilla Firefox)" }
-                elseif ($pLower -like "*edge*") { $icon = "🌀"; $color = "blue"; $disp = "$proc (Microsoft Edge)" }
-                elseif ($pLower -like "*excel*") { $icon = "📊"; $color = "green"; $disp = "$proc (Microsoft Excel)" }
-                elseif ($pLower -like "*word*") { $icon = "📝"; $color = "blue"; $disp = "$proc (Microsoft Word)" }
-                elseif ($pLower -like "*idle*") { $icon = "⏸"; $color = "yellow"; $disp = "IDLE_PAUSE (Паузы / AFK)" }
+        $totSec = 0
+        $actSec = 0
+        $idleSec = 0
 
-                $appMap[$proc] = @{
-                    name = $disp
-                    icon = $icon
-                    color = $color
-                    durationSec = 0
-                    pages = @{}
+        # Vladimir's Rule:
+        # If no active work, idle and work are strictly 0.
+        # Trailing idle after last activity of the day is NOT counted as a pause.
+        # Idle before first activity of the day is NOT counted as a pause.
+        # Only idle BETWEEN active working sessions is counted as pause!
+        if ($lastActiveIdx -ge 0) {
+            for ($i = 0; $i -lt $parsedLines.Count; $i++) {
+                if ($i -lt $firstActiveIdx -or $i -gt $lastActiveIdx) {
+                    continue
+                }
+                $rec = $parsedLines[$i]
+                $dur = $rec.dur
+                $proc = $rec.proc
+                $win = $rec.win
+                $st = $rec.st
+
+                if ($st -eq "ACTIVE" -and $proc -ne "IDLE_PAUSE" -and $proc -ne "Unknown" -and $proc -ne "") {
+                    $actSec += $dur
+                    $totSec += $dur
+
+                    $pLower = $proc.ToLower()
+                    if ($pLower -like "*powershell*" -or $pLower -like "*pwsh*" -or $pLower -eq "cmd" -or $pLower -eq "cmd.exe") {
+                        continue
+                    }
+
+                    if (-not $appMap.ContainsKey($proc)) {
+                        $icon = "📱"; $color = "blue"; $disp = $proc
+                        $pLower = $proc.ToLower()
+                        if ($pLower -like "*stereo*") { $icon = "🦔"; $color = "orange"; $disp = "$proc (STEREO — Ježek)" }
+                        elseif ($pLower -like "*ekonom*") { $icon = "💼"; $color = "blue"; $disp = "$proc (Ekonom.win)" }
+                        elseif ($pLower -like "*chrome*") { $icon = "🌐"; $color = "purple"; $disp = "$proc (Google Chrome)" }
+                        elseif ($pLower -like "*brave*") { $icon = "🦁"; $color = "orange"; $disp = "$proc (Brave Browser)" }
+                        elseif ($pLower -like "*firefox*") { $icon = "🦊"; $color = "orange"; $disp = "$proc (Mozilla Firefox)" }
+                        elseif ($pLower -like "*edge*") { $icon = "🌀"; $color = "blue"; $disp = "$proc (Microsoft Edge)" }
+                        elseif ($pLower -like "*excel*") { $icon = "📊"; $color = "green"; $disp = "$proc (Microsoft Excel)" }
+                        elseif ($pLower -like "*word*") { $icon = "📝"; $color = "blue"; $disp = "$proc (Microsoft Word)" }
+                        elseif ($pLower -like "*telegram*") { $icon = "✈️"; $color = "blue"; $disp = "$proc (Telegram)" }
+
+                        $appMap[$proc] = @{
+                            name = $disp
+                            icon = $icon
+                            color = $color
+                            durationSec = 0
+                            pages = @{}
+                        }
+                    }
+
+                    $appMap[$proc].durationSec += $dur
+                    $wKey = if ($win) { $win } else { "Hlavní okno programu" }
+                    if (-not $appMap[$proc].pages.ContainsKey($wKey)) {
+                        $appMap[$proc].pages[$wKey] = 0
+                    }
+                    $appMap[$proc].pages[$wKey] += $dur
+                } elseif ($st -eq "IDLE" -or $proc -eq "IDLE_PAUSE") {
+                    # Internal pause between active work sessions
+                    $idleSec += $dur
+                    $totSec += $dur
                 }
             }
-
-            $appMap[$proc].durationSec += $dur
-            $wKey = if ($win) { $win } else { "Hlavní okno programu" }
-            if (-not $appMap[$proc].pages.ContainsKey($wKey)) {
-                $appMap[$proc].pages[$wKey] = 0
-            }
-            $appMap[$proc].pages[$wKey] += $dur
         }
 
         $appList = @()
@@ -444,13 +490,11 @@ while ($true) {
             }
         }
 
-        if ($curSt -eq "IDLE") {
-            $wTitle = "Neaktivita (AFK)"
-            $pName = "IDLE_PAUSE"
-        }
+        $recP = if ($curSt -eq "IDLE") { "IDLE_PAUSE" } else { $pName }
+        $recT = if ($curSt -eq "IDLE") { "" } else { $wTitle }
 
         $stateChanged = ($curSt -ne $lastSt)
-        if (($pName -ne $lastP) -or ($wTitle -ne $lastT) -or $stateChanged) {
+        if (($recP -ne $lastP) -or ($recT -ne $lastT) -or $stateChanged) {
             if ($lastP -ne "") {
                 $now = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
                 Append-Log $startT $now $dur $lastP $lastT $lastSt
@@ -458,8 +502,10 @@ while ($true) {
             }
         }
 
-        $lastP = $pName; $lastT = $wTitle; $lastSt = $curSt; $dur += $PollIntervalSec
-        $hbObj = Write-Pulse $pName $wTitle $curSt $dur $idleSec
+        $lastP = $recP; $lastT = $recT; $lastSt = $curSt; $dur += $PollIntervalSec
+        $pulseP = if ($curSt -eq "IDLE") { "" } else { $pName }
+        $pulseT = if ($curSt -eq "IDLE") { "" } else { $wTitle }
+        $hbObj = Write-Pulse $pulseP $pulseT $curSt $dur $idleSec
 
         $cloudTimer += $PollIntervalSec
         if ($cloudTimer -ge $CloudPushIntervalSec -or $stateChanged) {
