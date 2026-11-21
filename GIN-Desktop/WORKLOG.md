@@ -1,3 +1,19 @@
+## Update: v047 (2026-11-21)
+- **Hardware Monitor Under Weather Badge**:
+  - Moved hardware metrics rendering from Dock Bar to desktop wallpaper HUD, directly underneath the Weather badge.
+  - Implemented `RefreshActiveWallpaperHUD()` to re-render HUD instantly (~50ms) on settings changes using `_lastDownloadedPath` without redownloading wallpaper.
+  - Added 30-second background timer in `WallpaperEngine` to keep live hardware metrics refreshed continuously.
+- **Top-Left Dock Bar Hot-Corner Activation Overhaul**:
+  - Expanded hot-corner detection threshold for high-DPI screens and top edge zones (`Math.Max(80, HotCornerWidth * 4)` and `Math.Max(40, HotCornerHeight * 2)` or `cursor.Y <= bounds.Top + 3 && cursor.X <= bounds.Left + 200`).
+  - Added relative coordinate offsets (`screen.Bounds.Left`, `screen.Bounds.Top`) to support multi-monitor setups properly.
+  - Watchdog timer starts permanently in `DockBarForm` constructor so enabling Dock in Settings takes effect immediately without restart.
+  - Enforced Topmost Z-order via `NativeMethods.SetWindowPos`.
+- **Settings Form UI Spacing Polish**:
+  - Moved Hardware Monitor settings to Wallpaper tab and fixed vertical overlap on Dock tab slider/labels.
+- **Compiled and Packaged v047**:
+  - Compiled binaries `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v047_Setup.exe`.
+  - Deployed `GIN-Desktop_v047_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one installer version.
+
 ## Update: v046 (2026-11-21)
 - **City Display in Weather HUD**:
   - Enhanced `WeatherService.GetCurrentWeather()` to format weather with the localized city name prefix: `{resolvedCity}: {icon} {sign}{temp}°C · {desc}`.

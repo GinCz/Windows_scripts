@@ -10,7 +10,7 @@ import subprocess
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
-VERSION = "v046"
+VERSION = "v047"
 APP_EXE = os.path.join(SCRIPT_DIR, "GIN-Desktop.exe")
 UNINST_EXE = os.path.join(SCRIPT_DIR, "Uninstall.exe")
 ICO_FILE = os.path.join(SCRIPT_DIR, "app.ico")
@@ -141,10 +141,10 @@ if os.path.exists(old_mirror):
         json.dump(v_data, f, indent=2, ensure_ascii=False)
     print(f"✅ Mirrored to {old_mirror}")
 
-# Retain strictly 2 latest versions in ROOT_DIR: v044 and v045
+# Retain strictly 2 latest versions in ROOT_DIR: v046 and v047
 for f in os.listdir(ROOT_DIR):
     if f.endswith("_Setup.exe"):
-        if not (VERSION in f or "v045" in f):
+        if not (VERSION in f or "v046" in f):
             try:
                 os.remove(os.path.join(ROOT_DIR, f))
                 print(f"Purged obsolete release: {f}")
@@ -154,7 +154,7 @@ for f in os.listdir(ROOT_DIR):
 if os.path.exists(old_mirror):
     for f in os.listdir(old_mirror):
         if f.endswith("_Setup.exe"):
-            if not (VERSION in f or "v045" in f):
+            if not (VERSION in f or "v046" in f):
                 try:
                     os.remove(os.path.join(old_mirror, f))
                     print(f"Purged obsolete mirror release: {f}")

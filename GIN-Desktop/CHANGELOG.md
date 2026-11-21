@@ -1,5 +1,23 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v047] — 2026-11-21
+### ⚡ Hardware Monitor Relocation to Wallpaper HUD, Top-Left Dock Activation Fix & Settings Layout Polish
+- **Hardware Monitor Under Weather Badge**:
+  - Moved hardware monitoring metrics (CPU %, RAM %, GPU %, GPU Temp °C) from the Dock Bar directly onto the desktop wallpaper.
+  - Positioned as a sleek rounded dark translucent pill directly below the Weather badge matching the existing Calendar HUD visual aesthetic.
+  - Added fast in-memory `RefreshActiveWallpaperHUD()` to re-render the HUD on top of the active wallpaper in ~50ms upon toggling settings without downloading a new image.
+  - Integrated a 30-second background watchdog timer to update live hardware metrics seamlessly.
+- **Top-Left Dock Bar Hot-Corner Activation Overhaul**:
+  - Fixed issue where the Dock Bar failed to appear when moving the mouse to the top-left corner after selecting a folder and enabling dock.
+  - Redesigned hot-corner trigger zone: expanded threshold from rigid 15×15px to a generous, high-DPI friendly zone (`Math.Max(80, HotCornerWidth * 4)` and `Math.Max(40, HotCornerHeight * 2)` or `cursor.Y <= bounds.Top + 3 && cursor.X <= bounds.Left + 200`).
+  - Added relative coordinate offsets (`screen.Bounds.Left`, `screen.Bounds.Top`) to support multi-monitor setups correctly.
+  - Permanent watchdog timer startup ensures that toggling Dock ON in Settings immediately activates monitoring without requiring app restart.
+  - Enforced Topmost Z-order via `NativeMethods.SetWindowPos` to prevent dock hiding behind other windows.
+- **Settings Form UI & Spacing Calibration**:
+  - Relocated Hardware Monitoring checkboxes from Tab 3 ("Панель Докер") to Tab 2 ("Обои и Календарь") directly under the Weather controls.
+  - Fixed vertical label overlap on Tab 3: repositioned icon size label below the hide delay slider with proper breathing room, completely eliminating text clipping.
+- **Single Versioned Setup on MEGA Desktop**: Build pipeline strictly delivers `GIN-Desktop_v047_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one versioned setup file.
+
 ## [v046] — 2026-11-21
 ### 📍 City Name in Weather HUD, Localized Geocoding & Dedicated City Settings Field
 - **Explicit Localized City Name in Weather Badge**: The weather pill rendered directly under the Calendar HUD on the desktop wallpaper now explicitly includes the city name, fully localized according to the current UI language (e.g. `Прага: ☀ +18°C · Ясно` in Russian, `Praha: ☀ +18°C · Jasno` in Czech, and `Prague: ☀ +18°C · Clear` in English).
