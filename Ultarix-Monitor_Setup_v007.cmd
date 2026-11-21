@@ -319,30 +319,88 @@ function Update-DayJs($date) {
                 $win = $rec.win
                 $st = $rec.st
 
-                if (($proc -eq "cmd" -or $proc -eq "cmd.exe" -or $proc -like "*stereo*") -and ($win -match "Ježek|STEREO")) {
-                    $proc = "STEREO"
+                $appKey = $proc
+                $disp = $proc
+                $icon = "📱"
+                $color = "blue"
+
+                $pLower = ($proc).ToLower()
+                $wTitle = ($win).Trim()
+                $cleanWin = $wTitle -replace "^(?i)(Administrator:\s*|\s*Správce:\s*)", ""
+
+                if ($pLower -eq "cmd" -or $pLower -eq "cmd.exe" -or $pLower -like "*stereo*" -or $pLower.StartsWith("cmd-") -or $pLower.StartsWith("cmd -")) {
+                    if ($cleanWin -match "(?i)stereo\s*(\d+)") {
+                        $appKey = "cmd-Stereo$($Matches[1])"
+                        $disp = "cmd-Stereo$($Matches[1])"
+                        $icon = "🦔"
+                        $color = "orange"
+                    } elseif ($cleanWin -match "(?i)gin-agent") {
+                        $appKey = "cmd - GIN-Agent"
+                        $disp = "cmd - GIN-Agent"
+                        $icon = "🤖"
+                        $color = "blue"
+                    } elseif ($cleanWin -match "(?i)instalace|setup|monitor") {
+                        $appKey = "cmd - Instalace monitoringu"
+                        $disp = "cmd - Instalace monitoringu"
+                        $icon = "⚙️"
+                        $color = "blue"
+                    } elseif ($cleanWin -match "(?i)ježek|stereo") {
+                        $appKey = "cmd-Stereo"
+                        $disp = "cmd-Stereo"
+                        $icon = "🦔"
+                        $color = "orange"
+                    } elseif ($pLower -match "(?i)stereo\s*(\d+)") {
+                        $appKey = "cmd-Stereo$($Matches[1])"
+                        $disp = "cmd-Stereo$($Matches[1])"
+                        $icon = "🦔"
+                        $color = "orange"
+                    } elseif ($cleanWin -and $cleanWin -ne "cmd.exe" -and $cleanWin -notlike "*system32\cmd.exe*") {
+                        $appKey = "cmd - $cleanWin"
+                        $disp = "cmd - $cleanWin"
+                        $icon = "💻"
+                        $color = "blue"
+                    } else {
+                        $appKey = "cmd"
+                        $disp = "cmd"
+                        $icon = "💻"
+                        $color = "blue"
+                    }
+                } elseif ($pLower -like "*powershell*" -or $pLower -like "*pwsh*") {
+                    if ($cleanWin -and $cleanWin -notmatch "^(?i)(windows powershell|powershell|pwsh)$") {
+                        $appKey = "powershell - $cleanWin"
+                        $disp = "powershell - $cleanWin"
+                        $icon = "⚡"
+                        $color = "blue"
+                    } else {
+                        $appKey = "PowerShell"
+                        $disp = "PowerShell"
+                        $icon = "⚡"
+                        $color = "blue"
+                    }
+                } elseif ($pLower -like "*ekonom*") {
+                    $icon = "💼"; $color = "blue"; $disp = "$proc (Ekonom.win)"
+                } elseif ($pLower -like "*chrome*") {
+                    $icon = "🌐"; $color = "purple"; $disp = "$proc (Google Chrome)"
+                } elseif ($pLower -like "*brave*") {
+                    $icon = "🦁"; $color = "orange"; $disp = "$proc (Brave Browser)"
+                } elseif ($pLower -like "*firefox*") {
+                    $icon = "🦊"; $color = "orange"; $disp = "$proc (Mozilla Firefox)"
+                } elseif ($pLower -like "*edge*") {
+                    $icon = "🌀"; $color = "blue"; $disp = "$proc (Microsoft Edge)"
+                } elseif ($pLower -like "*excel*") {
+                    $icon = "📊"; $color = "green"; $disp = "$proc (Microsoft Excel)"
+                } elseif ($pLower -like "*word*") {
+                    $icon = "📝"; $color = "blue"; $disp = "$proc (Microsoft Word)"
+                } elseif ($pLower -like "*telegram*") {
+                    $icon = "✈️"; $color = "blue"; $disp = "$proc (Telegram)"
                 }
 
                 if ($st -eq "ACTIVE" -and $proc -ne "IDLE_PAUSE" -and $proc -ne "Unknown" -and $proc -ne "") {
                     $actSec += $dur
                     $totSec += $dur
 
-                    if (-not $appMap.ContainsKey($proc)) {
-                        $icon = "📱"; $color = "blue"; $disp = $proc
-                        $pLower = $proc.ToLower()
-                        if ($pLower -like "*stereo*") { $icon = "🦔"; $color = "orange"; $disp = "$proc (STEREO — Ježek)" }
-                        elseif ($pLower -eq "cmd" -or $pLower -eq "cmd.exe") { $icon = "💻"; $color = "blue"; $disp = "Командная строка (CMD)" }
-                        elseif ($pLower -like "*powershell*" -or $pLower -like "*pwsh*") { $icon = "⚡"; $color = "blue"; $disp = "PowerShell" }
-                        elseif ($pLower -like "*ekonom*") { $icon = "💼"; $color = "blue"; $disp = "$proc (Ekonom.win)" }
-                        elseif ($pLower -like "*chrome*") { $icon = "🌐"; $color = "purple"; $disp = "$proc (Google Chrome)" }
-                        elseif ($pLower -like "*brave*") { $icon = "🦁"; $color = "orange"; $disp = "$proc (Brave Browser)" }
-                        elseif ($pLower -like "*firefox*") { $icon = "🦊"; $color = "orange"; $disp = "$proc (Mozilla Firefox)" }
-                        elseif ($pLower -like "*edge*") { $icon = "🌀"; $color = "blue"; $disp = "$proc (Microsoft Edge)" }
-                        elseif ($pLower -like "*excel*") { $icon = "📊"; $color = "green"; $disp = "$proc (Microsoft Excel)" }
-                        elseif ($pLower -like "*word*") { $icon = "📝"; $color = "blue"; $disp = "$proc (Microsoft Word)" }
-                        elseif ($pLower -like "*telegram*") { $icon = "✈️"; $color = "blue"; $disp = "$proc (Telegram)" }
-
-                        $appMap[$proc] = @{
+                    if (-not $appMap.ContainsKey($appKey)) {
+                        $appMap[$appKey] = @{
                             name = $disp
                             icon = $icon
                             color = $color
@@ -351,12 +409,12 @@ function Update-DayJs($date) {
                         }
                     }
 
-                    $appMap[$proc].durationSec += $dur
+                    $appMap[$appKey].durationSec += $dur
                     $wKey = if ($win) { $win } else { "Hlavní okno programu" }
-                    if (-not $appMap[$proc].pages.ContainsKey($wKey)) {
-                        $appMap[$proc].pages[$wKey] = 0
+                    if (-not $appMap[$appKey].pages.ContainsKey($wKey)) {
+                        $appMap[$appKey].pages[$wKey] = 0
                     }
-                    $appMap[$proc].pages[$wKey] += $dur
+                    $appMap[$appKey].pages[$wKey] += $dur
                 } elseif ($st -eq "IDLE" -or $proc -eq "IDLE_PAUSE") {
                     # Internal pause between active work sessions
                     # Vladimir's Rule: A single pause between work sessions cannot be an overnight/long gap (> 2 hours = 7200s)!
@@ -503,8 +561,12 @@ while ($true) {
                 $p = Get-Process -Id $procId -ErrorAction SilentlyContinue
                 if ($p) {
                     $pName = $p.ProcessName
-                    if (($pName -eq "cmd" -or $pName -eq "cmd.exe" -or $pName -like "*stereo*") -and ($wTitle -match "Ježek|STEREO")) {
-                        $pName = "STEREO"
+                    if ($pName -eq "cmd" -or $pName -eq "cmd.exe" -or $pName -like "*stereo*") {
+                        if ($wTitle -match "(?i)stereo\s*(\d+)") {
+                            $pName = "cmd-Stereo$($Matches[1])"
+                        } elseif ($wTitle -match "(?i)ježek|stereo") {
+                            $pName = "cmd-Stereo"
+                        }
                     }
                 }
             }
