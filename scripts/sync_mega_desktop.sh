@@ -15,6 +15,7 @@ fi
 
 FILE_NAME=$(basename "$FILE_PATH")
 APP_PREFIX="${2:-${FILE_NAME%%_v*}}"
+MAX_KEEP="${3:-2}"
 MEGA_DESKTOP_PATH="/MEGA/DOCS/desktop"
 
 echo "==> Deploying $FILE_NAME to MEGA Desktop ($MEGA_DESKTOP_PATH)..."
@@ -24,13 +25,13 @@ if ssh -q de-222 exit; then
     scp "$FILE_PATH" "de-222:/tmp/$FILE_NAME"
     ssh de-222 "mega-put -c /tmp/$FILE_NAME '$MEGA_DESKTOP_PATH/' && rm -f /tmp/$FILE_NAME"
     
-    # Prune older releases on MEGA desktop, keeping strictly 2 latest versions
+    # Prune older releases on MEGA desktop, keeping strictly MAX_KEEP latest versions
     if [ -n "$APP_PREFIX" ]; then
         ssh de-222 bash -c "'
             FILES=\$(mega-ls \"$MEGA_DESKTOP_PATH\" 2>/dev/null | grep \"^${APP_PREFIX}\" | grep \"\\.exe$\" | sort -V || true)
             COUNT=\$(echo \"\$FILES\" | grep -c . || true)
-            if [ \"\$COUNT\" -gt 2 ]; then
-                TO_REMOVE=\$(echo \"\$FILES\" | head -n -2)
+            if [ \"\$COUNT\" -gt $MAX_KEEP ]; then
+                TO_REMOVE=\$(echo \"\$FILES\" | head -n -$MAX_KEEP)
                 for rm_file in \$TO_REMOVE; do
                     echo \"Purging obsolete from MEGA desktop: \$rm_file\"
                     mega-rm \"$MEGA_DESKTOP_PATH/\$rm_file\" 2>/dev/null || true

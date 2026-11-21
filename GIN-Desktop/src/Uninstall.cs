@@ -5,16 +5,16 @@ using System.Reflection;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v044")]
-[assembly: AssemblyDescription("GIN-Desktop_v044")]
+[assembly: AssemblyTitle("GIN-Desktop_v045")]
+[assembly: AssemblyDescription("GIN-Desktop_v045")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v044")]
+[assembly: AssemblyProduct("GIN-Desktop_v045")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("0.44.0.0")]
-[assembly: AssemblyFileVersion("0.44.0.0")]
+[assembly: AssemblyVersion("0.45.0.0")]
+[assembly: AssemblyFileVersion("0.45.0.0")]
 
 namespace GINDesktop {
     static class Uninstaller {

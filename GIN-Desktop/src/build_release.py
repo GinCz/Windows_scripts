@@ -10,7 +10,7 @@ import subprocess
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
-VERSION = "v044"
+VERSION = "v045"
 APP_EXE = os.path.join(SCRIPT_DIR, "GIN-Desktop.exe")
 UNINST_EXE = os.path.join(SCRIPT_DIR, "Uninstall.exe")
 ICO_FILE = os.path.join(SCRIPT_DIR, "app.ico")
@@ -107,10 +107,13 @@ v_data = {
     "description": "Unified Windows Desktop Companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
     "author": "GinCz / Vladimir Bulantsev & Antigravity",
     "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Desktop",
-    "date": "2026-11-20",
+    "date": "2026-11-21",
     "sha256": setup_sha256,
     "download_url": f"https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_{VERSION}_Setup.exe",
     "features": [
+        "Silent Tray HUD Auto-Updater: Zero-popup quiet update workflow with subtle non-activating HUD toast near system tray and gentle pure-sine audio blips identical to GIN-Voice",
+        "Seamless Transition Pipeline: Live version transition (e.g. 44 ➔ 45) in tray HUD with automatic background download, process termination, service halt, and instant restart",
+        "Clean Desktop Organization: Automatic updates strictly skip recreating desktop shortcuts, preserving user desktop integrity",
         "Rebranded as GIN Desktop: Single unified lightweight Windows suite (~2-4 MB RAM) with independent ON/OFF engines",
         "Top-Only Fluid Dock Bar: Dedicated top position activated strictly on hover at top-left hot corner with zero visual clutter",
         "Configurable Shortcuts Path: Defaulted to D:\\UTIL\\GIN-Desktop\\ with interactive Browse button and clipboard path entry",
@@ -137,10 +140,10 @@ if os.path.exists(old_mirror):
         json.dump(v_data, f, indent=2, ensure_ascii=False)
     print(f"✅ Mirrored to {old_mirror}")
 
-# Retain strictly 2 latest versions in ROOT_DIR: v043 and v044
+# Retain strictly 2 latest versions in ROOT_DIR: v044 and v045
 for f in os.listdir(ROOT_DIR):
     if f.endswith("_Setup.exe"):
-        if not (VERSION in f or "v043" in f):
+        if not (VERSION in f or "v044" in f):
             try:
                 os.remove(os.path.join(ROOT_DIR, f))
                 print(f"Purged obsolete release: {f}")
@@ -150,7 +153,7 @@ for f in os.listdir(ROOT_DIR):
 if os.path.exists(old_mirror):
     for f in os.listdir(old_mirror):
         if f.endswith("_Setup.exe"):
-            if not (VERSION in f or "v043" in f):
+            if not (VERSION in f or "v044" in f):
                 try:
                     os.remove(os.path.join(old_mirror, f))
                     print(f"Purged obsolete mirror release: {f}")
@@ -158,11 +161,12 @@ if os.path.exists(old_mirror):
                     pass
 
 # Deploy to Vladimir's Desktop in MEGA cloud (D:\MEGA\DOCS\desktop\ via DE-222)
+# User specifically requested keeping strictly ONE copy on desktop with version in name
 sync_script = os.path.join(os.path.dirname(ROOT_DIR), "scripts", "sync_mega_desktop.sh")
 if os.path.exists(sync_script):
     print(f"==> Deploying to Vladimir's Desktop in MEGA cloud ({sync_script})...")
     try:
-        subprocess.run([sync_script, SETUP_EXE, "GIN-Desktop"], check=True)
+        subprocess.run([sync_script, SETUP_EXE, "GIN-Desktop", "1"], check=True)
     except Exception as e:
         print(f"⚠️ Warning: Auto-sync to MEGA Desktop failed: {e}")
 

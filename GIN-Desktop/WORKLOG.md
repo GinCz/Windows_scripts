@@ -1,3 +1,24 @@
+## Update: v045 (2026-11-21)
+- **Silent Tray HUD Auto-Updater**:
+  - Implemented `TrayNotificationHUD` borderless, non-activating form (`WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TOPMOST`) positioned near system tray.
+  - Eliminated all modal MessageBox prompts for updates.
+  - Configured 3-second auto-dismiss for up-to-date checks and 6-second auto-dismiss for version transition announcements.
+- **Pure Mathematical Sine Audio Engine (GIN-Voice Audio Signature)**:
+  - Added `GentleSound` synthesizing in-memory WAV buffers:
+    - Soft notice blip: 350 Hz, 110ms, volume 0.14.
+    - Gentle confirmation chime: 620 Hz, 90ms, volume 0.15.
+- **Background Silent Update & Service Watchdog**:
+  - Automatically downloads the update package in background.
+  - Halts active service (`sc stop GIN-Desktop`) and kills running processes.
+  - Launches setup in `/update` mode, replaces binaries, and restarts with `--updated`.
+  - Displays post-update completion banner with gentle chime upon launch.
+- **Clean Desktop Layout Preservation**:
+  - Updated `installer_setup.cs` to check for `/update` flag: strictly skips recreating desktop shortcuts during automatic updates.
+- **Single Versioned Setup on MEGA Desktop**:
+  - Configured `sync_mega_desktop.sh` with `MAX_KEEP=1` for `GIN-Desktop`.
+  - Automatically uploads `GIN-Desktop_v045_Setup.exe` to `/MEGA/DOCS/desktop/` and purges any older versions.
+- **Compiled and Packaged v045**: Produced `GIN-Desktop.exe`, `Uninstall.exe`, and standalone installer `GIN-Desktop_v045_Setup.exe`.
+
 ## Update: v044 (2026-11-21)
 - **UI Height Calibration & Form Sizing**: Expanded SettingsForm ClientSize to `760x780` and TabControl to `736x680`.
 - **Font Preview Grid Redesign**: Resized font preview buttons to `165x29` with `4px` vertical padding, `8.0f–9.0f` font sizing, centered text alignment, and zero border clipping for all 24 curated typefaces (specifically Gabriola, Impact, Sitka Banner, Palatino Linotype).

@@ -14,15 +14,15 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v044")]
-[assembly: AssemblyDescription("GIN-Desktop_v044")]
+[assembly: AssemblyTitle("GIN-Desktop_v045")]
+[assembly: AssemblyDescription("GIN-Desktop_v045")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyProduct("GIN-Desktop_v044")]
+[assembly: AssemblyProduct("GIN-Desktop_v045")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.44.0.0")]
-[assembly: AssemblyFileVersion("0.44.0.0")]
+[assembly: AssemblyVersion("0.45.0.0")]
+[assembly: AssemblyFileVersion("0.45.0.0")]
 
 namespace GINDesktop {
 
@@ -198,7 +198,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -584,7 +584,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v044" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v045" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -692,7 +692,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v044" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v045" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -800,7 +800,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v044" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v045" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1627,7 +1627,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1649,7 +1649,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1673,7 +1673,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v044 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v045 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2069,7 +2069,7 @@ namespace GINDesktop {
             _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             _brandBtn.Cursor = Cursors.Hand;
             _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v044 | Click for Menu");
+            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v045 | Click for Menu");
             this.Controls.Add(_brandBtn);
 
             _itemsPanel = new Panel();
@@ -2660,7 +2660,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v044");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v045");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -2739,6 +2739,195 @@ namespace GINDesktop {
     // ==========================================
     // SETTINGS FORM (GIN-VPN HERITAGE UI)
     // ==========================================
+
+    // ==========================================
+    // GENTLE SOUND GENERATOR (In-memory Pure Sine WAV, Identical to GIN-Voice)
+    // ==========================================
+    public static class GentleSound {
+        private static byte[] CreateGentleWav(double freq, int durationMs, double volume) {
+            int sampleRate = 44100;
+            int numSamples = sampleRate * durationMs / 1000;
+            byte[] pcm = new byte[numSamples * 2];
+            for (int i = 0; i < numSamples; i++) {
+                double t = (double)i / sampleRate;
+                double envelope = Math.Sin(Math.PI * i / numSamples);
+                short sample = (short)(Math.Sin(2 * Math.PI * freq * t) * envelope * volume * 32767.0);
+                pcm[i * 2] = (byte)(sample & 0xFF);
+                pcm[i * 2 + 1] = (byte)((sample >> 8) & 0xFF);
+            }
+            int dataLen = pcm.Length;
+            byte[] wav = new byte[44 + dataLen];
+            Buffer.BlockCopy(System.Text.Encoding.ASCII.GetBytes("RIFF"), 0, wav, 0, 4);
+            int totalLen = 36 + dataLen;
+            wav[4] = (byte)(totalLen & 0xFF);
+            wav[5] = (byte)((totalLen >> 8) & 0xFF);
+            wav[6] = (byte)((totalLen >> 16) & 0xFF);
+            wav[7] = (byte)((totalLen >> 24) & 0xFF);
+            Buffer.BlockCopy(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "), 0, wav, 8, 8);
+            wav[16] = 16; wav[17] = 0; wav[18] = 0; wav[19] = 0;
+            wav[20] = 1; wav[21] = 0;
+            wav[22] = 1; wav[23] = 0;
+            wav[24] = (byte)(sampleRate & 0xFF);
+            wav[25] = (byte)((sampleRate >> 8) & 0xFF);
+            wav[26] = (byte)((sampleRate >> 16) & 0xFF);
+            wav[27] = (byte)((sampleRate >> 24) & 0xFF);
+            int byteRate = sampleRate * 2;
+            wav[28] = (byte)(byteRate & 0xFF);
+            wav[29] = (byte)((byteRate >> 8) & 0xFF);
+            wav[30] = (byte)((byteRate >> 16) & 0xFF);
+            wav[31] = (byte)((byteRate >> 24) & 0xFF);
+            wav[32] = 2; wav[33] = 0;
+            wav[34] = 16; wav[35] = 0;
+            Buffer.BlockCopy(System.Text.Encoding.ASCII.GetBytes("data"), 0, wav, 36, 4);
+            wav[40] = (byte)(dataLen & 0xFF);
+            wav[41] = (byte)((dataLen >> 8) & 0xFF);
+            wav[42] = (byte)((dataLen >> 16) & 0xFF);
+            wav[43] = (byte)((dataLen >> 24) & 0xFF);
+            Buffer.BlockCopy(pcm, 0, wav, 44, dataLen);
+            return wav;
+        }
+
+        private static readonly byte[] WavNotice = CreateGentleWav(350.0, 110, 0.14);
+        private static readonly byte[] WavSave = CreateGentleWav(620.0, 90, 0.15);
+
+        public static void PlayNotice() {
+            PlayWav(WavNotice);
+        }
+
+        public static void PlayDone() {
+            PlayWav(WavSave);
+        }
+
+        private static void PlayWav(byte[] data) {
+            try {
+                using (MemoryStream ms = new MemoryStream(data))
+                using (System.Media.SoundPlayer sp = new System.Media.SoundPlayer(ms)) {
+                    sp.Play();
+                }
+            } catch { }
+        }
+    }
+
+    // ==========================================
+    // TRAY NOTIFICATION HUD (Silent Non-Activating Toast Window)
+    // ==========================================
+    public class TrayNotificationHUD : Form {
+        private static TrayNotificationHUD _instance;
+        private static readonly object _lock = new object();
+        public static SynchronizationContext MainSyncContext;
+
+        private Label _lblTitle;
+        private Label _lblMessage;
+        private System.Windows.Forms.Timer _timer;
+        private int _ticksRemaining = 0;
+        private double _targetOpacity = 0.96;
+
+        protected override bool ShowWithoutActivation {
+            get { return true; }
+        }
+
+        protected override CreateParams CreateParams {
+            get {
+                CreateParams cp = base.CreateParams;
+                cp.ExStyle |= 0x00000080; // WS_EX_TOOLWINDOW
+                cp.ExStyle |= 0x08000000; // WS_EX_NOACTIVATE
+                cp.ExStyle |= 0x00000008; // WS_EX_TOPMOST
+                return cp;
+            }
+        }
+
+        public TrayNotificationHUD() {
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar = false;
+            this.TopMost = true;
+            this.StartPosition = FormStartPosition.Manual;
+            this.Size = new Size(360, 74);
+            this.BackColor = Color.FromArgb(24, 25, 28);
+            this.DoubleBuffered = true;
+            this.Opacity = 0.0;
+
+            _lblTitle = new Label {
+                Location = new Point(16, 11),
+                Size = new Size(328, 20),
+                Font = new Font("Segoe UI", 9.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(245, 197, 24),
+                BackColor = Color.Transparent
+            };
+
+            _lblMessage = new Label {
+                Location = new Point(16, 33),
+                Size = new Size(328, 34),
+                Font = new Font("Segoe UI", 8.5f),
+                ForeColor = Color.FromArgb(220, 225, 230),
+                BackColor = Color.Transparent
+            };
+
+            this.Controls.Add(_lblTitle);
+            this.Controls.Add(_lblMessage);
+
+            this.Paint += (s, e) => {
+                Graphics g = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using (Pen borderPen = new Pen(Color.FromArgb(60, 65, 75), 1.5f)) {
+                    g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                }
+                using (SolidBrush accentBrush = new SolidBrush(Color.FromArgb(245, 197, 24))) {
+                    g.FillRectangle(accentBrush, 0, 0, 4, this.Height);
+                }
+            };
+
+            _timer = new System.Windows.Forms.Timer { Interval = 50 };
+            _timer.Tick += (s, e) => {
+                if (_ticksRemaining > 0) {
+                    if (this.Opacity < _targetOpacity) {
+                        this.Opacity = Math.Min(_targetOpacity, this.Opacity + 0.15);
+                    }
+                    _ticksRemaining--;
+                } else {
+                    if (this.Opacity > 0.0) {
+                        this.Opacity = Math.Max(0.0, this.Opacity - 0.12);
+                    } else {
+                        _timer.Stop();
+                        this.Hide();
+                    }
+                }
+            };
+        }
+
+        public static void ShowHUD(string title, string message, int durationSeconds = 3, bool playDone = false) {
+            if (playDone) {
+                GentleSound.PlayDone();
+            }
+            if (MainSyncContext != null) {
+                MainSyncContext.Post(_ => ShowHUDInternal(title, message, durationSeconds), null);
+            } else {
+                ShowHUDInternal(title, message, durationSeconds);
+            }
+        }
+
+        private static void ShowHUDInternal(string title, string message, int durationSeconds) {
+            try {
+                lock (_lock) {
+                    if (_instance == null || _instance.IsDisposed) {
+                        _instance = new TrayNotificationHUD();
+                    }
+
+                    _instance._lblTitle.Text = title;
+                    _instance._lblMessage.Text = message;
+
+                    Rectangle workArea = Screen.PrimaryScreen.WorkingArea;
+                    int x = workArea.Right - _instance.Width - 12;
+                    int y = workArea.Bottom - _instance.Height - 12;
+                    _instance.Location = new Point(x, y);
+
+                    _instance._ticksRemaining = durationSeconds * 20;
+                    _instance.Show();
+                    _instance._timer.Start();
+                }
+            } catch { }
+        }
+    }
+
     public class SettingsForm : Form {
         private Config _config;
         private Action _onConfigChanged;
@@ -3355,7 +3544,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v044", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v045", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3412,7 +3601,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v044",
+                Text = "v045",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -3840,7 +4029,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v044";
+        public const string CURRENT_VERSION = "v045";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -3849,12 +4038,21 @@ namespace GINDesktop {
             return int.TryParse(digits, out n) ? n : 0;
         }
 
-        public static void RunAutoUpdateWorkflow(Form parentForm, bool showUpToDateNotice) {
+                public static void RunAutoUpdateWorkflow(Form parentForm, bool isManual) {
+            if (isManual) {
+                string checkTitle = "🔍 GIN-Desktop";
+                string checkMsg = (I18n.CurrentLanguage == "ru"
+                    ? "Проверка обновлений..."
+                    : (I18n.CurrentLanguage == "cs" ? "Kontrola aktualizací..." : "Checking for updates..."));
+                TrayNotificationHUD.ShowHUD(checkTitle, checkMsg, 3, false);
+                GentleSound.PlayNotice();
+            }
+
             ThreadPool.QueueUserWorkItem(_ => {
                 try {
                     string url = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/version.json?_t=" + DateTime.UtcNow.Ticks;
                     using (WebClient wc = new WebClient()) {
-                        wc.Headers.Add("User-Agent", "GIN-Desktop");
+                        wc.Headers.Add("User-Agent", "GIN-Desktop/" + CURRENT_VERSION);
                         string json = wc.DownloadString(url);
 
                         int vIdx = json.IndexOf("\"version\":");
@@ -3880,42 +4078,52 @@ namespace GINDesktop {
                                     downloadUrl = "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_" + remoteVer + "_Setup.exe";
                                 }
 
-                                DialogResult dr = MessageBox.Show(
-                                    I18n.T("UpdateAvailable") + " (" + remoteVer + ")!\n\n" + I18n.T("DownloadNow"),
-                                    "GIN Dock Wallpaper Update",
-                                    MessageBoxButtons.YesNo,
-                                    MessageBoxIcon.Question
-                                );
+                                string arrowMsg = string.Format("{0} ➔ {1}", cNum, rNum);
+                                string updateTitle = "⬇️ GIN-Desktop Update";
+                                string updateDesc = (I18n.CurrentLanguage == "ru"
+                                    ? ("Найдена новая версия: " + arrowMsg + "\nЗагрузка и тихое обновление...")
+                                    : (I18n.CurrentLanguage == "cs"
+                                        ? ("Nová verze: " + arrowMsg + "\nStahování a tichá aktualizace...")
+                                        : ("New version found: " + arrowMsg + "\nDownloading & updating silently...")));
 
-                                if (dr == DialogResult.Yes) {
-                                    string tempSetup = Path.Combine(Path.GetTempPath(), "GIN-Desktop_" + remoteVer + "_Setup.exe");
-                                    using (WebClient dlClient = new WebClient()) {
-                                        dlClient.Headers.Add("User-Agent", "GIN-Desktop");
-                                        dlClient.DownloadFile(downloadUrl, tempSetup);
-                                    }
+                                TrayNotificationHUD.ShowHUD(updateTitle, updateDesc, 6, false);
+                                GentleSound.PlayNotice();
 
-                                    if (File.Exists(tempSetup)) {
-                                        ProcessStartInfo psi = new ProcessStartInfo {
-                                            FileName = tempSetup,
-                                            UseShellExecute = true
-                                        };
-                                        Process.Start(psi);
-                                        Application.Exit();
-                                    }
+                                string tempSetup = Path.Combine(Path.GetTempPath(), "GIN-Desktop_" + remoteVer + "_Setup.exe");
+                                using (WebClient dlClient = new WebClient()) {
+                                    dlClient.Headers.Add("User-Agent", "GIN-Desktop/" + CURRENT_VERSION);
+                                    dlClient.DownloadFile(downloadUrl, tempSetup);
                                 }
-                            } else if (showUpToDateNotice) {
-                                MessageBox.Show(
-                                    I18n.T("UpToDate") + " (" + currentVer + ").\n" + I18n.T("NoUpdatesNeeded"),
-                                    "GIN Dock Wallpaper",
-                                    MessageBoxButtons.OK,
-                                    MessageBoxIcon.Information
-                                );
+
+                                if (File.Exists(tempSetup)) {
+                                    string currentBaseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+                                    ProcessStartInfo psi = new ProcessStartInfo {
+                                        FileName = tempSetup,
+                                        Arguments = "/update /target:\"" + currentBaseDir + "\"",
+                                        UseShellExecute = true
+                                    };
+                                    Process.Start(psi);
+                                    Application.Exit();
+                                }
+                            } else if (isManual) {
+                                string latestTitle = "✅ GIN-Desktop " + CURRENT_VERSION;
+                                string latestDesc = (I18n.CurrentLanguage == "ru"
+                                    ? "У вас установлена последняя версия!"
+                                    : (I18n.CurrentLanguage == "cs"
+                                        ? "Máte nejnovější verzi!"
+                                        : "You have the latest version!"));
+
+                                TrayNotificationHUD.ShowHUD(latestTitle, latestDesc, 3, true);
                             }
                         }
                     }
                 } catch (Exception ex) {
-                    if (showUpToDateNotice) {
-                        MessageBox.Show("Update check failed:\n" + ex.Message, "GIN Dock Wallpaper", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    if (isManual) {
+                        string errTitle = "⚠️ GIN-Desktop Update";
+                        string errDesc = (I18n.CurrentLanguage == "ru"
+                            ? ("Ошибка проверки обновления: " + ex.Message)
+                            : ("Update check failed: " + ex.Message));
+                        TrayNotificationHUD.ShowHUD(errTitle, errDesc, 4, false);
                     }
                 }
             });
@@ -3983,13 +4191,13 @@ namespace GINDesktop {
             }
         }
 
-        public DockWallpaperApplicationContext() {
+        public DockWallpaperApplicationContext(bool isPostUpdate = false) {
             _config = Config.Load();
             _wallpaperEngine = new WallpaperEngine(_config);
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v044";
+            _trayIcon.Text = "GIN Dock Wallpaper v045";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -4028,11 +4236,27 @@ namespace GINDesktop {
                 BuildTrayMenu();
             };
 
-            if (_config.CheckUpdatesOnStartup) {
+            if (_config.CheckUpdatesOnStartup && !isPostUpdate) {
                 SettingsForm.RunAutoUpdateWorkflow(null, false);
             }
 
             NativeMethods.TrimMemory();
+
+            if (isPostUpdate) {
+                System.Windows.Forms.Timer postUpdTimer = new System.Windows.Forms.Timer { Interval = 700 };
+                postUpdTimer.Tick += (s, e) => {
+                    postUpdTimer.Stop();
+                    postUpdTimer.Dispose();
+                    string title = "✅ GIN Desktop " + SettingsForm.CURRENT_VERSION;
+                    string msg = (I18n.CurrentLanguage == "ru"
+                        ? "Все готово! У вас установлена последняя версия."
+                        : (I18n.CurrentLanguage == "cs"
+                            ? "Vše je připraveno! Máte nejnovější verzi."
+                            : "All done! You have the latest version."));
+                    TrayNotificationHUD.ShowHUD(title, msg, 4, true);
+                };
+                postUpdTimer.Start();
+            }
         }
 
         private void BuildTrayMenu() {
@@ -4040,7 +4264,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v044");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v045");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -4111,6 +4335,14 @@ namespace GINDesktop {
     public static class Program {
         [STAThread]
         public static void Main(string[] args) {
+            bool isPostUpdate = false;
+            if (args != null) {
+                foreach (string arg in args) {
+                    if (arg.Equals("--updated", StringComparison.OrdinalIgnoreCase) || arg.Equals("/updated", StringComparison.OrdinalIgnoreCase)) {
+                        isPostUpdate = true;
+                    }
+                }
+            }
             if (args != null && args.Length > 0 && (args[0].Equals("--uninstall", StringComparison.OrdinalIgnoreCase) || args[0].Equals("/uninstall", StringComparison.OrdinalIgnoreCase))) {
                 return;
             }
@@ -4139,7 +4371,8 @@ namespace GINDesktop {
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new DockWallpaperApplicationContext());
+                TrayNotificationHUD.MainSyncContext = SynchronizationContext.Current;
+                Application.Run(new DockWallpaperApplicationContext(isPostUpdate));
             }
         }
     }

@@ -1,5 +1,20 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v045] — 2026-11-21
+### 🔔 Silent Tray HUD Auto-Updater, Pure-Sine Gentle Sounds, Dynamic Version Transition & Clean Desktop Integrity
+- **Silent Non-Activating Tray HUD**: Eliminated intrusive modal MessageBox dialogs for update checks. Implemented `TrayNotificationHUD` positioned right above the system tray in the bottom-right corner, featuring smooth fade-in/fade-out, gold accent border, and non-activating window style (`WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST`).
+- **Pure-Sine Gentle Sound Generator (GIN-Voice Audio Signature)**: Embedded in-memory mathematical WAV tone generator (`GentleSound` 44.1kHz 16-bit mono PCM with half-sine envelope):
+  - 350 Hz (110ms, volume 0.14) soft notice blip on update check or download start.
+  - 620 Hz (90ms, volume 0.15) gentle confirmation chime upon up-to-date confirmation and successful post-update launch.
+- **3-Second Auto-Dismiss Up-to-Date Notice**: When running the latest version, the HUD automatically notifies the user and disappears smoothly after 3 seconds with zero required clicks.
+- **Dynamic Transition & Background Updater**:
+  - When an update is detected, the HUD shows the exact transition badge (`44 ➔ 45`) and initiates automatic background download.
+  - Halts services (`sc stop GIN-Desktop`) and stops active processes.
+  - Executes update in `/update` mode, writes updated binaries, and restarts with `--updated`.
+  - Upon restart, displays completion banner (`✅ Все готово! У вас установлена последняя версия.`) accompanied by the gentle confirmation sound.
+- **Desktop Shortcut Preservation (Zero Clutter)**: The `/update` workflow strictly skips recreating desktop shortcuts, keeping the user's desktop layout 100% clean and intact.
+- **Single Versioned Setup on MEGA Desktop**: Build pipeline strictly delivers `GIN-Desktop_v045_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one versioned setup file and purging obsolete installers.
+
 ## [v044] — 2026-11-21
 ### 🎨 Spacious Breathable UI, Clean Font Buttons, Single-Row Intervals, Zero-Tofu Weather & Multilingual HUD Sync
 - **Spacious Breathable Settings UI & Height Calibration**: Increased form height to 780px and tabs container to 680px, completely eliminating vertical crampedness.

@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo [GIN Desktop] Building v044...
+echo [GIN Desktop] Building v045...
 set CSC=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe
 
 if not exist "%CSC%" (
@@ -21,7 +21,7 @@ python build_release.py
 if %ERRORLEVEL% equ 0 (
     echo [SUCCESS] Compilation complete!
     if exist "D:\MEGA\DOCS\desktop" (
-        copy /y "..\GIN-Desktop_v044_Setup.exe" "D:\MEGA\DOCS\desktop\GIN-Desktop_v044_Setup.exe" >nul
+        copy /y "..\GIN-Desktop_v045_Setup.exe" "D:\MEGA\DOCS\desktop\GIN-Desktop_v045_Setup.exe" >nul
         echo [DEPLOY] Mirrored to D:\MEGA\DOCS\desktop\
     )
 ) else (
