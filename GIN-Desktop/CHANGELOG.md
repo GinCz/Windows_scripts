@@ -1,5 +1,19 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v050] — 2026-11-21
+### 🛠️ Critical Windows .NET Framework Installer Launch & Compatibility Fix
+- **Fixed Silent Launch Failure on Windows 10/11**:
+  - Diagnosed and resolved the root cause of `GIN-Desktop_vXXX_Setup.exe` failing to launch or install silently on clean Windows workstations (`KK-02`, laptops):
+  - In Mono's C# compiler (`mcs`), calling `arg.Substring(8).Trim('\"')` and `BaseDirectory.TrimEnd('\\')` with single character arguments generated IL `callvirt instance string [mscorlib]System.String::Trim(char)` and `TrimEnd(char)`.
+  - While single `char` overloads exist in .NET Core / .NET Standard 2.1 / Mono, Windows .NET Framework 4.0/4.5/4.8 only supports `Trim(params char[])` and `TrimEnd(params char[])`. On Windows, the CLR threw `System.MissingMethodException: Method not found: 'System.String System.String.Trim(Char)'` during JIT compilation of `Program.Main`, silently aborting execution before any window could open.
+  - Replaced all calls with explicit character array overloads: `Trim(new char[] { '\"', ' ' })` and `TrimEnd(new char[] { '\\', '/' })`.
+  - Verified with `ikdasm` that the generated binary strictly targets `System.String::Trim(char[])`.
+  - Verified live turnkey execution on Windows workstation (`VladiMIR-E14`), confirming clean installation and process startup.
+- **Assembly Manifest Purification**:
+  - Removed obsolete `[assembly: AssemblyCulture("")]` attribute from executables, conforming strictly to ECMA-335 / .NET standards.
+- **Single Versioned Setup on MEGA Desktop**:
+  - Build pipeline strictly delivers `GIN-Desktop_v050_Setup.exe` to Vladimir's Desktop in MEGA (`/MEGA/DOCS/desktop/`), retaining strictly one versioned setup file.
+
 ## [v049] — 2026-11-21
 ### 📂 Single Clean Start Menu Shortcut & Direct Program Folder Quick Access
 - **Single Clean Shortcut in Windows Start Menu**:

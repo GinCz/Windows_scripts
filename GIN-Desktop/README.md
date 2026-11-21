@@ -1,4 +1,4 @@
-# ⚡ GIN-Desktop `v049` (Universal Release)
+# ⚡ GIN-Desktop `v050` (Universal Release)
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 <br/>
 
-[Download GIN-Desktop v049 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/GIN-Desktop/GIN-Desktop_v049_Setup.exe)
+[Download GIN-Desktop v050 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/GIN-Desktop/GIN-Desktop_v050_Setup.exe)
 
 </div>
 
@@ -35,13 +35,12 @@
 
 ---
 
-## 🚀 What's New in v049
+## 🚀 What's New in v050
 
+- **Critical Windows .NET Framework Installer Launch Fix**: Resolved root cause where `GIN-Desktop_vXXX_Setup.exe` failed to launch or install silently on clean Windows workstations (`MissingMethodException` on Mono's single-char `Trim(char)` overload). Enforced explicit `char[]` overloads across all modules.
 - **Single Clean Start Menu Shortcut**: Installer writes strictly ONE direct shortcut (`GIN Desktop.lnk`) into the Windows Start Menu Programs root, purging legacy folders and eliminating clutter.
 - **Direct Program Folder Quick Access**: Added `📁 Открыть папку программы` / `Open Program Folder` directly to the system tray context menu and Dock brand menu for instant access to the application directory and uninstaller.
-- **Restoration of GIN-Wallpaper Celestial Shimmer Chime**: Peaceful velvet bells chime (F#4, A#4, C#5, F5 harmonic progression) on wallpaper change and sound enablement.
-- **Explicit Localized Sound Button**: Full-width state button (`🔊 Со звуком` / `🔇 Без звука`) replacing the static `♪` glyph with active theme accent styling.
-- **Single Versioned Setup on Desktop**: Retains strictly 1 versioned installer (`GIN-Desktop_v049_Setup.exe`) on MEGA Desktop.
+- **Single Versioned Setup on Desktop**: Retains strictly 1 versioned installer (`GIN-Desktop_v050_Setup.exe`) on MEGA Desktop.
 
 ---
 
@@ -49,4 +48,4 @@
 
 - **OS**: Windows 10 / 11 (32-bit or 64-bit)
 - **Runtime**: Built-in .NET Framework 4.5+ (Standard on all modern Windows installations)
-- **Installer**: Run `GIN-Desktop_v049_Setup.exe` for turnkey 1-click deployment.
+- **Installer**: Run `GIN-Desktop_v050_Setup.exe` for turnkey 1-click deployment.
