@@ -32,10 +32,11 @@ if %errorlevel% equ 0 goto :RUN_INSTALLER
 
 if not defined GIN_AGENT_ELEVATED (
     set GIN_AGENT_ELEVATED=1
-    set "ARG_LINE="
-    if defined GIN_AGENT_REGION set "ARG_LINE=%GIN_AGENT_REGION%"
-    if defined GIN_AGENT_SILENT set "ARG_LINE=%ARG_LINE% /silent"
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -ArgumentList '%ARG_LINE%' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    if defined GIN_AGENT_REGION (
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -ArgumentList '%GIN_AGENT_REGION%' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    ) else (
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+    )
     if not errorlevel 1 exit /b 0
 )
 
@@ -156,8 +157,7 @@ try {
         try {
             Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
                 $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    $_.CommandLine -like "*GIN-Agent*" -or
-                    $_.CommandLine -like "*agent-api*" -or
+                    $_.CommandLine -like "*GIN-Agent* /service*" -or
                     $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*"
                 )
             } | ForEach-Object {
@@ -221,32 +221,6 @@ try {
         $isSilent = ($env:GIN_AGENT_SILENT -eq "1")
 
         if (-not $isSilent) {
-            try {
-                $cs = @"
-using System;
-using System.Runtime.InteropServices;
-public class QuickEditFix {
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern IntPtr GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll")]
-    static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-    [DllImport("kernel32.dll")]
-    static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
-    public static void Disable() {
-        IntPtr h = GetStdHandle(-10);
-        uint m;
-        if (GetConsoleMode(h, out m)) {
-            m &= ~0x0040u;
-            m |= 0x0080u;
-            SetConsoleMode(h, m);
-        }
-    }
-}
-"@
-                Add-Type -TypeDefinition $cs -ErrorAction SilentlyContinue
-                [QuickEditFix]::Disable()
-            } catch {}
-
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "         GIN-AGENT v027 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
@@ -340,8 +314,7 @@ public class QuickEditFix {
         try {
             Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
                 $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    $_.CommandLine -like "*GIN-Agent*" -or
-                    $_.CommandLine -like "*agent-api*" -or
+                    $_.CommandLine -like "*GIN-Agent* /service*" -or
                     $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*"
                 )
             } | ForEach-Object {
@@ -392,135 +365,22 @@ public class QuickEditFix {
             }
         }
 
-        # 8. Deploy uninstaller script into Program Files\GIN-Agent\uninstall.cmd
-        $uninstallerContent = @'
-<# :
-@echo off
-setlocal DisableDelayedExpansion
-title GIN-Agent Uninstaller
-
-net session >nul 2>&1
-if %errorlevel% equ 0 goto :RUN_UNINSTALL
-
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
-exit /b %errorlevel%
-
-:RUN_UNINSTALL
-set "PS_EXE=powershell.exe"
-if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" (
-    set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
-) else if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
-    set "PS_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
-)
-
-"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
-set "PS_ERR=%errorlevel%"
-exit /b %PS_ERR%
-#>
-try {
-    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-    $OutputEncoding = [System.Text.Encoding]::UTF8
-} catch {}
-
-Write-Host ""
-Write-Host "====================================================================" -ForegroundColor Red
-Write-Host "           GIN-AGENT - COMPLETE SYSTEM UNINSTALLATION               " -ForegroundColor Yellow
-Write-Host "====================================================================" -ForegroundColor Red
-Write-Host "[*] Stopping and removing GIN-Agent services and scheduled tasks..." -ForegroundColor Cyan
-
-$tasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
-foreach ($t in $tasks) {
-    try { schtasks.exe /end /tn "$t" 2>&1 | Out-Null } catch {}
-    try { schtasks.exe /delete /tn "$t" /f 2>&1 | Out-Null } catch {}
-}
-
-$services = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
-foreach ($s in $services) {
-    try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
-    try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
-}
-
-$currentPid = $PID
-$parentPid = 0
-try {
-    $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
-    if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
-} catch {}
-
-try {
-    Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
-        $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-            $_.CommandLine -like "*GIN-Agent*" -or
-            $_.CommandLine -like "*agent-api*" -or
-            $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*"
-        )
-    } | ForEach-Object {
-        try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
-    }
-} catch {}
-
-Start-Sleep -Milliseconds 600
-
-Write-Host "[*] Removing registry entries..." -ForegroundColor Cyan
-$regPaths = @(
-    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent",
-    "HKLM:\SOFTWARE\GIN-Agent"
-)
-foreach ($rp in $regPaths) {
-    if (Test-Path $rp) {
-        try { Remove-Item -Path $rp -Recurse -Force -ErrorAction SilentlyContinue } catch {}
-    }
-}
-
-Write-Host "[*] Removing GIN-Agent files and directories..." -ForegroundColor Cyan
-$dirsToPurge = @(
-    "$env:ProgramData\GIN-Agent",
-    "$env:ProgramFiles\GIN-Agent",
-    "${env:ProgramFiles(x86)}\GIN-Agent"
-)
-foreach ($d in $dirsToPurge) {
-    if (Test-Path $d) {
-        try {
-            Get-ChildItem -Path $d -File -ErrorAction SilentlyContinue | ForEach-Object {
-                if ($_.FullName -ne $MyInvocation.MyCommand.Path) {
-                    try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
-                }
-            }
-        } catch {}
-    }
-}
-
-$scriptPath = $MyInvocation.MyCommand.Path
-if (-not $scriptPath) { $scriptPath = "$env:ProgramFiles\GIN-Agent\uninstall.cmd" }
-$parentFolder = Split-Path -Parent $scriptPath
-
-Write-Host ""
-Write-Host "====================================================================" -ForegroundColor Green
-Write-Host "  [OK] GIN-AGENT HAS BEEN COMPLETELY AND CLEANLY REMOVED!           " -ForegroundColor Green
-Write-Host "====================================================================" -ForegroundColor Green
-Write-Host ""
-
-if ($parentFolder -and (Test-Path $parentFolder)) {
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c ping 127.0.0.1 -n 3 >nul & rd /s /q `"`"$parentFolder`"`"" -WindowStyle Hidden
-}
-
-Start-Sleep -Seconds 2
-exit 0
-'@
-        [System.IO.File]::WriteAllText($uninstallerCmd, $uninstallerContent.Replace("`n", "`r`n"), [System.Text.Encoding]::UTF8)
+        # 8. Deploy uninstaller script using clean Base64 (zero syntax clashes)
+        $uninstallerB64 = "PCMgOg0KQGVjaG8gb2ZmDQpzZXRsb2NhbCBEaXNhYmxlRGVsYXllZEV4cGFuc2lvbg0KdGl0bGUgR0lOLUFnZW50IFVuaW5zdGFsbGVyDQoNCjo6IEVsZXZhdGlvbiBjaGVjaw0KbmV0IHNlc3Npb24gPm51bCAyPiYxDQppZiAlZXJyb3JsZXZlbCUgZXF1IDAgZ290byA6UlVOX1VOSU5TVEFMTA0KDQpwb3dlcnNoZWxsLmV4ZSAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICJ0cnkgeyBTdGFydC1Qcm9jZXNzIC1GaWxlUGF0aCAnJX5mMCcgLVZlcmIgUnVuQXMgLUVycm9yQWN0aW9uIFN0b3A7IGV4aXQgMCB9IGNhdGNoIHsgZXhpdCAxIH0iID5udWwgMj4mMQ0KZXhpdCAvYiAlZXJyb3JsZXZlbCUNCg0KOlJVTl9VTklOU1RBTEwNCnNldCAiUFNfRVhFPXBvd2Vyc2hlbGwuZXhlIg0KaWYgZXhpc3QgIiVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSIgKA0KICAgIHNldCAiUFNfRVhFPSVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSINCikgZWxzZSBpZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c3RlbTMyXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiICgNCiAgICBzZXQgIlBTX0VYRT0lU3lzdGVtUm9vdCVcU3lzdGVtMzJcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSINCikNCg0KIiVQU19FWEUlIiAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICIkcmF3ID0gW1N5c3RlbS5JTy5GaWxlXTo6UmVhZEFsbFRleHQoJyV+ZjAnLCBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4KTsgJiAoW1NjcmlwdEJsb2NrXTo6Q3JlYXRlKCRyYXcpKSINCnNldCAiUFNfRVJSPSVlcnJvcmxldmVsJSINCmV4aXQgL2IgJVBTX0VSUiUNCiM+DQp0cnkgew0KICAgIFtDb25zb2xlXTo6T3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4DQogICAgJE91dHB1dEVuY29kaW5nID0gW1N5c3RlbS5UZXh0LkVuY29kaW5nXTo6VVRGOA0KfSBjYXRjaCB7fQ0KDQpXcml0ZS1Ib3N0ICIiDQpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBSZWQNCldyaXRlLUhvc3QgIiAgICAgICAgICAgR0lOLUFHRU5UIC0gQ09NUExFVEUgU1lTVEVNIFVOSU5TVEFMTEFUSU9OICAgICAgICAgICAgICAgIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdw0KV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgUmVkDQpXcml0ZS1Ib3N0ICJbKl0gU3RvcHBpbmcgYW5kIHJlbW92aW5nIEdJTi1BZ2VudCBzZXJ2aWNlcyBhbmQgc2NoZWR1bGVkIHRhc2tzLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCg0KIyAxLiBTdG9wIGFuZCByZW1vdmUgc2NoZWR1bGVkIHRhc2tzDQokdGFza3MgPSBAKCJHSU4tQWdlbnQtU2VydmljZSIsICJHSU4tQWdlbnQiLCAiR0lOLUFnZW50LVdhdGNoZG9nIiwgIkdJTi1BZ2VudC1VcGRhdGVyIiwgIkdJTi1SZW1vdGUiKQ0KZm9yZWFjaCAoJHQgaW4gJHRhc2tzKSB7DQogICAgdHJ5IHsgc2NodGFza3MuZXhlIC9lbmQgL3RuICIkdCIgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30NCiAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2RlbGV0ZSAvdG4gIiR0IiAvZiAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQ0KfQ0KDQojIDIuIFN0b3AgYW5kIHJlbW92ZSBsZWdhY3kgV2luZG93cyBTZXJ2aWNlcw0KJHNlcnZpY2VzID0gQCgiR0lOLUFnZW50IiwgIkdJTi1BZ2VudC1TZXJ2aWNlIiwgIkdJTl9BZ2VudCIpDQpmb3JlYWNoICgkcyBpbiAkc2VydmljZXMpIHsNCiAgICB0cnkgeyAmIHNjLmV4ZSBzdG9wICRzIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9DQogICAgdHJ5IHsgJiBzYy5leGUgZGVsZXRlICRzIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9DQp9DQoNCiMgMy4gVGVybWluYXRlIHJ1bm5pbmcgYWdlbnQgcHJvY2Vzc2VzDQokY3VycmVudFBpZCA9ICRQSUQNCiRwYXJlbnRQaWQgPSAwDQp0cnkgew0KICAgICRwYXJlbnRQcm9jID0gR2V0LUNpbUluc3RhbmNlIFdpbjMyX1Byb2Nlc3MgLUZpbHRlciAiUHJvY2Vzc0lkID0gJGN1cnJlbnRQaWQiIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlDQogICAgaWYgKCRwYXJlbnRQcm9jKSB7ICRwYXJlbnRQaWQgPSAkcGFyZW50UHJvYy5QYXJlbnRQcm9jZXNzSWQgfQ0KfSBjYXRjaCB7fQ0KDQp0cnkgew0KICAgIEdldC1DaW1JbnN0YW5jZSBXaW4zMl9Qcm9jZXNzIC1GaWx0ZXIgIk5hbWUgPSAncG93ZXJzaGVsbC5leGUnIG9yIE5hbWUgPSAnY21kLmV4ZSciIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgV2hlcmUtT2JqZWN0IHsNCiAgICAgICAgJF8uUHJvY2Vzc0lkIC1uZSAkY3VycmVudFBpZCAtYW5kICRfLlByb2Nlc3NJZCAtbmUgJHBhcmVudFBpZCAtYW5kICgNCiAgICAgICAgICAgICRfLkNvbW1hbmRMaW5lIC1saWtlICIqR0lOLUFnZW50KiIgLW9yDQogICAgICAgICAgICAkXy5Db21tYW5kTGluZSAtbGlrZSAiKmFnZW50LWFwaSoiIC1vcg0KICAgICAgICAgICAgJF8uQ29tbWFuZExpbmUgLWxpa2UgIipHbG9iYWxcR0lOX0FnZW50X0NvcmVfTXV0ZXgqIg0KICAgICAgICApDQogICAgfSB8IEZvckVhY2gtT2JqZWN0IHsNCiAgICAgICAgdHJ5IHsgU3RvcC1Qcm9jZXNzIC1JZCAkXy5Qcm9jZXNzSWQgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30NCiAgICB9DQp9IGNhdGNoIHt9DQoNClN0YXJ0LVNsZWVwIC1NaWxsaXNlY29uZHMgNjAwDQoNCiMgNC4gUmVtb3ZlIFdpbmRvd3MgUmVnaXN0cnkgZW50cmllcw0KV3JpdGUtSG9zdCAiWypdIFJlbW92aW5nIHJlZ2lzdHJ5IGVudHJpZXMuLi4iIC1Gb3JlZ3JvdW5kQ29sb3IgQ3lhbg0KJHJlZ1BhdGhzID0gQCgNCiAgICAiSEtMTTpcU09GVFdBUkVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cVW5pbnN0YWxsXEdJTi1BZ2VudCIsDQogICAgIkhLTE06XFNPRlRXQVJFXEdJTi1BZ2VudCINCikNCmZvcmVhY2ggKCRycCBpbiAkcmVnUGF0aHMpIHsNCiAgICBpZiAoVGVzdC1QYXRoICRycCkgew0KICAgICAgICB0cnkgeyBSZW1vdmUtSXRlbSAtUGF0aCAkcnAgLVJlY3Vyc2UgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30NCiAgICB9DQp9DQoNCiMgNS4gQ2xlYW4gdXAgZGlyZWN0b3JpZXMNCldyaXRlLUhvc3QgIlsqXSBSZW1vdmluZyBHSU4tQWdlbnQgZmlsZXMgYW5kIGRpcmVjdG9yaWVzLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCiRkaXJzVG9QdXJnZSA9IEAoDQogICAgIiRlbnY6UHJvZ3JhbURhdGFcR0lOLUFnZW50IiwNCiAgICAiJGVudjpQcm9ncmFtRmlsZXNcR0lOLUFnZW50IiwNCiAgICAiJHtlbnY6UHJvZ3JhbUZpbGVzKHg4Nil9XEdJTi1BZ2VudCINCikNCmZvcmVhY2ggKCRkIGluICRkaXJzVG9QdXJnZSkgew0KICAgIGlmIChUZXN0LVBhdGggJGQpIHsNCiAgICAgICAgdHJ5IHsNCiAgICAgICAgICAgIEdldC1DaGlsZEl0ZW0gLVBhdGggJGQgLUZpbGUgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfCBGb3JFYWNoLU9iamVjdCB7DQogICAgICAgICAgICAgICAgaWYgKCRfLkZ1bGxOYW1lIC1uZSAkTXlJbnZvY2F0aW9uLk15Q29tbWFuZC5QYXRoKSB7DQogICAgICAgICAgICAgICAgICAgIHRyeSB7ICRfLklzUmVhZE9ubHkgPSAkZmFsc2U7IFJlbW92ZS1JdGVtIC1QYXRoICRfLkZ1bGxOYW1lIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB9IGNhdGNoIHt9DQogICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgfQ0KICAgICAgICB9IGNhdGNoIHt9DQogICAgfQ0KfQ0KDQojIDYuIERldGFjaGVkIHNlbGYtY2xlYW51cCBmb3IgcmVtYWluaW5nIGZvbGRlcg0KJHNjcmlwdFBhdGggPSAkTXlJbnZvY2F0aW9uLk15Q29tbWFuZC5QYXRoDQppZiAoLW5vdCAkc2NyaXB0UGF0aCkgeyAkc2NyaXB0UGF0aCA9ICIkZW52OlByb2dyYW1GaWxlc1xHSU4tQWdlbnRcdW5pbnN0YWxsLmNtZCIgfQ0KJHBhcmVudEZvbGRlciA9IFNwbGl0LVBhdGggLVBhcmVudCAkc2NyaXB0UGF0aA0KDQpXcml0ZS1Ib3N0ICIiDQpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBHcmVlbg0KV3JpdGUtSG9zdCAiICBbT0tdIEdJTi1BR0VOVCBIQVMgQkVFTiBDT01QTEVURUxZIEFORCBDTEVBTkxZIFJFTU9WRUQhICAgICAgICAgICAiIC1Gb3JlZ3JvdW5kQ29sb3IgR3JlZW4NCldyaXRlLUhvc3QgIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IiAtRm9yZWdyb3VuZENvbG9yIEdyZWVuDQpXcml0ZS1Ib3N0ICIiDQoNCiMgU3Bhd24gZGV0YWNoZWQgY21kIHRvIHJlbW92ZSB0aGUgZm9sZGVyIGl0c2VsZiBhZnRlciBleGl0DQppZiAoJHBhcmVudEZvbGRlciAtYW5kIChUZXN0LVBhdGggJHBhcmVudEZvbGRlcikpIHsNCiAgICBTdGFydC1Qcm9jZXNzIC1GaWxlUGF0aCAiY21kLmV4ZSIgLUFyZ3VtZW50TGlzdCAiL2MgcGluZyAxMjcuMC4wLjEgLW4gMyA+bnVsICYgcmQgL3MgL3EgYCJgIiRwYXJlbnRGb2xkZXJgImAiIiAtV2luZG93U3R5bGUgSGlkZGVuDQp9DQoNClN0YXJ0LVNsZWVwIC1TZWNvbmRzIDINCmV4aXQgMA0K"
+        [System.IO.File]::WriteAllBytes($uninstallerCmd, [System.Convert]::FromBase64String($uninstallerB64))
 
         # 9. Register in Windows Installed Apps (Add/Remove Programs)
         try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
-            Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v027" -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "QuietUninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "NoModify" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
-            Set-ItemProperty -Path $uninstallKey -Name "NoRepair" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v027" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "QuietUninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "NoModify" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "NoRepair" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {}
 
         # 10. Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
@@ -529,10 +389,8 @@ exit 0
         }
 
         $taskName = "GIN-Agent-Service"
-        $taskCmd = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
-
         schtasks.exe /delete /tn "$taskName" /f 2>&1 | Out-Null
-        schtasks.exe /create /tn "$taskName" /tr "$taskCmd" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
+        schtasks.exe /create /tn "$taskName" /tr "\`"$targetCmd\`" /service $selectedRegion" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
         schtasks.exe /run /tn "$taskName" 2>&1 | Out-Null
 
         $serviceStarted = $false
@@ -553,7 +411,7 @@ exit 0
         if (-not $serviceStarted) {
             try {
                 [void](Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
-                    CommandLine = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
+                    CommandLine = "`"$targetCmd`" /service $selectedRegion"
                 } -ErrorAction SilentlyContinue)
             } catch {}
         }
@@ -577,7 +435,7 @@ exit 0
             Write-Host "[*] Deployment finished. Window closing automatically..." -ForegroundColor DarkGray
             Start-Sleep -Milliseconds 600
         }
-        exit 0
+        [System.Environment]::Exit(0)
     }
 
     # ==========================================================================
@@ -645,10 +503,10 @@ exit 0
 
     # Ensure RDP & Shadow Policy
     try {
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
+        $null = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
         $tsPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
         if (-not (Test-Path $tsPolicy)) { New-Item -Path $tsPolicy -Force -ErrorAction SilentlyContinue | Out-Null }
-        Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
+        $null = Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
