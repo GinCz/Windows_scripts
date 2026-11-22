@@ -1,11 +1,19 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v026
+title GIN-Agent v027
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
 if /i "%~1"=="--service" goto :RUN_SERVICE
+
+:: If launched with /uninstall or --uninstall
+if /i "%~1"=="/uninstall" goto :RUN_UNINSTALL
+if /i "%~1"=="--uninstall" goto :RUN_UNINSTALL
+
+:: If launched with /silent or /update
+if /i "%~1"=="/silent" set "GIN_AGENT_SILENT=1"
+if /i "%~1"=="/update" set "GIN_AGENT_SILENT=1"
 
 :: Check for direct region parameter if passed via CLI
 if /i "%~1"=="/ru" set "GIN_AGENT_REGION=RU"
@@ -13,17 +21,21 @@ if /i "%~1"=="RU" set "GIN_AGENT_REGION=RU"
 if /i "%~1"=="/eu" set "GIN_AGENT_REGION=EU"
 if /i "%~1"=="EU" set "GIN_AGENT_REGION=EU"
 
-:: 1. Resilient Elevation Check for interactive installer
+if /i "%~2"=="/ru" set "GIN_AGENT_REGION=RU"
+if /i "%~2"=="RU" set "GIN_AGENT_REGION=RU"
+if /i "%~2"=="/eu" set "GIN_AGENT_REGION=EU"
+if /i "%~2"=="EU" set "GIN_AGENT_REGION=EU"
+
+:: 1. Resilient Elevation Check
 net session >nul 2>&1
 if %errorlevel% equ 0 goto :RUN_INSTALLER
 
 if not defined GIN_AGENT_ELEVATED (
     set GIN_AGENT_ELEVATED=1
-    if defined GIN_AGENT_REGION (
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -ArgumentList '%GIN_AGENT_REGION%' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
-    ) else (
-        powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
-    )
+    set "ARG_LINE="
+    if defined GIN_AGENT_REGION set "ARG_LINE=%GIN_AGENT_REGION%"
+    if defined GIN_AGENT_SILENT set "ARG_LINE=%ARG_LINE% /silent"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -ArgumentList '%ARG_LINE%' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
     if not errorlevel 1 exit /b 0
 )
 
@@ -34,6 +46,10 @@ goto :EXEC_PS
 :RUN_SERVICE
 set "GIN_AGENT_MODE=SERVICE"
 if not "%~2"=="" set "GIN_AGENT_REGION=%~2"
+goto :EXEC_PS
+
+:RUN_UNINSTALL
+set "GIN_AGENT_MODE=UNINSTALL"
 goto :EXEC_PS
 
 :EXEC_PS
@@ -50,20 +66,22 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" (
 set "PS_ERR=%errorlevel%"
 
 if "%GIN_AGENT_MODE%"=="INSTALL" (
-    if %PS_ERR% neq 0 (
-        echo.
-        echo ====================================================================
-        echo [ERROR] GIN-Agent execution halted with error code: %PS_ERR%
-        echo ====================================================================
-        echo.
-        pause
+    if not defined GIN_AGENT_SILENT (
+        if %PS_ERR% neq 0 (
+            echo.
+            echo ====================================================================
+            echo [ERROR] GIN-Agent execution halted with error code: %PS_ERR%
+            echo ====================================================================
+            echo.
+            pause
+        )
     )
 )
 
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v026 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v027 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -71,34 +89,35 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
-# Interactive Gateway Selector: 1. Europe (Default after 5s) / 2. Russia (Server 109)
-# ZERO External PS1 Files - 100% Standalone Polyglot CMD Architecture
-# FIX v026: All console output converted to ASCII/English to prevent Win32 error
-#           0x1F on systems with non-Unicode console codepage (Czech/Slovak/etc.)
+# Key v027 Additions:
+#   1. Standard Program Files Installation: C:\Program Files\GIN-Agent
+#   2. Full Turnkey Uninstaller: C:\Program Files\GIN-Agent\uninstall.cmd
+#      Registered in Windows Installed Apps (Control Panel / Add-Remove Programs)
+#   3. Autonomous Auto-Update Engine: Dual source (RU-109 for Russia, GitHub for Global)
+#   4. Double Telegram Alert Suppression: Local tag & Server-side persistent deduplication
 # ==============================================================================
 
 try {
     $ErrorActionPreference = "Continue"
 
-    # Fix: Force UTF-8 console output to prevent Win32 0x1F error on non-Unicode locales
     try {
         [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
         $OutputEncoding = [System.Text.Encoding]::UTF8
     } catch {}
 
-    # Universal TLS 1.2
     try { [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12 } catch {}
 
-    $installDir = "$env:ProgramData\GIN-Agent"
+    $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdV25 = "$installDir\GIN-Agent_Windows_v026.cmd"
+    $targetCmdV27 = "$installDir\GIN-Agent_Windows_v027.cmd"
+    $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
-    $serviceDesc = "Provides resilient background diagnostic connection and RDP shadow support for Vladimir Bulantsev (GinCz)."
+    $serviceDesc = "Provides resilient background diagnostic connection, auto-updates and RDP shadow support for Vladimir Bulantsev (GinCz)."
 
     $mode = $env:GIN_AGENT_MODE
     if (-not $mode) {
-        if ($env:GIN_AGENT_SCRIPT -and $env:GIN_AGENT_SCRIPT.ToLower().Contains("programdata")) {
+        if ($env:GIN_AGENT_SCRIPT -and ($env:GIN_AGENT_SCRIPT.ToLower().Contains("program files") -or $env:GIN_AGENT_SCRIPT.ToLower().Contains("programdata"))) {
             $mode = "SERVICE"
         } else {
             $mode = "INSTALL"
@@ -106,12 +125,104 @@ try {
     }
 
     # ==========================================================================
-    # MODE 1: INSTALLER (Interactive Region Selection & Service Deployment)
+    # MODE 0: UNINSTALLATION
+    # ==========================================================================
+    if ($mode -eq "UNINSTALL") {
+        Write-Host ""
+        Write-Host "====================================================================" -ForegroundColor Red
+        Write-Host "           GIN-AGENT - COMPLETE SYSTEM UNINSTALLATION               " -ForegroundColor Yellow
+        Write-Host "====================================================================" -ForegroundColor Red
+        Write-Host "[*] Stopping and removing GIN-Agent services and scheduled tasks..." -ForegroundColor Cyan
+
+        $tasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
+        foreach ($t in $tasks) {
+            try { schtasks.exe /end /tn "$t" 2>&1 | Out-Null } catch {}
+            try { schtasks.exe /delete /tn "$t" /f 2>&1 | Out-Null } catch {}
+        }
+
+        $services = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
+        foreach ($s in $services) {
+            try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
+            try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
+        }
+
+        $currentPid = $PID
+        $parentPid = 0
+        try {
+            $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
+            if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
+        } catch {}
+
+        try {
+            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
+                    $_.CommandLine -like "*GIN-Agent*" -or
+                    $_.CommandLine -like "*agent-api*" -or
+                    $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*"
+                )
+            } | ForEach-Object {
+                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+            }
+        } catch {}
+
+        Start-Sleep -Milliseconds 600
+
+        Write-Host "[*] Removing registry entries..." -ForegroundColor Cyan
+        $regPaths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent",
+            "HKLM:\SOFTWARE\GIN-Agent"
+        )
+        foreach ($rp in $regPaths) {
+            if (Test-Path $rp) {
+                try { Remove-Item -Path $rp -Recurse -Force -ErrorAction SilentlyContinue } catch {}
+            }
+        }
+
+        Write-Host "[*] Removing GIN-Agent files and directories..." -ForegroundColor Cyan
+        $dirsToPurge = @(
+            "$env:ProgramData\GIN-Agent",
+            "$env:ProgramFiles\GIN-Agent",
+            "${env:ProgramFiles(x86)}\GIN-Agent"
+        )
+        foreach ($d in $dirsToPurge) {
+            if (Test-Path $d) {
+                try {
+                    Get-ChildItem -Path $d -File -ErrorAction SilentlyContinue | ForEach-Object {
+                        if ($_.FullName -ne $MyInvocation.MyCommand.Path) {
+                            try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
+                        }
+                    }
+                } catch {}
+            }
+        }
+
+        $scriptPath = $MyInvocation.MyCommand.Path
+        if (-not $scriptPath) { $scriptPath = "$installDir\GIN-Agent.cmd" }
+        $parentFolder = Split-Path -Parent $scriptPath
+
+        Write-Host ""
+        Write-Host "====================================================================" -ForegroundColor Green
+        Write-Host "  [OK] GIN-AGENT HAS BEEN COMPLETELY AND CLEANLY REMOVED!           " -ForegroundColor Green
+        Write-Host "====================================================================" -ForegroundColor Green
+        Write-Host ""
+
+        if ($parentFolder -and (Test-Path $parentFolder)) {
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c ping 127.0.0.1 -n 3 >nul & rd /s /q `"`"$parentFolder`"`"" -WindowStyle Hidden
+        }
+
+        Start-Sleep -Seconds 2
+        exit 0
+    }
+
+    # ==========================================================================
+    # MODE 1: INSTALLER (Interactive / Silent Deployment)
     # ==========================================================================
     if ($mode -ne "SERVICE") {
-    # Disable QuickEdit Mode to prevent console freezing on mouse clicks
-    try {
-        $cs = @"
+        $isSilent = ($env:GIN_AGENT_SILENT -eq "1")
+
+        if (-not $isSilent) {
+            try {
+                $cs = @"
 using System;
 using System.Runtime.InteropServices;
 public class QuickEditFix {
@@ -125,27 +236,38 @@ public class QuickEditFix {
         IntPtr h = GetStdHandle(-10);
         uint m;
         if (GetConsoleMode(h, out m)) {
-            m &= ~0x0040u; // disable ENABLE_QUICK_EDIT_MODE
-            m |= 0x0080u;  // enable ENABLE_EXTENDED_FLAGS
+            m &= ~0x0040u;
+            m |= 0x0080u;
             SetConsoleMode(h, m);
         }
     }
 }
 "@
-        Add-Type -TypeDefinition $cs -ErrorAction SilentlyContinue
-        [QuickEditFix]::Disable()
-    } catch {}
+                Add-Type -TypeDefinition $cs -ErrorAction SilentlyContinue
+                [QuickEditFix]::Disable()
+            } catch {}
 
-        Write-Host ""
-        Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v026 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
-        Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
-        Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
-        Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
+            Write-Host ""
+            Write-Host "====================================================================" -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v027 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "====================================================================" -ForegroundColor Cyan
+            Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
+            Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
+            Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
+        }
 
         $selectedRegion = $env:GIN_AGENT_REGION
         if (-not $selectedRegion) {
+            $regFilePrev = "$installDir\region.txt"
+            $oldRegFile = "$env:ProgramData\GIN-Agent\region.txt"
+            if (Test-Path $regFilePrev) {
+                try { $selectedRegion = (Get-Content -Path $regFilePrev -Raw -ErrorAction SilentlyContinue).Trim() } catch {}
+            } elseif (Test-Path $oldRegFile) {
+                try { $selectedRegion = (Get-Content -Path $oldRegFile -Raw -ErrorAction SilentlyContinue).Trim() } catch {}
+            }
+        }
+
+        if (-not $selectedRegion -and -not $isSilent) {
             $selectedRegion = "EU"
             $secondsLeft = 1
             try {
@@ -176,18 +298,22 @@ public class QuickEditFix {
             }
         }
 
-        Write-Host ""
-        if ($selectedRegion -eq "RU") {
-            Write-Host "[OK] Region selected: RUSSIA (Server 109 - 212.109.223.109)" -ForegroundColor Yellow
-        } else {
-            Write-Host "[OK] Region selected: EUROPE (Server_222 - 152.53.182.222)" -ForegroundColor Green
-        }
-        Write-Host ""
+        if (-not $selectedRegion) { $selectedRegion = "EU" }
 
-        Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "         GIN-AGENT v026 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
-        Write-Host "====================================================================" -ForegroundColor Cyan
-        Write-Host "[*] Stopping and removing all previous agent versions..." -ForegroundColor Yellow
+        if (-not $isSilent) {
+            Write-Host ""
+            if ($selectedRegion -eq "RU") {
+                Write-Host "[OK] Region selected: RUSSIA (Server 109 - 212.109.223.109)" -ForegroundColor Yellow
+            } else {
+                Write-Host "[OK] Region selected: EUROPE (Server_222 - 152.53.182.222)" -ForegroundColor Green
+            }
+            Write-Host ""
+
+            Write-Host "====================================================================" -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v027 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "====================================================================" -ForegroundColor Cyan
+            Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
+        }
 
         # 1. Stop and remove any legacy Windows Services (sc.exe)
         $oldServices = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
@@ -196,7 +322,7 @@ public class QuickEditFix {
             try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
         }
 
-        # 2. Stop and remove all running scheduled task instances
+        # 2. Stop and remove running scheduled task instances
         $oldTasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
         foreach ($ot in $oldTasks) {
             try { schtasks.exe /end /tn $ot 2>&1 | Out-Null } catch {}
@@ -211,7 +337,6 @@ public class QuickEditFix {
             if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
         } catch {}
 
-        # Kill previous powershell and cmd instances running GIN-Agent
         try {
             Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
                 $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
@@ -226,23 +351,26 @@ public class QuickEditFix {
 
         Start-Sleep -Milliseconds 600
 
-        # Deploy Directory and CMD file (Zero PS1 files)
+        # 4. Clean up legacy ProgramData folder
+        $legacyDir = "$env:ProgramData\GIN-Agent"
+        if (Test-Path $legacyDir) {
+            try {
+                Get-ChildItem -Path $legacyDir -File -ErrorAction SilentlyContinue | ForEach-Object {
+                    try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
+                }
+                Remove-Item -Path $legacyDir -Recurse -Force -ErrorAction SilentlyContinue
+            } catch {}
+        }
+
+        # 5. Create Program Files directory
         if (-not (Test-Path $installDir)) {
             New-Item -Path $installDir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null
         }
 
-        # Clean purge of ALL obsolete files in installDir for a clean installation
-        Get-ChildItem -Path $installDir -File -ErrorAction SilentlyContinue | ForEach-Object {
-            try {
-                $_.IsReadOnly = $false
-                Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
-            } catch {}
-        }
-
-        # Save selected region configuration
+        # 6. Save region configuration
         [System.IO.File]::WriteAllText("$installDir\region.txt", $selectedRegion, [System.Text.Encoding]::UTF8)
 
-        # Copy the single CMD file to installation target with safe overwrite
+        # 7. Copy single CMD file to installation target
         $sourceScript = $env:GIN_AGENT_SCRIPT
         if (-not $sourceScript -or (-not (Test-Path $sourceScript))) {
             $sourceScript = $MyInvocation.MyCommand.Path
@@ -256,16 +384,149 @@ public class QuickEditFix {
                     [System.IO.File]::WriteAllBytes($targetCmd, [System.IO.File]::ReadAllBytes($sourceScript))
                 } catch {}
             }
-            try { Copy-Item -Path $sourceScript -Destination $targetCmdV25 -Force -ErrorAction SilentlyContinue } catch {}
+            try { Copy-Item -Path $sourceScript -Destination $targetCmdV27 -Force -ErrorAction SilentlyContinue } catch {}
         } else {
             if ($raw) {
                 try { [System.IO.File]::WriteAllText($targetCmd, $raw, [System.Text.Encoding]::UTF8) } catch {}
-                try { [System.IO.File]::WriteAllText($targetCmdV25, $raw, [System.Text.Encoding]::UTF8) } catch {}
+                try { [System.IO.File]::WriteAllText($targetCmdV27, $raw, [System.Text.Encoding]::UTF8) } catch {}
             }
         }
 
-        # Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
-        Write-Host "[*] Registering permanent SYSTEM background service ($selectedRegion)..." -ForegroundColor Cyan
+        # 8. Deploy uninstaller script into Program Files\GIN-Agent\uninstall.cmd
+        $uninstallerContent = @'
+<# :
+@echo off
+setlocal DisableDelayedExpansion
+title GIN-Agent Uninstaller
+
+net session >nul 2>&1
+if %errorlevel% equ 0 goto :RUN_UNINSTALL
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "try { Start-Process -FilePath '%~f0' -Verb RunAs -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+exit /b %errorlevel%
+
+:RUN_UNINSTALL
+set "PS_EXE=powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" (
+    set "PS_EXE=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+) else if exist "%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" (
+    set "PS_EXE=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+)
+
+"%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "$raw = [System.IO.File]::ReadAllText('%~f0', [System.Text.Encoding]::UTF8); & ([ScriptBlock]::Create($raw))"
+set "PS_ERR=%errorlevel%"
+exit /b %PS_ERR%
+#>
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+} catch {}
+
+Write-Host ""
+Write-Host "====================================================================" -ForegroundColor Red
+Write-Host "           GIN-AGENT - COMPLETE SYSTEM UNINSTALLATION               " -ForegroundColor Yellow
+Write-Host "====================================================================" -ForegroundColor Red
+Write-Host "[*] Stopping and removing GIN-Agent services and scheduled tasks..." -ForegroundColor Cyan
+
+$tasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
+foreach ($t in $tasks) {
+    try { schtasks.exe /end /tn "$t" 2>&1 | Out-Null } catch {}
+    try { schtasks.exe /delete /tn "$t" /f 2>&1 | Out-Null } catch {}
+}
+
+$services = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
+foreach ($s in $services) {
+    try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
+    try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
+}
+
+$currentPid = $PID
+$parentPid = 0
+try {
+    $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
+    if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
+} catch {}
+
+try {
+    Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
+        $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
+            $_.CommandLine -like "*GIN-Agent*" -or
+            $_.CommandLine -like "*agent-api*" -or
+            $_.CommandLine -like "*Global\GIN_Agent_Core_Mutex*"
+        )
+    } | ForEach-Object {
+        try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+    }
+} catch {}
+
+Start-Sleep -Milliseconds 600
+
+Write-Host "[*] Removing registry entries..." -ForegroundColor Cyan
+$regPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent",
+    "HKLM:\SOFTWARE\GIN-Agent"
+)
+foreach ($rp in $regPaths) {
+    if (Test-Path $rp) {
+        try { Remove-Item -Path $rp -Recurse -Force -ErrorAction SilentlyContinue } catch {}
+    }
+}
+
+Write-Host "[*] Removing GIN-Agent files and directories..." -ForegroundColor Cyan
+$dirsToPurge = @(
+    "$env:ProgramData\GIN-Agent",
+    "$env:ProgramFiles\GIN-Agent",
+    "${env:ProgramFiles(x86)}\GIN-Agent"
+)
+foreach ($d in $dirsToPurge) {
+    if (Test-Path $d) {
+        try {
+            Get-ChildItem -Path $d -File -ErrorAction SilentlyContinue | ForEach-Object {
+                if ($_.FullName -ne $MyInvocation.MyCommand.Path) {
+                    try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
+                }
+            }
+        } catch {}
+    }
+}
+
+$scriptPath = $MyInvocation.MyCommand.Path
+if (-not $scriptPath) { $scriptPath = "$env:ProgramFiles\GIN-Agent\uninstall.cmd" }
+$parentFolder = Split-Path -Parent $scriptPath
+
+Write-Host ""
+Write-Host "====================================================================" -ForegroundColor Green
+Write-Host "  [OK] GIN-AGENT HAS BEEN COMPLETELY AND CLEANLY REMOVED!           " -ForegroundColor Green
+Write-Host "====================================================================" -ForegroundColor Green
+Write-Host ""
+
+if ($parentFolder -and (Test-Path $parentFolder)) {
+    Start-Process -FilePath "cmd.exe" -ArgumentList "/c ping 127.0.0.1 -n 3 >nul & rd /s /q `"`"$parentFolder`"`"" -WindowStyle Hidden
+}
+
+Start-Sleep -Seconds 2
+exit 0
+'@
+        [System.IO.File]::WriteAllText($uninstallerCmd, $uninstallerContent.Replace("`n", "`r`n"), [System.Text.Encoding]::UTF8)
+
+        # 9. Register in Windows Installed Apps (Add/Remove Programs)
+        try {
+            $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
+            if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
+            Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v027" -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "QuietUninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "NoModify" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+            Set-ItemProperty -Path $uninstallKey -Name "NoRepair" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+        } catch {}
+
+        # 10. Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
+        if (-not $isSilent) {
+            Write-Host "[*] Registering permanent SYSTEM background service ($selectedRegion)..." -ForegroundColor Cyan
+        }
 
         $taskName = "GIN-Agent-Service"
         $taskCmd = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
@@ -274,7 +535,6 @@ public class QuickEditFix {
         schtasks.exe /create /tn "$taskName" /tr "$taskCmd" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
         schtasks.exe /run /tn "$taskName" 2>&1 | Out-Null
 
-        # Wait up to 3s to verify background service running under SYSTEM
         $serviceStarted = $false
         for ($w = 0; $w -lt 6; $w++) {
             Start-Sleep -Milliseconds 500
@@ -290,10 +550,7 @@ public class QuickEditFix {
             }
         }
 
-        # If schtasks could not start it (e.g. non-SYSTEM environment), launch detached via WMI
-        # Note: WMI Win32_Process.Create spawns under WmiPrvSE/services, completely detached from console!
         if (-not $serviceStarted) {
-            Write-Host "[*] Launching detached background worker via WMI..." -ForegroundColor Yellow
             try {
                 [void](Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
                     CommandLine = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
@@ -301,26 +558,25 @@ public class QuickEditFix {
             } catch {}
         }
 
-        $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
-
-        Write-Host ""
-        Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host "  [+] GIN-Agent v026 deployed cleanly as a permanent background service!" -ForegroundColor Green
-        Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
-        Write-Host "  [+] Service is fully detached: closing this window will NOT stop it." -ForegroundColor Green
-        Write-Host "  [+] Compatibility: Windows 10 (32-bit / 64-bit), Windows 11." -ForegroundColor White
-        Write-Host "  [+] Architecture: standalone single CMD file (no external PS1)." -ForegroundColor White
-        Write-Host "  [+] Task: GIN-Agent-Service (Auto-start on OS boot, $selectedRegion)" -ForegroundColor Cyan
-        Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-        Write-Host ""
-        Write-Host "====================================================================" -ForegroundColor Green
-        Write-Host "  [OK] INSTALLATION COMPLETED SUCCESSFULLY!" -ForegroundColor Green
-        Write-Host "====================================================================" -ForegroundColor Green
-        Write-Host ""
-
-        # Instant autonomous clean close (Zero keypresses, zero hanging)
-        Write-Host "[*] Deployment finished. Window closing automatically..." -ForegroundColor DarkGray
-        Start-Sleep -Milliseconds 600
+        if (-not $isSilent) {
+            $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
+            Write-Host ""
+            Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
+            Write-Host "  [+] GIN-Agent v027 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] Location: $installDir" -ForegroundColor White
+            Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
+            Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
+            Write-Host "  [+] Auto-Update: enabled (Dual-channel: RU-109 / GitHub)" -ForegroundColor Green
+            Write-Host "  [+] Task: GIN-Agent-Service (Auto-start on OS boot, $selectedRegion)" -ForegroundColor Cyan
+            Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
+            Write-Host ""
+            Write-Host "====================================================================" -ForegroundColor Green
+            Write-Host "  [OK] INSTALLATION COMPLETED SUCCESSFULLY!" -ForegroundColor Green
+            Write-Host "====================================================================" -ForegroundColor Green
+            Write-Host ""
+            Write-Host "[*] Deployment finished. Window closing automatically..." -ForegroundColor DarkGray
+            Start-Sleep -Milliseconds 600
+        }
         exit 0
     }
 
@@ -328,7 +584,7 @@ public class QuickEditFix {
     # MODE 2: SERVICE WORKER (Background execution loop)
     # ==========================================================================
     $token = "GinCz-Remote-2026"
-    $headers = @{ "Token" = $token; "X-Host" = $env:COMPUTERNAME; "X-Pin" = $pin }
+    $headers = @{ "Token" = $token; "X-Host" = $env:COMPUTERNAME }
 
     # Singleton Mutex to prevent duplicate service instances
     $createdNew = $false
@@ -396,9 +652,7 @@ public class QuickEditFix {
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
-        # -------------------------------------------------------------------------
-    # 1. HARDWARE GIN-PIN CALCULATION (Deterministic WMI)
-    # -------------------------------------------------------------------------
+    # Hardware GIN-PIN calculation (Deterministic WMI)
     $pin = "100-000-001"
     try {
         $uuid = (Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue).UUID
@@ -416,56 +670,7 @@ public class QuickEditFix {
         $pin = "$($dStr.Substring(0,3))-$($dStr.Substring(3,3))-$($dStr.Substring(6,3))"
     } catch {}
 
-    # -------------------------------------------------------------------------
-    # 2. CLONE AUTO-DETECTION & RUSTDESK ID RE-INITIALIZATION
-    # -------------------------------------------------------------------------
-    $pinFile = "$installDir\hardware_pin.txt"
-    $isCloned = $false
-    if (Test-Path $pinFile) {
-        try {
-            $savedPin = (Get-Content -Path $pinFile -Raw -ErrorAction SilentlyContinue).Trim()
-            if ($savedPin -and $savedPin -ne $pin) {
-                $isCloned = $true
-            }
-        } catch {}
-    }
-
-    if ($isCloned) {
-        try {
-            Stop-Service RustDesk -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 1
-
-            $allTomlFiles = @(
-                "$env:APPDATA\RustDesk\config\RustDesk.toml",
-                "$env:APPDATA\RustDesk\config\rustdesk.toml",
-                "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml",
-                "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\rustdesk.toml"
-            )
-            Get-ChildItem "$env:SystemDrive\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                $allTomlFiles += "$($_.FullName)\AppData\Roaming\RustDesk\config\RustDesk.toml"
-                $allTomlFiles += "$($_.FullName)\AppData\Roaming\RustDesk\config\rustdesk.toml"
-            }
-
-            foreach ($tf in $allTomlFiles) {
-                if (Test-Path $tf) {
-                    try {
-                        $c = Get-Content -Path $tf -Raw -ErrorAction SilentlyContinue
-                        if ($c) {
-                            $newC = $c -replace '(?m)^\s*id\s*=.*(\r?\n)?', ''
-                            [System.IO.File]::WriteAllText($tf, $newC, [System.Text.Encoding]::UTF8)
-                        }
-                    } catch {}
-                }
-            }
-
-            Restart-Service RustDesk -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 2
-        } catch {}
-    }
-
-    try {
-        [System.IO.File]::WriteAllText($pinFile, $pin, [System.Text.Encoding]::UTF8)
-    } catch {}
+    $headers["X-Pin"] = $pin
 
     # ULTARIX Policy: Enforce RustDesk unattended password 'Ultarix-22'
     try {
@@ -520,18 +725,9 @@ public class QuickEditFix {
         foreach ($cp in $rdPaths) {
             if (Test-Path $cp) {
                 $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                if ($c -match '(?m)^\s*id\s*=\s*[''''"]?(\d{6,12})[''''"]?') {
-                    $rustdeskId = $matches[1]; break
-                }
-            }
-        }
-        if (-not $rustdeskId) {
-            foreach ($cp in $rdPaths) {
-                if (Test-Path $cp) {
-                    $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                    if ($c -match 'id\s*=\s*[''''"]?([0-9a-zA-Z_-]+)[''''"]?') {
-                        $rustdeskId = $matches[1]; break
-                    }
+                if ($c -match '(?m)^\s*id\s*=\s*[''"]?(\d{6,12})[''"]?') {
+                    $rustdeskId = $matches[1]
+                    break
                 }
             }
         }
@@ -562,46 +758,92 @@ public class QuickEditFix {
         }
     } catch {}
 
-    # Hardware GIN-PIN calculation (Deterministic)
-    $pin = "100-000-001"
-    try {
-        $uuid = (Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue).UUID
-        $board = (Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue).SerialNumber
-        if (-not $uuid) { $uuid = $env:COMPUTERNAME }
-        if (-not $board) { $board = "DefaultBoard" }
-        $rawPin = "hw_win_${uuid}_${board}"
-        $sha = [System.Security.Cryptography.SHA256]::Create()
-        $bytes = [System.Text.Encoding]::UTF8.GetBytes($rawPin)
-        $digest = $sha.ComputeHash($bytes)
-        if ([BitConverter]::IsLittleEndian) { [Array]::Reverse($digest, 0, 8) }
-        $num = [Math]::Abs([BitConverter]::ToInt64($digest, 0))
-        $code = ($num % 900000000) + 100000000
-        $dStr = $code.ToString("D9")
-        $pin = "$($dStr.Substring(0,3))-$($dStr.Substring(3,3))-$($dStr.Substring(6,3))"
-    } catch {}
+    # Registration & Telegram Alert Suppression Check
+    $tagFile = "$installDir\registered.tag"
+    $isFirstRegistration = -not (Test-Path $tagFile)
 
-    # Initial Registration
     try {
         $regPayload = @{
-            pin         = $pin
-            host        = $env:COMPUTERNAME
-            user        = $env:USERNAME
-            admin       = $true
-            os          = $osName
-            cpu         = $cpuName
-            ram         = $ramStr
-            disk        = $diskStr
-            rustdesk_id = $rustdeskId
-            rdp_ready   = $true
-            region      = $region
-            gateway     = $activeGatewayName
-            version     = "v026"
+            pin             = $pin
+            host            = $env:COMPUTERNAME
+            user            = $env:USERNAME
+            admin           = $true
+            os              = $osName
+            cpu             = $cpuName
+            ram             = $ramStr
+            disk            = $diskStr
+            rustdesk_id     = $rustdeskId
+            rdp_ready       = $true
+            region          = $region
+            gateway         = $activeGatewayName
+            version         = "v027"
+            first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
+        if ($isFirstRegistration) {
+            [System.IO.File]::WriteAllText($tagFile, (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), [System.Text.Encoding]::UTF8)
+        }
     } catch {}
+
+    # Function: Auto-Update Check
+    function Check-GINAgentUpdate {
+        param([string]$currentVer = "v027", [string]$activeRegion = "EU")
+        try {
+            $versionUrls = @()
+            if ($activeRegion -eq "RU") {
+                $versionUrls += "http://212.109.223.109/agent/version.txt"
+                $versionUrls += "https://rd.gincz.com/agent/version.txt"
+                $versionUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/version.txt"
+            } else {
+                $versionUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/version.txt"
+                $versionUrls += "http://212.109.223.109/agent/version.txt"
+                $versionUrls += "https://remote.gincz.com/agent-api/version.txt"
+            }
+
+            $remoteVer = ""
+            foreach ($vu in $versionUrls) {
+                try {
+                    $v = (Invoke-RestMethod -Uri $vu -TimeoutSec 4 -ErrorAction Stop).Trim()
+                    if ($v -match '^v\d{3}$') {
+                        $remoteVer = $v
+                        break
+                    }
+                } catch {}
+            }
+
+            if ($remoteVer -and ($remoteVer -gt $currentVer)) {
+                $downloadUrls = @()
+                if ($activeRegion -eq "RU") {
+                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://rd.gincz.com/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
+                } else {
+                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://remote.gincz.com/agent-api/GIN-Agent_Windows.cmd"
+                }
+
+                $tempUpdateFile = "$env:TEMP\GIN-Agent_Update_$remoteVer.cmd"
+                foreach ($du in $downloadUrls) {
+                    try {
+                        Invoke-WebRequest -Uri $du -OutFile $tempUpdateFile -TimeoutSec 20 -ErrorAction Stop
+                        if ((Test-Path $tempUpdateFile) -and ((Get-Item $tempUpdateFile).Length -gt 15000)) {
+                            $sample = Get-Content -Path $tempUpdateFile -TotalCount 25 -Raw
+                            if ($sample -like "*GIN-Agent*") {
+                                Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent /service $activeRegion`"" -WindowStyle Hidden
+                                exit 0
+                            }
+                        }
+                    } catch {}
+                }
+            }
+        } catch {}
+    }
 
     # Background Polling Loop
     $loopCount = 0
+    $updateCheckCounter = 0
+
     while ($true) {
         try {
             $pollUrl = "$serverUrl/poll?h=$([System.Uri]::EscapeDataString($env:COMPUTERNAME))&pin=$pin"
@@ -629,51 +871,28 @@ public class QuickEditFix {
         if ($loopCount -ge 6) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v026&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v027&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
+
+        # Auto-Update Check: Initial check after 4 loops (~60s), then every 960 loops (~4 hours)
+        $updateCheckCounter++
+        if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 960) {
+            if ($updateCheckCounter -ge 960) { $updateCheckCounter = 5 }
+            Check-GINAgentUpdate -currentVer "v027" -activeRegion $region
+        }
+
         Start-Sleep -Seconds 5
     }
 
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v026:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v027:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
-    Write-Host "  Stack:   $($_.ScriptStackTrace)" -ForegroundColor DarkRed
     Write-Host "====================================================================" -ForegroundColor Red
     Write-Host ""
-    if ($mode -ne "SERVICE") {
-    # Disable QuickEdit Mode to prevent console freezing on mouse clicks
-    try {
-        $cs = @"
-using System;
-using System.Runtime.InteropServices;
-public class QuickEditFix {
-    [DllImport("kernel32.dll", SetLastError = true)]
-    static extern IntPtr GetStdHandle(int nStdHandle);
-    [DllImport("kernel32.dll")]
-    static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-    [DllImport("kernel32.dll")]
-    static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
-    public static void Disable() {
-        IntPtr h = GetStdHandle(-10);
-        uint m;
-        if (GetConsoleMode(h, out m)) {
-            m &= ~0x0040u; // disable ENABLE_QUICK_EDIT_MODE
-            m |= 0x0080u;  // enable ENABLE_EXTENDED_FLAGS
-            SetConsoleMode(h, m);
-        }
-    }
-}
-"@
-        Add-Type -TypeDefinition $cs -ErrorAction SilentlyContinue
-        [QuickEditFix]::Disable()
-    } catch {}
-
-        Write-Host "  Press any key to exit..." -ForegroundColor Yellow
-        try { $null = [System.Console]::ReadKey($true) } catch { pause }
-    }
+    exit 1
 }

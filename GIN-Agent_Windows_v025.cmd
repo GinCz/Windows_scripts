@@ -1,4 +1,4 @@
-<# :
+﻿<# :
 @echo off
 setlocal DisableDelayedExpansion
 title GIN-Agent v025
