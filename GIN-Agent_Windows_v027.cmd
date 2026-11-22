@@ -672,13 +672,14 @@ try {
             if ($remoteVer -and ($remoteVer -gt $currentVer)) {
                 $downloadUrls = @()
                 if ($activeRegion -eq "RU") {
-                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "https://rd.gincz.com/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows_$remoteVer.cmd"
+                    $downloadUrls += "https://rd.gincz.com/GIN-Agent_Windows_$remoteVer.cmd"
+                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows_$remoteVer.cmd"
                 } else {
-                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "https://remote.gincz.com/agent-api/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows_$remoteVer.cmd"
+                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows_$remoteVer.cmd"
+                    $downloadUrls += "https://remote.gincz.com/downloads/GIN-Agent_Windows_$remoteVer.cmd"
+                    $downloadUrls += "https://remote.gincz.com/agent-api/GIN-Agent_Windows_$remoteVer.cmd"
                 }
 
                 $tempUpdateFile = "$env:TEMP\GIN-Agent_Update_$remoteVer.cmd"
@@ -700,7 +701,8 @@ try {
 
     # Background Polling Loop
     $loopCount = 0
-    $updateCheckCounter = 0
+    $lastUpdateCheck = [DateTime]::MinValue
+    $startupTime = [DateTime]::UtcNow
 
     while ($true) {
         try {
@@ -734,10 +736,19 @@ try {
             } catch {}
         }
 
-        # Auto-Update Check: Initial check after 4 loops (~60s), then every 960 loops (~4 hours)
-        $updateCheckCounter++
-        if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 960) {
-            if ($updateCheckCounter -ge 960) { $updateCheckCounter = 5 }
+        # Auto-Update Check: Initial check 60s after startup, then strictly every 6 hours
+        $now = [DateTime]::UtcNow
+        $shouldCheck = $false
+        if ($lastUpdateCheck -eq [DateTime]::MinValue) {
+            if (($now - $startupTime).TotalSeconds -ge 60) {
+                $shouldCheck = $true
+            }
+        } elseif (($now - $lastUpdateCheck).TotalHours -ge 6.0) {
+            $shouldCheck = $true
+        }
+
+        if ($shouldCheck) {
+            $lastUpdateCheck = $now
             Check-GINAgentUpdate -currentVer "v027" -activeRegion $region
         }
 
