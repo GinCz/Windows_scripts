@@ -1,11 +1,15 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v027
+title GIN-Agent v028
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
 if /i "%~1"=="--service" goto :RUN_SERVICE
+
+:: If launched with /checkupdate or --checkupdate
+if /i "%~1"=="/checkupdate" goto :RUN_CHECKUPDATE
+if /i "%~1"=="--checkupdate" goto :RUN_CHECKUPDATE
 
 :: If launched with /uninstall or --uninstall
 if /i "%~1"=="/uninstall" goto :RUN_UNINSTALL
@@ -49,6 +53,11 @@ set "GIN_AGENT_MODE=SERVICE"
 if not "%~2"=="" set "GIN_AGENT_REGION=%~2"
 goto :EXEC_PS
 
+:RUN_CHECKUPDATE
+set "GIN_AGENT_MODE=CHECKUPDATE"
+if not "%~2"=="" set "GIN_AGENT_REGION=%~2"
+goto :EXEC_PS
+
 :RUN_UNINSTALL
 set "GIN_AGENT_MODE=UNINSTALL"
 goto :EXEC_PS
@@ -82,7 +91,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v027 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v028 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -110,7 +119,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdV27 = "$installDir\GIN-Agent_Windows_v027.cmd"
+    $targetCmdV27 = "$installDir\GIN-Agent_Windows_v028.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -125,6 +134,78 @@ try {
         }
     }
 
+    # Function: Auto-Update Check
+    function Check-GINAgentUpdate {
+        param([string]$currentVer = "v028", [string]$activeRegion = "EU")
+        try {
+            $versionUrls = @()
+            if ($activeRegion -eq "RU") {
+                $versionUrls += "http://212.109.223.109/agent/version.txt"
+                $versionUrls += "https://rd.gincz.com/agent/version.txt"
+                $versionUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/version.txt"
+            } else {
+                $versionUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/version.txt"
+                $versionUrls += "http://212.109.223.109/agent/version.txt"
+                $versionUrls += "https://remote.gincz.com/agent-api/version.txt"
+            }
+
+            $remoteVer = ""
+            foreach ($vu in $versionUrls) {
+                try {
+                    $v = (Invoke-RestMethod -Uri $vu -TimeoutSec 4 -ErrorAction Stop).Trim()
+                    if ($v -match '^v\d{3}$') {
+                        $remoteVer = $v
+                        break
+                    }
+                } catch {}
+            }
+
+            if ($remoteVer -and ($remoteVer -gt $currentVer)) {
+                $downloadUrls = @()
+                if ($activeRegion -eq "RU") {
+                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://rd.gincz.com/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
+                } else {
+                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
+                    $downloadUrls += "https://remote.gincz.com/agent-api/GIN-Agent_Windows.cmd"
+                }
+
+                $tempUpdateFile = "$env:TEMP\GIN-Agent_Update_$remoteVer.cmd"
+                foreach ($du in $downloadUrls) {
+                    try {
+                        Invoke-WebRequest -Uri $du -OutFile $tempUpdateFile -TimeoutSec 20 -ErrorAction Stop
+                        if ((Test-Path $tempUpdateFile) -and ((Get-Item $tempUpdateFile).Length -gt 15000)) {
+                            $sample = Get-Content -Path $tempUpdateFile -TotalCount 25 -Raw
+                            if ($sample -like "*GIN-Agent*") {
+                                Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent /service $activeRegion`"" -WindowStyle Hidden
+                                exit 0
+                            }
+                        }
+                    } catch {}
+                }
+            }
+        } catch {}
+    }
+
+
+    # ==========================================================================
+    # MODE 1.5: STANDALONE UPDATE CHECK (/checkupdate - Scheduled on logon +30m)
+    # ==========================================================================
+    if ($mode -eq "CHECKUPDATE") {
+        $reg = $env:GIN_AGENT_REGION
+        if (-not $reg) {
+            $regFile = "$installDir\region.txt"
+            if (Test-Path $regFile) {
+                try { $reg = (Get-Content $regFile -Raw).Trim() } catch {}
+            }
+        }
+        if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
+        Check-GINAgentUpdate -currentVer "v028" -activeRegion $reg
+        [System.Environment]::Exit(0)
+    }
+
     # ==========================================================================
     # MODE 0: UNINSTALLATION
     # ==========================================================================
@@ -135,7 +216,7 @@ try {
         Write-Host "====================================================================" -ForegroundColor Red
         Write-Host "[*] Stopping and removing GIN-Agent services and scheduled tasks..." -ForegroundColor Cyan
 
-        $tasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
+        $tasks = @("GIN-Agent-Service", "GIN-Agent-Update-Logon", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
         foreach ($t in $tasks) {
             try { schtasks.exe /end /tn "$t" 2>&1 | Out-Null } catch {}
             try { schtasks.exe /delete /tn "$t" /f 2>&1 | Out-Null } catch {}
@@ -297,7 +378,7 @@ try {
         }
 
         # 2. Stop and remove running scheduled task instances
-        $oldTasks = @("GIN-Agent-Service", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
+        $oldTasks = @("GIN-Agent-Service", "GIN-Agent-Update-Logon", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
         foreach ($ot in $oldTasks) {
             try { schtasks.exe /end /tn $ot 2>&1 | Out-Null } catch {}
             try { schtasks.exe /delete /tn $ot /f 2>&1 | Out-Null } catch {}
@@ -374,7 +455,7 @@ try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v027" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v028" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -392,6 +473,11 @@ try {
         schtasks.exe /delete /tn "$taskName" /f 2>&1 | Out-Null
         schtasks.exe /create /tn "$taskName" /tr "\`"$targetCmd\`" /service $selectedRegion" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
         schtasks.exe /run /tn "$taskName" 2>&1 | Out-Null
+
+        # Scheduled Auto-Update Task on User Logon (+30 minutes delay)
+        $logonTaskName = "GIN-Agent-Update-Logon"
+        schtasks.exe /delete /tn "$logonTaskName" /f 2>&1 | Out-Null
+        schtasks.exe /create /tn "$logonTaskName" /tr "\`"$targetCmd\`" /checkupdate $selectedRegion" /sc ONLOGON /delay 0030:00 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
 
         $serviceStarted = $false
         for ($w = 0; $w -lt 6; $w++) {
@@ -420,7 +506,7 @@ try {
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v027 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v028 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -634,7 +720,7 @@ try {
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v027"
+            version         = "v028"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -642,61 +728,6 @@ try {
             [System.IO.File]::WriteAllText($tagFile, (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), [System.Text.Encoding]::UTF8)
         }
     } catch {}
-
-    # Function: Auto-Update Check
-    function Check-GINAgentUpdate {
-        param([string]$currentVer = "v027", [string]$activeRegion = "EU")
-        try {
-            $versionUrls = @()
-            if ($activeRegion -eq "RU") {
-                $versionUrls += "http://212.109.223.109/agent/version.txt"
-                $versionUrls += "https://rd.gincz.com/agent/version.txt"
-                $versionUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/version.txt"
-            } else {
-                $versionUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/version.txt"
-                $versionUrls += "http://212.109.223.109/agent/version.txt"
-                $versionUrls += "https://remote.gincz.com/agent-api/version.txt"
-            }
-
-            $remoteVer = ""
-            foreach ($vu in $versionUrls) {
-                try {
-                    $v = (Invoke-RestMethod -Uri $vu -TimeoutSec 4 -ErrorAction Stop).Trim()
-                    if ($v -match '^v\d{3}$') {
-                        $remoteVer = $v
-                        break
-                    }
-                } catch {}
-            }
-
-            if ($remoteVer -and ($remoteVer -gt $currentVer)) {
-                $downloadUrls = @()
-                if ($activeRegion -eq "RU") {
-                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "https://rd.gincz.com/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
-                } else {
-                    $downloadUrls += "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "http://212.109.223.109/GIN-Agent_Windows.cmd"
-                    $downloadUrls += "https://remote.gincz.com/agent-api/GIN-Agent_Windows.cmd"
-                }
-
-                $tempUpdateFile = "$env:TEMP\GIN-Agent_Update_$remoteVer.cmd"
-                foreach ($du in $downloadUrls) {
-                    try {
-                        Invoke-WebRequest -Uri $du -OutFile $tempUpdateFile -TimeoutSec 20 -ErrorAction Stop
-                        if ((Test-Path $tempUpdateFile) -and ((Get-Item $tempUpdateFile).Length -gt 15000)) {
-                            $sample = Get-Content -Path $tempUpdateFile -TotalCount 25 -Raw
-                            if ($sample -like "*GIN-Agent*") {
-                                Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent /service $activeRegion`"" -WindowStyle Hidden
-                                exit 0
-                            }
-                        }
-                    } catch {}
-                }
-            }
-        } catch {}
-    }
 
     # Background Polling Loop
     $loopCount = 0
@@ -729,16 +760,16 @@ try {
         if ($loopCount -ge 6) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v027&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v028&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
 
-        # Auto-Update Check: Initial check after 4 loops (~60s), then every 960 loops (~4 hours)
+        # Auto-Update Check: Initial check after 4 loops (~60s), then every 4320 loops (~6 hours)
         $updateCheckCounter++
-        if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 960) {
-            if ($updateCheckCounter -ge 960) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v027" -activeRegion $region
+        if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
+            if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
+            Check-GINAgentUpdate -currentVer "v028" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -747,7 +778,7 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v027:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v028:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
