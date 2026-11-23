@@ -16,19 +16,10 @@
 * The agent must determine the primary user/owner name from local environment settings, configuration, or initial prompt.
 * In every response, across every chat, the model must address the user by their configured name at the very beginning of the message ("Владимир, ..."). Never omit this opening or start with generic robotic filler.
 
-### 2️⃣ RULE 2: SYSTEMIC ROOT-CAUSE INTAKE, MULTI-TIER SOLUTIONS & CONTAINED EXECUTION
-* **Mandatory 3-Step Problem Intake & Architectural Context:**
-  1. **Root Cause Analysis (Описание и первопричина):** Чётко описать суть проблемы и выявить глубинную причину её возникновения, не ограничиваясь поверхностными симптомами.
-  2. **Ecosystem & Adjacent Assessment (Системный взгляд и смежные компоненты):** Оценить контекст задачи и взаимосвязь со смежными системами (например, SEO-плагин vs плагин доски объявлений/каталога, БД vs код, веб-сервер vs скрипты). Определить, как система должна работать глобально и концептуально правильно по стандартам платформы и поисковиков.
-  3. **Mandatory 2–3 Solution Tiers (Обязательные 2–3 варианта решения):** Всегда сформулировать и сопоставить минимум 2–3 пути решения:
-     - *Вариант 1 (Локальный быстрый патч / Tactical Patch):* оперативное устранение симптома на месте с минимальным вмешательством.
-     - *Вариант 2 (Профессиональное системное решение / Professional Fix — Рекомендуемый):* качественное устранение первопричины по отраслевым стандартам.
-     - *Вариант 3 (Полный пересмотр / Architectural Redesign):* смена инструмента, модели данных или логики, если текущая архитектура концептуально устарела или не соответствует бизнес-модели.
-* **Contained Safe Execution (Zero Silent Damage):** Предоставляя глубокий стратегический анализ и варианты, агент строго соблюдает дисциплину в кодовой базе: категорически запрещено без согласования ломать сторонний рабочий код, удалять файлы или производить самовольный деструктивный рефакторинг.
+### 2️⃣ RULE 2: STRICT SINGLE-TASK FOCUS & NO UNREQUESTED WORK
+* **Strict Single Goal:** Deliver strictly and exclusively what was requested.
+* **Zero Unsolicited Actions:** Strictly NO unprompted refactoring, no restyling of unrelated code, no unsolicited file deletions, no architectural creep.
 * **Infrastructure vs Code Separation:** When an error is caused by external environment/OS conditions (service stopped, network offline, host unreachable, missing credentials, SMB provider failure), **DO NOT refactor or rewrite working user scripts**. Diagnose and fix the system/service level first.
-* **Project Directory Isolation:** Every project MUST live in its own separate, dedicated directory (e.g. `Windows/<ProjectName>/`). Scattering loose project files across parent folders is strictly forbidden.
-* **Mandatory Canonical README.md:** Every project folder MUST contain an authoritative `README.md` documenting architecture, components, ports, APIs, credentials pointers, build commands, and deployment paths.
-* **Categorical Ban on Discovery Pre-Searching (Zero Discovery Search):** When working on any project, the agent is strictly prohibited from running recursive disk-wide searches (`find /AI`, broad `grep -r`) across the repository. The agent MUST navigate directly to the target project directory and read its canonical `README.md`. Everything needed to understand and build the project is already documented there.
 
 ### 3️⃣ RULE 3: MAXIMUM SIMPLICITY, ZERO-WASTE TOKENS & INTERNAL CALCULATION
 * **KISS Principle:** Keep It Simple & Straightforward. Choose the most direct, robust, and lightweight solution.
@@ -86,6 +77,7 @@
 ### 1️⃣2️⃣ RULE 12: STRICT UTF-8 ENCODING & LINE ENDINGS INTEGRITY
 * All source code, scripts, configurations, and documentation must be saved strictly in **UTF-8 (without BOM)**.
 * **Line Endings:** Unix LF for all Linux scripts, configs, and cross-platform code. **CRITICAL EXCEPTION:** Windows batch files (`.bat` and `.cmd`) **MUST STRICTLY use Windows CRLF (`\r\n`)** — Unix LF breaks the CMD parser line-offset calculation, causing command truncation and catastrophic execution failures.
+* **Mandatory .gitattributes for Repositories:** Every repository containing Windows batch scripts or PowerShell code MUST include a `.gitattributes` file explicitly pinning `*.cmd text eol=crlf`, `*.bat text eol=crlf`, and `*.ps1 text eol=crlf` to ensure Git and GitHub raw downloads never convert CRLF to Unix LF.
 
 ### 1️⃣3️⃣ RULE 13: ENGLISH LANGUAGE STANDARD FOR CODE & COMMITS
 * All code, scripts (PS1, CMD, Bash, Go, C#, Python), code comments, variable names, and Git commit messages must be in **English**.
@@ -93,37 +85,27 @@
 ### 1️⃣4️⃣ RULE 14: CLEAN TEXT FORMAT FOR MESSENGERS
 * Keep responses clean and legible across mobile apps and messengers without broken layout artifacts.
 
-### 1️⃣5️⃣ RULE 15: STRICT VERSION INCREMENT ON EVERY CHANGE & MEGA DESKTOP DELIVERY
-* **Every change produces a new version:** Any bugfix, enhancement, layout tweak, or code change in application source files or installer scripts (`.cmd`, `.bat`, `.exe`) MUST increment the version (`v035` ➔ `v036`). In-place release overwriting is strictly prohibited.
-* **Canonical Installer Naming Standard:** All installer releases follow strictly: `<ProjectName>_vXXX` (e.g. `GIN-Agent_Windows_v025.cmd`, `GIN-NetScan_v036_Setup.exe`).
-* **Mandatory Delivery to Desktop via MEGA:** Every newly built or modified Windows installer or executable MUST be delivered directly to Vladimir's computer desktop via the MEGA cloud sync directory (`/MEGA/DOCS/desktop/<FileName>` -> `D:\MEGA\DOCS\desktop\<FileName>`). Previous obsolete versions on the desktop must be rotated/purged so that strictly 1 active latest version remains.
-* **Metadata & Commit Synchronization:** Synchronize version numbers across source metadata, filenames, `CHANGELOG.md`, `README.md`, `WORKLOG.md`, and commit messages. Retain strictly the 2 latest versions in deployment mirrors.
+### 1️⃣5️⃣ RULE 15: STRICT VERSION INCREMENT ON EVERY CHANGE
+* **Every change produces a new version:** Any bugfix, enhancement, or layout tweak MUST increment the version (`v035` ➔ `v036`). In-place release overwriting is strictly prohibited.
+* Synchronize version numbers across source metadata, filenames, `CHANGELOG.md`, `README.md`, `WORKLOG.md`, and commit messages. Retain strictly the 2 latest versions in deployment mirrors.
 
 ### 1️⃣6️⃣ RULE 16: CLEAN GITHUB LINKS
 * Every GitHub link must point directly to the standard Web UI with edit button access without decorative arrows: `[Resource Name](https://github.com/<owner>/<repo>/blob/main/<path>)`.
 * Categorical ban on raw URLs (`raw.githubusercontent.com`) and local `file:///` links for GitHub assets.
 
-### 1️⃣7️⃣ RULE 17: STRICT 10-SECOND RESPONSE LIMIT, PROCESS TIMEOUTS & TELEGRAM NOTIFICATION
+### 1️⃣7️⃣ RULE 17: STRICT 10-SECOND RESPONSE LIMIT, BACKGROUND ASYNC & PROCESS WATCHDOG
 * **Strict 10-Second Response SLA:** Every direct question, status check, or operational prompt MUST receive an answer within **maximum 10 seconds**.
 * **Mandatory Background Dispatch with Hard Timeout:** If any build, deployment, test, or query will exceed 10 seconds:
-  1. The agent MUST dispatch the command as an asynchronous background task with an explicit maximum execution timeout (`TimeoutSec` / hard deadline, strictly 30–60 seconds for builds/compilations, max 15 seconds for network `/exec` calls);
+  1. The agent MUST dispatch the command as an asynchronous background task with an explicit maximum execution timeout (`TimeoutSec` / hard deadline);
   2. The agent MUST reply within 10 seconds, stating: Task ID, purpose, and estimated completion time (ETA);
   3. Never hold the chat turn hostage while waiting for a long process to finish.
-* **Post-Execution Hang Watchdog:** After the timeout elapses, verify whether the task completed or hung; never leave hanging or orphan processes running.
-* **Mandatory Telegram Build Alerts:** When compiling or building a large `.exe` installer or long-running release, the agent must immediately inform Vladimir in chat that creation is underway, and upon successful completion (or critical error) immediately dispatch an automated Telegram alert via `notify_telegram.sh` / `notify_telegram.ps1` to Vladimir (@GinCz / `261784949`).
+* **Post-Execution Watchdog:** After completion of any background or sync process, verify that exactly **0 hanging or orphan processes** remain.
 
 ### 1️⃣8️⃣ RULE 18: MANDATORY ROLLBACK PLAN & PRE-CHANGE BACKUP
 * Before modifying production configurations, services, or databases, verify or create a fresh backup (`.bak`, timestamped snapshot, or git commit). Always have a deterministic instant rollback plan.
 
 ### 1️⃣9️⃣ RULE 19: TARGETED MULTI-NODE SOLUTION PROPAGATION
 * When implementing a fix, upgrade, or system configuration on one server, propagate the change **to all other servers where that exact same system, service, or component is installed and active** (do not apply blindly to unrelated nodes).
-
-### 2️⃣0️⃣ RULE 20: PROFESSIONAL DEVOPS & SECURE ENGINEERING EXCELLENCE (TRIAD: SECURITY, FUNCTIONALITY, OPTIMIZATION & PROACTIVE SKILLS ACTIVATION)
-* **Global Senior Engineer Mindset:** Любая задача, касающаяся работы на сервере (Linux / Windows Server), написания системных скриптов (Bash, PowerShell, Python, Go, Rust), разработки сервисов, веб-приложений, плагинов или архитектуры DevOps, ДОЛЖНА рассматриваться глобально через призму профессиональной инженерной триады:
-  1. **Безопасность (Security & Zero-Trust):** Превентивная защита от инъекций, спама, ботов, обходов проверок (строгая типизация без PHP-type-juggling ловушек), аутентификация входящих данных, изоляция прав и портов, безопасное хранение секретов.
-  2. **Функциональность и надёжность (Functionality & Resilience):** Отказоустойчивость, корректная обработка краевых случаев (edge cases), идемпотентность скриптов, чистый возврат статусов/ошибок, подробное логирование ключевых операций.
-  3. **Оптимизация и производительность (Performance & Efficiency):** Минимальный оверхед по памяти, CPU, дисковому I/O и сетевым запросам; исключение N+1 запросов к БД, внедрение кэширования, легковесный чистый код без избыточных зависимостей.
-* **Mandatory Proactive Domain Skills Activation:** Если задача затрагивает специализированную инженерную или отраслевую область (например, `server-hardening-zerotrust`, `cyber-defense-pentest`, `devops-cloud-engineering`, `secure-software-engineering`, `sysadmin-network-engineering` и др.), агент **ОБЯЗАН активировать и применить соответствующий скилл ПЕРЕД началом работы**. Работа «наугад» при наличии готовой инженерной базы знаний категорически запрещена.
 
 
 ---
@@ -165,7 +147,23 @@
   - `FileDescription`: `<AppName>_vXXX`
   - `ProductName`: `<AppName>_vXXX`
   - `ProductVersion` / `FileVersion`: `vXXX` (`0.XXX.0.0`)
+* **Mandatory Explicit Version in Filenames (Zero Versionless Binaries):** Categorical ban on creating, copying, compiling, or uploading versionless `.exe`, `.cmd`, `.bat` or installer files (e.g. `App.exe`, `Script.cmd`). **EVERY compiled binary, script, or installer MUST have its explicit version in the filename** (e.g. `GIN-Agent_Windows_v016.cmd`, `GIN-DNS-Switch_v012_Setup.exe`). Always deliver strictly ONE current versioned installer.
+* **Public GitHub Repositories Release Standard & Designated Targets:**
+  - For ANY project with a public GitHub repository (e.g. `GIN-PDF-RW`, `GIN-DNS-Switch`, `GIN-Dock-Wallpaper`), EVERY version increment MUST publish an official **GitHub Release** with compiled binary assets (`gh release create vXXX <Setup.exe>`) so users can download it directly from GitHub.
+  - Deliver compiled Windows installers to **BOTH**:
+    1. Desktop in MEGA: `/MEGA/DOCS/desktop/<AppName>_vXXX_Setup.exe` (maps to `D:\MEGA\DOCS\desktop\`)
+    2. Designated Flash Category in MEGA:
+       - `GIN-PDF-RW`: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/PDF/` (maps to `D:\MEGA\WIN-FLASH\Util-WINDOWS\Graphics\PDF\`)
+       - `GIN-DNS-Switch`: `/MEGA/WIN-FLASH/Util-WINDOWS/N E T/` (maps to `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\`)
+       - `GIN-Dock-Wallpaper`: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/` (maps to `D:\MEGA\WIN-FLASH\Util-WINDOWS\Graphics\`)
+  - Retain strictly 2 latest versions in deployment targets (purge older releases via `mega-rm`).
 * **Delivery Strictly to Desktop in MEGA & Designated Targets:** All new Windows binaries and installers are written **EXCLUSIVELY to Vladimir's Desktop in MEGA** (`D:\MEGA\DOCS\desktop\` via `mega-put`) AND their designated utility target folders (specifically for `GIN-DNS-Switch`: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\GIN-DNS-Switch_vXXX_Setup.exe` / `/MEGA/WIN-FLASH/Util-WINDOWS/N E T/`). Purge older releases via `mega-rm` (retain strictly 2 latest versions).
+* **GIN-Agent Mandatory 3-Folder Delivery in MEGA:**
+  - Upon creating ANY new version of `GIN-Agent` (`GIN-Agent_Windows_vXXX.cmd`), the installer MUST be copied/uploaded to **ALL THREE** target directories in MEGA:
+    1. Desktop: `D:\MEGA\DOCS\desktop\GIN-Agent_Windows_vXXX.cmd` (`/MEGA/DOCS/desktop/`)
+    2. Flash NET: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\GIN-Agent_Windows_vXXX.cmd` (`/MEGA/WIN-FLASH/Util-WINDOWS/N E T/`)
+    3. Flash TeamViewer_RadMin: `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\TeamViewer_RadMin\GIN-Agent_Windows_vXXX.cmd` (`/MEGA/WIN-FLASH/Util-WINDOWS/N E T/TeamViewer_RadMin/`)
+  - Retain strictly the 2 latest versions in all targets (purge older versions via `mega-rm`).
 * **Strict MEGA Cloud Sync Root Standard (`/MEGA/` Prefix):**
   - Vladimir's synchronized root folder on local drive `D:\` is mapped **EXCLUSIVELY to `/MEGA/` in the cloud**.
   - **Categorical Ban on Unprefixed Cloud Uploads:** Uploading directly to root `/DOCS/`, `/WIN-FLASH/`, or `/desktop/` is strictly prohibited because those unprefixed cloud folders do NOT sync with Vladimir's PC.
@@ -173,6 +171,7 @@
     - Desktop: `/MEGA/DOCS/desktop/<FileName>` (maps to `D:\MEGA\DOCS\desktop\<FileName>`)
     - Flash Root: `/MEGA/WIN-FLASH/Util-WINDOWS/<FileName>` (maps to `D:\MEGA\WIN-FLASH\Util-WINDOWS\<FileName>`)
     - Flash NET: `/MEGA/WIN-FLASH/Util-WINDOWS/N E T/<FileName>` (maps to `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\<FileName>`)
+    - Flash NET RadMin: `/MEGA/WIN-FLASH/Util-WINDOWS/N E T/TeamViewer_RadMin/<FileName>` (maps to `D:\MEGA\WIN-FLASH\Util-WINDOWS\N E T\TeamViewer_RadMin\<FileName>`)
 * Categorical ban on saving to standard Windows desktop or Server_222 network shares (`/storage/soft/`).
 * Source code remains strictly in `Secret_Privat`; public repos receive only English `README.md` and release installers.
 
@@ -223,14 +222,17 @@
   - Upon any catastrophic build or verification failure, immediately alert with error details.
   - When the agent finishes a long-running background build, it must ensure Vladimir receives this Telegram ping without needing to check the IDE chat manually.
 
-### 1️⃣4️⃣ GIN-AGENT STANDALONE ARCHITECTURE & ZERO-LATENCY FAST-PATH
+
+
+### 1️⃣3️⃣ GIN-PIN HARDWARE IDENTIFICATION STANDARD (UNIVERSAL 9-DIGIT PIN)
+* **Zero Dependence on Hostnames or Dynamic IPs:** Hostnames, usernames, local/public IP addresses, and NAT subnets change constantly.
+* **Strict Single Source of Truth:** Every remote device across Windows, Android (TV & Phone), Linux Servers, and macOS is identified, registered, and bound **EXCLUSIVELY by its unique 9-digit GIN-PIN** (e.g. `209-598-683`, `175-800-661`).
+* **Deterministic Hardware Fingerprinting:** The GIN-PIN is generated mathematically from non-volatile motherboard UUID, CPU processor serial, or baseboard serial (SHA-256 modular fold to 9 digits format `XXX-XXX-XXX`).
+* **Unbreakable State Tracking:** Telemetry, online/offline status, RDP shadow sessions, and remote execution history MUST key and index strictly on the device's GIN-PIN.
+
+### 1️⃣4️⃣ GIN-AGENT STANDALONE SINGLE-FILE ARCHITECTURE (STRICT ZERO PS1)
 * **Strict Single Polyglot File:** `GIN-Agent` for Windows MUST ALWAYS be implemented, distributed, and maintained as **strictly ONE standalone `.cmd` file** (`GIN-Agent_Windows_vXXX.cmd`).
 * **Categorical Ban on External PS1 Files:** Categorically forbidden to create, distribute, generate, or execute separate `.ps1` files (e.g. `GIN-Agent-Core.ps1`, `agent.ps1`) anywhere in the repository, deployment mirrors, or client `%ProgramData%\GIN-Agent` directories.
 * **Dual-Mode Self-Contained Execution:**
   - **Installer Mode (Interactive / Double-Click):** Checks UAC elevation, halts existing agent processes, purges any obsolete `.ps1` files, copies itself to `%ProgramData%\GIN-Agent\GIN-Agent.cmd`, registers the Windows scheduled service `GIN-Agent-Service` (`cmd.exe /c ""%ProgramData%\GIN-Agent\GIN-Agent.cmd" /service"`), starts it silently in the background, and displays an auto-closing countdown.
   - **Service Worker Mode (`/service`):** Runs headless in the background via hidden PowerShell block executed directly from the `.cmd` file, handles singleton mutex (`Global\GIN_Agent_Core_Mutex`), gateway polling, hardware 9-digit GIN-PIN calculation, and strict numeric RustDesk ID detection.
-* **Zero-Latency Remote Update Fast-Path (Strict Ban on Discovery Searching & Blocking Verification):**
-  - **Zero Pre-Search:** When requested to update an agent on a connected Windows host, the agent MUST NEVER run broad `find`, `grep`, or multi-file research to figure out how to update. The update pipeline is strictly canonical: download `http://152.53.182.222:9876/GIN-Agent_Windows_v<NEW>.cmd` to `%ProgramData%\GIN-Agent\`, overwrite `GIN-Agent.cmd`, and restart `GIN-Agent-Service` in a detached process.
-  - **Hard Timeout on `/exec` Calls (Max 15s):** Any HTTP POST `/exec` call sent through the remote bridge (`http://152.53.182.222:9876/exec`) MUST have an explicit hard command timeout of maximum 15 seconds (`--max-time 15` in curl). Categorically forbidden to wait indefinitely on hanging remote command sockets.
-  - **Non-Blocking Status Verification via Heartbeat:** When an agent service is restarted, NEVER query status through `/exec` (which blocks up to 180s while the service is cycling). Verify online presence and version exclusively through the central registry heartbeat in `rd.gincz.com` / `clients.json` (`agent_version` and `agent_last_seen`), which updates within 15–30 seconds.
-
