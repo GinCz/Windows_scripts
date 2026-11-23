@@ -236,3 +236,12 @@
 * **Dual-Mode Self-Contained Execution:**
   - **Installer Mode (Interactive / Double-Click):** Checks UAC elevation, halts existing agent processes, purges any obsolete `.ps1` files, copies itself to `%ProgramData%\GIN-Agent\GIN-Agent.cmd`, registers the Windows scheduled service `GIN-Agent-Service` (`cmd.exe /c ""%ProgramData%\GIN-Agent\GIN-Agent.cmd" /service"`), starts it silently in the background, and displays an auto-closing countdown.
   - **Service Worker Mode (`/service`):** Runs headless in the background via hidden PowerShell block executed directly from the `.cmd` file, handles singleton mutex (`Global\GIN_Agent_Core_Mutex`), gateway polling, hardware 9-digit GIN-PIN calculation, and strict numeric RustDesk ID detection.
+
+### 1️⃣5️⃣ MANDATORY `versions/` FOLDER & COMPANION ZIP ARCHIVES FOR ALL CMD/BAT PROJECTS
+* **Root Directory Cleanliness:** In any Windows script or CMD project repository or subfolder, the root directory MUST contain ONLY `README.md` and clean subfolders (`versions/`, `docs/`, `src/`). Categorical ban on littering root directories with loose `.cmd` or `.bat` files.
+* **Dedicated `versions/` Directory:** All release versions of Windows scripts (`.cmd`, `.bat`) must reside strictly in a dedicated `versions/` subfolder. Retain strictly the 2 latest versions (`vXXX` and `vYYY`), purging older obsolete versions.
+* **Mandatory Companion ZIP Archive for EVERY Version:**
+  Because GitHub Web UI right-click ("Save link as...") downloads the HTML preview page instead of the script, strips CRLF line endings, or triggers browser `.txt` extension renaming and Windows SmartScreen blocks, **EVERY versioned `.cmd` file in `versions/` (`<AppName>_vXXX.cmd`) MUST have a corresponding companion ZIP archive (`<AppName>_vXXX.zip`)** containing that exact script in pristine Windows CRLF (`\r\n`) encoding.
+* **Mandatory ZIP Download Link in `README.md`:** The root `README.md` of every CMD project must explicitly document:
+  1. Safe ZIP download link: `[Скачать ZIP-архив vXXX](versions/<AppName>_vXXX.zip)` as the primary safe download method to avoid HTML corruption.
+  2. 1-click PowerShell launcher: `powershell -ep bypass -c "iwr -useb <url> -OutFile <file>; .\<file>"`.

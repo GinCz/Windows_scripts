@@ -28,3 +28,4 @@
 * **MEGA Cloud Sync Standard:** Always prefix MEGA upload paths with `/MEGA/` (e.g. `/MEGA/DOCS/desktop/`, `/MEGA/WIN-FLASH/Util-WINDOWS/`). Unprefixed `/DOCS/` does not sync with PC.
 * **GIN-Agent Standalone Standard:** GIN-Agent must strictly be ONE polyglot `.cmd` file with ZERO external `.ps1` files.
 * **Strict CRLF Integrity & .gitattributes:** Every `.cmd` and `.bat` file MUST have CRLF line terminators. All repositories with Windows scripts MUST have `.gitattributes` pinning `*.cmd text eol=crlf`.
+* **Mandatory versions/ & Companion ZIP for CMD Projects:** All Windows CMD/BAT projects must store scripts in `versions/` (retaining strictly 2 latest versions) and ALWAYS generate a companion `.zip` archive (`<App>_vXXX.zip`) alongside each `.cmd` to protect users against GitHub Web HTML-saving corruption.

@@ -24,6 +24,13 @@
 
 ### Direct Download Links
 
+> ⚠️ **Внимание:** Не используйте правый клик «Сохранить ссылку как...» на `.cmd` файлах в GitHub — скачивается HTML-страница веб-интерфейса! Скачивайте безопасный **ZIP-архив** из папки `versions/` или запускайте через PowerShell.
+
+| Release | File | Safe ZIP Archive (Recommended) | Direct CMD | Web UI |
+| :--- | :--- | :---: | :---: | :---: |
+| 🟢 **Latest (v056)** | `GIN-Win-Optimizer_v056.cmd` | [**📦 GIN-Win-Optimizer_v056.zip**](versions/GIN-Win-Optimizer_v056.zip) | [Download .cmd](versions/GIN-Win-Optimizer_v056.cmd) | [View Code](versions/GIN-Win-Optimizer_v056.cmd) |
+| ⚪ **Previous (v055)** | `GIN-Win-Optimizer_v055.cmd` | [**📦 GIN-Win-Optimizer_v055.zip**](versions/GIN-Win-Optimizer_v055.zip) | [Download .cmd](versions/GIN-Win-Optimizer_v055.cmd) | [View Code](versions/GIN-Win-Optimizer_v055.cmd) |
+
 | Release | File | Size | Direct Download Button | Web UI |
 | :--- | :--- | :---: | :---: | :---: |
 | 🟢 **Latest (Recommended)** | `GIN-Win-Optimizer_v056.cmd` | ~294 KB | [**📥 Download v055**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd) | [View v055 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd) |
