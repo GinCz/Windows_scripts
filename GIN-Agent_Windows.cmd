@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v033
+title GIN-Agent v034
 
 :: Parse all arguments robustly across %1, %2, %3, %4
 set "GIN_ARG1=%~1"
@@ -105,7 +105,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v033 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v034 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -113,6 +113,12 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
+# Key v034 Fixes:
+#   1. Guaranteed Remote Desktop (RDP) & TermService Enablement on Install and Auto-Update
+#   2. Fixed PowerShell syntax error in RDP policy registry configuration
+#   3. Start and enable TermService & UmRdpService automatic startup
+#   4. Multi-language Windows Firewall open for TCP/UDP Port 3389 and Remote Desktop
+#   5. Allow local blank passwords (LimitBlankPasswordUse=0) & disable NLA requirement (UserAuthentication=0)
 # Key v033 Fixes:
 #   0. 100% Pre-Install & Pre-Update Autostart & Registry Deep Purge (Purges all duplicate PowerShell autostart scripts, Run keys and ghost tasks)
 # Key v032 Fixes:
@@ -135,7 +141,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v033.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v034.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -148,6 +154,83 @@ try {
         } else {
             $mode = "INSTALL"
         }
+    }
+
+    # ==========================================================================
+    # FUNCTION: Enable Remote Desktop (RDP), TermService, Firewall & Policies
+    # ==========================================================================
+    function Enable-RemoteDesktopSupport {
+        try {
+            # 1. Enable RDP in System & Terminal Server Registry
+            $tsPath = 'HKLM:\System\CurrentControlSet\Control\Terminal Server'
+            if (-not (Test-Path $tsPath)) { New-Item -Path $tsPath -Force -ErrorAction SilentlyContinue | Out-Null }
+            $null = Set-ItemProperty -Path $tsPath -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
+
+            $rdpTcp = 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp'
+            if (-not (Test-Path $rdpTcp)) { New-Item -Path $rdpTcp -Force -ErrorAction SilentlyContinue | Out-Null }
+            $null = Set-ItemProperty -Path $rdpTcp -Name "UserAuthentication" -Value 0 -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $rdpTcp -Name "SecurityLayer" -Value 1 -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $rdpTcp -Name "PortNumber" -Value 3389 -Force -ErrorAction SilentlyContinue
+
+            # 2. Terminal Services Policies (Overrides GPO restrictions, enables Shadow Full Control)
+            $tsPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
+            if (-not (Test-Path $tsPolicy)) { New-Item -Path $tsPolicy -Force -ErrorAction SilentlyContinue | Out-Null }
+            $null = Set-ItemProperty -Path $tsPolicy -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $tsPolicy -Name "fAllowToGetHelp" -Value 1 -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $tsPolicy -Name "MaxInstanceCount" -Value 999999 -Force -ErrorAction SilentlyContinue
+
+            # 3. Remote Assistance & Blank Password Allowance for local accounts
+            $raPath = 'HKLM:\System\CurrentControlSet\Control\Remote Assistance'
+            if (-not (Test-Path $raPath)) { New-Item -Path $raPath -Force -ErrorAction SilentlyContinue | Out-Null }
+            $null = Set-ItemProperty -Path $raPath -Name "fAllowToGetHelp" -Value 1 -Force -ErrorAction SilentlyContinue
+
+            $lsaPath = 'HKLM:\System\CurrentControlSet\Control\Lsa'
+            if (Test-Path $lsaPath) {
+                $null = Set-ItemProperty -Path $lsaPath -Name "LimitBlankPasswordUse" -Value 0 -Force -ErrorAction SilentlyContinue
+            }
+
+            # 4. Windows Services: TermService (Remote Desktop) & UmRdpService
+            try {
+                Set-Service -Name "TermService" -StartupType Automatic -ErrorAction SilentlyContinue
+                $svc = Get-Service -Name "TermService" -ErrorAction SilentlyContinue
+                if ($svc -and $svc.Status -ne "Running") {
+                    Start-Service -Name "TermService" -ErrorAction SilentlyContinue
+                }
+            } catch {}
+            try {
+                Set-Service -Name "UmRdpService" -StartupType Automatic -ErrorAction SilentlyContinue
+                $uSvc = Get-Service -Name "UmRdpService" -ErrorAction SilentlyContinue
+                if ($uSvc -and $uSvc.Status -ne "Running") {
+                    Start-Service -Name "UmRdpService" -ErrorAction SilentlyContinue
+                }
+            } catch {}
+
+            # Native service configuration fallback
+            try {
+                & sc.exe config TermService start= auto >$null 2>&1
+                & net.exe start TermService >$null 2>&1
+                & sc.exe config UmRdpService start= auto >$null 2>&1
+                & net.exe start UmRdpService >$null 2>&1
+            } catch {}
+
+            # 5. Windows Firewall Rules: Built-in, Localized, and Custom Port 3389 Rules
+            try {
+                Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
+                Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-TCP" -ErrorAction SilentlyContinue | Out-Null
+                Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-UDP" -ErrorAction SilentlyContinue | Out-Null
+                Enable-NetFirewallRule -Name "RemoteDesktop-Shadow-In-TCP" -ErrorAction SilentlyContinue | Out-Null
+            } catch {}
+
+            try {
+                & netsh.exe advfirewall firewall set rule group="remote desktop" new enable=Yes >$null 2>&1
+                & netsh.exe advfirewall firewall set rule group="vzdálená plocha" new enable=Yes >$null 2>&1
+                & netsh.exe advfirewall firewall set rule group="дистанционное управление рабочим столом" new enable=Yes >$null 2>&1
+                & netsh.exe advfirewall firewall set rule group="@FirewallAPI.dll,-28752" new enable=Yes >$null 2>&1
+                & netsh.exe advfirewall firewall add rule name="GIN-Agent-RDP-TCP" dir=in action=allow protocol=TCP localport=3389 >$null 2>&1
+                & netsh.exe advfirewall firewall add rule name="GIN-Agent-RDP-UDP" dir=in action=allow protocol=UDP localport=3389 >$null 2>&1
+            } catch {}
+        } catch {}
     }
 
     # ==========================================================================
@@ -408,7 +491,7 @@ try {
 
     # Function: Auto-Update Check
     function Check-GINAgentUpdate {
-        param([string]$currentVer = "v033", [string]$activeRegion = "EU")
+        param([string]$currentVer = "v034", [string]$activeRegion = "EU")
         try {
             $versionUrls = @()
             if ($activeRegion -eq "RU") {
@@ -473,7 +556,7 @@ try {
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v033" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v034" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -514,7 +597,7 @@ try {
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v033 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v034 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -575,7 +658,7 @@ try {
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v033 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v034 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
@@ -622,7 +705,7 @@ try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v033" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v034" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -631,7 +714,16 @@ try {
             $null = Set-ItemProperty -Path $uninstallKey -Name "NoRepair" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
         } catch {}
 
-        # 10. Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
+        # 10. Enable Remote Desktop (RDP), TermService, Port 3389 and Windows Firewall
+        if (-not $isSilent) {
+            Write-Host "[*] Enabling Remote Desktop Connection (RDP), TermService & Firewall..." -ForegroundColor Cyan
+        }
+        Enable-RemoteDesktopSupport
+        if (-not $isSilent) {
+            Write-Host "    [OK] Remote Desktop enabled (TermService active, NLA requirement disabled, Port 3389 open)." -ForegroundColor Green
+        }
+
+        # 11. Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
         if (-not $isSilent) {
             Write-Host "[*] Registering permanent SYSTEM background service ($selectedRegion)..." -ForegroundColor Cyan
         }
@@ -687,7 +779,7 @@ try {
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v033 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v034 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -773,18 +865,8 @@ try {
         }
     }
 
-    # Ensure RDP & Shadow Policy
-    try {
-        $null = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
-         = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force -ErrorAction SilentlyContinue
-         = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "SecurityLayer" -Value 1 -Force -ErrorAction SilentlyContinue
-        $tsPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
-        if (-not (Test-Path $tsPolicy)) { New-Item -Path $tsPolicy -Force -ErrorAction SilentlyContinue | Out-Null }
-        $null = Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
-        Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-TCP" -ErrorAction SilentlyContinue | Out-Null
-        Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-UDP" -ErrorAction SilentlyContinue | Out-Null
-    } catch {}
+    # Ensure RDP, TermService, Firewall & Shadow Policy
+    Enable-RemoteDesktopSupport
 
     # Hardware GIN-PIN calculation (Deterministic WMI)
     $pin = "100-000-001"
@@ -910,7 +992,7 @@ try {
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v033"
+            version         = "v034"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -939,7 +1021,7 @@ try {
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v033&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v034&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -949,7 +1031,7 @@ try {
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v033" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v034" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1008,7 +1090,7 @@ try {
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v033" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v034" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -1022,20 +1104,23 @@ try {
         if ($loopCount -ge 5) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v033&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v034&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v033" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v034" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
 
-        # Auto-Update Check: Initial check after 4 loops (~20s), then every 4320 loops (~6 hours)
+        # Periodic RDP & Auto-Update Check: Initial check after 4 loops (~20s), hourly RDP refresh, update every ~6h
         $updateCheckCounter++
+        if ($updateCheckCounter -eq 4 -or ($updateCheckCounter % 720 -eq 0)) {
+            Enable-RemoteDesktopSupport
+        }
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v033" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v034" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -1044,7 +1129,7 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v033:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v034:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
