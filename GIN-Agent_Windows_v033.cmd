@@ -1,34 +1,50 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v031
+title GIN-Agent v033
 
-:: If launched with /service or --service in background
-if /i "%~1"=="/service" goto :RUN_SERVICE
-if /i "%~1"=="--service" goto :RUN_SERVICE
+:: Parse all arguments robustly across %1, %2, %3, %4
+set "GIN_ARG1=%~1"
+set "GIN_ARG2=%~2"
+set "GIN_ARG3=%~3"
 
-:: If launched with /checkupdate or --checkupdate
-if /i "%~1"=="/checkupdate" goto :RUN_CHECKUPDATE
-if /i "%~1"=="--checkupdate" goto :RUN_CHECKUPDATE
+:: Detect silent mode
+if /i "%GIN_ARG1%"=="/silent" set "GIN_AGENT_SILENT=1"
+if /i "%GIN_ARG2%"=="/silent" set "GIN_AGENT_SILENT=1"
+if /i "%GIN_ARG3%"=="/silent" set "GIN_AGENT_SILENT=1"
+if /i "%GIN_ARG1%"=="/update" set "GIN_AGENT_SILENT=1"
+if /i "%GIN_ARG2%"=="/update" set "GIN_AGENT_SILENT=1"
+if /i "%GIN_ARG3%"=="/update" set "GIN_AGENT_SILENT=1"
 
-:: If launched with /uninstall or --uninstall
-if /i "%~1"=="/uninstall" goto :RUN_UNINSTALL
-if /i "%~1"=="--uninstall" goto :RUN_UNINSTALL
+:: Detect region parameter
+if /i "%GIN_ARG1%"=="/ru" set "GIN_AGENT_REGION=RU"
+if /i "%GIN_ARG1%"=="RU" set "GIN_AGENT_REGION=RU"
+if /i "%GIN_ARG2%"=="/ru" set "GIN_AGENT_REGION=RU"
+if /i "%GIN_ARG2%"=="RU" set "GIN_AGENT_REGION=RU"
+if /i "%GIN_ARG3%"=="/ru" set "GIN_AGENT_REGION=RU"
+if /i "%GIN_ARG3%"=="RU" set "GIN_AGENT_REGION=RU"
 
-:: If launched with /silent or /update
-if /i "%~1"=="/silent" set "GIN_AGENT_SILENT=1"
-if /i "%~1"=="/update" set "GIN_AGENT_SILENT=1"
+if /i "%GIN_ARG1%"=="/eu" set "GIN_AGENT_REGION=EU"
+if /i "%GIN_ARG1%"=="EU" set "GIN_AGENT_REGION=EU"
+if /i "%GIN_ARG2%"=="/eu" set "GIN_AGENT_REGION=EU"
+if /i "%GIN_ARG2%"=="EU" set "GIN_AGENT_REGION=EU"
+if /i "%GIN_ARG3%"=="/eu" set "GIN_AGENT_REGION=EU"
+if /i "%GIN_ARG3%"=="EU" set "GIN_AGENT_REGION=EU"
 
-:: Check for direct region parameter if passed via CLI
-if /i "%~1"=="/ru" set "GIN_AGENT_REGION=RU"
-if /i "%~1"=="RU" set "GIN_AGENT_REGION=RU"
-if /i "%~1"=="/eu" set "GIN_AGENT_REGION=EU"
-if /i "%~1"=="EU" set "GIN_AGENT_REGION=EU"
+:: Mode routing
+if /i "%GIN_ARG1%"=="/uninstall" goto :RUN_UNINSTALL
+if /i "%GIN_ARG1%"=="--uninstall" goto :RUN_UNINSTALL
+if /i "%GIN_ARG1%"=="/checkupdate" goto :RUN_CHECKUPDATE
+if /i "%GIN_ARG1%"=="--checkupdate" goto :RUN_CHECKUPDATE
 
-if /i "%~2"=="/ru" set "GIN_AGENT_REGION=RU"
-if /i "%~2"=="RU" set "GIN_AGENT_REGION=RU"
-if /i "%~2"=="/eu" set "GIN_AGENT_REGION=EU"
-if /i "%~2"=="EU" set "GIN_AGENT_REGION=EU"
+:: Note: If /silent is passed (auto-updater invocation),
+:: we MUST run the installer first to perform the complete deep cleanup and file update!
+if defined GIN_AGENT_SILENT (
+    goto :RUN_INSTALLER
+)
+
+if /i "%GIN_ARG1%"=="/service" goto :RUN_SERVICE
+if /i "%GIN_ARG1%"=="--service" goto :RUN_SERVICE
 
 :: 1. Resilient Elevation Check
 net session >nul 2>&1
@@ -50,12 +66,10 @@ goto :EXEC_PS
 
 :RUN_SERVICE
 set "GIN_AGENT_MODE=SERVICE"
-if not "%~2"=="" set "GIN_AGENT_REGION=%~2"
 goto :EXEC_PS
 
 :RUN_CHECKUPDATE
 set "GIN_AGENT_MODE=CHECKUPDATE"
-if not "%~2"=="" set "GIN_AGENT_REGION=%~2"
 goto :EXEC_PS
 
 :RUN_UNINSTALL
@@ -91,7 +105,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v031 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v033 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -99,7 +113,9 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
-# Key v031 Fixes:
+# Key v033 Fixes:
+#   0. 100% Pre-Install & Pre-Update Autostart & Registry Deep Purge (Purges all duplicate PowerShell autostart scripts, Run keys and ghost tasks)
+# Key v032 Fixes:
 #   1. Clean Regex Tokenization: Escaped hexadecimal ASCII hex ["\x27] for RustDesk ID matching
 #   2. Guaranteed Dual KeepAlive Heartbeat: Direct loop ping every ~25s + global-scoped background timer
 #   3. Corrected Variable Scope in Timer & Heartbeat (100% valid PIN & RustDesk ID delivery)
@@ -119,7 +135,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v031.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v033.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -134,9 +150,265 @@ try {
         }
     }
 
+    # ==========================================================================
+    # DEEP SYSTEM PURGE FUNCTION (Zero-Clutter Standard: Auto-start, Tasks, Svc)
+    # ==========================================================================
+    function Invoke-GINAgentDeepCleanup {
+        param([switch]$FullUninstall = $false)
+
+        if (-not ($env:GIN_AGENT_SILENT -eq "1")) {
+            Write-Host "[*] Executing deep purge of previous services, tasks, processes and autostart..." -ForegroundColor Cyan
+        }
+
+        # 1. Stop and remove all legacy Windows Services (sc.exe)
+        $servicesToKill = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
+        foreach ($s in $servicesToKill) {
+            try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
+            try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
+        }
+        try {
+            Get-CimInstance Win32_Service -ErrorAction SilentlyContinue | Where-Object {
+                $_.Name -like "*GIN*Agent*" -or $_.DisplayName -like "*GIN*Agent*"
+            } | ForEach-Object {
+                try { & sc.exe stop $_.Name 2>&1 | Out-Null } catch {}
+                try { & sc.exe delete $_.Name 2>&1 | Out-Null } catch {}
+            }
+        } catch {}
+
+        # 2. Stop and remove all running scheduled task instances
+        $tasksToKill = @("GIN-Agent-Service", "GIN-Agent-Update-Logon", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
+        foreach ($ot in $tasksToKill) {
+            try { schtasks.exe /end /tn "$ot" 2>&1 | Out-Null } catch {}
+            try { schtasks.exe /delete /tn "$ot" /f 2>&1 | Out-Null } catch {}
+        }
+        try {
+            Get-ScheduledTask -ErrorAction SilentlyContinue | Where-Object {
+                $_.TaskName -like "*GIN*Agent*" -or $_.TaskPath -like "*GIN*Agent*"
+            } | ForEach-Object {
+                try { schtasks.exe /end /tn "$($_.TaskName)" 2>&1 | Out-Null } catch {}
+                try { schtasks.exe /delete /tn "$($_.TaskName)" /f 2>&1 | Out-Null } catch {}
+            }
+        } catch {}
+
+        # 3. Terminate running background agent processes safely (release Global Mutex)
+        $currentPid = $PID
+        $parentPid = 0
+        try {
+            $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
+            if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
+        } catch {}
+
+        try {
+            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe' or Name = 'pwsh.exe'" -ErrorAction SilentlyContinue | Where-Object {
+                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
+                    $_.CommandLine -like "*GIN-Agent*" -or
+                    $_.CommandLine -like "*agent-api*"
+                )
+            } | ForEach-Object {
+                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
+            }
+        } catch {}
+        try {
+            Get-Process -Name "GIN-Agent*" -ErrorAction SilentlyContinue | Where-Object {
+                $_.Id -ne $currentPid -and $_.Id -ne $parentPid
+            } | Stop-Process -Force -ErrorAction SilentlyContinue
+        } catch {}
+
+        Start-Sleep -Milliseconds 600
+
+        # 4. Aggressively purge all duplicate/ghost Autostart items from Registry Run & RunOnce
+        $runKeyPaths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce",
+            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run",
+            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce",
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce",
+            "HKCU:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Run",
+            "HKCU:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce"
+        )
+        try {
+            Get-ChildItem -Path "Registry::HKEY_USERS" -ErrorAction SilentlyContinue | Where-Object {
+                $_.PSChildName -notmatch '_Classes$' -and $_.PSChildName -ne '.DEFAULT'
+            } | ForEach-Object {
+                $runKeyPaths += "Registry::HKEY_USERS\$($_.PSChildName)\Software\Microsoft\Windows\CurrentVersion\Run"
+                $runKeyPaths += "Registry::HKEY_USERS\$($_.PSChildName)\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+            }
+        } catch {}
+
+        foreach ($rk in $runKeyPaths) {
+            if (Test-Path $rk) {
+                try {
+                    $item = Get-Item -Path $rk -ErrorAction SilentlyContinue
+                    if ($item) {
+                        foreach ($prop in $item.Property) {
+                            $val = ($item.GetValue($prop) | Out-String).Trim()
+                            $isMatch = $false
+                            if ($prop -match '(?i)(GIN-Agent|GIN_Agent|NeverCombine|FolderView|UltarixMonitor)') {
+                                $isMatch = $true
+                            } elseif ($val -match '(?i)(GIN-Agent|GIN_Agent|agent-api|NeverCombineTaskbar|FolderViewListSortType)') {
+                                $isMatch = $true
+                            } elseif ($val -match '(?i)powershell\.exe' -and $val -match '(?i)(GIN|NeverCombine|FolderView)') {
+                                $isMatch = $true
+                            }
+                            if ($isMatch) {
+                                try { Remove-ItemProperty -Path $rk -Name $prop -Force -ErrorAction SilentlyContinue } catch {}
+                            }
+                        }
+                    }
+                } catch {}
+            }
+        }
+
+        # 5. Clean StartupApproved registry keys
+        $approvedPaths = @(
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32",
+            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder",
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
+            "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder"
+        )
+        foreach ($ap in $approvedPaths) {
+            if (Test-Path $ap) {
+                try {
+                    $item = Get-Item -Path $ap -ErrorAction SilentlyContinue
+                    if ($item) {
+                        foreach ($prop in $item.Property) {
+                            if ($prop -match '(?i)(GIN-Agent|GIN_Agent|NeverCombine|FolderView|UltarixMonitor)') {
+                                try { Remove-ItemProperty -Path $ap -Name $prop -Force -ErrorAction SilentlyContinue } catch {}
+                            }
+                        }
+                    }
+                } catch {}
+            }
+        }
+
+        # 6. Aggressively purge all files and shortcuts from Startup folders
+        $startupFolders = @(
+            "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp",
+            "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup",
+            "$env:ALLUSERSPROFILE\Microsoft\Windows\Start Menu\Programs\StartUp",
+            "$env:ALLUSERSPROFILE\Microsoft\Windows\Start Menu\Programs\Startup",
+            "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup",
+            "$([Environment]::GetFolderPath('Startup'))"
+        )
+        try {
+            Get-ChildItem -Path "$env:SystemDrive\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                $uStartup = "$($_.FullName)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
+                if (Test-Path $uStartup) { $startupFolders += $uStartup }
+            }
+        } catch {}
+
+        $wscriptShell = $null
+        try { $wscriptShell = New-Object -ComObject WScript.Shell } catch {}
+
+        foreach ($sf in ($startupFolders | Select-Object -Unique)) {
+            if (Test-Path $sf) {
+                try {
+                    Get-ChildItem -Path $sf -Force -ErrorAction SilentlyContinue | ForEach-Object {
+                        $f = $_
+                        $shouldDelete = $false
+                        $fn = $f.Name
+                        if ($fn -match '(?i)(GIN-Agent|GIN_Agent|NeverCombine|FolderView|UltarixMonitor|CLEAN\.lnk)') {
+                            $shouldDelete = $true
+                        } elseif ($f.Extension -eq ".ps1") {
+                            $shouldDelete = $true
+                        } elseif ($f.Extension -eq ".lnk" -and $wscriptShell) {
+                            try {
+                                $sc = $wscriptShell.CreateShortcut($f.FullName)
+                                $target = ($sc.TargetPath | Out-String).Trim()
+                                $args = ($sc.Arguments | Out-String).Trim()
+                                if ($target -match '(?i)powershell' -and ($args -match '(?i)(GIN|Agent|NeverCombine|FolderView)' -or -not $args)) {
+                                    $shouldDelete = $true
+                                } elseif ($target -match '(?i)(GIN-Agent|GIN_Agent)' -or $args -match '(?i)(GIN-Agent|GIN_Agent)') {
+                                    $shouldDelete = $true
+                                } elseif ($target -and -not (Test-Path $target)) {
+                                    if ($target -match '(?i)(GIN|Agent|powershell)') {
+                                        $shouldDelete = $true
+                                    }
+                                }
+                            } catch {}
+                        } elseif ($f.Extension -in @(".cmd", ".bat", ".vbs")) {
+                            try {
+                                $content = Get-Content -Path $f.FullName -Raw -ErrorAction SilentlyContinue
+                                if ($content -match '(?i)(GIN-Agent|GIN_Agent|agent-api|NeverCombineTaskbar)') {
+                                    $shouldDelete = $true
+                                }
+                            } catch {}
+                        }
+                        if ($shouldDelete) {
+                            try {
+                                $f.IsReadOnly = $false
+                                Remove-Item -Path $f.FullName -Force -ErrorAction SilentlyContinue
+                            } catch {}
+                        }
+                    }
+                } catch {}
+            }
+        }
+
+        # 7. Clean legacy ProgramData folder
+        $legacyDir = "$env:ProgramData\GIN-Agent"
+        if (Test-Path $legacyDir) {
+            try {
+                Get-ChildItem -Path $legacyDir -File -ErrorAction SilentlyContinue | ForEach-Object {
+                    try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
+                }
+                Remove-Item -Path $legacyDir -Recurse -Force -ErrorAction SilentlyContinue
+            } catch {}
+        }
+
+        # 8. Clean old versions & artifacts inside Program Files\GIN-Agent
+        $instDir = "$env:ProgramFiles\GIN-Agent"
+        if (Test-Path $instDir) {
+            try {
+                Get-ChildItem -Path $instDir -File -ErrorAction SilentlyContinue | ForEach-Object {
+                    $fname = $_.Name
+                    if ($FullUninstall) {
+                        try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
+                    } else {
+                        if ($fname -match '(?i)^GIN-Agent_Windows_v\d{3}\.(cmd|zip)$' -or
+                            $fname -match '(?i)^GIN-Agent.*\.bak' -or
+                            $fname -match '(?i)\.tmp$' -or
+                            $fname -match '(?i)\.old$' -or
+                            $fname -match '(?i)^GIN-Agent.*\.exe$') {
+                            try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
+                        }
+                    }
+                }
+            } catch {}
+        }
+
+        # 9. If FullUninstall requested, purge registry keys too
+        if ($FullUninstall) {
+            $regPaths = @(
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent",
+                "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent",
+                "HKLM:\SOFTWARE\GIN-Agent",
+                "HKCU:\Software\GIN-Agent",
+                "HKLM:\SOFTWARE\WOW6432Node\GIN-Agent",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
+            )
+            foreach ($rp in $regPaths) {
+                if (Test-Path $rp) {
+                    try { Remove-Item -Path $rp -Recurse -Force -ErrorAction SilentlyContinue } catch {}
+                }
+            }
+        }
+
+        # 10. Purge temp update files
+        try {
+            Get-ChildItem -Path $env:TEMP -Filter "*GIN-Agent*" -Force -ErrorAction SilentlyContinue | ForEach-Object {
+                if ($_.FullName -ne $MyInvocation.MyCommand.Path) {
+                    try { Remove-Item -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue } catch {}
+                }
+            }
+        } catch {}
+    }
+
     # Function: Auto-Update Check
     function Check-GINAgentUpdate {
-        param([string]$currentVer = "v031", [string]$activeRegion = "EU")
+        param([string]$currentVer = "v033", [string]$activeRegion = "EU")
         try {
             $versionUrls = @()
             if ($activeRegion -eq "RU") {
@@ -201,7 +473,7 @@ try {
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v031" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v033" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -213,68 +485,7 @@ try {
         Write-Host "====================================================================" -ForegroundColor Red
         Write-Host "           GIN-AGENT - COMPLETE SYSTEM UNINSTALLATION               " -ForegroundColor Yellow
         Write-Host "====================================================================" -ForegroundColor Red
-        Write-Host "[*] Stopping and removing GIN-Agent services and scheduled tasks..." -ForegroundColor Cyan
-
-        $tasks = @("GIN-Agent-Service", "GIN-Agent-Update-Logon", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
-        foreach ($t in $tasks) {
-            try { schtasks.exe /end /tn "$t" 2>&1 | Out-Null } catch {}
-            try { schtasks.exe /delete /tn "$t" /f 2>&1 | Out-Null } catch {}
-        }
-
-        $services = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
-        foreach ($s in $services) {
-            try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
-            try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
-        }
-
-        $currentPid = $PID
-        $parentPid = 0
-        try {
-            $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
-            if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
-        } catch {}
-
-        try {
-            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
-                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    $_.CommandLine -like "*GIN-Agent*" -or
-                    $_.CommandLine -like "*agent-api*"
-                )
-            } | ForEach-Object {
-                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
-            }
-        } catch {}
-
-        Start-Sleep -Milliseconds 600
-
-        Write-Host "[*] Removing registry entries..." -ForegroundColor Cyan
-        $regPaths = @(
-            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent",
-            "HKLM:\SOFTWARE\GIN-Agent"
-        )
-        foreach ($rp in $regPaths) {
-            if (Test-Path $rp) {
-                try { Remove-Item -Path $rp -Recurse -Force -ErrorAction SilentlyContinue } catch {}
-            }
-        }
-
-        Write-Host "[*] Removing GIN-Agent files and directories..." -ForegroundColor Cyan
-        $dirsToPurge = @(
-            "$env:ProgramData\GIN-Agent",
-            "$env:ProgramFiles\GIN-Agent",
-            "${env:ProgramFiles(x86)}\GIN-Agent"
-        )
-        foreach ($d in $dirsToPurge) {
-            if (Test-Path $d) {
-                try {
-                    Get-ChildItem -Path $d -File -ErrorAction SilentlyContinue | ForEach-Object {
-                        if ($_.FullName -ne $MyInvocation.MyCommand.Path) {
-                            try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
-                        }
-                    }
-                } catch {}
-            }
-        }
+        Invoke-GINAgentDeepCleanup -FullUninstall
 
         $scriptPath = $MyInvocation.MyCommand.Path
         if (-not $scriptPath) { $scriptPath = "$installDir\GIN-Agent.cmd" }
@@ -303,7 +514,7 @@ try {
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v031 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v033 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -364,56 +575,13 @@ try {
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v031 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v033 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
 
-        # 1. Stop and remove any legacy Windows Services (sc.exe)
-        $oldServices = @("GIN-Agent", "GIN-Agent-Service", "GIN_Agent")
-        foreach ($s in $oldServices) {
-            try { & sc.exe stop $s 2>&1 | Out-Null } catch {}
-            try { & sc.exe delete $s 2>&1 | Out-Null } catch {}
-        }
-
-        # 2. Stop and remove running scheduled task instances
-        $oldTasks = @("GIN-Agent-Service", "GIN-Agent-Update-Logon", "GIN-Agent", "GIN-Agent-Watchdog", "GIN-Agent-Updater", "GIN-Remote")
-        foreach ($ot in $oldTasks) {
-            try { schtasks.exe /end /tn "$ot" 2>&1 | Out-Null } catch {}
-            try { schtasks.exe /delete /tn "$ot" /f 2>&1 | Out-Null } catch {}
-        }
-
-        # 3. Terminate previous agent processes safely (release Global Mutex)
-        $currentPid = $PID
-        $parentPid = 0
-        try {
-            $parentProc = Get-CimInstance Win32_Process -Filter "ProcessId = $currentPid" -ErrorAction SilentlyContinue
-            if ($parentProc) { $parentPid = $parentProc.ParentProcessId }
-        } catch {}
-
-        try {
-            Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe' or Name = 'cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {
-                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    $_.CommandLine -like "*GIN-Agent*" -or
-                    $_.CommandLine -like "*agent-api*"
-                )
-            } | ForEach-Object {
-                try { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } catch {}
-            }
-        } catch {}
-
-        Start-Sleep -Milliseconds 600
-
-        # 4. Clean up legacy ProgramData folder
-        $legacyDir = "$env:ProgramData\GIN-Agent"
-        if (Test-Path $legacyDir) {
-            try {
-                Get-ChildItem -Path $legacyDir -File -ErrorAction SilentlyContinue | ForEach-Object {
-                    try { $_.IsReadOnly = $false; Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue } catch {}
-                }
-                Remove-Item -Path $legacyDir -Recurse -Force -ErrorAction SilentlyContinue
-            } catch {}
-        }
+        # 1-4. Deep System Cleanup: Purges legacy services, tasks, processes, autostart shortcuts & registry clutter
+        Invoke-GINAgentDeepCleanup -FullUninstall:$false
 
         # 5. Create Program Files directory
         if (-not (Test-Path $installDir)) {
@@ -446,7 +614,7 @@ try {
         }
 
         # 8. Deploy uninstaller script using clean Base64 (zero syntax clashes)
-        $uninstallerB64 = "PCMgOg0KQGVjaG8gb2ZmDQpzZXRsb2NhbCBEaXNhYmxlRGVsYXllZEV4cGFuc2lvbg0KdGl0bGUgR0lOLUFnZW50IFVuaW5zdGFsbGVyDQoNCjo6IEVsZXZhdGlvbiBjaGVjaw0KbmV0IHNlc3Npb24gPm51bCAyPiYxDQppZiAlZXJyb3JsZXZlbCUgZXF1IDAgZ290byA6UlVOX1VOSU5TVEFMTA0KDQpwb3dlcnNoZWxsLmV4ZSAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICJ0cnkgeyBTdGFydC1Qcm9jZXNzIC1GaWxlUGF0aCAnJX5mMCcgLVZlcmIgUnVuQXMgLUVycm9yQWN0aW9uIFN0b3A7IGV4aXQgMCB9IGNhdGNoIHsgZXhpdCAxIH0iID5udWwgMj4mMQ0KZXhpdCAvYiAlZXJyb3JsZXZlbCUNCg0KOlJVTl9VTklOU1RBTEwNCnNldCAiUFNfRVhFPXBvd2Vyc2hlbGwuZXhlIg0KaWYgZXhpc3QgIiVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSIgKA0KICAgIHNldCAiUFNfRVhFPSVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSINCikgZWxzZSBpZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c3RlbTMyXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiICgNCiAgICBzZXQgIlBTX0VYRT0lU3lzdGVtUm9vdCVcU3lzdGVtMzJcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSINCikNCg0KIiVQU19FWEUlIiAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICIkcmF3ID0gW1N5c3RlbS5JTy5GaWxlXTo6UmVhZEFsbFRleHQoJyV+ZjAnLCBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4KTsgJiAoW1NjcmlwdEJsb2NrXTo6Q3JlYXRlKCRyYXcpKSINCnNldCAiUFNfRVJSPSVlcnJvcmxldmVsJSINCmV4aXQgL2IgJVBTX0VSUiUNCiM+DQp0cnkgew0KICAgIFtDb25zb2xlXTo6T3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4DQogICAgJE91dHB1dEVuY29kaW5nID0gW1N5c3RlbS5UZXh0LkVuY29kaW5nXTo6VVRGOA0KfSBjYXRjaCB7fQ0KDQpXcml0ZS1Ib3N0ICIiDQpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBSZWQNCldyaXRlLUhvc3QgIiAgICAgICAgICAgR0lOLUFHRU5UIC0gQ09NUExFVEUgU1lTVEVNIFVOSU5TVEFMTEFUSU9OICAgICAgICAgICAgICAgIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdw0KV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgUmVkDQpXcml0ZS1Ib3N0ICJbKl0gU3RvcHBpbmcgYW5kIHJlbW92aW5nIEdJTi1BZ2VudCBzZXJ2aWNlcyBhbmQgc2NoZWR1bGVkIHRhc2tzLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCg0KIyAxLiBTdG9wIGFuZCByZW1vdmUgc2NoZWR1bGVkIHRhc2tzDQokdGFza3MgPSBAKCJHSU4tQWdlbnQtU2VydmljZSIsICJHSU4tQWdlbnQiLCAiR0lOLUFnZW50LVdhdGNoZG9nIiwgIkdJTi1BZ2VudC1VcGRhdGVyIiwgIkdJTi1BZ2VudC1VcGRhdGUtTG9nb24iLCAiR0lOLVJlbW90ZSIpDQpmb3JlYWNoICgkdCBpbiAkdGFza3MpIHsNCiAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2VuZCAvdG4gIiR0IiAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQ0KICAgIHRyeSB7IHNjaHRhc2tzLmV4ZSAvZGVsZXRlIC90biAiJHQiIC9mIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9DQp9DQoNCiMgMi4gU3RvcCBhbmQgcmVtb3ZlIGxlZ2FjeSBXaW5kb3dzIFNlcnZpY2VzDQokc2VydmljZXMgPSBAKCJHSU4tQWdlbnQiLCAiR0lOLUFnZW50LVNlcnZpY2UiLCAiR0lOX0FnZW50IikNCmZvcmVhY2ggKCRzIGluICRzZXJ2aWNlcykgew0KICAgIHRyeSB7ICYgc2MuZXhlIHN0b3AgJHMgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30NCiAgICB0cnkgeyAmIHNjLmV4ZSBkZWxldGUgJHMgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30NCn0NCg0KIyAzLiBUZXJtaW5hdGUgcnVubmluZyBhZ2VudCBwcm9jZXNzZXMgc2FmZWx5DQokY3VycmVudFBpZCA9ICRQSUQNCiRwYXJlbnRQaWQgPSAwDQp0cnkgew0KICAgICRwYXJlbnRQcm9jID0gR2V0LUNpbUluc3RhbmNlIFdpbjMyX1Byb2Nlc3MgLUZpbHRlciAiUHJvY2Vzc0lkID0gJGN1cnJlbnRQaWQiIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlDQogICAgaWYgKCRwYXJlbnRQcm9jKSB7ICRwYXJlbnRQaWQgPSAkcGFyZW50UHJvYy5QYXJlbnRQcm9jZXNzSWQgfQ0KfSBjYXRjaCB7fQ0KDQp0cnkgew0KICAgIEdldC1DaW1JbnN0YW5jZSBXaW4zMl9Qcm9jZXNzIC1GaWx0ZXIgIk5hbWUgPSAncG93ZXJzaGVsbC5leGUnIG9yIE5hbWUgPSAnY21kLmV4ZSciIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgV2hlcmUtT2JqZWN0IHsNCiAgICAgICAgJF8uUHJvY2Vzc0lkIC1uZSAkY3VycmVudFBpZCAtYW5kICRfLlByb2Nlc3NJZCAtbmUgJHBhcmVudFBpZCAtYW5kICgNCiAgICAgICAgICAgICRfLkNvbW1hbmRMaW5lIC1saWtlICIqR0lOLUFnZW50KiIgLW9yDQogICAgICAgICAgICAkXy5Db21tYW5kTGluZSAtbGlrZSAiKmFnZW50LWFwaSoiDQogICAgICAgICkNCiAgICB9IHwgRm9yRWFjaC1PYmplY3Qgew0KICAgICAgICB0cnkgeyBTdG9wLVByb2Nlc3MgLUlkICRfLlByb2Nlc3NJZCAtRm9yY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfSBjYXRjaCB7fQ0KICAgIH0NCn0gY2F0Y2gge30NCg0KU3RhcnQtU2xlZXAgLU1pbGxpc2Vjb25kcyA2MDANCg0KIyA0LiBSZW1vdmUgV2luZG93cyBSZWdpc3RyeSBlbnRyaWVzDQpXcml0ZS1Ib3N0ICJbKl0gUmVtb3ZpbmcgcmVnaXN0cnkgZW50cmllcy4uLiIgLUZvcmVncm91bmRDb2xvciBDeWFuDQokcmVnUGF0aHMgPSBAKA0KICAgICJIS0xNOlxTT0ZUV0FSRVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxVbmluc3RhbGxcR0lOLUFnZW50IiwNCiAgICAiSEtMTTpcU09GVFdBUkVcR0lOLUFnZW50Ig0KKQ0KZm9yZWFjaCAoJHJwIGluICRyZWdQYXRocykgew0KICAgIGlmIChUZXN0LVBhdGggJHJwKSB7DQogICAgICAgIHRyeSB7IFJlbW92ZS1JdGVtIC1QYXRoICRycCAtUmVjdXJzZSAtRm9yY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfSBjYXRjaCB7fQ0KICAgIH0NCn0NCg0KIyA1LiBDbGVhbiB1cCBkaXJlY3Rvcmllcw0KV3JpdGUtSG9zdCAiWypdIFJlbW92aW5nIEdJTi1BZ2VudCBmaWxlcyBhbmQgZGlyZWN0b3JpZXMuLi4iIC1Gb3JlZ3JvdW5kQ29sb3IgQ3lhbg0KJGRpcnNUb1B1cmdlID0gQCgNCiAgICAiJGVudjpQcm9ncmFtRGF0YVxHSU4tQWdlbnQiLA0KICAgICIkZW52OlByb2dyYW1GaWxlc1xHSU4tQWdlbnQiLA0KICAgICIke2VudjpQcm9ncmFtRmlsZXMoeDg2KX1cR0lOLUFnZW50Ig0KKQ0KZm9yZWFjaCAoJGQgaW4gJGRpcnNUb1B1cmdlKSB7DQogICAgaWYgKFRlc3QtUGF0aCAkZCkgew0KICAgICAgICB0cnkgew0KICAgICAgICAgICAgR2V0LUNoaWxkSXRlbSAtUGF0aCAkZCAtRmlsZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB8IEZvckVhY2gtT2JqZWN0IHsNCiAgICAgICAgICAgICAgICBpZiAoJF8uRnVsbE5hbWUgLW5lICRNeUludm9jYXRpb24uTXlDb21tYW5kLlBhdGgpIHsNCiAgICAgICAgICAgICAgICAgICAgdHJ5IHsgJF8uSXNSZWFkT25seSA9ICRmYWxzZTsgUmVtb3ZlLUl0ZW0gLVBhdGggJF8uRnVsbE5hbWUgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30NCiAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICB9DQogICAgICAgIH0gY2F0Y2gge30NCiAgICB9DQp9DQoNCiMgNi4gRGV0YWNoZWQgc2VsZi1jbGVhbnVwIGZvciByZW1haW5pbmcgZm9sZGVyDQokc2NyaXB0UGF0aCA9ICRNeUludm9jYXRpb24uTXlDb21tYW5kLlBhdGgNCmlmICgtbm90ICRzY3JpcHRQYXRoKSB7ICRzY3JpcHRQYXRoID0gIiRlbnY6UHJvZ3JhbUZpbGVzXEdJTi1BZ2VudFx1bmluc3RhbGwuY21kIiB9DQokcGFyZW50Rm9sZGVyID0gU3BsaXQtUGF0aCAtUGFyZW50ICRzY3JpcHRQYXRoDQoNCldyaXRlLUhvc3QgIiINCldyaXRlLUhvc3QgIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IiAtRm9yZWdyb3VuZENvbG9yIEdyZWVuDQpXcml0ZS1Ib3N0ICIgIFtPS10gR0lOLUFHRU5UIEhBUyBCRUVOIENPTVBMRVRFTFkgQU5EIENMRUFOTFkgUkVNT1ZFRCEgICAgICAgICAgICIgLUZvcmVncm91bmRDb2xvciBHcmVlbg0KV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgR3JlZW4NCldyaXRlLUhvc3QgIiINCg0KIyBTcGF3biBkZXRhY2hlZCBjbWQgdG8gcmVtb3ZlIHRoZSBmb2xkZXIgaXRzZWxmIGFmdGVyIGV4aXQNCmlmICgkcGFyZW50Rm9sZGVyIC1hbmQgKFRlc3QtUGF0aCAkcGFyZW50Rm9sZGVyKSkgew0KICAgIFN0YXJ0LVByb2Nlc3MgLUZpbGVQYXRoICJjbWQuZXhlIiAtQXJndW1lbnRMaXN0ICIvYyBwaW5nIDEyNy4wLjAuMSAtbiAzID5udWwgJiByZCAvcyAvcSBgImAiJHBhcmVudEZvbGRlcmAiYCIiIC1XaW5kb3dTdHlsZSBIaWRkZW4NCn0NCg0KU3RhcnQtU2xlZXAgLVNlY29uZHMgMg0KZXhpdCAwDQo="
+        $uninstallerB64 = "PCMgOg0KQGVjaG8gb2ZmDQpzZXRsb2NhbCBEaXNhYmxlRGVsYXllZEV4cGFuc2lvbg0KdGl0bGUgR0lOLUFnZW50IFVuaW5zdGFsbGVyDQoNCjo6IEVsZXZhdGlvbiBjaGVjaw0KbmV0IHNlc3Npb24gPm51bCAyPiYxDQppZiAlZXJyb3JsZXZlbCUgZXF1IDAgZ290byA6UlVOX1VOSU5TVEFMTA0KDQpwb3dlcnNoZWxsLmV4ZSAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICJ0cnkgeyBTdGFydC1Qcm9jZXNzIC1GaWxlUGF0aCAnJX5mMCcgLVZlcmIgUnVuQXMgLUVycm9yQWN0aW9uIFN0b3A7IGV4aXQgMCB9IGNhdGNoIHsgZXhpdCAxIH0iID5udWwgMj4mMQ0KZXhpdCAvYiAlZXJyb3JsZXZlbCUNCg0KOlJVTl9VTklOU1RBTEwNCnNldCAiUFNfRVhFPXBvd2Vyc2hlbGwuZXhlIg0KaWYgZXhpc3QgIiVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSIgKA0KICAgIHNldCAiUFNfRVhFPSVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSINCikgZWxzZSBpZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c3RlbTMyXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiICgNCiAgICBzZXQgIlBTX0VYRT0lU3lzdGVtUm9vdCVcU3lzdGVtMzJcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSINCikNCg0KIiVQU19FWEUlIiAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICIkcmF3ID0gW1N5c3RlbS5JTy5GaWxlXTo6UmVhZEFsbFRleHQoJyV+ZjAnLCBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4KTsgJiAoW1NjcmlwdEJsb2NrXTo6Q3JlYXRlKCRyYXcpKSINCnNldCAiUFNfRVJSPSVlcnJvcmxldmVsJSINCmV4aXQgL2IgJVBTX0VSUiUNCiM+DQp0cnkgew0KICAgIFtDb25zb2xlXTo6T3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4DQogICAgJE91dHB1dEVuY29kaW5nID0gW1N5c3RlbS5UZXh0LkVuY29kaW5nXTo6VVRGOA0KfSBjYXRjaCB7fQ0KDQpXcml0ZS1Ib3N0ICIiDQpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBSZWQNCldyaXRlLUhvc3QgIiAgICAgICAgICAgR0lOLUFHRU5UIC0gQ09NUExFVEUgU1lTVEVNIFVOSU5TVEFMTEFUSU9OICAgICAgICAgICAgICAgIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdw0KV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgUmVkDQpXcml0ZS1Ib3N0ICJbKl0gU3RvcHBpbmcgYW5kIHJlbW92aW5nIEdJTi1BZ2VudCBzZXJ2aWNlcywgdGFza3MsIHByb2Nlc3Nlcy4uLiIgLUZvcmVncm91bmRDb2xvciBDeWFuDQoNCiMgMS4gU3RvcCBhbmQgcmVtb3ZlIHNjaGVkdWxlZCB0YXNrcw0KJHRhc2tzID0gQCgiR0lOLUFnZW50LVNlcnZpY2UiLCAiR0lOLUFnZW50IiwgIkdJTi1BZ2VudC1XYXRjaGRvZyIsICJHSU4tQWdlbnQtVXBkYXRlciIsICJHSU4tQWdlbnQtVXBkYXRlLUxvZ29uIiwgIkdJTi1SZW1vdGUiKQ0KZm9yZWFjaCAoJHQgaW4gJHRhc2tzKSB7DQogICAgdHJ5IHsgc2NodGFza3MuZXhlIC9lbmQgL3RuICIkdCIgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30NCiAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2RlbGV0ZSAvdG4gIiR0IiAvZiAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQ0KfQ0KdHJ5IHsNCiAgICBHZXQtU2NoZWR1bGVkVGFzayAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB8IFdoZXJlLU9iamVjdCB7DQogICAgICAgICRfLlRhc2tOYW1lIC1saWtlICIqR0lOKkFnZW50KiIgLW9yICRfLlRhc2tQYXRoIC1saWtlICIqR0lOKkFnZW50KiINCiAgICB9IHwgRm9yRWFjaC1PYmplY3Qgew0KICAgICAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2VuZCAvdG4gIiQoJF8uVGFza05hbWUpIiAyPiYxIHwgT3V0LU51bGw7IHNjaHRhc2tzLmV4ZSAvZGVsZXRlIC90biAiJCgkXy5UYXNrTmFtZSkiIC9mIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9DQogICAgfQ0KfSBjYXRjaCB7fQ0KDQojIDIuIFN0b3AgYW5kIHJlbW92ZSBXaW5kb3dzIFNlcnZpY2VzDQokc2VydmljZXMgPSBAKCJHSU4tQWdlbnQiLCAiR0lOLUFnZW50LVNlcnZpY2UiLCAiR0lOX0FnZW50IikNCmZvcmVhY2ggKCRzIGluICRzZXJ2aWNlcykgew0KICAgIHRyeSB7ICYgc2MuZXhlIHN0b3AgJHMgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30NCiAgICB0cnkgeyAmIHNjLmV4ZSBkZWxldGUgJHMgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30NCn0NCnRyeSB7DQogICAgR2V0LUNpbUluc3RhbmNlIFdpbjMyX1NlcnZpY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfCBXaGVyZS1PYmplY3Qgew0KICAgICAgICAkXy5OYW1lIC1saWtlICIqR0lOKkFnZW50KiIgLW9yICRfLkRpc3BsYXlOYW1lIC1saWtlICIqR0lOKkFnZW50KiINCiAgICB9IHwgRm9yRWFjaC1PYmplY3Qgew0KICAgICAgICB0cnkgeyAmIHNjLmV4ZSBzdG9wICRfLk5hbWUgMj4mMSB8IE91dC1OdWxsOyAmIHNjLmV4ZSBkZWxldGUgJF8uTmFtZSAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQ0KICAgIH0NCn0gY2F0Y2gge30NCg0KIyAzLiBUZXJtaW5hdGUgcnVubmluZyBhZ2VudCBwcm9jZXNzZXMgc2FmZWx5DQokY3VycmVudFBpZCA9ICRQSUQNCiRwYXJlbnRQaWQgPSAwDQp0cnkgew0KICAgICRwYXJlbnRQcm9jID0gR2V0LUNpbUluc3RhbmNlIFdpbjMyX1Byb2Nlc3MgLUZpbHRlciAiUHJvY2Vzc0lkID0gJGN1cnJlbnRQaWQiIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlDQogICAgaWYgKCRwYXJlbnRQcm9jKSB7ICRwYXJlbnRQaWQgPSAkcGFyZW50UHJvYy5QYXJlbnRQcm9jZXNzSWQgfQ0KfSBjYXRjaCB7fQ0KDQp0cnkgew0KICAgIEdldC1DaW1JbnN0YW5jZSBXaW4zMl9Qcm9jZXNzIC1GaWx0ZXIgIk5hbWUgPSAncG93ZXJzaGVsbC5leGUnIG9yIE5hbWUgPSAnY21kLmV4ZScgb3IgTmFtZSA9ICdwd3NoLmV4ZSciIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgV2hlcmUtT2JqZWN0IHsNCiAgICAgICAgJF8uUHJvY2Vzc0lkIC1uZSAkY3VycmVudFBpZCAtYW5kICRfLlByb2Nlc3NJZCAtbmUgJHBhcmVudFBpZCAtYW5kICgNCiAgICAgICAgICAgICRfLkNvbW1hbmRMaW5lIC1saWtlICIqR0lOLUFnZW50KiIgLW9yDQogICAgICAgICAgICAkXy5Db21tYW5kTGluZSAtbGlrZSAiKmFnZW50LWFwaSoiDQogICAgICAgICkNCiAgICB9IHwgRm9yRWFjaC1PYmplY3Qgew0KICAgICAgICB0cnkgeyBTdG9wLVByb2Nlc3MgLUlkICRfLlByb2Nlc3NJZCAtRm9yY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfSBjYXRjaCB7fQ0KICAgIH0NCn0gY2F0Y2gge30NCnRyeSB7DQogICAgR2V0LVByb2Nlc3MgLU5hbWUgIkdJTi1BZ2VudCoiIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgV2hlcmUtT2JqZWN0IHsgJF8uSWQgLW5lICRjdXJyZW50UGlkIC1hbmQgJF8uSWQgLW5lICRwYXJlbnRQaWQgfSB8IFN0b3AtUHJvY2VzcyAtRm9yY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUNCn0gY2F0Y2gge30NCg0KU3RhcnQtU2xlZXAgLU1pbGxpc2Vjb25kcyA2MDANCg0KIyA0LiBSZW1vdmUgYWxsIGR1cGxpY2F0ZS9naG9zdCBBdXRvc3RhcnQgaXRlbXMgZnJvbSBSZWdpc3RyeSBSdW4gJiBSdW5PbmNlDQpXcml0ZS1Ib3N0ICJbKl0gUHVyZ2luZyBhbGwgUG93ZXJTaGVsbCBhbmQgYWdlbnQgZW50cmllcyBmcm9tIFJlZ2lzdHJ5IFJ1biBrZXlzLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCiRydW5LZXlQYXRocyA9IEAoDQogICAgIkhLTE06XFNPRlRXQVJFXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFJ1biIsDQogICAgIkhLTE06XFNPRlRXQVJFXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFJ1bk9uY2UiLA0KICAgICJIS0xNOlxTT0ZUV0FSRVxXT1c2NDMyTm9kZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxSdW4iLA0KICAgICJIS0xNOlxTT0ZUV0FSRVxXT1c2NDMyTm9kZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxSdW5PbmNlIiwNCiAgICAiSEtDVTpcU29mdHdhcmVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cUnVuIiwNCiAgICAiSEtDVTpcU29mdHdhcmVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cUnVuT25jZSIsDQogICAgIkhLQ1U6XFNvZnR3YXJlXFdPVzY0MzJOb2RlXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFJ1biIsDQogICAgIkhLQ1U6XFNvZnR3YXJlXFdPVzY0MzJOb2RlXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFJ1bk9uY2UiDQopDQp0cnkgew0KICAgIEdldC1DaGlsZEl0ZW0gLVBhdGggIlJlZ2lzdHJ5OjpIS0VZX1VTRVJTIiAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB8IFdoZXJlLU9iamVjdCB7DQogICAgICAgICRfLlBTQ2hpbGROYW1lIC1ub3RtYXRjaCAnX0NsYXNzZXMkJyAtYW5kICRfLlBTQ2hpbGROYW1lIC1uZSAnLkRFRkFVTFQnDQogICAgfSB8IEZvckVhY2gtT2JqZWN0IHsNCiAgICAgICAgJHJ1bktleVBhdGhzICs9ICJSZWdpc3RyeTo6SEtFWV9VU0VSU1wkKCRfLlBTQ2hpbGROYW1lKVxTb2Z0d2FyZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxSdW4iDQogICAgICAgICRydW5LZXlQYXRocyArPSAiUmVnaXN0cnk6OkhLRVlfVVNFUlNcJCgkXy5QU0NoaWxkTmFtZSlcU29mdHdhcmVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cUnVuT25jZSINCiAgICB9DQp9IGNhdGNoIHt9DQoNCmZvcmVhY2ggKCRyayBpbiAkcnVuS2V5UGF0aHMpIHsNCiAgICBpZiAoVGVzdC1QYXRoICRyaykgew0KICAgICAgICB0cnkgew0KICAgICAgICAgICAgJGl0ZW0gPSBHZXQtSXRlbSAtUGF0aCAkcmsgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUNCiAgICAgICAgICAgIGlmICgkaXRlbSkgew0KICAgICAgICAgICAgICAgIGZvcmVhY2ggKCRwcm9wIGluICRpdGVtLlByb3BlcnR5KSB7DQogICAgICAgICAgICAgICAgICAgICR2YWwgPSAoJGl0ZW0uR2V0VmFsdWUoJHByb3ApIHwgT3V0LVN0cmluZykuVHJpbSgpDQogICAgICAgICAgICAgICAgICAgICRpc01hdGNoID0gJGZhbHNlDQogICAgICAgICAgICAgICAgICAgIGlmICgkcHJvcCAtbWF0Y2ggJyg/aSkoR0lOLUFnZW50fEdJTl9BZ2VudHxOZXZlckNvbWJpbmV8Rm9sZGVyVmlld3xVbHRhcml4TW9uaXRvciknKSB7DQogICAgICAgICAgICAgICAgICAgICAgICAkaXNNYXRjaCA9ICR0cnVlDQogICAgICAgICAgICAgICAgICAgIH0gZWxzZWlmICgkdmFsIC1tYXRjaCAnKD9pKShHSU4tQWdlbnR8R0lOX0FnZW50fGFnZW50LWFwaXxOZXZlckNvbWJpbmVUYXNrYmFyfEZvbGRlclZpZXdMaXN0U29ydFR5cGUpJykgew0KICAgICAgICAgICAgICAgICAgICAgICAgJGlzTWF0Y2ggPSAkdHJ1ZQ0KICAgICAgICAgICAgICAgICAgICB9IGVsc2VpZiAoJHZhbCAtbWF0Y2ggJyg/aSlwb3dlcnNoZWxsXC5leGUnIC1hbmQgJHZhbCAtbWF0Y2ggJyg/aSkoR0lOfE5ldmVyQ29tYmluZXxGb2xkZXJWaWV3KScpIHsNCiAgICAgICAgICAgICAgICAgICAgICAgICRpc01hdGNoID0gJHRydWUNCiAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgICAgICBpZiAoJGlzTWF0Y2gpIHsNCiAgICAgICAgICAgICAgICAgICAgICAgIHRyeSB7IFJlbW92ZS1JdGVtUHJvcGVydHkgLVBhdGggJHJrIC1OYW1lICRwcm9wIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB9IGNhdGNoIHt9DQogICAgICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICB9DQogICAgICAgIH0gY2F0Y2gge30NCiAgICB9DQp9DQoNCiMgNS4gQ2xlYW4gU3RhcnR1cEFwcHJvdmVkIHJlZ2lzdHJ5IGtleXMNCiRhcHByb3ZlZFBhdGhzID0gQCgNCiAgICAiSEtMTTpcU09GVFdBUkVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cRXhwbG9yZXJcU3RhcnR1cEFwcHJvdmVkXFJ1biIsDQogICAgIkhLTE06XFNPRlRXQVJFXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXEV4cGxvcmVyXFN0YXJ0dXBBcHByb3ZlZFxSdW4zMiIsDQogICAgIkhLTE06XFNPRlRXQVJFXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXEV4cGxvcmVyXFN0YXJ0dXBBcHByb3ZlZFxTdGFydHVwRm9sZGVyIiwNCiAgICAiSEtDVTpcU29mdHdhcmVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cRXhwbG9yZXJcU3RhcnR1cEFwcHJvdmVkXFJ1biIsDQogICAgIkhLQ1U6XFNvZnR3YXJlXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXEV4cGxvcmVyXFN0YXJ0dXBBcHByb3ZlZFxTdGFydHVwRm9sZGVyIg0KKQ0KZm9yZWFjaCAoJGFwIGluICRhcHByb3ZlZFBhdGhzKSB7DQogICAgaWYgKFRlc3QtUGF0aCAkYXApIHsNCiAgICAgICAgdHJ5IHsNCiAgICAgICAgICAgICRpdGVtID0gR2V0LUl0ZW0gLVBhdGggJGFwIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlDQogICAgICAgICAgICBpZiAoJGl0ZW0pIHsNCiAgICAgICAgICAgICAgICBmb3JlYWNoICgkcHJvcCBpbiAkaXRlbS5Qcm9wZXJ0eSkgew0KICAgICAgICAgICAgICAgICAgICBpZiAoJHByb3AgLW1hdGNoICcoP2kpKEdJTi1BZ2VudHxHSU5fQWdlbnR8TmV2ZXJDb21iaW5lfEZvbGRlclZpZXd8VWx0YXJpeE1vbml0b3IpJykgew0KICAgICAgICAgICAgICAgICAgICAgICAgdHJ5IHsgUmVtb3ZlLUl0ZW1Qcm9wZXJ0eSAtUGF0aCAkYXAgLU5hbWUgJHByb3AgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30NCiAgICAgICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgICAgIH0NCiAgICAgICAgICAgIH0NCiAgICAgICAgfSBjYXRjaCB7fQ0KICAgIH0NCn0NCg0KIyA2LiBQdXJnZSBTdGFydHVwIGZvbGRlcnMNCldyaXRlLUhvc3QgIlsqXSBQdXJnaW5nIGFsbCBQb3dlclNoZWxsIGFuZCBkdXBsaWNhdGUgc2NyaXB0cyBmcm9tIFN0YXJ0dXAgZm9sZGVycy4uLiIgLUZvcmVncm91bmRDb2xvciBDeWFuDQokc3RhcnR1cEZvbGRlcnMgPSBAKA0KICAgICIkZW52OlByb2dyYW1EYXRhXE1pY3Jvc29mdFxXaW5kb3dzXFN0YXJ0IE1lbnVcUHJvZ3JhbXNcU3RhcnRVcCIsDQogICAgIiRlbnY6UHJvZ3JhbURhdGFcTWljcm9zb2Z0XFdpbmRvd3NcU3RhcnQgTWVudVxQcm9ncmFtc1xTdGFydHVwIiwNCiAgICAiJGVudjpBTExVU0VSU1BST0ZJTEVcTWljcm9zb2Z0XFdpbmRvd3NcU3RhcnQgTWVudVxQcm9ncmFtc1xTdGFydFVwIiwNCiAgICAiJGVudjpBTExVU0VSU1BST0ZJTEVcTWljcm9zb2Z0XFdpbmRvd3NcU3RhcnQgTWVudVxQcm9ncmFtc1xTdGFydHVwIiwNCiAgICAiJGVudjpBUFBEQVRBXE1pY3Jvc29mdFxXaW5kb3dzXFN0YXJ0IE1lbnVcUHJvZ3JhbXNcU3RhcnR1cCIsDQogICAgIiQoW0Vudmlyb25tZW50XTo6R2V0Rm9sZGVyUGF0aCgnU3RhcnR1cCcpKSINCikNCnRyeSB7DQogICAgR2V0LUNoaWxkSXRlbSAtUGF0aCAiJGVudjpTeXN0ZW1Ecml2ZVxVc2VycyIgLURpcmVjdG9yeSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB8IEZvckVhY2gtT2JqZWN0IHsNCiAgICAgICAgJHVTdGFydHVwID0gIiQoJF8uRnVsbE5hbWUpXEFwcERhdGFcUm9hbWluZ1xNaWNyb3NvZnRcV2luZG93c1xTdGFydCBNZW51XFByb2dyYW1zXFN0YXJ0dXAiDQogICAgICAgIGlmIChUZXN0LVBhdGggJHVTdGFydHVwKSB7ICRzdGFydHVwRm9sZGVycyArPSAkdVN0YXJ0dXAgfQ0KICAgIH0NCn0gY2F0Y2gge30NCg0KJHdzY3JpcHRTaGVsbCA9ICRudWxsDQp0cnkgeyAkd3NjcmlwdFNoZWxsID0gTmV3LU9iamVjdCAtQ29tT2JqZWN0IFdTY3JpcHQuU2hlbGwgfSBjYXRjaCB7fQ0KDQpmb3JlYWNoICgkc2YgaW4gKCRzdGFydHVwRm9sZGVycyB8IFNlbGVjdC1PYmplY3QgLVVuaXF1ZSkpIHsNCiAgICBpZiAoVGVzdC1QYXRoICRzZikgew0KICAgICAgICB0cnkgew0KICAgICAgICAgICAgR2V0LUNoaWxkSXRlbSAtUGF0aCAkc2YgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgRm9yRWFjaC1PYmplY3Qgew0KICAgICAgICAgICAgICAgICRmID0gJF8NCiAgICAgICAgICAgICAgICAkc2hvdWxkRGVsZXRlID0gJGZhbHNlDQogICAgICAgICAgICAgICAgJGZuID0gJGYuTmFtZQ0KICAgICAgICAgICAgICAgIGlmICgkZm4gLW1hdGNoICcoP2kpKEdJTi1BZ2VudHxHSU5fQWdlbnR8TmV2ZXJDb21iaW5lfEZvbGRlclZpZXd8VWx0YXJpeE1vbml0b3J8Q0xFQU5cLmxuayknKSB7DQogICAgICAgICAgICAgICAgICAgICRzaG91bGREZWxldGUgPSAkdHJ1ZQ0KICAgICAgICAgICAgICAgIH0gZWxzZWlmICgkZi5FeHRlbnNpb24gLWVxICIucHMxIikgew0KICAgICAgICAgICAgICAgICAgICAkc2hvdWxkRGVsZXRlID0gJHRydWUNCiAgICAgICAgICAgICAgICB9IGVsc2VpZiAoJGYuRXh0ZW5zaW9uIC1lcSAiLmxuayIgLWFuZCAkd3NjcmlwdFNoZWxsKSB7DQogICAgICAgICAgICAgICAgICAgIHRyeSB7DQogICAgICAgICAgICAgICAgICAgICAgICAkc2MgPSAkd3NjcmlwdFNoZWxsLkNyZWF0ZVNob3J0Y3V0KCRmLkZ1bGxOYW1lKQ0KICAgICAgICAgICAgICAgICAgICAgICAgJHRhcmdldCA9ICgkc2MuVGFyZ2V0UGF0aCB8IE91dC1TdHJpbmcpLlRyaW0oKQ0KICAgICAgICAgICAgICAgICAgICAgICAgJGFyZ3MgPSAoJHNjLkFyZ3VtZW50cyB8IE91dC1TdHJpbmcpLlRyaW0oKQ0KICAgICAgICAgICAgICAgICAgICAgICAgaWYgKCR0YXJnZXQgLW1hdGNoICcoP2kpcG93ZXJzaGVsbCcgLWFuZCAoJGFyZ3MgLW1hdGNoICcoP2kpKEdJTnxBZ2VudHxOZXZlckNvbWJpbmV8Rm9sZGVyVmlldyknIC1vciAtbm90ICRhcmdzKSkgew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICRzaG91bGREZWxldGUgPSAkdHJ1ZQ0KICAgICAgICAgICAgICAgICAgICAgICAgfSBlbHNlaWYgKCR0YXJnZXQgLW1hdGNoICcoP2kpKEdJTi1BZ2VudHxHSU5fQWdlbnQpJyAtb3IgJGFyZ3MgLW1hdGNoICcoP2kpKEdJTi1BZ2VudHxHSU5fQWdlbnQpJykgew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICRzaG91bGREZWxldGUgPSAkdHJ1ZQ0KICAgICAgICAgICAgICAgICAgICAgICAgfSBlbHNlaWYgKCR0YXJnZXQgLWFuZCAtbm90IChUZXN0LVBhdGggJHRhcmdldCkpIHsNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBpZiAoJHRhcmdldCAtbWF0Y2ggJyg/aSkoR0lOfEFnZW50fHBvd2Vyc2hlbGwpJykgew0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAkc2hvdWxkRGVsZXRlID0gJHRydWUNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgIH0gY2F0Y2gge30NCiAgICAgICAgICAgICAgICB9IGVsc2VpZiAoJGYuRXh0ZW5zaW9uIC1pbiBAKCIuY21kIiwgIi5iYXQiLCAiLnZicyIpKSB7DQogICAgICAgICAgICAgICAgICAgIHRyeSB7DQogICAgICAgICAgICAgICAgICAgICAgICAkY29udGVudCA9IEdldC1Db250ZW50IC1QYXRoICRmLkZ1bGxOYW1lIC1SYXcgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUNCiAgICAgICAgICAgICAgICAgICAgICAgIGlmICgkY29udGVudCAtbWF0Y2ggJyg/aSkoR0lOLUFnZW50fEdJTl9BZ2VudHxhZ2VudC1hcGl8TmV2ZXJDb21iaW5lVGFza2JhciknKSB7DQogICAgICAgICAgICAgICAgICAgICAgICAgICAgJHNob3VsZERlbGV0ZSA9ICR0cnVlDQogICAgICAgICAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgICAgIH0gY2F0Y2gge30NCiAgICAgICAgICAgICAgICB9DQogICAgICAgICAgICAgICAgaWYgKCRzaG91bGREZWxldGUpIHsNCiAgICAgICAgICAgICAgICAgICAgdHJ5IHsNCiAgICAgICAgICAgICAgICAgICAgICAgICRmLklzUmVhZE9ubHkgPSAkZmFsc2UNCiAgICAgICAgICAgICAgICAgICAgICAgIFJlbW92ZS1JdGVtIC1QYXRoICRmLkZ1bGxOYW1lIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZQ0KICAgICAgICAgICAgICAgICAgICB9IGNhdGNoIHt9DQogICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgfQ0KICAgICAgICB9IGNhdGNoIHt9DQogICAgfQ0KfQ0KDQojIDcuIFJlbW92ZSBXaW5kb3dzIFJlZ2lzdHJ5IGVudHJpZXMNCldyaXRlLUhvc3QgIlsqXSBSZW1vdmluZyByZWdpc3RyeSBlbnRyaWVzLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCiRyZWdQYXRocyA9IEAoDQogICAgIkhLTE06XFNPRlRXQVJFXE1pY3Jvc29mdFxXaW5kb3dzXEN1cnJlbnRWZXJzaW9uXFVuaW5zdGFsbFxHSU4tQWdlbnQiLA0KICAgICJIS0NVOlxTb2Z0d2FyZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxVbmluc3RhbGxcR0lOLUFnZW50IiwNCiAgICAiSEtMTTpcU09GVFdBUkVcR0lOLUFnZW50IiwNCiAgICAiSEtDVTpcU29mdHdhcmVcR0lOLUFnZW50IiwNCiAgICAiSEtMTTpcU09GVFdBUkVcV09XNjQzMk5vZGVcR0lOLUFnZW50IiwNCiAgICAiSEtMTTpcU09GVFdBUkVcV09XNjQzMk5vZGVcTWljcm9zb2Z0XFdpbmRvd3NcQ3VycmVudFZlcnNpb25cVW5pbnN0YWxsXEdJTi1BZ2VudCINCikNCmZvcmVhY2ggKCRycCBpbiAkcmVnUGF0aHMpIHsNCiAgICBpZiAoVGVzdC1QYXRoICRycCkgew0KICAgICAgICB0cnkgeyBSZW1vdmUtSXRlbSAtUGF0aCAkcnAgLVJlY3Vyc2UgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30NCiAgICB9DQp9DQoNCiMgOC4gQ2xlYW4gdXAgZGlyZWN0b3JpZXMNCldyaXRlLUhvc3QgIlsqXSBSZW1vdmluZyBHSU4tQWdlbnQgZmlsZXMgYW5kIGRpcmVjdG9yaWVzLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4NCiRkaXJzVG9QdXJnZSA9IEAoDQogICAgIiRlbnY6UHJvZ3JhbURhdGFcR0lOLUFnZW50IiwNCiAgICAiJGVudjpQcm9ncmFtRmlsZXNcR0lOLUFnZW50IiwNCiAgICAiJHtlbnY6UHJvZ3JhbUZpbGVzKHg4Nil9XEdJTi1BZ2VudCINCikNCmZvcmVhY2ggKCRkIGluICRkaXJzVG9QdXJnZSkgew0KICAgIGlmIChUZXN0LVBhdGggJGQpIHsNCiAgICAgICAgdHJ5IHsNCiAgICAgICAgICAgIEdldC1DaGlsZEl0ZW0gLVBhdGggJGQgLUZpbGUgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfCBGb3JFYWNoLU9iamVjdCB7DQogICAgICAgICAgICAgICAgaWYgKCRfLkZ1bGxOYW1lIC1uZSAkTXlJbnZvY2F0aW9uLk15Q29tbWFuZC5QYXRoKSB7DQogICAgICAgICAgICAgICAgICAgIHRyeSB7ICRfLklzUmVhZE9ubHkgPSAkZmFsc2U7IFJlbW92ZS1JdGVtIC1QYXRoICRfLkZ1bGxOYW1lIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB9IGNhdGNoIHt9DQogICAgICAgICAgICAgICAgfQ0KICAgICAgICAgICAgfQ0KICAgICAgICB9IGNhdGNoIHt9DQogICAgfQ0KfQ0KDQojIDkuIERldGFjaGVkIHNlbGYtY2xlYW51cCBmb3IgcmVtYWluaW5nIGZvbGRlcg0KJHNjcmlwdFBhdGggPSAkTXlJbnZvY2F0aW9uLk15Q29tbWFuZC5QYXRoDQppZiAoLW5vdCAkc2NyaXB0UGF0aCkgeyAkc2NyaXB0UGF0aCA9ICIkZW52OlByb2dyYW1GaWxlc1xHSU4tQWdlbnRcdW5pbnN0YWxsLmNtZCIgfQ0KJHBhcmVudEZvbGRlciA9IFNwbGl0LVBhdGggLVBhcmVudCAkc2NyaXB0UGF0aA0KDQpXcml0ZS1Ib3N0ICIiDQpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBHcmVlbg0KV3JpdGUtSG9zdCAiICBbT0tdIEdJTi1BR0VOVCBIQVMgQkVFTiBDT01QTEVURUxZIEFORCBDTEVBTkxZIFJFTU9WRUQhICAgICAgICAgICAiIC1Gb3JlZ3JvdW5kQ29sb3IgR3JlZW4NCldyaXRlLUhvc3QgIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IiAtRm9yZWdyb3VuZENvbG9yIEdyZWVuDQpXcml0ZS1Ib3N0ICIiDQoNCmlmICgkcGFyZW50Rm9sZGVyIC1hbmQgKFRlc3QtUGF0aCAkcGFyZW50Rm9sZGVyKSkgew0KICAgIFN0YXJ0LVByb2Nlc3MgLUZpbGVQYXRoICJjbWQuZXhlIiAtQXJndW1lbnRMaXN0ICIvYyBwaW5nIDEyNy4wLjAuMSAtbiAzID5udWwgJiByZCAvcyAvcSBgImAiJHBhcmVudEZvbGRlcmAiYCIiIC1XaW5kb3dTdHlsZSBIaWRkZW4NCn0NCg0KU3RhcnQtU2xlZXAgLVNlY29uZHMgMg0KZXhpdCAwDQo="
         [System.IO.File]::WriteAllBytes($uninstallerCmd, [System.Convert]::FromBase64String($uninstallerB64))
 
         # 9. Register in Windows Installed Apps (Add/Remove Programs)
@@ -454,7 +622,7 @@ try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v031" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v033" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -519,7 +687,7 @@ try {
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v031 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v033 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -608,10 +776,14 @@ try {
     # Ensure RDP & Shadow Policy
     try {
         $null = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force -ErrorAction SilentlyContinue
+         = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force -ErrorAction SilentlyContinue
+         = Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "SecurityLayer" -Value 1 -Force -ErrorAction SilentlyContinue
         $tsPolicy = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services'
         if (-not (Test-Path $tsPolicy)) { New-Item -Path $tsPolicy -Force -ErrorAction SilentlyContinue | Out-Null }
         $null = Set-ItemProperty -Path $tsPolicy -Name "Shadow" -Value 2 -Force -ErrorAction SilentlyContinue
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
+        Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-TCP" -ErrorAction SilentlyContinue | Out-Null
+        Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-UDP" -ErrorAction SilentlyContinue | Out-Null
     } catch {}
 
     # Hardware GIN-PIN calculation (Deterministic WMI)
@@ -738,7 +910,7 @@ try {
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v031"
+            version         = "v033"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -767,7 +939,7 @@ try {
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v031&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v033&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -777,7 +949,7 @@ try {
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v031" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v033" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -836,7 +1008,7 @@ try {
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v031" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v033" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -850,11 +1022,11 @@ try {
         if ($loopCount -ge 5) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v031&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v033&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v031" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v033" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -863,7 +1035,7 @@ try {
         $updateCheckCounter++
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v031" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v033" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -872,7 +1044,7 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v031:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v033:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
