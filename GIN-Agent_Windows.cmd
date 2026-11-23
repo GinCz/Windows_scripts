@@ -481,7 +481,7 @@ try {
         # Watchdog Task: fires every 5 minutes, restarts agent if dead
         $watchdogName = "GIN-Agent-Watchdog"
         schtasks.exe /delete /tn "$watchdogName" /f 2>&1 | Out-Null
-        $wdAction = "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command `"if (-not (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*GIN-Agent*' })) { Start-Process -FilePath 'cmd.exe' -ArgumentList '/c `\`"`"$targetCmd`\`" /service $selectedRegion`\`"' -WindowStyle Hidden }`""
+        $wdAction = "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command `"if (-not (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*GIN-Agent*' })) { Start-Process -FilePath '$targetCmd' -ArgumentList '/service $selectedRegion' -WindowStyle Hidden }`""
         schtasks.exe /create /tn "$watchdogName" /tr $wdAction /sc MINUTE /mo 5 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
         try {
             $wdSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0)
@@ -687,7 +687,7 @@ try {
         foreach ($cp in $rdPaths) {
             if (Test-Path $cp) {
                 $c = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
-                if ($c -match '(?m)^\s*id\s*=\s*['"]?(\d{6,12})['"]?') {
+                if ($c -match '(?m)^\s*id\s*=\s*["\x27]?(\d{6,12})["\x27]?') {
                     $rustdeskId = $matches[1]
                     break
                 }
