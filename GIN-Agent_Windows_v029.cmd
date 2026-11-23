@@ -477,7 +477,7 @@ try {
         # Watchdog Task: fires every 5 minutes, restarts agent if not running
         $watchdogName = "GIN-Agent-Watchdog"
         schtasks.exe /delete /tn "$watchdogName" /f 2>&1 | Out-Null
-        $wdAction = "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command \"if (-not (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { \$_.CommandLine -like '*GIN-Agent.cmd*' -or \$_.CommandLine -like '*GIN-Agent_Windows*' })) { Start-Process -FilePath '$targetCmd' -ArgumentList '/service $selectedRegion' -WindowStyle Hidden }\""'
+        $wdAction = "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command `"if (-not (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*GIN-Agent.cmd*' -or $_.CommandLine -like '*GIN-Agent_Windows*' })) { Start-Process -FilePath '$targetCmd' -ArgumentList '/service $selectedRegion' -WindowStyle Hidden }`""
         schtasks.exe /create /tn "$watchdogName" /tr $wdAction /sc MINUTE /mo 5 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
 
         # Scheduled Auto-Update Task on User Logon (+30 minutes delay)
