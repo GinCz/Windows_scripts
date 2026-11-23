@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v030
+title GIN-Agent v031
 
 :: If launched with /service or --service in background
 if /i "%~1"=="/service" goto :RUN_SERVICE
@@ -91,7 +91,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v030 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v031 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -99,12 +99,12 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
-# Key v030 Fixes & Improvements:
-#   1. Guaranteed Dual KeepAlive Heartbeat: Direct loop ping every ~25s + global-scoped background timer
-#   2. Corrected Variable Scope in Timer & Heartbeat (100% valid PIN & RustDesk ID delivery)
-#   3. Clean Process Killer: Kills all previous GIN-Agent instances unconditionally so mutex is released
-#   4. Battery & 72h Timeout Hardening: Task Scheduler settings updated to prevent auto-kill on battery
-#   5. Watchdog Syntax Fix: Escaped $_.CommandLine in scheduled task definition
+# Key v031 Fixes:
+#   1. Clean Regex Tokenization: Escaped hexadecimal ASCII hex ["\x27] for RustDesk ID matching
+#   2. Guaranteed Dual KeepAlive Heartbeat: Direct loop ping every ~25s + global-scoped background timer
+#   3. Corrected Variable Scope in Timer & Heartbeat (100% valid PIN & RustDesk ID delivery)
+#   4. Clean Process Killer: Kills all previous GIN-Agent instances unconditionally so mutex is released
+#   5. Battery & 72h Timeout Hardening: Task Scheduler settings updated to prevent auto-kill on battery
 # ==============================================================================
 
 try {
@@ -119,7 +119,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v030.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v031.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -136,7 +136,7 @@ try {
 
     # Function: Auto-Update Check
     function Check-GINAgentUpdate {
-        param([string]$currentVer = "v030", [string]$activeRegion = "EU")
+        param([string]$currentVer = "v031", [string]$activeRegion = "EU")
         try {
             $versionUrls = @()
             if ($activeRegion -eq "RU") {
@@ -201,7 +201,7 @@ try {
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v030" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v031" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -303,7 +303,7 @@ try {
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v030 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v031 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -364,7 +364,7 @@ try {
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v030 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v031 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
@@ -454,7 +454,7 @@ try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v030" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v031" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -519,7 +519,7 @@ try {
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v030 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v031 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -738,7 +738,7 @@ try {
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v030"
+            version         = "v031"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -767,7 +767,7 @@ try {
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v030&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v031&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -777,7 +777,7 @@ try {
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v030" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v031" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -836,7 +836,7 @@ try {
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v030" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v031" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -850,11 +850,11 @@ try {
         if ($loopCount -ge 5) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v030&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v031&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v030" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v031" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -863,7 +863,7 @@ try {
         $updateCheckCounter++
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v030" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v031" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -872,7 +872,7 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v030:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v031:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
