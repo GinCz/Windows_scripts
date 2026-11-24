@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v037
+title GIN-Agent v038
 
 :: Parse all arguments robustly across %1, %2, %3, %4
 set "GIN_ARG1=%~1"
@@ -105,7 +105,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v037 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v038 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -113,7 +113,7 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
-# Key v037 Fixes:
+# Key v038 Fixes:
 #   1. Universal 3-Tier Multi-Source Auto-Update: Tier 1 GitHub -> Tier 2 Server 222 (EU) -> Tier 3 Server 109 (RU)
 #   2. Ultra-Fast Resilient Timeout: max 5s version check per tier, 15s payload download
 #   3. Fully agnostic roaming support (Europe / Russia / Global)
@@ -144,7 +144,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v037.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v038.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -157,6 +157,60 @@ try {
         } else {
             $mode = "INSTALL"
         }
+    }
+
+    # ==========================================================================
+    # LOGGING ENGINE (90-Day Rolling Log in logs\agent.log)
+    # ==========================================================================
+    $logDir = "$installDir\logs"
+    $logFile = "$logDir\agent.log"
+    if (-not (Test-Path $logDir)) {
+        try { New-Item -Path $logDir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null } catch {}
+    }
+
+    function Write-GINLog {
+        param([string]$Message, [string]$Level = "INFO")
+        try {
+            $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+            $entry = "[$stamp] [$Level] $Message"
+            [System.IO.File]::AppendAllText($logFile, "$entry`r`n", [System.Text.Encoding]::UTF8)
+        } catch {}
+    }
+
+    function Prune-GINLogs {
+        try {
+            if (-not (Test-Path $logFile)) { return }
+            $fi = Get-Item $logFile -ErrorAction SilentlyContinue
+            if (-not $fi) { return }
+
+            # Rotate if larger than 5 MB
+            if ($fi.Length -gt 5MB) {
+                $lines = Get-Content -Path $logFile -Tail 5000 -ErrorAction SilentlyContinue
+                if ($lines) {
+                    [System.IO.File]::WriteAllLines($logFile, $lines, [System.Text.Encoding]::UTF8)
+                }
+            }
+
+            # Prune entries older than 90 days (3 months)
+            $cutoff = (Get-Date).AddDays(-90)
+            $rawLines = [System.IO.File]::ReadAllLines($logFile, [System.Text.Encoding]::UTF8)
+            $kept = [System.Collections.Generic.List[string]]::new()
+            $pruned = $false
+            foreach ($line in $rawLines) {
+                if ($line -match '^\[(\d{4}-\d{2}-\d{2})') {
+                    try {
+                        $lineDate = [DateTime]::ParseExact($matches[1], "yyyy-MM-dd", [System.Globalization.CultureInfo]::InvariantCulture)
+                        if ($lineDate -ge $cutoff) { $kept.Add($line) }
+                        else { $pruned = $true }
+                    } catch { $kept.Add($line) }
+                } else {
+                    $kept.Add($line)
+                }
+            }
+            if ($pruned) {
+                [System.IO.File]::WriteAllLines($logFile, $kept, [System.Text.Encoding]::UTF8)
+            }
+        } catch {}
     }
 
     # ==========================================================================
@@ -494,7 +548,7 @@ try {
 
     # Universal 3-Tier Multi-Source Auto-Update
     function Check-GINAgentUpdate {
-        param([string]$currentVer = "v037", [string]$activeRegion = "EU")
+        param([string]$currentVer = "v038", [string]$activeRegion = "EU")
         try {
             # Structured sources: Tier 1 GitHub -> Tier 2 Server 222 (EU) -> Tier 3 Server 109 (RU)
             $updateSources = @(
@@ -589,7 +643,7 @@ try {
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v037" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v038" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -630,7 +684,7 @@ try {
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v037 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v038 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -691,7 +745,7 @@ try {
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v037 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v038 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
@@ -742,7 +796,7 @@ try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v037" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v038" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -849,7 +903,7 @@ try {
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v037 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v038 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -878,6 +932,8 @@ try {
     try {
         $mutex = New-Object System.Threading.Mutex($true, "Global\GIN_Agent_Core_Mutex", [ref]$createdNew)
     } catch [System.Threading.AbandonedMutexException] {
+        $createdNew = $true
+    } catch {
         $createdNew = $true
     }
     if (-not $createdNew) { exit 0 }
@@ -941,7 +997,7 @@ try {
     
     # Initialize 90-Day Rolling Log
     Prune-GINLogs
-    Write-GINLog "GIN-Agent v037 Service started. PID: $PID, Session: $((Get-Process -Id $PID).SessionId), User: $env:USERNAME, Host: $env:COMPUTERNAME, Region: $region" "INFO"
+    Write-GINLog "GIN-Agent v038 Service started. PID: $PID, Session: $((Get-Process -Id $PID).SessionId), User: $env:USERNAME, Host: $env:COMPUTERNAME, Region: $region" "INFO"
     Write-GINLog "Active Gateway: $activeGatewayName ($serverUrl)" "INFO"
 
     # Hardware GIN-PIN calculation (Deterministic WMI)
@@ -1068,7 +1124,7 @@ try {
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v037"
+            version         = "v038"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -1097,7 +1153,7 @@ try {
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v037&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v038&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1107,7 +1163,7 @@ try {
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v037" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v038" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1166,7 +1222,7 @@ try {
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v037" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v038" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -1180,11 +1236,11 @@ try {
         if ($loopCount -ge 5) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v037&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v038&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v037" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v038" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -1196,7 +1252,7 @@ try {
         }
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v037" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v038" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -1205,65 +1261,10 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v037:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v038:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
     Write-Host ""
     exit 1
 }
-    # ==========================================================================
-    # LOGGING ENGINE (90-Day Rolling Log in logs\agent.log)
-    # ==========================================================================
-    $logDir = "$installDir\logs"
-    $logFile = "$logDir\agent.log"
-    if (-not (Test-Path $logDir)) {
-        try { New-Item -Path $logDir -ItemType Directory -Force -ErrorAction SilentlyContinue | Out-Null } catch {}
-    }
-
-    function Write-GINLog {
-        param([string]$Message, [string]$Level = "INFO")
-        try {
-            $stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-            $entry = "[$stamp] [$Level] $Message"
-            [System.IO.File]::AppendAllText($logFile, "$entry`r`n", [System.Text.Encoding]::UTF8)
-        } catch {}
-    }
-
-    function Prune-GINLogs {
-        try {
-            if (-not (Test-Path $logFile)) { return }
-            $fi = Get-Item $logFile -ErrorAction SilentlyContinue
-            if (-not $fi) { return }
-
-            # Rotate if larger than 5 MB
-            if ($fi.Length -gt 5MB) {
-                $lines = Get-Content -Path $logFile -Tail 5000 -ErrorAction SilentlyContinue
-                if ($lines) {
-                    [System.IO.File]::WriteAllLines($logFile, $lines, [System.Text.Encoding]::UTF8)
-                }
-            }
-
-            # Prune entries older than 90 days (3 months)
-            $cutoff = (Get-Date).AddDays(-90)
-            $rawLines = [System.IO.File]::ReadAllLines($logFile, [System.Text.Encoding]::UTF8)
-            $kept = [System.Collections.Generic.List[string]]::new()
-            $pruned = $false
-            foreach ($line in $rawLines) {
-                if ($line -match '^\[(\d{4}-\d{2}-\d{2})') {
-                    try {
-                        $lineDate = [DateTime]::ParseExact($matches[1], "yyyy-MM-dd", [System.Globalization.CultureInfo]::InvariantCulture)
-                        if ($lineDate -ge $cutoff) { $kept.Add($line) }
-                        else { $pruned = $true }
-                    } catch { $kept.Add($line) }
-                } else {
-                    $kept.Add($line)
-                }
-            }
-            if ($pruned) {
-                [System.IO.File]::WriteAllLines($logFile, $kept, [System.Text.Encoding]::UTF8)
-            }
-        } catch {}
-    }
-
-    
