@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v035
+title GIN-Agent v036
 
 :: Parse all arguments robustly across %1, %2, %3, %4
 set "GIN_ARG1=%~1"
@@ -105,7 +105,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v035 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v036 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -113,7 +113,7 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
-# Key v035 Fixes:
+# Key v036 Fixes:
 #   1. Universal 3-Tier Multi-Source Auto-Update: Tier 1 GitHub -> Tier 2 Server 222 (EU) -> Tier 3 Server 109 (RU)
 #   2. Ultra-Fast Resilient Timeout: max 5s version check per tier, 15s payload download
 #   3. Fully agnostic roaming support (Europe / Russia / Global)
@@ -144,7 +144,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v035.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v036.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -494,7 +494,7 @@ try {
 
     # Universal 3-Tier Multi-Source Auto-Update
     function Check-GINAgentUpdate {
-        param([string]$currentVer = "v035", [string]$activeRegion = "EU")
+        param([string]$currentVer = "v036", [string]$activeRegion = "EU")
         try {
             # Structured sources: Tier 1 GitHub -> Tier 2 Server 222 (EU) -> Tier 3 Server 109 (RU)
             $updateSources = @(
@@ -588,7 +588,7 @@ try {
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v035" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v036" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -629,7 +629,7 @@ try {
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v035 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v036 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -690,7 +690,7 @@ try {
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v035 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v036 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
@@ -737,7 +737,7 @@ try {
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v035" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v036" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -755,63 +755,96 @@ try {
             Write-Host "    [OK] Remote Desktop enabled (TermService active, NLA requirement disabled, Port 3389 open)." -ForegroundColor Green
         }
 
-        # 11. Register Native Windows Scheduled Service Host (HIGHEST Privileges, ONSTART)
+        # 11. Register Bulletproof Native Windows Scheduled Service Host (Session 0, SYSTEM, Unkillable)
         if (-not $isSilent) {
-            Write-Host "[*] Registering permanent SYSTEM background service ($selectedRegion)..." -ForegroundColor Cyan
+            Write-Host "[*] Registering unkillable Session 0 SYSTEM service ($selectedRegion)..." -ForegroundColor Cyan
         }
+
+        # Prevent laptops from dropping Wi-Fi / sleeping on AC power after user logoff or screen lock
+        try {
+            & powercfg.exe /change standby-timeout-ac 0 2>&1 | Out-Null
+            & powercfg.exe /setacvalueindex scheme_current sub_buttons lidaction 0 2>&1 | Out-Null
+            & powercfg.exe /setactive scheme_current 2>&1 | Out-Null
+        } catch {}
 
         $taskName = "GIN-Agent-Service"
-        schtasks.exe /delete /tn "$taskName" /f 2>&1 | Out-Null
-        $svcAction = "cmd.exe /c `"`"$targetCmd`" /service $selectedRegion`""
-        schtasks.exe /create /tn "$taskName" /tr $svcAction /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
+        try { schtasks.exe /end /tn "$taskName" 2>&1 | Out-Null } catch {}
+        try { schtasks.exe /delete /tn "$taskName" /f 2>&1 | Out-Null } catch {}
+
+        # Use native Register-ScheduledTask for 100% reliable quote preservation and battery immunity
+        $regSuccess = $false
         try {
-            $svcSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1)
-            Set-ScheduledTask -TaskName "$taskName" -Settings $svcSettings -ErrorAction SilentlyContinue | Out-Null
-        } catch {}
+            $act = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c `"`"$targetCmd`" /service $selectedRegion`"" -WorkingDirectory $installDir
+            $trigBoot = New-ScheduledTaskTrigger -AtStartup
+            $trigLogon = New-ScheduledTaskTrigger -AtLogOn
+            $princ = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+            $sett = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0) -RestartCount 999 -RestartInterval (New-TimeSpan -Minutes 1) -StartWhenAvailable -MultipleInstances IgnoreNew
+            $null = Register-ScheduledTask -TaskName "$taskName" -TaskPath "\" -Action $act -Trigger @($trigBoot, $trigLogon) -Principal $princ -Settings $sett -Force -ErrorAction Stop
+            $regSuccess = $true
+        } catch {
+            # Resilient fallback via schtasks XML
+            $xmlDef = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo><Author>VladiMIR+AI</Author><Description>GIN-Agent Unkillable System Service</Description></RegistrationInfo>
+  <Triggers><BootTrigger><Enabled>true</Enabled></BootTrigger><LogonTrigger><Enabled>true</Enabled></LogonTrigger></Triggers>
+  <Principals><Principal id="Author"><UserId>S-1-5-18</UserId><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardImmediate>false</AllowHardImmediate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings><StopOnIdleEnd>false</StopOnIdleEnd><RestartOnIdle>false</RestartOnIdle></IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>4</Priority>
+    <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>
+  </Settings>
+  <Actions Context="Author"><Exec><Command>cmd.exe</Command><Arguments>/c &quot;&quot;$targetCmd&quot; /service $selectedRegion&quot;</Arguments><WorkingDirectory>$installDir</WorkingDirectory></Exec></Actions>
+</Task>
+"@
+            $xmlPath = "$env:TEMP\gin_agent_svc.xml"
+            [System.IO.File]::WriteAllText($xmlPath, $xmlDef, [System.Text.Encoding]::Unicode)
+            & schtasks.exe /create /tn "$taskName" /xml "$xmlPath" /f 2>&1 | Out-Null
+            try { Remove-Item -Path $xmlPath -Force -ErrorAction SilentlyContinue } catch {}
+        }
+
+        # Start the SYSTEM service task
         schtasks.exe /run /tn "$taskName" 2>&1 | Out-Null
 
-        # Watchdog Task: fires every 5 minutes, restarts agent if dead
+        # Watchdog Task: checks every 3 minutes, restarts GIN-Agent-Service if stopped
         $watchdogName = "GIN-Agent-Watchdog"
-        schtasks.exe /delete /tn "$watchdogName" /f 2>&1 | Out-Null
-        $wdAction = "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command `"if (-not (Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { `$_.CommandLine -like '*GIN-Agent*' })) { Start-Process -FilePath '$targetCmd' -ArgumentList '/service $selectedRegion' -WindowStyle Hidden }`""
-        schtasks.exe /create /tn "$watchdogName" /tr $wdAction /sc MINUTE /mo 5 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
+        try { schtasks.exe /end /tn "$watchdogName" 2>&1 | Out-Null } catch {}
+        try { schtasks.exe /delete /tn "$watchdogName" /f 2>&1 | Out-Null } catch {}
+
         try {
-            $wdSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0)
-            Set-ScheduledTask -TaskName "$watchdogName" -Settings $wdSettings -ErrorAction SilentlyContinue | Out-Null
-        } catch {}
+            $wdAct = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoProfile -NonInteractive -WindowStyle Hidden -Command `"if ((Get-ScheduledTask -TaskName 'GIN-Agent-Service' -TaskPath '\' -ErrorAction SilentlyContinue).State -ne 'Running') { Start-ScheduledTask -TaskName 'GIN-Agent-Service' -TaskPath '\' -ErrorAction SilentlyContinue }`""
+            $wdTrig = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 3) -RepetitionDuration ([TimeSpan]::MaxValue)
+            $wdPrinc = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+            $wdSett = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Days 0) -StartWhenAvailable
+            $null = Register-ScheduledTask -TaskName "$watchdogName" -TaskPath "\" -Action $wdAct -Trigger $wdTrig -Principal $wdPrinc -Settings $wdSett -Force -ErrorAction Stop
+        } catch {
+            $wdActionCmd = "powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -Command `"if ((Get-ScheduledTask -TaskName 'GIN-Agent-Service' -ErrorAction SilentlyContinue).State -ne 'Running') { Start-ScheduledTask -TaskName 'GIN-Agent-Service' }`""
+            schtasks.exe /create /tn "$watchdogName" /tr "$wdActionCmd" /sc MINUTE /mo 3 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
+        }
 
-        # Scheduled Auto-Update Task on User Logon (+30 minutes delay)
+        # Scheduled Auto-Update Task on User Logon (+15 minutes delay)
         $logonTaskName = "GIN-Agent-Update-Logon"
-        schtasks.exe /delete /tn "$logonTaskName" /f 2>&1 | Out-Null
+        try { schtasks.exe /delete /tn "$logonTaskName" /f 2>&1 | Out-Null } catch {}
         $logonAction = "cmd.exe /c `"`"$targetCmd`" /checkupdate $selectedRegion`""
-        schtasks.exe /create /tn "$logonTaskName" /tr $logonAction /sc ONLOGON /delay 0030:00 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
-
-        $serviceStarted = $false
-        for ($w = 0; $w -lt 6; $w++) {
-            Start-Sleep -Milliseconds 500
-            $runningProc = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
-                $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $parentPid -and (
-                    $_.CommandLine -like "*$targetCmd*" -or
-                    $_.CommandLine -like "*GIN-Agent.cmd*"
-                )
-            }
-            if ($runningProc) {
-                $serviceStarted = $true
-                break
-            }
-        }
-
-        if (-not $serviceStarted) {
-            try {
-                Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$targetCmd`" /service $selectedRegion`"" -WindowStyle Hidden
-            } catch {}
-        }
+        schtasks.exe /create /tn "$logonTaskName" /tr $logonAction /sc ONLOGON /delay 0015:00 /ru "SYSTEM" /rl HIGHEST /f 2>&1 | Out-Null
 
         if (-not $isSilent) {
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v035 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v036 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -1024,7 +1057,7 @@ try {
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v035"
+            version         = "v036"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -1053,7 +1086,7 @@ try {
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v035&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v036&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1063,7 +1096,7 @@ try {
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v035" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v036" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1122,7 +1155,7 @@ try {
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v035" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v036" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -1136,11 +1169,11 @@ try {
         if ($loopCount -ge 5) {
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v035&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v036&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v035" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v036" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -1152,7 +1185,7 @@ try {
         }
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v035" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v036" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -1161,7 +1194,7 @@ try {
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v035:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v036:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
