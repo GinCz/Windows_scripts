@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v040
+title GIN-Agent v041
 
 :: Parse all arguments robustly across %1, %2, %3, %4
 set "GIN_ARG1=%~1"
@@ -109,7 +109,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v040 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v041 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -117,6 +117,10 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
+# Key v041 Fixes:
+#   - Fixed auto-updater execution (removed /service so updater runs full :RUN_INSTALLER)
+#   - Fixed rd.gincz.com live presence calculation for all connected agents
+#   - Zero manual intervention auto-upgrade across all remote nodes
 # Key v040 Fixes:
 #   - Automatic RustDesk deployment & configuration (Always-On Support Standard)
 #   - Dynamic RustDesk ID re-probing in service loop
@@ -152,7 +156,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v040.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v041.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -775,7 +779,14 @@ access-mode = 'full'
                         if ((Test-Path $tempUpdateFile) -and ((Get-Item $tempUpdateFile).Length -gt 15000)) {
                             $sample = Get-Content -Path $tempUpdateFile -TotalCount 30 -Raw
                             if ($sample -like "*GIN-Agent*") {
-                                Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent /service $activeRegion`"" -WindowStyle Hidden
+                                Write-GINLog "Spawning detached installer via WMI outside Job Object: $tempUpdateFile" "INFO"
+                                try {
+                                    $procClass = [wmiclass]"Win32_Process"
+                                    $procClass.Create("cmd.exe /c `"`"$tempUpdateFile`" /silent $activeRegion`"") | Out-Null
+                                } catch {
+                                    Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent $activeRegion`"" -WindowStyle Hidden
+                                }
+                                Start-Sleep -Seconds 1
                                 exit 0
                             }
                         }
@@ -797,7 +808,7 @@ access-mode = 'full'
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v040" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v041" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -838,7 +849,7 @@ access-mode = 'full'
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v040 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v041 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -899,7 +910,7 @@ access-mode = 'full'
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v040 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v041 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
@@ -941,7 +952,7 @@ access-mode = 'full'
         $uninstallerCmd = "$installDir\uninstall.cmd"
         $updaterCmd = "$installDir\update.cmd"
         $uninstallerB64 = "PCMgOgpAZWNobyBvZmYKc2V0bG9jYWwgRGlzYWJsZURlbGF5ZWRFeHBhbnNpb24KdGl0bGUgR0lOLUFnZW50IFVuaW5zdGFsbGVyCgo6OiBFbGV2YXRpb24gY2hlY2sKbmV0IHNlc3Npb24gPm51bCAyPiYxCmlmICVlcnJvcmxldmVsJSBlcXUgMCBnb3RvIDpSVU5fVU5JTlNUQUxMCgpwb3dlcnNoZWxsLmV4ZSAtTm9Qcm9maWxlIC1FeGVjdXRpb25Qb2xpY3kgQnlwYXNzIC1Db21tYW5kICJ0cnkgeyBTdGFydC1Qcm9jZXNzIC1GaWxlUGF0aCAnJX5mMCcgLVZlcmIgUnVuQXMgLUVycm9yQWN0aW9uIFN0b3A7IGV4aXQgMCB9IGNhdGNoIHsgZXhpdCAxIH0iID5udWwgMj4mMQpleGl0IC9iICVlcnJvcmxldmVsJQoKOlJVTl9VTklOU1RBTEwKc2V0ICJQU19FWEU9cG93ZXJzaGVsbC5leGUiCmlmIGV4aXN0ICIlU3lzdGVtUm9vdCVcU3lzbmF0aXZlXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiICgKICAgIHNldCAiUFNfRVhFPSVTeXN0ZW1Sb290JVxTeXNuYXRpdmVcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSIKKSBlbHNlIGlmIGV4aXN0ICIlU3lzdGVtUm9vdCVcU3lzdGVtMzJcV2luZG93c1Bvd2VyU2hlbGxcdjEuMFxwb3dlcnNoZWxsLmV4ZSIgKAogICAgc2V0ICJQU19FWEU9JVN5c3RlbVJvb3QlXFN5c3RlbTMyXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiCikKCiIlUFNfRVhFJSIgLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtQ29tbWFuZCAiJHJhdyA9IFtTeXN0ZW0uSU8uRmlsZV06OlJlYWRBbGxUZXh0KCclfmYwJywgW1N5c3RlbS5UZXh0LkVuY29kaW5nXTo6VVRGOCk7ICYgKFtTY3JpcHRCbG9ja106OkNyZWF0ZSgkcmF3KSkiCnNldCAiUFNfRVJSPSVlcnJvcmxldmVsJSIKZXhpdCAvYiAlUFNfRVJSJQojPgp0cnkgewogICAgW0NvbnNvbGVdOjpPdXRwdXRFbmNvZGluZyA9IFtTeXN0ZW0uVGV4dC5FbmNvZGluZ106OlVURjgKICAgICRPdXRwdXRFbmNvZGluZyA9IFtTeXN0ZW0uVGV4dC5FbmNvZGluZ106OlVURjgKfSBjYXRjaCB7fQoKV3JpdGUtSG9zdCAiIgpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBSZWQKV3JpdGUtSG9zdCAiICAgICAgICAgICBHSU4tQUdFTlQgLSBDT01QTEVURSBTWVNURU0gVU5JTlNUQUxMQVRJT04gICAgICAgICAgICAgICAiIC1Gb3JlZ3JvdW5kQ29sb3IgWWVsbG93CldyaXRlLUhvc3QgIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IiAtRm9yZWdyb3VuZENvbG9yIFJlZApXcml0ZS1Ib3N0ICJbKl0gU3RvcHBpbmcgYW5kIHJlbW92aW5nIEdJTi1BZ2VudCBzZXJ2aWNlcywgdGFza3MsIHByb2Nlc3Nlcy4uLiIgLUZvcmVncm91bmRDb2xvciBDeWFuCgojIDEuIFN0b3AgYW5kIHJlbW92ZSBzY2hlZHVsZWQgdGFza3MKJHRhc2tzID0gQCgiR0lOLUFnZW50LVNlcnZpY2UiLCAiR0lOLUFnZW50IiwgIkdJTi1BZ2VudC1XYXRjaGRvZyIsICJHSU4tQWdlbnQtVXBkYXRlciIsICJHSU4tQWdlbnQtVXBkYXRlLUxvZ29uIiwgIkdJTi1SZW1vdGUiKQpmb3JlYWNoICgkdCBpbiAkdGFza3MpIHsKICAgIHRyeSB7IHNjaHRhc2tzLmV4ZSAvZW5kIC90biAiJHQiIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9CiAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2RlbGV0ZSAvdG4gIiR0IiAvZiAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQp9CnRyeSB7CiAgICBHZXQtU2NoZWR1bGVkVGFzayAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB8IFdoZXJlLU9iamVjdCB7CiAgICAgICAgJF8uVGFza05hbWUgLWxpa2UgIipHSU4qQWdlbnQqIiAtb3IgJF8uVGFza1BhdGggLWxpa2UgIipHSU4qQWdlbnQqIgogICAgfSB8IEZvckVhY2gtT2JqZWN0IHsKICAgICAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2VuZCAvdG4gIiQoJF8uVGFza05hbWUpIiAyPiYxIHwgT3V0LU51bGw7IHNjaHRhc2tzLmV4ZSAvZGVsZXRlIC90biAiJCgkXy5UYXNrTmFtZSkiIC9mIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9CiAgICB9Cn0gY2F0Y2gge30KCiMgMi4gU3RvcCBhbmQgcmVtb3ZlIFdpbmRvd3MgU2VydmljZXMgaWYgYW55CiRzZXJ2aWNlcyA9IEAoIkdJTi1BZ2VudCIsICJHSU4tQWdlbnQtU2VydmljZSIsICJHSU5fQWdlbnQiKQpmb3JlYWNoICgkcyBpbiAkc2VydmljZXMpIHsKICAgIHRyeSB7ICYgc2MuZXhlIHN0b3AgJHMgMj4mMSB8IE91dC1OdWxsIH0gY2F0Y2gge30KICAgIHRyeSB7ICYgc2MuZXhlIGRlbGV0ZSAkcyAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQp9CgojIDMuIFRlcm1pbmF0ZSBydW5uaW5nIGFnZW50IHByb2Nlc3NlcyBzYWZlbHkKJGN1cnJlbnRQaWQgPSAkUElECnRyeSB7CiAgICBHZXQtQ2ltSW5zdGFuY2UgV2luMzJfUHJvY2VzcyAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB8IFdoZXJlLU9iamVjdCB7CiAgICAgICAgJF8uUHJvY2Vzc0lkIC1uZSAkY3VycmVudFBpZCAtYW5kICgKICAgICAgICAgICAgJF8uQ29tbWFuZExpbmUgLWxpa2UgIipHSU4tQWdlbnQqIiAtb3IKICAgICAgICAgICAgJF8uQ29tbWFuZExpbmUgLWxpa2UgIiphZ2VudC1hcGkqIgogICAgICAgICkKICAgIH0gfCBGb3JFYWNoLU9iamVjdCB7CiAgICAgICAgdHJ5IHsgU3RvcC1Qcm9jZXNzIC1JZCAkXy5Qcm9jZXNzSWQgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30KICAgIH0KfSBjYXRjaCB7fQoKIyA0LiBSZW1vdmUgU3RhcnR1cCBzaG9ydGN1dHMgKHNoZWxsOnN0YXJ0dXAgJiBzaGVsbDpjb21tb24gc3RhcnR1cCkKJHN0YXJ0dXBQYXRocyA9IEAoCiAgICAiJGVudjpBUFBEQVRBXE1pY3Jvc29mdFxXaW5kb3dzXFN0YXJ0IE1lbnVcUHJvZ3JhbXNcU3RhcnR1cCIsCiAgICAiJGVudjpQcm9ncmFtRGF0YVxNaWNyb3NvZnRcV2luZG93c1xTdGFydCBNZW51XFByb2dyYW1zXFN0YXJ0dXAiCikKZm9yZWFjaCAoJHNwIGluICRzdGFydHVwUGF0aHMpIHsKICAgIGlmIChUZXN0LVBhdGggJHNwKSB7CiAgICAgICAgdHJ5IHsKICAgICAgICAgICAgR2V0LUNoaWxkSXRlbSAtUGF0aCAkc3AgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfCBXaGVyZS1PYmplY3QgewogICAgICAgICAgICAgICAgJF8uTmFtZSAtbGlrZSAiKkdJTipBZ2VudCoiIC1vciAkXy5OYW1lIC1saWtlICIqR0lOLVJlbW90ZSoiCiAgICAgICAgICAgIH0gfCBGb3JFYWNoLU9iamVjdCB7CiAgICAgICAgICAgICAgICB0cnkgeyBSZW1vdmUtSXRlbSAtUGF0aCAkXy5GdWxsTmFtZSAtRm9yY2UgLUVycm9yQWN0aW9uIFNpbGVudGx5Q29udGludWUgfSBjYXRjaCB7fQogICAgICAgICAgICB9CiAgICAgICAgfSBjYXRjaCB7fQogICAgfQp9CgojIDUuIFJlbW92ZSBXaW5kb3dzIFJlZ2lzdHJ5IGVudHJpZXMKJHJlZ1BhdGhzID0gQCgKICAgICJIS0xNOlxTT0ZUV0FSRVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxVbmluc3RhbGxcR0lOLUFnZW50IiwKICAgICJIS0NVOlxTb2Z0d2FyZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxVbmluc3RhbGxcR0lOLUFnZW50IiwKICAgICJIS0xNOlxTT0ZUV0FSRVxHSU4tQWdlbnQiLAogICAgIkhLQ1U6XFNvZnR3YXJlXEdJTi1BZ2VudCIsCiAgICAiSEtMTTpcU09GVFdBUkVcV09XNjQzMk5vZGVcR0lOLUFnZW50IiwKICAgICJIS0xNOlxTT0ZUV0FSRVxXT1c2NDMyTm9kZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxVbmluc3RhbGxcR0lOLUFnZW50IiwKICAgICJIS0xNOlxTT0ZUV0FSRVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxSdW5cR0lOLUFnZW50IiwKICAgICJIS0NVOlxTb2Z0d2FyZVxNaWNyb3NvZnRcV2luZG93c1xDdXJyZW50VmVyc2lvblxSdW5cR0lOLUFnZW50IgopCmZvcmVhY2ggKCRycCBpbiAkcmVnUGF0aHMpIHsKICAgIGlmIChUZXN0LVBhdGggJHJwKSB7CiAgICAgICAgdHJ5IHsgUmVtb3ZlLUl0ZW0gLVBhdGggJHJwIC1SZWN1cnNlIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB9IGNhdGNoIHt9CiAgICB9Cn0KCiMgNi4gRGVyZWdpc3RlciBmcm9tIFJ1c3REZXNrIHJlZ2lzdHJ5IChyZC5naW5jei5jb20pCnRyeSB7CiAgICAkdXVpZCA9IChHZXQtQ2ltSW5zdGFuY2UgV2luMzJfQ29tcHV0ZXJTeXN0ZW1Qcm9kdWN0IC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlKS5VVUlECiAgICAkYm9hcmQgPSAoR2V0LUNpbUluc3RhbmNlIFdpbjMyX0Jhc2VCb2FyZCAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSkuU2VyaWFsTnVtYmVyCiAgICBpZiAoLW5vdCAkdXVpZCkgeyAkdXVpZCA9ICRlbnY6Q09NUFVURVJOQU1FIH0KICAgIGlmICgtbm90ICRib2FyZCkgeyAkYm9hcmQgPSAiRGVmYXVsdEJvYXJkIiB9CiAgICAkcmF3UGluID0gImh3X3dpbl8ke3V1aWR9XyR7Ym9hcmR9IgogICAgJHNoYSA9IFtTeXN0ZW0uU2VjdXJpdHkuQ3J5cHRvZ3JhcGh5LlNIQTI1Nl06OkNyZWF0ZSgpCiAgICAkYnl0ZXMgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4LkdldEJ5dGVzKCRyYXdQaW4pCiAgICAkZGlnZXN0ID0gJHNoYS5Db21wdXRlSGFzaCgkYnl0ZXMpCiAgICBpZiAoW0JpdENvbnZlcnRlcl06OklzTGl0dGxlRW5kaWFuKSB7IFtBcnJheV06OlJldmVyc2UoJGRpZ2VzdCwgMCwgOCkgfQogICAgJG51bSA9IFtNYXRoXTo6QWJzKFtCaXRDb252ZXJ0ZXJdOjpUb0ludDY0KCRkaWdlc3QsIDApKQogICAgJGNvZGUgPSAoJG51bSAlIDkwMDAwMDAwMCkgKyAxMDAwMDAwMDAKICAgICRkU3RyID0gJGNvZGUuVG9TdHJpbmcoIkQ5IikKICAgICRwaW4gPSAiJCgkZFN0ci5TdWJzdHJpbmcoMCwzKSktJCgkZFN0ci5TdWJzdHJpbmcoMywzKSktJCgkZFN0ci5TdWJzdHJpbmcoNiwzKSkiCiAgICAkcmVzcFJkID0gSW52b2tlLVJlc3RNZXRob2QgLVVyaSAiaHR0cHM6Ly9yZC5naW5jei5jb20vYXBpL3VucmVnaXN0ZXI/cGluPSRwaW4maG9zdD0kZW52OkNPTVBVVEVSTkFNRSIgLU1ldGhvZCBHZXQgLVRpbWVvdXRTZWMgMyAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZQp9IGNhdGNoIHt9CgojIDcuIENsZWFuIHVwIGRpcmVjdG9yaWVzIChpbmNsdWRpbmcgbG9ncywgY29uZmlncywgYmluYXJpZXMpCiRkaXJzVG9QdXJnZSA9IEAoCiAgICAiJGVudjpQcm9ncmFtRGF0YVxHSU4tQWdlbnQiLAogICAgIiRlbnY6UHJvZ3JhbUZpbGVzXEdJTi1BZ2VudCIsCiAgICAiJHtlbnY6UHJvZ3JhbUZpbGVzKHg4Nil9XEdJTi1BZ2VudCIKKQpmb3JlYWNoICgkZCBpbiAkZGlyc1RvUHVyZ2UpIHsKICAgIGlmIChUZXN0LVBhdGggJGQpIHsKICAgICAgICB0cnkgewogICAgICAgICAgICBHZXQtQ2hpbGRJdGVtIC1QYXRoICRkIC1SZWN1cnNlIC1GaWxlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgRm9yRWFjaC1PYmplY3QgewogICAgICAgICAgICAgICAgaWYgKCRfLkZ1bGxOYW1lIC1uZSAkTXlJbnZvY2F0aW9uLk15Q29tbWFuZC5QYXRoKSB7CiAgICAgICAgICAgICAgICAgICAgdHJ5IHsgJF8uSXNSZWFkT25seSA9ICRmYWxzZTsgUmVtb3ZlLUl0ZW0gLVBhdGggJF8uRnVsbE5hbWUgLUZvcmNlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIH0gY2F0Y2gge30KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0gY2F0Y2gge30KICAgIH0KfQoKIyA4LiBEZXRhY2hlZCBzZWxmLWNsZWFudXAgZm9yIHJlbWFpbmluZyBmb2xkZXIKJHNjcmlwdFBhdGggPSAkTXlJbnZvY2F0aW9uLk15Q29tbWFuZC5QYXRoCmlmICgtbm90ICRzY3JpcHRQYXRoKSB7ICRzY3JpcHRQYXRoID0gIiRlbnY6UHJvZ3JhbUZpbGVzXEdJTi1BZ2VudFx1bmluc3RhbGwuY21kIiB9CiRwYXJlbnRGb2xkZXIgPSBTcGxpdC1QYXRoIC1QYXJlbnQgJHNjcmlwdFBhdGgKCldyaXRlLUhvc3QgIiIKV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgR3JlZW4KV3JpdGUtSG9zdCAiICBbT0tdIEdJTi1BR0VOVCBIQVMgQkVFTiBDT01QTEVURUxZIEFORCBDTEVBTkxZIFJFTU9WRUQhICAgICAgICAgICAiIC1Gb3JlZ3JvdW5kQ29sb3IgR3JlZW4KV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgR3JlZW4KV3JpdGUtSG9zdCAiIgoKaWYgKCRwYXJlbnRGb2xkZXIgLWFuZCAoVGVzdC1QYXRoICRwYXJlbnRGb2xkZXIpKSB7CiAgICBTdGFydC1Qcm9jZXNzIC1GaWxlUGF0aCAiY21kLmV4ZSIgLUFyZ3VtZW50TGlzdCAiL2MgcGluZyAxMjcuMC4wLjEgLW4gMyA+bnVsICYgcmQgL3MgL3EgYCJgIiRwYXJlbnRGb2xkZXJgImAiIiAtV2luZG93U3R5bGUgSGlkZGVuCn0KClN0YXJ0LVNsZWVwIC1TZWNvbmRzIDIKZXhpdCAwCg=="
-        $updaterB64 = "PCMgOgpAZWNobyBvZmYKc2V0bG9jYWwgRGlzYWJsZURlbGF5ZWRFeHBhbnNpb24KdGl0bGUgR0lOLUFnZW50IDEtQ2xpY2sgVXBkYXRlcgoKOjogMS4gVUFDIEVsZXZhdGlvbiBDaGVjayAoY2FuIGJlIGRvdWJsZS1jbGlja2VkIHdpdGhvdXQgYWRtaW4pCm5ldCBzZXNzaW9uID5udWwgMj4mMQppZiAlZXJyb3JsZXZlbCUgZXF1IDAgZ290byA6UlVOX1VQREFURQoKcG93ZXJzaGVsbC5leGUgLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtQ29tbWFuZCAidHJ5IHsgU3RhcnQtUHJvY2VzcyAtRmlsZVBhdGggJyV+ZjAnIC1WZXJiIFJ1bkFzIC1FcnJvckFjdGlvbiBTdG9wOyBleGl0IDAgfSBjYXRjaCB7IGV4aXQgMSB9IiA+bnVsIDI+JjEKZXhpdCAvYiAlZXJyb3JsZXZlbCUKCjpSVU5fVVBEQVRFCnNldCAiUFNfRVhFPXBvd2Vyc2hlbGwuZXhlIgppZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c25hdGl2ZVxXaW5kb3dzUG93ZXJTaGVsbFx2MS4wXHBvd2Vyc2hlbGwuZXhlIiAoCiAgICBzZXQgIlBTX0VYRT0lU3lzdGVtUm9vdCVcU3lzbmF0aXZlXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiCikgZWxzZSBpZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c3RlbTMyXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiICgKICAgIHNldCAiUFNfRVhFPSVTeXN0ZW1Sb290JVxTeXN0ZW0zMlxXaW5kb3dzUG93ZXJTaGVsbFx2MS4wXHBvd2Vyc2hlbGwuZXhlIgopCgoiJVBTX0VYRSUiIC1Ob1Byb2ZpbGUgLUV4ZWN1dGlvblBvbGljeSBCeXBhc3MgLUNvbW1hbmQgIiRyYXcgPSBbU3lzdGVtLklPLkZpbGVdOjpSZWFkQWxsVGV4dCgnJX5mMCcsIFtTeXN0ZW0uVGV4dC5FbmNvZGluZ106OlVURjgpOyAmIChbU2NyaXB0QmxvY2tdOjpDcmVhdGUoJHJhdykpIgpzZXQgIlBTX0VSUj0lZXJyb3JsZXZlbCUiCmlmICVQU19FUlIlIG5lcSAwICgKICAgIGVjaG8uCiAgICBlY2hvID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICBlY2hvIFtFUlJPUl0gVXBkYXRlIGZhaWxlZCB3aXRoIGVycm9yIGNvZGU6ICVQU19FUlIlCiAgICBlY2hvID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICBwYXVzZQopCmV4aXQgL2IgJVBTX0VSUiUKIz4KdHJ5IHsKICAgIFtDb25zb2xlXTo6T3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4CiAgICAkT3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4Cn0gY2F0Y2gge30KCldyaXRlLUhvc3QgIiIKV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgQ3lhbgpXcml0ZS1Ib3N0ICIgICAgICAgICBHSU4tQUdFTlQgLSAxLUNMSUNLIENMRUFOIFVQREFURSBVVElMSVRZICAgICAgICAgICAgICAgICAgIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdwpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBDeWFuCldyaXRlLUhvc3QgIlsqXSBFbGV2YXRpb246IEFkbWluaXN0cmF0b3IgY29uZmlybWVkLiIgLUZvcmVncm91bmRDb2xvciBHcmVlbgpXcml0ZS1Ib3N0ICJbKl0gVGVybWluYXRpbmcgZXhpc3RpbmcgdGFza3MsIGRhZW1vbnMsIGFuZCBwcm9jZXNzZXMuLi4iIC1Gb3JlZ3JvdW5kQ29sb3IgQ3lhbgoKIyBUZXJtaW5hdGUgYWxsIHJ1bm5pbmcgdGFza3MgJiBwcm9jZXNzZXMKJHRhc2tzID0gQCgiR0lOLUFnZW50LVNlcnZpY2UiLCAiR0lOLUFnZW50LVdhdGNoZG9nIiwgIkdJTi1BZ2VudC1VcGRhdGUtTG9nb24iLCAiR0lOLUFnZW50IiwgIkdJTi1SZW1vdGUiKQpmb3JlYWNoICgkdCBpbiAkdGFza3MpIHsKICAgIHRyeSB7IHNjaHRhc2tzLmV4ZSAvZW5kIC90biAiJHQiIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9CiAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2RlbGV0ZSAvdG4gIiR0IiAvZiAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQp9CkdldC1DaW1JbnN0YW5jZSBXaW4zMl9Qcm9jZXNzIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgV2hlcmUtT2JqZWN0IHsKICAgICRfLkNvbW1hbmRMaW5lIC1saWtlICIqR0lOLUFnZW50KiIgLW9yICRfLkNvbW1hbmRMaW5lIC1saWtlICIqYWdlbnQtYXBpKiIKfSB8IEZvckVhY2gtT2JqZWN0IHsKICAgIHRyeSB7IFN0b3AtUHJvY2VzcyAtSWQgJF8uUHJvY2Vzc0lkIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB9IGNhdGNoIHt9Cn0KCiMgRGV0ZXJtaW5lIHJlZ2lvbgokaW5zdGFsbERpciA9ICIkZW52OlByb2dyYW1GaWxlc1xHSU4tQWdlbnQiCiRyZWdpb24gPSAiRVUiCiRyZWdGaWxlID0gIiRpbnN0YWxsRGlyXHJlZ2lvbi50eHQiCmlmIChUZXN0LVBhdGggJHJlZ0ZpbGUpIHsKICAgIHRyeSB7CiAgICAgICAgJHIgPSAoR2V0LUNvbnRlbnQgLVBhdGggJHJlZ0ZpbGUgLVJhdyAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSkuVHJpbSgpCiAgICAgICAgaWYgKCRyIC1lcSAiUlUiIC1vciAkciAtZXEgIkVVIikgeyAkcmVnaW9uID0gJHIgfQogICAgfSBjYXRjaCB7fQp9CgpXcml0ZS1Ib3N0ICJbKl0gUXVlcnlpbmcgbXVsdGktdGllciBtaXJyb3JzIChHaXRIdWIgLT4gU2VydmVyIDIyMiAtPiBTZXJ2ZXIgMTA5KS4uLiIgLUZvcmVncm91bmRDb2xvciBDeWFuCiRkb3dubG9hZFVybHMgPSBAKAogICAgImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9HaW5Dei9XaW5kb3dzX3NjcmlwdHMvbWFpbi9HSU4tQWdlbnRfV2luZG93cy5jbWQiLAogICAgImh0dHA6Ly8xNTIuNTMuMTgyLjIyMjo5ODc2L0dJTi1BZ2VudF9XaW5kb3dzLmNtZCIsCiAgICAiaHR0cDovLzIxMi4xMDkuMjIzLjEwOS9hZ2VudC9HSU4tQWdlbnRfV2luZG93cy5jbWQiCikKCiR0YXJnZXRGaWxlID0gIiRlbnY6VEVNUFxHSU4tQWdlbnRfTGF0ZXN0X0luc3RhbGxlci5jbWQiCiRkb3dubG9hZGVkID0gJGZhbHNlCgpmb3JlYWNoICgkdSBpbiAkZG93bmxvYWRVcmxzKSB7CiAgICB0cnkgewogICAgICAgIFdyaXRlLUhvc3QgIiAgLT4gVHJ5aW5nIG1pcnJvcjogJHUgKDEwcyB0aW1lb3V0KS4uLiIgLUZvcmVncm91bmRDb2xvciBEYXJrR3JheQogICAgICAgIEludm9rZS1XZWJSZXF1ZXN0IC1VcmkgJHUgLU91dEZpbGUgJHRhcmdldEZpbGUgLVRpbWVvdXRTZWMgMTAgLUVycm9yQWN0aW9uIFN0b3AKICAgICAgICBpZiAoKFRlc3QtUGF0aCAkdGFyZ2V0RmlsZSkgLWFuZCAoKEdldC1JdGVtICR0YXJnZXRGaWxlKS5MZW5ndGggLWd0IDE1MDAwKSkgewogICAgICAgICAgICAkc2FtcGxlID0gR2V0LUNvbnRlbnQgLVBhdGggJHRhcmdldEZpbGUgLVRvdGFsQ291bnQgMzAgLVJhdwogICAgICAgICAgICBpZiAoJHNhbXBsZSAtbGlrZSAiKkdJTi1BZ2VudCoiKSB7CiAgICAgICAgICAgICAgICAkZG93bmxvYWRlZCA9ICR0cnVlCiAgICAgICAgICAgICAgICBXcml0ZS1Ib3N0ICJbT0tdIFN1Y2Nlc3NmdWxseSBkb3dubG9hZGVkIGxhdGVzdCByZWxlYXNlIGZyb20gbWlycm9yISIgLUZvcmVncm91bmRDb2xvciBHcmVlbgogICAgICAgICAgICAgICAgYnJlYWsKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0gY2F0Y2ggewogICAgICAgIFdyaXRlLUhvc3QgIiAgWyFdIE1pcnJvciBmYWlsZWQsIHRyeWluZyBuZXh0Li4uIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdwogICAgfQp9CgppZiAoLW5vdCAkZG93bmxvYWRlZCkgewogICAgV3JpdGUtSG9zdCAiW0VSUk9SXSBBbGwgdXBkYXRlIG1pcnJvcnMgdW5yZWFjaGFibGUuIENoZWNrIGludGVybmV0IGNvbm5lY3Rpb24hIiAtRm9yZWdyb3VuZENvbG9yIFJlZAogICAgU3RhcnQtU2xlZXAgLVNlY29uZHMgMwogICAgZXhpdCAxCn0KCldyaXRlLUhvc3QgIlsqXSBFeGVjdXRpbmcgY2xlYW4gZGVwbG95bWVudCBpbiBTZXNzaW9uIDAgKCRyZWdpb24pLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4KU3RhcnQtUHJvY2VzcyAtRmlsZVBhdGggImNtZC5leGUiIC1Bcmd1bWVudExpc3QgIi9jIGAiYCIkdGFyZ2V0RmlsZWAiIC9zaWxlbnQgL3NlcnZpY2UgJHJlZ2lvbmAiIiAtV2FpdApTdGFydC1TbGVlcCAtU2Vjb25kcyAyCgpXcml0ZS1Ib3N0ICIiCldyaXRlLUhvc3QgIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IiAtRm9yZWdyb3VuZENvbG9yIEdyZWVuCldyaXRlLUhvc3QgIiAgW09LXSBHSU4tQUdFTlQgVVBEQVRFICYgQ0xFQU4gUkVJTlNUQUxMIENPTVBMRVRFRCEgICAgICAgICAgICAgICAgICIgLUZvcmVncm91bmRDb2xvciBHcmVlbgpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBHcmVlbgpXcml0ZS1Ib3N0ICIiClN0YXJ0LVNsZWVwIC1TZWNvbmRzIDMKZXhpdCAwCg=="
+        $updaterB64 = "PCMgOgpAZWNobyBvZmYKc2V0bG9jYWwgRGlzYWJsZURlbGF5ZWRFeHBhbnNpb24KdGl0bGUgR0lOLUFnZW50IDEtQ2xpY2sgVXBkYXRlcgoKOjogMS4gVUFDIEVsZXZhdGlvbiBDaGVjayAoY2FuIGJlIGRvdWJsZS1jbGlja2VkIHdpdGhvdXQgYWRtaW4pCm5ldCBzZXNzaW9uID5udWwgMj4mMQppZiAlZXJyb3JsZXZlbCUgZXF1IDAgZ290byA6UlVOX1VQREFURQoKcG93ZXJzaGVsbC5leGUgLU5vUHJvZmlsZSAtRXhlY3V0aW9uUG9saWN5IEJ5cGFzcyAtQ29tbWFuZCAidHJ5IHsgU3RhcnQtUHJvY2VzcyAtRmlsZVBhdGggJyV+ZjAnIC1WZXJiIFJ1bkFzIC1FcnJvckFjdGlvbiBTdG9wOyBleGl0IDAgfSBjYXRjaCB7IGV4aXQgMSB9IiA+bnVsIDI+JjEKZXhpdCAvYiAlZXJyb3JsZXZlbCUKCjpSVU5fVVBEQVRFCnNldCAiUFNfRVhFPXBvd2Vyc2hlbGwuZXhlIgppZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c25hdGl2ZVxXaW5kb3dzUG93ZXJTaGVsbFx2MS4wXHBvd2Vyc2hlbGwuZXhlIiAoCiAgICBzZXQgIlBTX0VYRT0lU3lzdGVtUm9vdCVcU3lzbmF0aXZlXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiCikgZWxzZSBpZiBleGlzdCAiJVN5c3RlbVJvb3QlXFN5c3RlbTMyXFdpbmRvd3NQb3dlclNoZWxsXHYxLjBccG93ZXJzaGVsbC5leGUiICgKICAgIHNldCAiUFNfRVhFPSVTeXN0ZW1Sb290JVxTeXN0ZW0zMlxXaW5kb3dzUG93ZXJTaGVsbFx2MS4wXHBvd2Vyc2hlbGwuZXhlIgopCgoiJVBTX0VYRSUiIC1Ob1Byb2ZpbGUgLUV4ZWN1dGlvblBvbGljeSBCeXBhc3MgLUNvbW1hbmQgIiRyYXcgPSBbU3lzdGVtLklPLkZpbGVdOjpSZWFkQWxsVGV4dCgnJX5mMCcsIFtTeXN0ZW0uVGV4dC5FbmNvZGluZ106OlVURjgpOyAmIChbU2NyaXB0QmxvY2tdOjpDcmVhdGUoJHJhdykpIgpzZXQgIlBTX0VSUj0lZXJyb3JsZXZlbCUiCmlmICVQU19FUlIlIG5lcSAwICgKICAgIGVjaG8uCiAgICBlY2hvID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICBlY2hvIFtFUlJPUl0gVXBkYXRlIGZhaWxlZCB3aXRoIGVycm9yIGNvZGU6ICVQU19FUlIlCiAgICBlY2hvID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09CiAgICBwYXVzZQopCmV4aXQgL2IgJVBTX0VSUiUKIz4KdHJ5IHsKICAgIFtDb25zb2xlXTo6T3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4CiAgICAkT3V0cHV0RW5jb2RpbmcgPSBbU3lzdGVtLlRleHQuRW5jb2RpbmddOjpVVEY4Cn0gY2F0Y2gge30KCldyaXRlLUhvc3QgIiIKV3JpdGUtSG9zdCAiPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0iIC1Gb3JlZ3JvdW5kQ29sb3IgQ3lhbgpXcml0ZS1Ib3N0ICIgICAgICAgICBHSU4tQUdFTlQgLSAxLUNMSUNLIENMRUFOIFVQREFURSBVVElMSVRZICAgICAgICAgICAgICAgICAgIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdwpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBDeWFuCldyaXRlLUhvc3QgIlsqXSBFbGV2YXRpb246IEFkbWluaXN0cmF0b3IgY29uZmlybWVkLiIgLUZvcmVncm91bmRDb2xvciBHcmVlbgpXcml0ZS1Ib3N0ICJbKl0gVGVybWluYXRpbmcgZXhpc3RpbmcgdGFza3MsIGRhZW1vbnMsIGFuZCBwcm9jZXNzZXMuLi4iIC1Gb3JlZ3JvdW5kQ29sb3IgQ3lhbgoKIyBUZXJtaW5hdGUgYWxsIHJ1bm5pbmcgdGFza3MgJiBwcm9jZXNzZXMKJHRhc2tzID0gQCgiR0lOLUFnZW50LVNlcnZpY2UiLCAiR0lOLUFnZW50LVdhdGNoZG9nIiwgIkdJTi1BZ2VudC1VcGRhdGUtTG9nb24iLCAiR0lOLUFnZW50IiwgIkdJTi1SZW1vdGUiKQpmb3JlYWNoICgkdCBpbiAkdGFza3MpIHsKICAgIHRyeSB7IHNjaHRhc2tzLmV4ZSAvZW5kIC90biAiJHQiIDI+JjEgfCBPdXQtTnVsbCB9IGNhdGNoIHt9CiAgICB0cnkgeyBzY2h0YXNrcy5leGUgL2RlbGV0ZSAvdG4gIiR0IiAvZiAyPiYxIHwgT3V0LU51bGwgfSBjYXRjaCB7fQp9CkdldC1DaW1JbnN0YW5jZSBXaW4zMl9Qcm9jZXNzIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlIHwgV2hlcmUtT2JqZWN0IHsKICAgICRfLkNvbW1hbmRMaW5lIC1saWtlICIqR0lOLUFnZW50KiIgLW9yICRfLkNvbW1hbmRMaW5lIC1saWtlICIqYWdlbnQtYXBpKiIKfSB8IEZvckVhY2gtT2JqZWN0IHsKICAgIHRyeSB7IFN0b3AtUHJvY2VzcyAtSWQgJF8uUHJvY2Vzc0lkIC1Gb3JjZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSB9IGNhdGNoIHt9Cn0KCiMgRGV0ZXJtaW5lIHJlZ2lvbgokaW5zdGFsbERpciA9ICIkZW52OlByb2dyYW1GaWxlc1xHSU4tQWdlbnQiCiRyZWdpb24gPSAiRVUiCiRyZWdGaWxlID0gIiRpbnN0YWxsRGlyXHJlZ2lvbi50eHQiCmlmIChUZXN0LVBhdGggJHJlZ0ZpbGUpIHsKICAgIHRyeSB7CiAgICAgICAgJHIgPSAoR2V0LUNvbnRlbnQgLVBhdGggJHJlZ0ZpbGUgLVJhdyAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZSkuVHJpbSgpCiAgICAgICAgaWYgKCRyIC1lcSAiUlUiIC1vciAkciAtZXEgIkVVIikgeyAkcmVnaW9uID0gJHIgfQogICAgfSBjYXRjaCB7fQp9CgpXcml0ZS1Ib3N0ICJbKl0gUXVlcnlpbmcgbXVsdGktdGllciBtaXJyb3JzIChHaXRIdWIgLT4gU2VydmVyIDIyMiAtPiBTZXJ2ZXIgMTA5KS4uLiIgLUZvcmVncm91bmRDb2xvciBDeWFuCiRkb3dubG9hZFVybHMgPSBAKAogICAgImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9HaW5Dei9XaW5kb3dzX3NjcmlwdHMvbWFpbi9HSU4tQWdlbnRfV2luZG93cy5jbWQiLAogICAgImh0dHA6Ly8xNTIuNTMuMTgyLjIyMjo5ODc2L0dJTi1BZ2VudF9XaW5kb3dzLmNtZCIsCiAgICAiaHR0cDovLzIxMi4xMDkuMjIzLjEwOS9hZ2VudC9HSU4tQWdlbnRfV2luZG93cy5jbWQiCikKCiR0YXJnZXRGaWxlID0gIiRlbnY6VEVNUFxHSU4tQWdlbnRfTGF0ZXN0X0luc3RhbGxlci5jbWQiCiRkb3dubG9hZGVkID0gJGZhbHNlCgpmb3JlYWNoICgkdSBpbiAkZG93bmxvYWRVcmxzKSB7CiAgICB0cnkgewogICAgICAgIFdyaXRlLUhvc3QgIiAgLT4gVHJ5aW5nIG1pcnJvcjogJHUgKDEwcyB0aW1lb3V0KS4uLiIgLUZvcmVncm91bmRDb2xvciBEYXJrR3JheQogICAgICAgIEludm9rZS1XZWJSZXF1ZXN0IC1VcmkgJHUgLU91dEZpbGUgJHRhcmdldEZpbGUgLVRpbWVvdXRTZWMgMTAgLUVycm9yQWN0aW9uIFN0b3AKICAgICAgICBpZiAoKFRlc3QtUGF0aCAkdGFyZ2V0RmlsZSkgLWFuZCAoKEdldC1JdGVtICR0YXJnZXRGaWxlKS5MZW5ndGggLWd0IDE1MDAwKSkgewogICAgICAgICAgICAkc2FtcGxlID0gR2V0LUNvbnRlbnQgLVBhdGggJHRhcmdldEZpbGUgLVRvdGFsQ291bnQgMzAgLVJhdwogICAgICAgICAgICBpZiAoJHNhbXBsZSAtbGlrZSAiKkdJTi1BZ2VudCoiKSB7CiAgICAgICAgICAgICAgICAkZG93bmxvYWRlZCA9ICR0cnVlCiAgICAgICAgICAgICAgICBXcml0ZS1Ib3N0ICJbT0tdIFN1Y2Nlc3NmdWxseSBkb3dubG9hZGVkIGxhdGVzdCByZWxlYXNlIGZyb20gbWlycm9yISIgLUZvcmVncm91bmRDb2xvciBHcmVlbgogICAgICAgICAgICAgICAgYnJlYWsKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0gY2F0Y2ggewogICAgICAgIFdyaXRlLUhvc3QgIiAgWyFdIE1pcnJvciBmYWlsZWQsIHRyeWluZyBuZXh0Li4uIiAtRm9yZWdyb3VuZENvbG9yIFllbGxvdwogICAgfQp9CgppZiAoLW5vdCAkZG93bmxvYWRlZCkgewogICAgV3JpdGUtSG9zdCAiW0VSUk9SXSBBbGwgdXBkYXRlIG1pcnJvcnMgdW5yZWFjaGFibGUuIENoZWNrIGludGVybmV0IGNvbm5lY3Rpb24hIiAtRm9yZWdyb3VuZENvbG9yIFJlZAogICAgU3RhcnQtU2xlZXAgLVNlY29uZHMgMwogICAgZXhpdCAxCn0KCldyaXRlLUhvc3QgIlsqXSBFeGVjdXRpbmcgY2xlYW4gZGVwbG95bWVudCBpbiBTZXNzaW9uIDAgKCRyZWdpb24pLi4uIiAtRm9yZWdyb3VuZENvbG9yIEN5YW4KU3RhcnQtUHJvY2VzcyAtRmlsZVBhdGggImNtZC5leGUiIC1Bcmd1bWVudExpc3QgIi9jIGAiYCIkdGFyZ2V0RmlsZWAiIC9zaWxlbnQgJHJlZ2lvbmAiIiAtV2FpdApTdGFydC1TbGVlcCAtU2Vjb25kcyAyCgpXcml0ZS1Ib3N0ICIiCldyaXRlLUhvc3QgIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09IiAtRm9yZWdyb3VuZENvbG9yIEdyZWVuCldyaXRlLUhvc3QgIiAgW09LXSBHSU4tQUdFTlQgVVBEQVRFICYgQ0xFQU4gUkVJTlNUQUxMIENPTVBMRVRFRCEgICAgICAgICAgICAgICAgICIgLUZvcmVncm91bmRDb2xvciBHcmVlbgpXcml0ZS1Ib3N0ICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIgLUZvcmVncm91bmRDb2xvciBHcmVlbgpXcml0ZS1Ib3N0ICIiClN0YXJ0LVNsZWVwIC1TZWNvbmRzIDMKZXhpdCAwCg=="
         [System.IO.File]::WriteAllBytes($uninstallerCmd, [System.Convert]::FromBase64String($uninstallerB64))
         [System.IO.File]::WriteAllBytes($updaterCmd, [System.Convert]::FromBase64String($updaterB64))
 
@@ -950,7 +961,7 @@ access-mode = 'full'
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v039" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v041" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -1044,7 +1055,7 @@ access-mode = 'full'
 
         # Instant Initial Registration Dispatch to rd.gincz.com and Gateways
         try {
-            $regRdUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v040&rd_id=$initialRdId&gw=$selectedRegion&region=$selectedRegion"
+            $regRdUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v041&rd_id=$initialRdId&gw=$selectedRegion&region=$selectedRegion"
             Invoke-RestMethod -Uri $regRdUrl -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
         } catch {}
 
@@ -1074,7 +1085,7 @@ access-mode = 'full'
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v040 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v041 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -1168,7 +1179,7 @@ access-mode = 'full'
     
     # Initialize 90-Day Rolling Log
     Prune-GINLogs
-    Write-GINLog "GIN-Agent v040 Service started. PID: $PID, Session: $((Get-Process -Id $PID).SessionId), User: $env:USERNAME, Host: $env:COMPUTERNAME, Region: $region" "INFO"
+    Write-GINLog "GIN-Agent v041 Service started. PID: $PID, Session: $((Get-Process -Id $PID).SessionId), User: $env:USERNAME, Host: $env:COMPUTERNAME, Region: $region" "INFO"
     Write-GINLog "Active Gateway: $activeGatewayName ($serverUrl)" "INFO"
 
     # Hardware GIN-PIN calculation (Deterministic WMI)
@@ -1190,7 +1201,7 @@ access-mode = 'full'
     } catch {}
 
     $headers["X-Pin"] = $pin
-    $headers["X-Version"] = "v040"
+    $headers["X-Version"] = "v041"
 
     
     # Ensure RustDesk is permanently installed and running
@@ -1265,7 +1276,7 @@ access-mode = 'full'
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v040"
+            version         = "v041"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -1294,7 +1305,7 @@ access-mode = 'full'
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v040&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v041&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1304,7 +1315,7 @@ access-mode = 'full'
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v040" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v041" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1363,7 +1374,7 @@ access-mode = 'full'
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v040" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v041" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -1380,11 +1391,11 @@ access-mode = 'full'
             }
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v040&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v041&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v040" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v041" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -1396,7 +1407,7 @@ access-mode = 'full'
         }
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v040" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v041" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -1405,7 +1416,7 @@ access-mode = 'full'
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v040:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v041:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
