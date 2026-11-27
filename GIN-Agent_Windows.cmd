@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Agent v042
+title GIN-Agent v043
 
 :: Parse all arguments robustly across %1, %2, %3, %4
 set "GIN_ARG1=%~1"
@@ -109,7 +109,7 @@ if "%GIN_AGENT_MODE%"=="INSTALL" (
 exit /b %PS_ERR%
 #>
 # ==============================================================================
-# GIN-Agent Windows Service v042 (Single File CMD Hybrid)
+# GIN-Agent Windows Service v043 (Single File CMD Hybrid)
 # Author: Vladimir Bulantsev (GinCz) & Antigravity
 # Permanent Background Windows Service (Auto-Start, Watchdog Recovery, No Console Window)
 # Primary Identifier: 9-Digit Hardware GIN-PIN
@@ -117,7 +117,7 @@ exit /b %PS_ERR%
 # Regional Gateways:
 #   - Europe: Server_222 (152.53.182.222:9876), Global (remote.gincz.com)
 #   - Russia: Server_109 (212.109.223.109), RU-FastNode (195.158.255.208)
-# Key v042 Fixes:
+# Key v043 Fixes:
 #   - Fixed auto-updater execution (removed /service so updater runs full :RUN_INSTALLER)
 #   - Fixed rd.gincz.com live presence calculation for all connected agents
 #   - Zero manual intervention auto-upgrade across all remote nodes
@@ -156,7 +156,7 @@ try {
 
     $installDir = "$env:ProgramFiles\GIN-Agent"
     $targetCmd = "$installDir\GIN-Agent.cmd"
-    $targetCmdVer = "$installDir\GIN-Agent_Windows_v042.cmd"
+    $targetCmdVer = "$installDir\GIN-Agent_Windows_v043.cmd"
     $uninstallerCmd = "$installDir\uninstall.cmd"
     $serviceName = "GIN-Agent"
     $serviceDisplayName = "GIN-Agent Remote Support Service"
@@ -629,14 +629,12 @@ try {
                 "C:\Program Files\RustDesk\rustdesk.exe"
             ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
-            $serverIp  = "212.109.223.109"
-            $publicKey = "IKNzdN1NNf5fOmEv2N5eFDR4vv9MfpSOvasS+qcOn0g="
             $isUltarix = ($env:COMPUTERNAME -match '^(ULTARIX|U-\d|ULPS)' -or (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).Workgroup -match 'ULTARIX')
             $accessKey = if ($isUltarix) { "Ultarix-22" } else { "OKMokm-09" }
 
             if (-not $rdBin) {
                 Write-GINLog "RustDesk client missing. Deploying unattended background service..." "INFO"
-                $tempExe = "$env:TEMP\rustdesk-host=$serverIp,key=$publicKey.exe"
+                $tempExe = "$env:TEMP\rustdesk-setup.exe"
                 $downloadSources = @(
                     "http://152.53.182.222:9876/rustdesk.exe",
                     "https://rd.gincz.com/rustdesk.exe",
@@ -668,57 +666,37 @@ try {
             }
 
             if ($rdBin -and (Test-Path $rdBin)) {
-                $tomlContent = @"
-custom-rendezvous-server = '$serverIp'
-relay-server = '$serverIp'
-api-server = 'http://$serverIp:21114'
-key = '$publicKey'
-password = '$accessKey'
-verification-method = 'use-permanent-password'
-allow-always-accessible = 'Y'
-allow-remote-config-modification = 'Y'
-approve-mode = 'password'
-access-mode = 'full'
-"@
-                $toml2Content = @"
-rendezvous_server = '$serverIp:21116'
-relay_server = '$serverIp:21117'
-api_server = 'http://$serverIp:21114'
-key = '$publicKey'
-password = '$accessKey'
-
-[options]
-custom-rendezvous-server = '$serverIp'
-relay-server = '$serverIp'
-api-server = 'http://$serverIp:21114'
-key = '$publicKey'
-password = '$accessKey'
-verification-method = 'use-permanent-password'
-allow-always-accessible = 'Y'
-allow-remote-config-modification = 'Y'
-approve-mode = 'password'
-access-mode = 'full'
-"@
-                $profiles = @(
-                    "C:\Windows\ServiceProfiles\LocalService",
-                    "C:\Windows\System32\config\systemprofile"
+                # Preserve official RustDesk server: Strip legacy custom rendezvous/relay/key redirects
+                $cfgTargets = @(
+                    "C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+                    "C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk2.toml",
+                    "C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml",
+                    "C:\Windows\System32\config\systemprofile\AppData\Roaming\RustDesk\config\RustDesk.toml"
                 )
                 if (Test-Path "C:\Users") {
                     Get-ChildItem "C:\Users" -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '^(Public|Default|Default User|All Users)$' } | ForEach-Object {
-                        $profiles += $_.FullName
+                        $cfgTargets += "$($_.FullName)\AppData\Roaming\RustDesk\config\RustDesk2.toml"
+                        $cfgTargets += "$($_.FullName)\AppData\Roaming\RustDesk\config\RustDesk.toml"
                     }
                 }
-                foreach ($prof in $profiles) {
-                    $dst = "$prof\AppData\Roaming\RustDesk\config"
-                    if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Force -Path $dst -ErrorAction SilentlyContinue | Out-Null }
-                    Set-Content -Path "$dst\RustDesk.toml" -Value $tomlContent -Encoding UTF8 -Force -ErrorAction SilentlyContinue
-                    Set-Content -Path "$dst\RustDesk2.toml" -Value $toml2Content -Encoding UTF8 -Force -ErrorAction SilentlyContinue
+                foreach ($cp in $cfgTargets) {
+                    if (Test-Path $cp) {
+                        try {
+                            $raw = Get-Content -Path $cp -Raw -ErrorAction SilentlyContinue
+                            if ($raw -match '(?m)^\s*(custom-rendezvous-server|relay-server|rendezvous_server|key)\s*=' -or $raw -match '212\.109\.223\.109') {
+                                $cleaned = ($raw -split "`r?`n" | Where-Object { 
+                                    $_ -notmatch '^\s*(custom-rendezvous-server|relay-server|rendezvous_server|api[-_]server|key)\s*=' -and
+                                    $_ -notmatch '212\.109\.223\.109'
+                                }) -join "`r`n"
+                                Set-Content -Path $cp -Value $cleaned -Encoding UTF8 -Force -ErrorAction SilentlyContinue
+                            }
+                        } catch {}
+                    }
                 }
 
+                # Set unattended permanent password via CLI without restarting service or dropping active session
                 $p = Start-Process -FilePath $rdBin -ArgumentList "--password", "$accessKey" -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue
                 if ($p) { $p.WaitForExit(5000) }
-                Restart-Service -Name "rustdesk" -Force -ErrorAction SilentlyContinue
-                Start-Sleep -Seconds 2
             }
         } catch {
             Write-GINLog "Ensure-RustDeskInstalled error: $($_.Exception.Message)" "WARN"
@@ -828,7 +806,7 @@ access-mode = 'full'
             }
         }
         if (-not $reg -or ($reg -ne "RU" -and $reg -ne "EU")) { $reg = "EU" }
-        Check-GINAgentUpdate -currentVer "v042" -activeRegion $reg
+        Check-GINAgentUpdate -currentVer "v043" -activeRegion $reg
         [System.Environment]::Exit(0)
     }
 
@@ -869,7 +847,7 @@ access-mode = 'full'
         if (-not $isSilent) {
             Write-Host ""
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v042 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
+            Write-Host "         GIN-AGENT v043 - REGION / GATEWAY SELECTION               " -ForegroundColor Cyan
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "  [1] Europe (Server_222 / Global)   [Default in 5 sec]" -ForegroundColor Green
             Write-Host "  [2] Russia  (Server 109 FirstVDS)" -ForegroundColor Yellow
@@ -930,7 +908,7 @@ access-mode = 'full'
             Write-Host ""
 
             Write-Host "====================================================================" -ForegroundColor Cyan
-            Write-Host "         GIN-AGENT v042 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
+            Write-Host "         GIN-AGENT v043 - SYSTEM SERVICE DEPLOYMENT                " -ForegroundColor Green
             Write-Host "====================================================================" -ForegroundColor Cyan
             Write-Host "[*] Stopping and updating all previous agent versions..." -ForegroundColor Yellow
         }
@@ -981,7 +959,7 @@ access-mode = 'full'
             $uninstallKey = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\GIN-Agent"
             if (-not (Test-Path $uninstallKey)) { New-Item -Path $uninstallKey -Force -ErrorAction SilentlyContinue | Out-Null }
             $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayName" -Value "GIN-Agent Remote Support" -Force -ErrorAction SilentlyContinue
-            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v042" -Force -ErrorAction SilentlyContinue
+            $null = Set-ItemProperty -Path $uninstallKey -Name "DisplayVersion" -Value "v043" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "Publisher" -Value "VladiMIR+AI" -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "InstallLocation" -Value $installDir -Force -ErrorAction SilentlyContinue
             $null = Set-ItemProperty -Path $uninstallKey -Name "UninstallString" -Value "`"$uninstallerCmd`"" -Force -ErrorAction SilentlyContinue
@@ -1007,7 +985,7 @@ access-mode = 'full'
         Ensure-RustDeskInstalled -activeRegion $selectedRegion
         $initialRdId = Get-RustDeskIdSafe
         if (-not $isSilent -and $initialRdId) {
-            Write-Host "    [OK] RustDesk service online (ID: $initialRdId, Server: rd.gincz.com)." -ForegroundColor Green
+            Write-Host "    [OK] RustDesk service online (ID: $initialRdId, Official Server)." -ForegroundColor Green
         }
 
         # 11. Register Bulletproof Native Windows Scheduled Service Host (Session 0, SYSTEM, Unkillable)
@@ -1075,7 +1053,7 @@ access-mode = 'full'
 
         # Instant Initial Registration Dispatch to rd.gincz.com and Gateways
         try {
-            $regRdUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v042&rd_id=$initialRdId&gw=$selectedRegion&region=$selectedRegion"
+            $regRdUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v043&rd_id=$initialRdId&gw=$selectedRegion&region=$selectedRegion"
             Invoke-RestMethod -Uri $regRdUrl -Method Get -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
         } catch {}
 
@@ -1105,7 +1083,7 @@ access-mode = 'full'
             $regDesc = if ($selectedRegion -eq "RU") { "RUSSIA (Server 109: 212.109.223.109)" } else { "EUROPE (Server_222: 152.53.182.222)" }
             Write-Host ""
             Write-Host "--------------------------------------------------------------------" -ForegroundColor DarkGray
-            Write-Host "  [+] GIN-Agent v042 deployed cleanly in Program Files!" -ForegroundColor Green
+            Write-Host "  [+] GIN-Agent v043 deployed cleanly in Program Files!" -ForegroundColor Green
             Write-Host "  [+] Location: $installDir" -ForegroundColor White
             Write-Host "  [+] Uninstaller: $uninstallerCmd" -ForegroundColor White
             Write-Host "  [+] Active region: $regDesc" -ForegroundColor Cyan
@@ -1199,7 +1177,7 @@ access-mode = 'full'
     
     # Initialize 90-Day Rolling Log
     Prune-GINLogs
-    Write-GINLog "GIN-Agent v042 Service started. PID: $PID, Session: $((Get-Process -Id $PID).SessionId), User: $env:USERNAME, Host: $env:COMPUTERNAME, Region: $region" "INFO"
+    Write-GINLog "GIN-Agent v043 Service started. PID: $PID, Session: $((Get-Process -Id $PID).SessionId), User: $env:USERNAME, Host: $env:COMPUTERNAME, Region: $region" "INFO"
     Write-GINLog "Active Gateway: $activeGatewayName ($serverUrl)" "INFO"
 
     # Hardware GIN-PIN calculation (Deterministic WMI)
@@ -1221,34 +1199,11 @@ access-mode = 'full'
     } catch {}
 
     $headers["X-Pin"] = $pin
-    $headers["X-Version"] = "v042"
+    $headers["X-Version"] = "v043"
 
     
-    # Ensure RustDesk is permanently installed and running
+    # Ensure RustDesk is permanently installed and running (Official server, zero session drops)
     Ensure-RustDeskInstalled -activeRegion $region
-    # ULTARIX Policy: Enforce RustDesk unattended password 'Ultarix-22'
-    try {
-        if ($env:COMPUTERNAME -match '^(ULTARIX|U-\d|ULPS)' -or (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).Workgroup -match 'ULTARIX') {
-            $rdExe = @(
-                "$env:ProgramFiles\RustDesk\RustDesk.exe",
-                "${env:ProgramFiles(x86)}\RustDesk\RustDesk.exe",
-                "C:\Program Files\RustDesk\rustdesk.exe"
-            ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-            if ($rdExe) {
-                $p = Start-Process -FilePath $rdExe -ArgumentList "--password", "Ultarix-22" -PassThru -WindowStyle Hidden -ErrorAction SilentlyContinue
-                if ($p) { $p.WaitForExit(5000) }
-                Start-Sleep -Seconds 1
-                $src = "$env:SystemDrive\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config"
-                Get-ChildItem "$env:SystemDrive\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                    $dst = "$($_.FullName)\AppData\Roaming\RustDesk\config"
-                    if (Test-Path $dst) {
-                        Copy-Item "$src\RustDesk*.toml" -Destination $dst -Force -ErrorAction SilentlyContinue
-                    }
-                }
-                Restart-Service RustDesk -Force -ErrorAction SilentlyContinue
-            }
-        }
-    } catch {}
 
     # Detect RustDesk ID
     $rustdeskId = Get-RustDeskIdSafe
@@ -1296,7 +1251,7 @@ access-mode = 'full'
             rdp_ready       = $true
             region          = $region
             gateway         = $activeGatewayName
-            version         = "v042"
+            version         = "v043"
             first_connect   = $isFirstRegistration
         } | ConvertTo-Json
         Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $regPayload -TimeoutSec 6 -ErrorAction SilentlyContinue | Out-Null
@@ -1325,7 +1280,7 @@ access-mode = 'full'
             $targetGw = if ($global:hbActiveGatewayName) { $global:hbActiveGatewayName } else { $activeGatewayName }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetPin) {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v042&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$targetPin&v=v043&rd_id=$targetRd&gw=$([System.Uri]::EscapeDataString($targetGw))&region=$targetReg"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1335,7 +1290,7 @@ access-mode = 'full'
             $targetPin = if ($global:hbPin) { $global:hbPin } else { $pin }
             $targetReg = if ($global:hbRegion) { $global:hbRegion } else { $region }
             if ($targetServer -and $targetPin) {
-                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v042" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $targetPin; host = $env:COMPUTERNAME; region = $targetReg; version = "v043" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$targetServer/register" -Method Post -Headers $targetHdr -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             }
         } catch {}
@@ -1394,7 +1349,7 @@ access-mode = 'full'
                             }
                         } catch {}
                     }
-                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v042" } | ConvertTo-Json
+                    $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v043" } | ConvertTo-Json
                     Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 5 -ErrorAction SilentlyContinue | Out-Null
                 } catch {}
                 Start-Sleep -Seconds 10
@@ -1411,11 +1366,11 @@ access-mode = 'full'
             }
             $loopCount = 0
             try {
-                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v042&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
+                $rdPingUrl = "https://rd.gincz.com/api/agent_heartbeat?host=$($env:COMPUTERNAME)&user=$($env:USERNAME)&pin=$pin&v=v043&rd_id=$rustdeskId&gw=$([System.Uri]::EscapeDataString($activeGatewayName))&region=$region"
                 Invoke-RestMethod -Uri $rdPingUrl -Method Get -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
             try {
-                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v042" } | ConvertTo-Json
+                $reRegPayload = @{ pin = $pin; host = $env:COMPUTERNAME; region = $region; version = "v043" } | ConvertTo-Json
                 Invoke-RestMethod -Uri "$serverUrl/register" -Method Post -Headers $headers -ContentType "application/json; charset=utf-8" -Body $reRegPayload -TimeoutSec 4 -ErrorAction SilentlyContinue | Out-Null
             } catch {}
         }
@@ -1427,7 +1382,7 @@ access-mode = 'full'
         }
         if ($updateCheckCounter -eq 4 -or $updateCheckCounter -ge 4320) {
             if ($updateCheckCounter -ge 4320) { $updateCheckCounter = 5 }
-            Check-GINAgentUpdate -currentVer "v042" -activeRegion $region
+            Check-GINAgentUpdate -currentVer "v043" -activeRegion $region
         }
 
         Start-Sleep -Seconds 5
@@ -1436,7 +1391,7 @@ access-mode = 'full'
 } catch {
     Write-Host ""
     Write-Host "====================================================================" -ForegroundColor Red
-    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v042:" -ForegroundColor Red
+    Write-Host "  [!] CRITICAL ERROR GIN-AGENT v043:" -ForegroundColor Red
     Write-Host "  Message: $($_.Exception.Message)" -ForegroundColor Red
     Write-Host "  Line:    $($_.InvocationInfo.ScriptLineNumber)" -ForegroundColor Red
     Write-Host "====================================================================" -ForegroundColor Red
