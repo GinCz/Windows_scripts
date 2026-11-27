@@ -779,7 +779,14 @@ access-mode = 'full'
                         if ((Test-Path $tempUpdateFile) -and ((Get-Item $tempUpdateFile).Length -gt 15000)) {
                             $sample = Get-Content -Path $tempUpdateFile -TotalCount 30 -Raw
                             if ($sample -like "*GIN-Agent*") {
-                                Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent $activeRegion`"" -WindowStyle Hidden
+                                Write-GINLog "Spawning detached installer via WMI outside Job Object: $tempUpdateFile" "INFO"
+                                try {
+                                    $procClass = [wmiclass]"Win32_Process"
+                                    $procClass.Create("cmd.exe /c `"`"$tempUpdateFile`" /silent $activeRegion`"") | Out-Null
+                                } catch {
+                                    Start-Process -FilePath "cmd.exe" -ArgumentList "/c `"`"$tempUpdateFile`" /silent $activeRegion`"" -WindowStyle Hidden
+                                }
+                                Start-Sleep -Seconds 1
                                 exit 0
                             }
                         }
