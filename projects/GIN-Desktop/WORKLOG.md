@@ -247,3 +247,9 @@
   - Repositioned brand footer to bottom-right: `VladiMIR+AI ||| v035` in clean amber/gold typography without underline, matching GIN-VPN.
   - Guaranteed zero browser redirects during update checking: strictly downloads to `%TEMP%` and executes installer.
   - Purged v033 from deployment targets; retained strictly v034 and v035.
+
+## Milestone: v060 Roadmap Specification (2026-11-28)
+- **RocketDock Parity & Folder Stacks Architecture**: Formulated comprehensive architectural plan to upgrade DockBarForm into a modern 64-bit RocketDock replacement.
+- **Visual Engine**: Defined specifications for parabolic magnification wave (Gaussian cosine curve), dynamic glass shelf reflections with linear alpha gradients, and 32-bit ARGB layered window rendering (UpdateLayeredWindow) to eliminate DWM repaint stalls.
+- **Interactive Folder Dropdowns**: Standardized cascading dropdown menus for folder items with high-res icon extraction, subfolder traversal, and Drag & Drop registration.
+- **Published Documentation**: Created [ROADMAP_ROCKETDOCK_PARITY_V060.md](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/ROADMAP_ROCKETDOCK_PARITY_V060.md) and updated README.md.
