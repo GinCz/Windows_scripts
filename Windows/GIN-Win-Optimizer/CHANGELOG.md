@@ -6,6 +6,22 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v057] - 2026-11-28
+### Critical Hardware Thermal Safeguard & APU Power Scheme Normalization
+- **Critical Lenovo Thermal & Power Service Whitelist (`chk_srv_oem_lenovo`)**:
+  - Implemented ironclad whitelist (`$criticalWhitelist = @('LITSSVC', 'IBMPMSVC', 'IBMPMDRV', 'LenovoFnAndFunctionKeys', 'LPlatSvc')`) protecting Lenovo Notebook Intelligent Thermal Solution (ITS) and Power Management services.
+  - Guarantees services remain `Automatic` and actively running on all ThinkPad/IdeaPad laptops, eliminating Embedded Controller (EC) fail-safe throttling of integrated GPU clocks to 200–400 MHz.
+  - Purges only user-space telemetry and bloatware (`LenovoVantage`, `ImController`, background scheduled tasks).
+- **APU Power Scheme Normalization & Duplicate Prevention (`chk_srv_power_plan`)**:
+  - Eliminated infinite scheme duplication bug (`powercfg.exe -duplicatescheme`).
+  - Added chassis detection (`Win32_SystemEnclosure` / `Win32_Battery`): automatically enforces canonical "Balanced" power scheme on laptops and mobile APUs (AMD Ryzen / Intel Core) to prevent CPU cores from monopolizing package TDP and starving the integrated GPU.
+  - Desktops safely receive High Performance.
+- **Delivery**:
+  - Released `GIN-Win-Optimizer_v057.cmd` and `GIN-Win-Optimizer_v057.zip`.
+  - Deployed simultaneously to Flash drive (`D:\MEGA\WIN-FLASH\Util-WINDOWS\`) and Desktop (`D:\MEGA\DOCS\desktop\`).
+  - Purged obsolete `v055`, retaining strictly `v056` and `v057`.
+
+
 ## [v056] - 2026-11-19
 ### Hardcore Autostart, Scheduled Tasks & Windows License Purge (Lenovo, Office, Updaters & License Checks)
 - **Hardcore Autostart Purge (`chk_srv_startup_apps_clean`)**:

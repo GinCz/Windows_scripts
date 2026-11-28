@@ -110,7 +110,9 @@ if os.path.exists(v_file):
     active_v = v_data.get("active_versions", [])
     print(f"[*] Current Version: {cur_v}, Active Versions: {active_v}")
     for act in active_v:
-        if not os.path.exists(os.path.join(base_dir, act)):
+        p1 = os.path.join(base_dir, act)
+        p2 = os.path.join(base_dir, "versions", act)
+        if not os.path.exists(p1) and not os.path.exists(p2):
             errors.append(f"FATAL: Active version file missing: {act}")
 
 if errors:

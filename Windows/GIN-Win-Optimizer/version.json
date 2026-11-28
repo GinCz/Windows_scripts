@@ -1,10 +1,10 @@
 {
     "project": "GIN-Win-Optimizer",
-    "current_version": "v056",
-    "updated_at": "2026-11-19",
+    "current_version": "v057",
+    "updated_at": "2026-11-28",
     "active_versions": [
-        "GIN-Win-Optimizer_v056.cmd",
-        "GIN-Win-Optimizer_v055.cmd"
+        "GIN-Win-Optimizer_v057.cmd",
+        "GIN-Win-Optimizer_v056.cmd"
     ],
     "sync_targets": {
         "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,11 @@
         "desktop_copy": true
     },
     "changelog": [
+        {
+            "version": "v057",
+            "date": "2026-11-28",
+            "changes": "Critical Hardware Thermal Safeguard & APU Power Scheme Normalization: 1) Implemented critical whitelist ($criticalWhitelist = @('LITSSVC', 'IBMPMSVC', 'IBMPMDRV', 'LenovoFnAndFunctionKeys', 'LPlatSvc')) in chk_srv_oem_lenovo protecting Lenovo Notebook Intelligent Thermal Solution (ITS) and Power Management services from being stopped or disabled, preventing fail-safe EC GPU clock throttling on ThinkPad/IdeaPad hardware; 2) Fixed power scheme duplication flaw in chk_srv_power_plan, adding laptop chassis detection (ChassisTypes / Win32_Battery) to automatically enforce Balanced power plan on mobile APUs (Ryzen / Intel Core) protecting GPU TDP headroom, while desktops receive High Performance; 3) Retained strictly 2 latest versions (v057 and v056), purged v055; 4) Deployed to D:\\MEGA\\DOCS\\desktop\\ and D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\."
+        },
         {
             "version": "v056",
             "date": "2026-11-19",

@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Win-Optimizer v055 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
+title GIN-Win-Optimizer v057 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell location (supports x86, x64, Sysnative on 32-bit processes in 64-bit OS)
 set "PS_EXE=powershell.exe"
@@ -10,10 +10,10 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11 (32-bit and 64-bit)
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-Win-Optimizer v055...
-    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v055.cmd" >nul 2>&1
-    if exist "%TEMP%\GIN-Win-Optimizer_v055.cmd" (
-        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v055.cmd""' -Verb RunAs"
+    echo [*] Elevating to Administrator privileges for GIN-Win-Optimizer v057...
+    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v057.cmd" >nul 2>&1
+    if exist "%TEMP%\GIN-Win-Optimizer_v057.cmd" (
+        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v057.cmd""' -Verb RunAs"
     ) else (
         "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%~f0""' -Verb RunAs"
     )
@@ -123,7 +123,7 @@ start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden 
 exit /b
 #>
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v055
+#  GIN-WIN-OPTIMIZER PLUS                                          v057
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -156,6 +156,23 @@ try {
             Remove-Item -Path (Join-Path $cp "Fix-Phantom-Desktop-Icon.cmd") -Force -ErrorAction SilentlyContinue
         }
     }
+
+    # 2.0 Autonomous Immediate Task Scheduler & Autostart Purge (Lenovo Vantage, Office, Driver Booster, Updaters, License checks)
+    try {
+        $startupPatt = @(
+            "Driver Booster*", "*DriverBooster*", "*IObit*",
+            "*Intel PTT EK*", "*Intel PTT*",
+            "*MicrosoftEdgeUpdate*", "*GoogleUpdate*", "*BraveUpdate*", "*CentBrowserUpdate*"
+        )
+        foreach ($sp in $startupPatt) {
+            Get-ScheduledTask -TaskName $sp -ErrorAction SilentlyContinue | ForEach-Object {
+                if ($_.TaskName -notmatch '^(GIN|RustDesk)') {
+                    Disable-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -ErrorAction SilentlyContinue | Out-Null
+                    Unregister-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+                }
+            }
+        }
+    } catch {}
 
     # 2.1 Autonomous Purge of Legacy Start Menu Applets (Accessibility, Accessories, Speech, Math, Steps, Fax, Character Map)
     try {
@@ -775,9 +792,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v055
+#  GIN-WIN-OPTIMIZER PLUS                                          v057
 
-#  Rule: Strict Version Increment Mandate (v032 -> v055)
+#  Rule: Strict Version Increment Mandate (v032 -> v057)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -830,11 +847,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -1021,6 +1038,8 @@ $t = @{
 
         "chk_wu_exclude_msrt" = "Windows Update does not include Malicious Software Removal Tool (MSRT)"
 
+        "chk_wu_license_checks" = "Disable Windows License Validation & SoftwareProtectionPlatform scheduled tasks"
+
         "chk_sys_bsod_no_autoreboot" = "Disable automatic reboot on BSOD (allow reading stop code)"
 
         "chk_sys_small_minidump" = "Configure small kernel memory minidump (saves SSD space)"
@@ -1042,6 +1061,8 @@ $t = @{
         "chk_app_news" = "Remove MSN News, Weather, Sports, Money / Finance apps"
 
         "chk_app_office_stub" = "Remove Microsoft 365 / GetOffice stub"
+
+        "chk_srv_office_tasks" = "Purge Microsoft Office scheduled tasks (ClickToRun updates, monitor & telemetry)"
 
         "chk_app_clipchamp" = "Remove pre-installed Clipchamp video editor"
 
@@ -1082,6 +1103,7 @@ $t = @{
 
         "chk_srv_iphlpsvc" = "Disable IP Helper service (iphlpsvc - uncheck if using IPv6 VPNs)"
         "chk_srv_oem_lenovo" = "Purge / Disable Lenovo ImController bloat, services & background tasks"
+        "chk_srv_startup_apps_clean" = "Purge third-party autostart programs in Run keys & Startup (manual launch only)"
         "chk_srv_intel_graphics" = "Disable Intel HD Graphics background services, tray & hotkey modules"
         "chk_srv_conexant_audio" = "Disable Conexant / Synaptics Audio background services (CxAudioSvc, CxUIUSvc, CxUtilSvc)"
 
@@ -1111,9 +1133,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -1300,6 +1322,8 @@ $t = @{
 
         "chk_wu_exclude_msrt" = "Vyloučit stahování nástroje pro odstranění škodlivého softwaru (MSRT)"
 
+        "chk_wu_license_checks" = "Zakázat kontrolu licencí Windows a naplánované úlohy SoftwareProtectionPlatform"
+
         "chk_sys_bsod_no_autoreboot" = "Zakázat automatický restart při modré smrti BSOD (pro zobrazení chyby)"
 
         "chk_sys_small_minidump" = "Nastavit malý výpis paměti Minidump při havárii (šetří místo na SSD)"
@@ -1321,6 +1345,8 @@ $t = @{
         "chk_app_news" = "Odstranit aplikace MSN Zprávy, Počasí, Sport a Finance"
 
         "chk_app_office_stub" = "Odstranit zástupce Microsoft 365 / GetOffice"
+
+        "chk_srv_office_tasks" = "Odstranit naplánované úlohy Microsoft Office (ClickToRun aktualizace, monitor a telemetrie)"
 
         "chk_app_clipchamp" = "Odstranit předinstalovaný editor videa Clipchamp"
 
@@ -1361,6 +1387,7 @@ $t = @{
 
         "chk_srv_iphlpsvc" = "Zakázat službu Pomocník protokolu IP (iphlpsvc - IPv6)"
         "chk_srv_oem_lenovo" = "Vyčistit / zakázat bloatware Lenovo ImController, služby a úlohy na pozadí"
+        "chk_srv_startup_apps_clean" = "Tvrdé vyčištění po spuštění (klíče Run a Po spuštění: Office, Lenovo, updaty - spouštění pouze ručně)"
         "chk_srv_intel_graphics" = "Zakázat služby Intel HD Graphics na pozadí, ikonu v liště a moduly kláves"
         "chk_srv_conexant_audio" = "Zakázat služby Conexant / Synaptics Audio na pozadí (CxAudioSvc, CxUIUSvc, CxUtilSvc)"
 
@@ -1390,11 +1417,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v055 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -1642,6 +1669,11 @@ $t = @{
 
         "chk_srv_iphlpsvc" = "Отключить службу преобразования IPv6 (iphlpsvc - снимите, если нужен IPv6 VPN)"
 
+        "chk_srv_oem_lenovo" = "Очистить / отключить bloatware Lenovo ImController, службы и фоновые задачи"
+        "chk_srv_intel_graphics" = "Отключить фоновые службы Intel HD Graphics, трей и модули горячих клавиш"
+        "chk_srv_conexant_audio" = "Отключить фоновые службы Conexant / Synaptics Audio (CxAudioSvc, CxUIUSvc, CxUtilSvc)"
+        "chk_srv_startup_apps_clean" = "Жесткая зачистка автозагрузки (Run и Автозагрузка: Office, Lenovo, апдейтеры — запуск только вручную)"
+
         "chk_clean_user_temp" = "Очистить пользовательские временные файлы (%TEMP% и LocalAppData\\Temp)"
 
         "chk_clean_win_temp" = "Очистить общесистемный каталог временных файлов (C:\\Windows\\Temp)"
@@ -1673,7 +1705,7 @@ $t = @{
 $xamlBase64 = (@(
         'PFdpbmRvdyB4bWxucz0iaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93aW5meC8yMDA2L3hhbWwvcHJlc2VudGF0aW9uIgog'
         'ICAgICAgIHhtbG5zOng9Imh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd2luZngvMjAwNi94YW1sIgogICAgICAgIFRpdGxl'
-        'PSJHSU4tV2luLU9wdGltaXplciB2MDUzIFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
+        'PSJHSU4tV2luLU9wdGltaXplciB2MDU2IFtWbGFkaU1JUiArIEFJXSIKICAgICAgICBIZWlnaHQ9Ijg5MCIgV2lkdGg9IjEyODAi'
         'CiAgICAgICAgTWluSGVpZ2h0PSI3NTAiIE1pbldpZHRoPSIxMTAwIgogICAgICAgIFdpbmRvd1N0YXJ0dXBMb2NhdGlvbj0iQ2Vu'
         'dGVyU2NyZWVuIgogICAgICAgIFdpbmRvd1N0YXRlPSJNYXhpbWl6ZWQiCiAgICAgICAgQmFja2dyb3VuZD0iIzEzMTUxOCIgRm9y'
         'ZWdyb3VuZD0iI2UwZTBlMCIKICAgICAgICBGb250RmFtaWx5PSJTZWdvZSBVSSIgRm9udFNpemU9IjEyIj4KICAgIDxXaW5kb3cu'
@@ -1905,125 +1937,128 @@ $xamlBase64 = (@(
         'YXV0b191cGRhdGVzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1l'
         'PSJjaGtfd3VfZXhjbHVkZV9kcml2ZXJzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
         'aGVja0JveCBOYW1lPSJjaGtfd3VfZXhjbHVkZV9tc3J0IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAg'
-        'ICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2Jzb2Rfbm9fYXV0b3JlYm9vdCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAg'
-        'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3N5c19zbWFsbF9taW5pZHVtcCIgSXNDaGVja2VkPSJU'
-        'cnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3N5c19mYXN0X3N0YXJ0dXBfb2Zm'
-        'IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2Rp'
-        'c2FibGVfcmVtb3RlX2Fzc2lzdCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tC'
-        'b3ggTmFtZT0iY2hrX3N5c19lbmFibGVfcGhvdG9fdmlld2VyIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAg'
-        'ICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX25vdGVwYWRfdHdlYWtzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAg'
-        'ICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAg'
-        'ICAgICAgICAgIDwhLS0gR3JvdXA6IEFwcHMgJiBCbG9hdHdhcmUgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5h'
-        'bWU9ImdycEFwcHMiIEhlYWRlcj0iQXBwIERlYmxvYXRlciAmYW1wOyBQcm92aXNpb25lZCBQYWNrYWdlcyI+CiAgICAgICAgICAg'
-        'ICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19h'
-        'cHBfeGJveCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
-        'X2FwcF9nYW1lYmFyX2Rpc2FibGUiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNr'
-        'Qm94IE5hbWU9ImNoa19hcHBfZ2FtZXMiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENo'
-        'ZWNrQm94IE5hbWU9ImNoa19hcHBfbmV3cyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8'
-        'Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9vZmZpY2Vfc3R1YiIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAg'
-        'ICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9jbGlwY2hhbXAiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19hcHBfcGVvcGxlIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAg'
-        'ICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX2ZlZWRiYWNrIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAg'
-        'ICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX2dldF9oZWxwIiBJc0NoZWNrZWQ9IlRydWUi'
-        'Lz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX3Bob25lIiBJc0NoZWNrZWQ9IlRy'
-        'dWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+'
-        'CgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IFNlcnZpY2VzICYgUGVyZm9ybWFuY2UgLS0+CiAgICAgICAgICAgICAg'
-        'ICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFNlcnZpY2VzIiBIZWFkZXI9IlN5c3RlbSBQZXJmb3JtYW5jZSAmYW1wOyBTZXJ2aWNl'
-        'cyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNr'
-        'Qm94IE5hbWU9ImNoa19zcnZfc3lzbWFpbiIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8'
-        'Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9pbmRleGluZyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAg'
-        'ICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9yZW1vdGVfcmVnIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2RlbGl2ZXJ5X29wdCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAg'
-        'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9yZXNlcnZlZF9zdG9yYWdlIiBJc0NoZWNrZWQ9'
-        'IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2hpYmVybmF0aW9uIiBJ'
-        'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3Bvd2Vy'
-        'X3BsYW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19z'
-        'cnZfcG93ZXJfc2xlZXBfc2NyZWVuIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVj'
-        'a0JveCBOYW1lPSJjaGtfc3J2X3NzZF90cmltIiBJc0NoZWNrZWQ9IlRydWUiLz4NCiAgICAgICAgICAgICAgICAgICAgICAgICAg'
-        'ICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9wYWdlZmlsZV9hdXRvIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X25ldHdvcmtfb2ZmbG9hZCIgSXNDaGVja2VkPSJGYWxzZSIvPgog'
-        'ICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfdmlzdWFsX2FwcGVhcmFuY2UiIElzQ2hl'
-        'Y2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfcGNhIiBJc0No'
-        'ZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl90cmt3a3Mi'
-        'IElzQ2hlY2tlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2lw'
-        'aGxwc3ZjIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
-        'X3Nydl9vZW1fbGVub3ZvIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBO'
-        'YW1lPSJjaGtfc3J2X2ludGVsX2dyYXBoaWNzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAg'
-        'IDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2NvbmV4YW50X2F1ZGlvIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAg'
-        'ICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAg'
-        'IDwhLS0gR3JvdXA6IENhY2hlICYgQ2xlYW5pbmcgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycENs'
-        'ZWFuIiBIZWFkZXI9IkNhY2hlICZhbXA7IENvbXBvbmVudCBDbGVhbmluZyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFj'
-        'a1BhbmVsPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPCEtLSBUaGUgMyBsb25nZXN0L3Nsb3dlc3QgbWFpbnRlbmFuY2Ug'
-        'b3BlcmF0aW9ucyAoaGlnaGxpZ2h0ZWQgaW4gYnJpZ2h0IHJlZCwgT0ZGIGJ5IGRlZmF1bHQpIC0tPgogICAgICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19kZWVwX2Rpc21fcmVwYWlyIiBJc0NoZWNrZWQ9IkZhbHNlIiBGb3JlZ3Jv'
-        'dW5kPSIjZmY0ZDRmIiBGb250V2VpZ2h0PSJCb2xkIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFt'
-        'ZT0iY2hrX2RlZXBfZGlzbV9yZXNldGJhc2UiIElzQ2hlY2tlZD0iRmFsc2UiIEZvcmVncm91bmQ9IiNmZjRkNGYiIEZvbnRXZWln'
-        'aHQ9IkJvbGQiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZGVlcF9zZmNfY29tcGFj'
-        'dCIgSXNDaGVja2VkPSJGYWxzZSIgRm9yZWdyb3VuZD0iI2ZmNGQ0ZiIgRm9udFdlaWdodD0iQm9sZCIvPgogICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgICAgPFNlcGFyYXRvciBCYWNrZ3JvdW5kPSIjMmUzMjNiIiBNYXJnaW49IjAsMywwLDQiLz4KICAgICAgICAg'
-        'ICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fdXNlcl90ZW1wIiBJc0NoZWNrZWQ9IlRydWUiLz4K'
-        'ICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fd2luX3RlbXAiIElzQ2hlY2tlZD0i'
-        'VHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl9zb2Z0X2Rpc3QiIElz'
-        'Q2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl90aHVt'
-        'Yl9jYWNoZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
-        'X2NsZWFuX3NoYWRlcnNfZG5zIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0Jv'
-        'eCBOYW1lPSJjaGtfY2xlYW5fZXZlbnRfbG9ncyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAg'
-        'ICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX3JlY3ljbGVfYmluIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fY2xlYW5tZ3IiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAg'
-        'ICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4KICAgICAgICAgICAg'
-        'ICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9HcmlkPgogICAgICAgIDwvU2Nyb2xsVmlld2VyPgoKICAgICAgICA8IS0t'
-        'IExpdmUgRXhlY3V0aW9uIENvbnNvbGUgLyBMb2cgQm94IChIZWlnaHQgMTg1KSAtLT4KICAgICAgICA8Qm9yZGVyIEdyaWQuUm93'
-        'PSIzIiBCYWNrZ3JvdW5kPSIjMGIwYzBlIiBDb3JuZXJSYWRpdXM9IjQiIFBhZGRpbmc9IjgsNiIgQm9yZGVyQnJ1c2g9IiMyNTI4'
-        'MmUiIEJvcmRlclRoaWNrbmVzcz0iMSI+CiAgICAgICAgICAgIDxHcmlkPgogICAgICAgICAgICAgICAgPEdyaWQuUm93RGVmaW5p'
-        'dGlvbnM+CiAgICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgICAgICAg'
-        'ICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0PSJBdXRvIi8+CiAgICAgICAgICAgICAgICAgICAgPFJvd0RlZmluaXRpb24gSGVpZ2h0'
-        'PSIqIi8+CiAgICAgICAgICAgICAgICA8L0dyaWQuUm93RGVmaW5pdGlvbnM+CgogICAgICAgICAgICAgICAgPCEtLSBDb25zb2xl'
-        'IEhlYWRlciBUb29sYmFyIC0tPgogICAgICAgICAgICAgICAgPERvY2tQYW5lbCBHcmlkLlJvdz0iMCIgTWFyZ2luPSIwLDAsMCw0'
-        'Ij4KICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBEb2NrUGFuZWwuRG9jaz0iUmlnaHQiIE9yaWVudGF0aW9uPSJIb3Jp'
-        'em9udGFsIj4KICAgICAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5DbGVhckxvZyIgQ29udGVudD0i8J+nuSBD'
-        'bGVhciIgTWFyZ2luPSIwLDAsNCwwIiBQYWRkaW5nPSI2LDIiIEZvbnRTaXplPSIxMCIvPgogICAgICAgICAgICAgICAgICAgICAg'
-        'ICA8QnV0dG9uIE5hbWU9ImJ0bkNvcHlMb2ciIENvbnRlbnQ9IvCfk4sgQ29weSIgUGFkZGluZz0iNiwyIiBGb250U2l6ZT0iMTAi'
-        'Lz4KICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgT3JpZW50'
-        'YXRpb249Ikhvcml6b250YWwiIFZlcnRpY2FsQWxpZ25tZW50PSJDZW50ZXIiPgogICAgICAgICAgICAgICAgICAgICAgICA8VGV4'
-        'dEJsb2NrIFRleHQ9IlRFUk1JTkFMIExPRyIgRm9udFdlaWdodD0iQm9sZCIgRm9udFNpemU9IjExIiBGb3JlZ3JvdW5kPSIjMDBi'
-        'NGQ4IiBNYXJnaW49IjAsMCwxMCwwIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDxUZXh0QmxvY2sgTmFtZT0idHh0U3ViU3Rh'
-        'dHVzIiBUZXh0PSJSZWFkeS4iIEZvbnRTaXplPSIxMC41IiBGb3JlZ3JvdW5kPSIjOTRhM2I4IiBWZXJ0aWNhbEFsaWdubWVudD0i'
-        'Q2VudGVyIi8+CiAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAgICAgICAgPC9Eb2NrUGFuZWw+Cgog'
-        'ICAgICAgICAgICAgICAgPCEtLSBTdWItVGFzayBQcm9ncmVzcyBCYXIgKGUuZy4gRElTTS9TRkMgJSkgLS0+CiAgICAgICAgICAg'
-        'ICAgICA8UHJvZ3Jlc3NCYXIgR3JpZC5Sb3c9IjEiIE5hbWU9InBiU3ViVGFzayIgSGVpZ2h0PSIzIiBNaW5pbXVtPSIwIiBNYXhp'
-        'bXVtPSIxMDAiIFZhbHVlPSIwIiBGb3JlZ3JvdW5kPSIjMTBiOTgxIiBCYWNrZ3JvdW5kPSIjMWUyMDI2IiBCb3JkZXJUaGlja25l'
-        'c3M9IjAiIE1hcmdpbj0iMCwwLDAsNCIvPgoKICAgICAgICAgICAgICAgIDwhLS0gTG9nIFRleHQgQXJlYSAtLT4KICAgICAgICAg'
-        'ICAgICAgIDxSaWNoVGV4dEJveCBHcmlkLlJvdz0iMiIgTmFtZT0idHh0Q29uc29sZUxvZyIgQmFja2dyb3VuZD0iVHJhbnNwYXJl'
-        'bnQiIEZvcmVncm91bmQ9IiM2ZWU3YjciIEZvbnRGYW1pbHk9IkNvbnNvbGFzIiBGb250U2l6ZT0iMTEiCiAgICAgICAgICAgICAg'
-        'ICAgICAgICAgICAgICAgQm9yZGVyVGhpY2tuZXNzPSIwIiBJc1JlYWRPbmx5PSJUcnVlIiBWZXJ0aWNhbFNjcm9sbEJhclZpc2li'
-        'aWxpdHk9IkF1dG8iIEhvcml6b250YWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRvIj4KICAgICAgICAgICAgICAgICAgICA8Rmxv'
-        'd0RvY3VtZW50IFBhZ2VQYWRkaW5nPSIwIj4KICAgICAgICAgICAgICAgICAgICAgICAgPFBhcmFncmFwaCBNYXJnaW49IjAiPgog'
-        'ICAgICAgICAgICAgICAgICAgICAgICAgICAgPFJ1biBUZXh0PSJSZWFkeS4gU2VsZWN0IGRlc2lyZWQgb3B0aW1pemF0aW9uIG9w'
-        'dGlvbnMgYW5kIGNsaWNrIFNUQVJUIE9QVElNSVpBVElPTi4iLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9QYXJhZ3JhcGg+'
-        'CiAgICAgICAgICAgICAgICAgICAgPC9GbG93RG9jdW1lbnQ+CiAgICAgICAgICAgICAgICA8L1JpY2hUZXh0Qm94PgogICAgICAg'
-        'ICAgICA8L0dyaWQ+CiAgICAgICAgPC9Cb3JkZXI+CgogICAgICAgIDwhLS0gQm90dG9tIEFjdGlvbiBCYXIgLS0+CiAgICAgICAg'
-        'PEJvcmRlciBHcmlkLlJvdz0iNCIgTWFyZ2luPSIwLDgsMCwwIj4KICAgICAgICAgICAgPERvY2tQYW5lbCBMYXN0Q2hpbGRGaWxs'
-        'PSJUcnVlIj4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIERvY2tQYW5lbC5Eb2NrPSJSaWdodCIgT3JpZW50YXRpb249Ikhv'
-        'cml6b250YWwiIFZlcnRpY2FsQWxpZ25tZW50PSJDZW50ZXIiPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRu'
-        'RXhwb3J0TG9nIiBDb250ZW50PSLwn5K+IEV4cG9ydCBMb2ciIE1hcmdpbj0iMCwwLDYsMCIgUGFkZGluZz0iMTIsNiIvPgogICAg'
-        'ICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuU2tpcEJvdHRvbSIgQ29udGVudD0i4o+tIFNLSVAgU1RFUCIgQmFja2dy'
-        'b3VuZD0iI2Q5NzcwNiIgQm9yZGVyQnJ1c2g9IiNmNTllMGIiIEZvcmVncm91bmQ9IiNmZmZmZmYiIEZvbnRXZWlnaHQ9IkJvbGQi'
-        'IFBhZGRpbmc9IjE0LDYiIE1hcmdpbj0iMCwwLDYsMCIgRm9udFNpemU9IjEyIiBJc0VuYWJsZWQ9IkZhbHNlIi8+CiAgICAgICAg'
-        'ICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5TdGFydEJvdHRvbSIgQ29udGVudD0i8J+agCDQntCf0KLQmNCc0JjQl9CY0KDQ'
-        'ntCS0JDQotCsIiBCYWNrZ3JvdW5kPSIjMDA3N2I2IiBCb3JkZXJCcnVzaD0iIzAwOTZjNyIgRm9yZWdyb3VuZD0iI2ZmZmZmZiIg'
-        'Rm9udFdlaWdodD0iQm9sZCIgUGFkZGluZz0iMTYsNiIgTWFyZ2luPSIwLDAsNiwwIiBGb250U2l6ZT0iMTIiLz4KICAgICAgICAg'
-        'ICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blJlYm9vdEJvdHRvbSIgQ29udGVudD0i4pqhIFJFQk9PVCIgQmFja2dyb3VuZD0i'
-        'I2RjMjYyNiIgQm9yZGVyQnJ1c2g9IiNmZjRkNGYiIEZvcmVncm91bmQ9IiNmZmZmZmYiIEZvbnRXZWlnaHQ9IkJvbGQiIFBhZGRp'
-        'bmc9IjE2LDYiIE1hcmdpbj0iMCwwLDYsMCIgRm9udFNpemU9IjEyIiBWaXNpYmlsaXR5PSJWaXNpYmxlIi8+CiAgICAgICAgICAg'
-        'ICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5FeGl0Qm90dG9tIiBDb250ZW50PSJFeGl0IiBNYXJnaW49IjAsMCwwLDAiIFBhZGRp'
-        'bmc9IjEyLDYiLz4KICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9yaWVu'
-        'dGF0aW9uPSJWZXJ0aWNhbCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciIgTWFyZ2luPSIwLDAsMTIsMCI+CiAgICAgICAgICAg'
-        'ICAgICAgICAgPFByb2dyZXNzQmFyIE5hbWU9InBiUHJvZ3Jlc3MiIEhlaWdodD0iOCIgTWluaW11bT0iMCIgTWF4aW11bT0iMTAw'
-        'IiBWYWx1ZT0iMCIgRm9yZWdyb3VuZD0iIzAwYjRkOCIgQmFja2dyb3VuZD0iIzI1MjgyZSIgQm9yZGVyVGhpY2tuZXNzPSIwIiBN'
-        'YXJnaW49IjAsMCwwLDQiLz4KICAgICAgICAgICAgICAgICAgICA8VGV4dEJsb2NrIE5hbWU9InR4dFN0YXR1cyIgVGV4dD0iUmVh'
-        'ZHkuIDExNSBPcHRpbWl6YXRpb24gTW9kdWxlcyBBY3RpdmUuIiBGb3JlZ3JvdW5kPSIjOTQ5YmE0IiBGb250U2l6ZT0iMTEiLz4K'
-        'ICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgPC9Eb2NrUGFuZWw+CiAgICAgICAgPC9Cb3JkZXI+CiAg'
-        'ICA8L0dyaWQ+CjwvV2luZG93Pg=='
+        'ICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfd3VfbGljZW5zZV9jaGVja3MiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zeXNfYnNvZF9ub19hdXRvcmVib290IiBJc0NoZWNrZWQ9IlRy'
+        'dWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX3NtYWxsX21pbmlkdW1wIiBJ'
+        'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2Zhc3Rf'
+        'c3RhcnR1cF9vZmYiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9'
+        'ImNoa19zeXNfZGlzYWJsZV9yZW1vdGVfYXNzaXN0IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3lzX2VuYWJsZV9waG90b192aWV3ZXIiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zeXNfbm90ZXBhZF90d2Vha3MiIElzQ2hlY2tlZD0iVHJ1'
+        'ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgPC9Hcm91cEJveD4K'
+        'CiAgICAgICAgICAgICAgICAgICAgPCEtLSBHcm91cDogQXBwcyAmIEJsb2F0d2FyZSAtLT4KICAgICAgICAgICAgICAgICAgICA8'
+        'R3JvdXBCb3ggTmFtZT0iZ3JwQXBwcyIgSGVhZGVyPSJBcHAgRGVibG9hdGVyICZhbXA7IFByb3Zpc2lvbmVkIFBhY2thZ2VzIj4K'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWw+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3gg'
+        'TmFtZT0iY2hrX2FwcF94Ym94IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0Jv'
+        'eCBOYW1lPSJjaGtfYXBwX2dhbWViYXJfZGlzYWJsZSIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9nYW1lcyIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9uZXdzIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX29mZmljZV9zdHViIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X29mZmljZV90YXNrcyIgSXNDaGVja2VkPSJUcnVlIi8+'
+        'CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2FwcF9jbGlwY2hhbXAiIElzQ2hlY2tlZD0i'
+        'VHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19hcHBfcGVvcGxlIiBJc0NoZWNr'
+        'ZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX2ZlZWRiYWNrIiBJ'
+        'c0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBwX2dldF9o'
+        'ZWxwIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfYXBw'
+        'X3Bob25lIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAgICAg'
+        'ICAgICAgICAgIDwvR3JvdXBCb3g+CgogICAgICAgICAgICAgICAgICAgIDwhLS0gR3JvdXA6IFNlcnZpY2VzICYgUGVyZm9ybWFu'
+        'Y2UgLS0+CiAgICAgICAgICAgICAgICAgICAgPEdyb3VwQm94IE5hbWU9ImdycFNlcnZpY2VzIiBIZWFkZXI9IlN5c3RlbSBQZXJm'
+        'b3JtYW5jZSAmYW1wOyBTZXJ2aWNlcyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsPgogICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfc3lzbWFpbiIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9pbmRleGluZyIgSXNDaGVja2VkPSJUcnVlIi8+CiAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9yZW1vdGVfcmVnIiBJc0NoZWNrZWQ9IlRy'
+        'dWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X2RlbGl2ZXJ5X29wdCIgSXND'
+        'aGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9yZXNlcnZl'
+        'ZF9zdG9yYWdlIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJj'
+        'aGtfc3J2X2hpYmVybmF0aW9uIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0Jv'
+        'eCBOYW1lPSJjaGtfc3J2X3Bvd2VyX3BsYW4iIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAg'
+        'PENoZWNrQm94IE5hbWU9ImNoa19zcnZfcG93ZXJfc2xlZXBfc2NyZWVuIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3NzZF90cmltIiBJc0NoZWNrZWQ9IlRydWUiLz4NCiAgICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9wYWdlZmlsZV9hdXRvIiBJc0NoZWNrZWQ9IlRy'
+        'dWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X25ldHdvcmtfb2ZmbG9hZCIg'
+        'SXNDaGVja2VkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19zcnZfdmlz'
+        'dWFsX2FwcGVhcmFuY2UiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5h'
+        'bWU9ImNoa19zcnZfcGNhIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3gg'
+        'TmFtZT0iY2hrX3Nydl90cmt3a3MiIElzQ2hlY2tlZD0iRmFsc2UiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVj'
+        'a0JveCBOYW1lPSJjaGtfc3J2X2lwaGxwc3ZjIiBJc0NoZWNrZWQ9IkZhbHNlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9vZW1fbGVub3ZvIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfc3J2X3N0YXJ0dXBfYXBwc19jbGVhbiIgSXNDaGVja2VkPSJUcnVlIi8+CiAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9pbnRlbF9ncmFwaGljcyIgSXNDaGVja2Vk'
+        'PSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX3Nydl9jb25leGFudF9hdWRp'
+        'byIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQYW5lbD4KICAgICAgICAgICAgICAg'
+        'ICAgICA8L0dyb3VwQm94PgoKICAgICAgICAgICAgICAgICAgICA8IS0tIEdyb3VwOiBDYWNoZSAmIENsZWFuaW5nIC0tPgogICAg'
+        'ICAgICAgICAgICAgICAgIDxHcm91cEJveCBOYW1lPSJncnBDbGVhbiIgSGVhZGVyPSJDYWNoZSAmYW1wOyBDb21wb25lbnQgQ2xl'
+        'YW5pbmciPgogICAgICAgICAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbD4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDwh'
+        'LS0gVGhlIDMgbG9uZ2VzdC9zbG93ZXN0IG1haW50ZW5hbmNlIG9wZXJhdGlvbnMgKGhpZ2hsaWdodGVkIGluIGJyaWdodCByZWQs'
+        'IE9GRiBieSBkZWZhdWx0KSAtLT4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfZGVlcF9k'
+        'aXNtX3JlcGFpciIgSXNDaGVja2VkPSJGYWxzZSIgRm9yZWdyb3VuZD0iI2ZmNGQ0ZiIgRm9udFdlaWdodD0iQm9sZCIvPgogICAg'
+        'ICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19kZWVwX2Rpc21fcmVzZXRiYXNlIiBJc0NoZWNrZWQ9'
+        'IkZhbHNlIiBGb3JlZ3JvdW5kPSIjZmY0ZDRmIiBGb250V2VpZ2h0PSJCb2xkIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAg'
+        'ICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2RlZXBfc2ZjX2NvbXBhY3QiIElzQ2hlY2tlZD0iRmFsc2UiIEZvcmVncm91bmQ9IiNmZjRk'
+        'NGYiIEZvbnRXZWlnaHQ9IkJvbGQiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxTZXBhcmF0b3IgQmFja2dyb3VuZD0i'
+        'IzJlMzIzYiIgTWFyZ2luPSIwLDMsMCw0Ii8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hr'
+        'X2NsZWFuX3VzZXJfdGVtcCIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3gg'
+        'TmFtZT0iY2hrX2NsZWFuX3dpbl90ZW1wIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxD'
+        'aGVja0JveCBOYW1lPSJjaGtfY2xlYW5fc29mdF9kaXN0IiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAg'
+        'ICAgICAgIDxDaGVja0JveCBOYW1lPSJjaGtfY2xlYW5fdGh1bWJfY2FjaGUiIElzQ2hlY2tlZD0iVHJ1ZSIvPgogICAgICAgICAg'
+        'ICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl9zaGFkZXJzX2RucyIgSXNDaGVja2VkPSJUcnVlIi8+'
+        'CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFuX2V2ZW50X2xvZ3MiIElzQ2hlY2tl'
+        'ZD0iVHJ1ZSIvPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgPENoZWNrQm94IE5hbWU9ImNoa19jbGVhbl9yZWN5Y2xlX2Jp'
+        'biIgSXNDaGVja2VkPSJUcnVlIi8+CiAgICAgICAgICAgICAgICAgICAgICAgICAgICA8Q2hlY2tCb3ggTmFtZT0iY2hrX2NsZWFu'
+        'X2NsZWFubWdyIiBJc0NoZWNrZWQ9IlRydWUiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgogICAgICAg'
+        'ICAgICAgICAgICAgIDwvR3JvdXBCb3g+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAgICAgIDwvR3JpZD4K'
+        'ICAgICAgICA8L1Njcm9sbFZpZXdlcj4KCiAgICAgICAgPCEtLSBMaXZlIEV4ZWN1dGlvbiBDb25zb2xlIC8gTG9nIEJveCAoSGVp'
+        'Z2h0IDE4NSkgLS0+CiAgICAgICAgPEJvcmRlciBHcmlkLlJvdz0iMyIgQmFja2dyb3VuZD0iIzBiMGMwZSIgQ29ybmVyUmFkaXVz'
+        'PSI0IiBQYWRkaW5nPSI4LDYiIEJvcmRlckJydXNoPSIjMjUyODJlIiBCb3JkZXJUaGlja25lc3M9IjEiPgogICAgICAgICAgICA8'
+        'R3JpZD4KICAgICAgICAgICAgICAgIDxHcmlkLlJvd0RlZmluaXRpb25zPgogICAgICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0'
+        'aW9uIEhlaWdodD0iQXV0byIvPgogICAgICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0aW9uIEhlaWdodD0iQXV0byIvPgogICAg'
+        'ICAgICAgICAgICAgICAgIDxSb3dEZWZpbml0aW9uIEhlaWdodD0iKiIvPgogICAgICAgICAgICAgICAgPC9HcmlkLlJvd0RlZmlu'
+        'aXRpb25zPgoKICAgICAgICAgICAgICAgIDwhLS0gQ29uc29sZSBIZWFkZXIgVG9vbGJhciAtLT4KICAgICAgICAgICAgICAgIDxE'
+        'b2NrUGFuZWwgR3JpZC5Sb3c9IjAiIE1hcmdpbj0iMCwwLDAsNCI+CiAgICAgICAgICAgICAgICAgICAgPFN0YWNrUGFuZWwgRG9j'
+        'a1BhbmVsLkRvY2s9IlJpZ2h0IiBPcmllbnRhdGlvbj0iSG9yaXpvbnRhbCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxCdXR0'
+        'b24gTmFtZT0iYnRuQ2xlYXJMb2ciIENvbnRlbnQ9IvCfp7kgQ2xlYXIiIE1hcmdpbj0iMCwwLDQsMCIgUGFkZGluZz0iNiwyIiBG'
+        'b250U2l6ZT0iMTAiLz4KICAgICAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5Db3B5TG9nIiBDb250ZW50PSLw'
+        'n5OLIENvcHkiIFBhZGRpbmc9IjYsMiIgRm9udFNpemU9IjEwIi8+CiAgICAgICAgICAgICAgICAgICAgPC9TdGFja1BhbmVsPgog'
+        'ICAgICAgICAgICAgICAgICAgIDxTdGFja1BhbmVsIE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIiBWZXJ0aWNhbEFsaWdubWVudD0i'
+        'Q2VudGVyIj4KICAgICAgICAgICAgICAgICAgICAgICAgPFRleHRCbG9jayBUZXh0PSJURVJNSU5BTCBMT0ciIEZvbnRXZWlnaHQ9'
+        'IkJvbGQiIEZvbnRTaXplPSIxMSIgRm9yZWdyb3VuZD0iIzAwYjRkOCIgTWFyZ2luPSIwLDAsMTAsMCIvPgogICAgICAgICAgICAg'
+        'ICAgICAgICAgICA8VGV4dEJsb2NrIE5hbWU9InR4dFN1YlN0YXR1cyIgVGV4dD0iUmVhZHkuIiBGb250U2l6ZT0iMTAuNSIgRm9y'
+        'ZWdyb3VuZD0iIzk0YTNiOCIgVmVydGljYWxBbGlnbm1lbnQ9IkNlbnRlciIvPgogICAgICAgICAgICAgICAgICAgIDwvU3RhY2tQ'
+        'YW5lbD4KICAgICAgICAgICAgICAgIDwvRG9ja1BhbmVsPgoKICAgICAgICAgICAgICAgIDwhLS0gU3ViLVRhc2sgUHJvZ3Jlc3Mg'
+        'QmFyIChlLmcuIERJU00vU0ZDICUpIC0tPgogICAgICAgICAgICAgICAgPFByb2dyZXNzQmFyIEdyaWQuUm93PSIxIiBOYW1lPSJw'
+        'YlN1YlRhc2siIEhlaWdodD0iMyIgTWluaW11bT0iMCIgTWF4aW11bT0iMTAwIiBWYWx1ZT0iMCIgRm9yZWdyb3VuZD0iIzEwYjk4'
+        'MSIgQmFja2dyb3VuZD0iIzFlMjAyNiIgQm9yZGVyVGhpY2tuZXNzPSIwIiBNYXJnaW49IjAsMCwwLDQiLz4KCiAgICAgICAgICAg'
+        'ICAgICA8IS0tIExvZyBUZXh0IEFyZWEgLS0+CiAgICAgICAgICAgICAgICA8UmljaFRleHRCb3ggR3JpZC5Sb3c9IjIiIE5hbWU9'
+        'InR4dENvbnNvbGVMb2ciIEJhY2tncm91bmQ9IlRyYW5zcGFyZW50IiBGb3JlZ3JvdW5kPSIjNmVlN2I3IiBGb250RmFtaWx5PSJD'
+        'b25zb2xhcyIgRm9udFNpemU9IjExIgogICAgICAgICAgICAgICAgICAgICAgICAgICAgIEJvcmRlclRoaWNrbmVzcz0iMCIgSXNS'
+        'ZWFkT25seT0iVHJ1ZSIgVmVydGljYWxTY3JvbGxCYXJWaXNpYmlsaXR5PSJBdXRvIiBIb3Jpem9udGFsU2Nyb2xsQmFyVmlzaWJp'
+        'bGl0eT0iQXV0byI+CiAgICAgICAgICAgICAgICAgICAgPEZsb3dEb2N1bWVudCBQYWdlUGFkZGluZz0iMCI+CiAgICAgICAgICAg'
+        'ICAgICAgICAgICAgIDxQYXJhZ3JhcGggTWFyZ2luPSIwIj4KICAgICAgICAgICAgICAgICAgICAgICAgICAgIDxSdW4gVGV4dD0i'
+        'UmVhZHkuIFNlbGVjdCBkZXNpcmVkIG9wdGltaXphdGlvbiBvcHRpb25zIGFuZCBjbGljayBTVEFSVCBPUFRJTUlaQVRJT04uIi8+'
+        'CiAgICAgICAgICAgICAgICAgICAgICAgIDwvUGFyYWdyYXBoPgogICAgICAgICAgICAgICAgICAgIDwvRmxvd0RvY3VtZW50Pgog'
+        'ICAgICAgICAgICAgICAgPC9SaWNoVGV4dEJveD4KICAgICAgICAgICAgPC9HcmlkPgogICAgICAgIDwvQm9yZGVyPgoKICAgICAg'
+        'ICA8IS0tIEJvdHRvbSBBY3Rpb24gQmFyIC0tPgogICAgICAgIDxCb3JkZXIgR3JpZC5Sb3c9IjQiIE1hcmdpbj0iMCw4LDAsMCI+'
+        'CiAgICAgICAgICAgIDxEb2NrUGFuZWwgTGFzdENoaWxkRmlsbD0iVHJ1ZSI+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBE'
+        'b2NrUGFuZWwuRG9jaz0iUmlnaHQiIE9yaWVudGF0aW9uPSJIb3Jpem9udGFsIiBWZXJ0aWNhbEFsaWdubWVudD0iQ2VudGVyIj4K'
+        'ICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0bkV4cG9ydExvZyIgQ29udGVudD0i8J+SviBFeHBvcnQgTG9nIiBN'
+        'YXJnaW49IjAsMCw2LDAiIFBhZGRpbmc9IjEyLDYiLz4KICAgICAgICAgICAgICAgICAgICA8QnV0dG9uIE5hbWU9ImJ0blNraXBC'
+        'b3R0b20iIENvbnRlbnQ9IuKPrSBTS0lQIFNURVAiIEJhY2tncm91bmQ9IiNkOTc3MDYiIEJvcmRlckJydXNoPSIjZjU5ZTBiIiBG'
+        'b3JlZ3JvdW5kPSIjZmZmZmZmIiBGb250V2VpZ2h0PSJCb2xkIiBQYWRkaW5nPSIxNCw2IiBNYXJnaW49IjAsMCw2LDAiIEZvbnRT'
+        'aXplPSIxMiIgSXNFbmFibGVkPSJGYWxzZSIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuU3RhcnRCb3R0'
+        'b20iIENvbnRlbnQ9IvCfmoAg0J7Qn9Ci0JjQnNCY0JfQmNCg0J7QktCQ0KLQrCIgQmFja2dyb3VuZD0iIzAwNzdiNiIgQm9yZGVy'
+        'QnJ1c2g9IiMwMDk2YzciIEZvcmVncm91bmQ9IiNmZmZmZmYiIEZvbnRXZWlnaHQ9IkJvbGQiIFBhZGRpbmc9IjE2LDYiIE1hcmdp'
+        'bj0iMCwwLDYsMCIgRm9udFNpemU9IjEyIi8+CiAgICAgICAgICAgICAgICAgICAgPEJ1dHRvbiBOYW1lPSJidG5SZWJvb3RCb3R0'
+        'b20iIENvbnRlbnQ9IuKaoSBSRUJPT1QiIEJhY2tncm91bmQ9IiNkYzI2MjYiIEJvcmRlckJydXNoPSIjZmY0ZDRmIiBGb3JlZ3Jv'
+        'dW5kPSIjZmZmZmZmIiBGb250V2VpZ2h0PSJCb2xkIiBQYWRkaW5nPSIxNiw2IiBNYXJnaW49IjAsMCw2LDAiIEZvbnRTaXplPSIx'
+        'MiIgVmlzaWJpbGl0eT0iVmlzaWJsZSIvPgogICAgICAgICAgICAgICAgICAgIDxCdXR0b24gTmFtZT0iYnRuRXhpdEJvdHRvbSIg'
+        'Q29udGVudD0iRXhpdCIgTWFyZ2luPSIwLDAsMCwwIiBQYWRkaW5nPSIxMiw2Ii8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFu'
+        'ZWw+CiAgICAgICAgICAgICAgICA8U3RhY2tQYW5lbCBPcmllbnRhdGlvbj0iVmVydGljYWwiIFZlcnRpY2FsQWxpZ25tZW50PSJD'
+        'ZW50ZXIiIE1hcmdpbj0iMCwwLDEyLDAiPgogICAgICAgICAgICAgICAgICAgIDxQcm9ncmVzc0JhciBOYW1lPSJwYlByb2dyZXNz'
+        'IiBIZWlnaHQ9IjgiIE1pbmltdW09IjAiIE1heGltdW09IjEwMCIgVmFsdWU9IjAiIEZvcmVncm91bmQ9IiMwMGI0ZDgiIEJhY2tn'
+        'cm91bmQ9IiMyNTI4MmUiIEJvcmRlclRoaWNrbmVzcz0iMCIgTWFyZ2luPSIwLDAsMCw0Ii8+CiAgICAgICAgICAgICAgICAgICAg'
+        'PFRleHRCbG9jayBOYW1lPSJ0eHRTdGF0dXMiIFRleHQ9IlJlYWR5LiAxMTkgT3B0aW1pemF0aW9uIE1vZHVsZXMgQWN0aXZlLiIg'
+        'Rm9yZWdyb3VuZD0iIzk0OWJhNCIgRm9udFNpemU9IjExIi8+CiAgICAgICAgICAgICAgICA8L1N0YWNrUGFuZWw+CiAgICAgICAg'
+        'ICAgIDwvRG9ja1BhbmVsPgogICAgICAgIDwvQm9yZGVyPgogICAgPC9HcmlkPgo8L1dpbmRvdz4='
     ) -join '')
 $xamlBytes = [System.Convert]::FromBase64String($xamlBase64)
 
@@ -2087,7 +2122,7 @@ $chkNames = @(
 
     "chk_ctx_cleanup_bloat", "chk_ctx_intel_graphics", "chk_ctx_winrar_email",
 
-    "chk_wu_disable_auto_updates", "chk_wu_exclude_drivers", "chk_wu_exclude_msrt",
+    "chk_wu_disable_auto_updates", "chk_wu_exclude_drivers", "chk_wu_exclude_msrt", "chk_wu_license_checks",
 
     "chk_sys_bsod_no_autoreboot", "chk_sys_small_minidump",
 
@@ -2095,7 +2130,7 @@ $chkNames = @(
 
     "chk_sys_enable_photo_viewer", "chk_sys_notepad_tweaks",
 
-    "chk_app_xbox", "chk_app_gamebar_disable", "chk_app_games", "chk_app_news", "chk_app_office_stub",
+    "chk_app_xbox", "chk_app_gamebar_disable", "chk_app_games", "chk_app_news", "chk_app_office_stub", "chk_srv_office_tasks",
 
     "chk_app_clipchamp", "chk_app_people", "chk_app_feedback", "chk_app_get_help", "chk_app_phone",
 
@@ -2105,7 +2140,7 @@ $chkNames = @(
     "chk_srv_pagefile_auto",
 
     "chk_srv_network_offload", "chk_srv_visual_appearance", "chk_srv_pca", "chk_srv_trkwks", "chk_srv_iphlpsvc",
-    "chk_srv_oem_lenovo", "chk_srv_intel_graphics", "chk_srv_conexant_audio",
+    "chk_srv_oem_lenovo", "chk_srv_startup_apps_clean", "chk_srv_intel_graphics", "chk_srv_conexant_audio",
 
     "chk_clean_user_temp", "chk_clean_win_temp", "chk_clean_soft_dist", "chk_clean_thumb_cache",
 
@@ -2133,6 +2168,9 @@ if ($controls["chk_srv_pca"]) { $controls["chk_srv_pca"].IsChecked = $true }
 if ($controls["chk_srv_trkwks"]) { $controls["chk_srv_trkwks"].IsChecked = $true }
 if ($controls["chk_srv_iphlpsvc"]) { $controls["chk_srv_iphlpsvc"].IsChecked = $true }
 if ($controls["chk_app_office_stub"]) { $controls["chk_app_office_stub"].IsChecked = $true }
+if ($controls["chk_wu_license_checks"]) { $controls["chk_wu_license_checks"].IsChecked = $true }
+if ($controls["chk_srv_office_tasks"]) { $controls["chk_srv_office_tasks"].IsChecked = $true }
+if ($controls["chk_srv_startup_apps_clean"]) { $controls["chk_srv_startup_apps_clean"].IsChecked = $true }
 if ($controls["chk_deep_dism_repair"]) { $controls["chk_deep_dism_repair"].IsChecked = $false }
 if ($controls["chk_deep_dism_resetbase"]) { $controls["chk_deep_dism_resetbase"].IsChecked = $false }
 if ($controls["chk_deep_sfc_compact"]) { $controls["chk_deep_sfc_compact"].IsChecked = $false }
@@ -2774,7 +2812,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v055 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v057 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -3484,17 +3522,34 @@ $executeOptimization = {
                 sc.exe config $s start= disabled 2>$null | Out-Null
             }
 
-            # 3. Delete scheduled updater tasks
-            $updTaskPatterns = @("GoogleUpdate*", "*Chrome*", "BraveUpdate*", "*Brave*", "CentBrowserUpdate*", "*CentBrowser*")
+            # 3. Delete scheduled updater & third-party driver updater tasks (Driver Booster, Intel PTT EK, Edge, Chrome, Brave, Adobe)
+            $updTaskPatterns = @(
+                "Driver Booster*", "*DriverBooster*", "*IObit*",
+                "Intel PTT EK*", "*Intel PTT*", "*Intel(R) SUR*", "*DSATray*",
+                "MicrosoftEdgeUpdate*", "*EdgeUpdate*",
+                "GoogleUpdate*", "*Chrome*",
+                "BraveUpdate*", "*Brave*",
+                "CentBrowserUpdate*", "*CentBrowser*",
+                "Adobe Acrobat Update Task*", "*Adobe GC Invoker*", "*Adobe Genuine*",
+                "CCleaner Update*", "*CCleanerCrashReporting*"
+            )
             foreach ($pat in $updTaskPatterns) {
-                Get-ScheduledTask -TaskName $pat -ErrorAction SilentlyContinue | Unregister-ScheduledTask -Confirm:$false -ErrorAction SilentlyContinue
+                Get-ScheduledTask -TaskName $pat -ErrorAction SilentlyContinue | ForEach-Object {
+                    if ($_.TaskName -notmatch '^(GIN|RustDesk)') {
+                        Disable-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -ErrorAction SilentlyContinue | Out-Null
+                        Unregister-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+                        Log-Message "Unregistered third-party updater task: $($_.TaskName)" "SUCCESS"
+                    }
+                }
             }
             try {
                 $rawTasks = schtasks.exe /query /fo csv 2>$null | ConvertFrom-Csv
                 foreach ($t in $rawTasks) {
                     $tn = $t.TaskName
-                    if ($tn -and ($tn -match "GoogleUpdate|BraveUpdate|CentBrowser")) {
-                        schtasks.exe /delete /tn $tn /f 2>$null | Out-Null
+                    if ($tn -and ($tn -notmatch 'GIN|RustDesk') -and ($tn -match "Driver Booster|IObit|Intel PTT|MicrosoftEdgeUpdate|GoogleUpdate|BraveUpdate|CentBrowser|Adobe|CCleaner")) {
+                        schtasks.exe /change /tn "$tn" /disable 2>$null | Out-Null
+                        schtasks.exe /delete /tn "$tn" /f 2>$null | Out-Null
+                        Log-Message "schtasks deleted updater task: $tn" "SUCCESS"
                     }
                 }
             } catch {}
@@ -4439,10 +4494,38 @@ $executeOptimization = {
                 }
             }
 
-            # 4. Disable scheduled background update scanner tasks that bypass Group Policy
-            Get-ScheduledTask -TaskPath '\Microsoft\Windows\WindowsUpdate\*' -ErrorAction SilentlyContinue | Disable-ScheduledTask -ErrorAction SilentlyContinue
-            Get-ScheduledTask -TaskPath '\Microsoft\Windows\UpdateOrchestrator\*' -ErrorAction SilentlyContinue | Disable-ScheduledTask -ErrorAction SilentlyContinue
-            Get-ScheduledTask -TaskPath '\Microsoft\Windows\WaaSMedic\*' -ErrorAction SilentlyContinue | Disable-ScheduledTask -ErrorAction SilentlyContinue
+            # 4. Deep unregister & delete scheduled background update scanner tasks that bypass Group Policy
+            $wuTaskPaths = @(
+                '\Microsoft\Windows\WindowsUpdate\*',
+                '\Microsoft\Windows\UpdateOrchestrator\*',
+                '\Microsoft\Windows\WaaSMedic\*'
+            )
+            foreach ($wp in $wuTaskPaths) {
+                Get-ScheduledTask -TaskPath $wp -ErrorAction SilentlyContinue | ForEach-Object {
+                    Disable-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -ErrorAction SilentlyContinue | Out-Null
+                    Unregister-ScheduledTask -TaskName $_.TaskName -TaskPath $_.TaskPath -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+                    Log-Message "Unregistered Windows Update scanner task: $($_.TaskName)" "SUCCESS"
+                }
+            }
+            $knownWuTasks = @(
+                "\Microsoft\Windows\WindowsUpdate\Refresh Group Policy Cache",
+                "\Microsoft\Windows\WindowsUpdate\Scheduled Start",
+                "\Microsoft\Windows\WindowsUpdate\Automatic App Update",
+                "\Microsoft\Windows\WindowsUpdate\sih",
+                "\Microsoft\Windows\WindowsUpdate\sihboot",
+                "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan",
+                "\Microsoft\Windows\UpdateOrchestrator\Schedule Scan Static Task",
+                "\Microsoft\Windows\UpdateOrchestrator\UpdateModelTask",
+                "\Microsoft\Windows\UpdateOrchestrator\USO_UxBroker",
+                "\Microsoft\Windows\UpdateOrchestrator\Schedule Maintenance Work",
+                "\Microsoft\Windows\UpdateOrchestrator\Report policies",
+                "\Microsoft\Windows\UpdateOrchestrator\Schedule Work",
+                "\Microsoft\Windows\WaaSMedic\PerformRemediation"
+            )
+            foreach ($kw in $knownWuTasks) {
+                schtasks.exe /change /tn "$kw" /disable 2>$null | Out-Null
+                schtasks.exe /delete /tn "$kw" /f 2>$null | Out-Null
+            }
         }}
     }
 
@@ -4458,6 +4541,46 @@ $executeOptimization = {
         $actions += @{ Name = "Exclude MSRT from Windows Update (Dism++ Standard)"; Script = {
             New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\MRT" -Force -ErrorAction SilentlyContinue | Out-Null
             Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\MRT" -Name "DontOfferThroughWUAU" -Value 1 -Type DWord -Force -ErrorAction SilentlyContinue
+        }}
+    }
+
+    if ($controls["chk_wu_license_checks"].IsChecked) {
+        $actions += @{ Name = "Disable Windows License Validation & Activation Scheduled Tasks"; Script = {
+            Log-Message "Purging Windows License validation and activation tasks..." "INFO"
+            $licenseTaskFolders = @(
+                "\Microsoft\Windows\SoftwareProtectionPlatform",
+                "\Microsoft\Windows\Windows Activation Technologies",
+                "\Microsoft\Windows\Subscription",
+                "\Microsoft\Windows\Clip"
+            )
+            foreach ($folder in $licenseTaskFolders) {
+                try {
+                    $ts = Get-ScheduledTask -TaskPath "$folder\*" -ErrorAction SilentlyContinue
+                    foreach ($t in $ts) {
+                        Disable-ScheduledTask -TaskName $t.TaskName -TaskPath $t.TaskPath -ErrorAction SilentlyContinue | Out-Null
+                        Unregister-ScheduledTask -TaskName $t.TaskName -TaskPath $t.TaskPath -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+                        Log-Message "Disabled & Unregistered license task: $($t.TaskName)" "SUCCESS"
+                    }
+                } catch {}
+            }
+            $stubbornTasks = @(
+                "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTask",
+                "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskLogon",
+                "\Microsoft\Windows\SoftwareProtectionPlatform\SvcRestartTaskNetwork",
+                "\Microsoft\Windows\SoftwareProtectionPlatform\LicenseValidation",
+                "\Microsoft\Windows\Windows Activation Technologies\ValidationTask",
+                "\Microsoft\Windows\Windows Activation Technologies\ValidationTaskDeadline",
+                "\Microsoft\Windows\Subscription\EnableLicenseAcquisition",
+                "\Microsoft\Windows\Subscription\LicenseAcquisition",
+                "\Microsoft\Windows\Clip\License Validation"
+            )
+            foreach ($st in $stubbornTasks) {
+                schtasks.exe /change /tn "$st" /disable 2>$null | Out-Null
+                schtasks.exe /delete /tn "$st" /f 2>$null | Out-Null
+            }
+            # Set Software Protection service to Demand/Manual so it does not auto-wake
+            sc.exe config sppsvc start= demand 2>$null | Out-Null
+            Log-Message "Windows License validation and activation background tasks purged." "SUCCESS"
         }}
     }
 
@@ -4801,19 +4924,39 @@ $executeOptimization = {
     }
 
     if ($controls["chk_srv_power_plan"].IsChecked) {
+        $actions += @{ Name = "Configure Optimal Power Plan (Balanced for Laptops, High Perf for Desktops)"; Script = {
+            $balancedGuid = "381b4222-f694-41f0-9685-ff5bb260df2e"
+            $highGuid     = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+            $ultimateGuid = "e9a42b02-d5df-448d-aa00-03f14749eb61"
 
-        $actions += @{ Name = "Activate Ultimate Performance Plan"; Script = {
+            $chassis = (Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue).ChassisTypes
+            $isLaptop = ($chassis -match "8|9|10|11|12|14|18|21|30|31|32" -or (Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue))
 
-            $pOut = powercfg.exe -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
-
-            if ($pOut -match '([0-9a-fA-F-]{36})') {
-
-                powercfg.exe -setactive $matches[1] 2>$null | Out-Null
-
+            # Purge any redundant duplicated schemes
+            $allPlans = powercfg.exe /list | Where-Object { $_ -match "GUID схемы питания:\s+([a-f0-9\-]+)" }
+            foreach ($pLine in $allPlans) {
+                if ($pLine -match "GUID схемы питания:\s+([a-f0-9\-]+)") {
+                    $g = $matches[1].Trim()
+                    if ($g -ne $balancedGuid -and $g -ne $highGuid -and $g -ne $ultimateGuid) {
+                        powercfg.exe /delete $g 2>$null | Out-Null
+                    }
+                }
             }
 
+            if ($isLaptop) {
+                powercfg.exe -setactive $balancedGuid 2>$null | Out-Null
+                Log-Message "Laptop/APU detected: Activated Balanced power plan to ensure full GPU TDP headroom." "SUCCESS"
+            } else {
+                $curList = powercfg.exe /list
+                if ($curList -match $highGuid) {
+                    powercfg.exe -setactive $highGuid 2>$null | Out-Null
+                    Log-Message "Desktop workstation: Activated High Performance power plan." "SUCCESS"
+                } else {
+                    powercfg.exe -setactive $balancedGuid 2>$null | Out-Null
+                    Log-Message "Desktop workstation: Activated Balanced power plan." "SUCCESS"
+                }
+            }
         }}
-
     }
 
     if ($controls["chk_srv_power_sleep_screen"].IsChecked) {
@@ -5053,11 +5196,19 @@ $executeOptimization = {
             # 1. Terminate all Lenovo processes
             Stop-Process -Name "Lenovo.Modern.ImController*", "LenovoVantage*", "ClientBrokerAgent*" -Force -ErrorAction SilentlyContinue
 
-            # 2. Process Lenovo services
+            # 2. Process Lenovo services with Critical Hardware & Thermal Whitelist
+            $criticalWhitelist = @('LITSSVC', 'IBMPMSVC', 'IBMPMDRV', 'LenovoFnAndFunctionKeys', 'LPlatSvc')
             $lenovoServices = Get-Service -ErrorAction SilentlyContinue | Where-Object {
                 $_.Name -match '^Lenovo|^ImController' -or $_.DisplayName -match 'Lenovo|ImController|System Interface Foundation'
             }
             foreach ($svc in $lenovoServices) {
+                if ($svc.Name -in $criticalWhitelist -or $svc.DisplayName -match 'ITS|Thermal Solution|Power Management|Fn and function') {
+                    Set-Service -Name $svc.Name -StartupType Automatic -ErrorAction SilentlyContinue
+                    Start-Service -Name $svc.Name -ErrorAction SilentlyContinue
+                    Log-Message "Preserved critical Lenovo thermal/power service: $($svc.Name)" "INFO"
+                    continue
+                }
+
                 Stop-Service -Name $svc.Name -Force -ErrorAction SilentlyContinue
                 if (-not $isLenovo) {
                     sc.exe delete $svc.Name 2>$null | Out-Null
@@ -5069,16 +5220,58 @@ $executeOptimization = {
                 }
             }
 
-            # 3. Clean Lenovo scheduled tasks
+            # 3. Deep recursive deletion of ALL Lenovo scheduled tasks (Plugins, TimeBasedEvents, BatteryGauge, Power Manager, etc.)
             try {
-                $lenovoTasks = Get-ScheduledTask -TaskPath "\Lenovo\*" -ErrorAction SilentlyContinue
-                foreach ($lt in $lenovoTasks) {
-                    Disable-ScheduledTask -TaskName $lt.TaskName -TaskPath $lt.TaskPath -ErrorAction SilentlyContinue | Out-Null
-                    if (-not $isLenovo) {
+                # Method A: Get-ScheduledTask across all nested paths
+                $allTasks = Get-ScheduledTask -ErrorAction SilentlyContinue | Where-Object { $_.TaskPath -like "\Lenovo*" -or $_.TaskName -like "*Lenovo*" }
+                foreach ($lt in $allTasks) {
+                    if ($lt.TaskName -notmatch '^(GIN|RustDesk)') {
+                        Disable-ScheduledTask -TaskName $lt.TaskName -TaskPath $lt.TaskPath -ErrorAction SilentlyContinue | Out-Null
                         Unregister-ScheduledTask -TaskName $lt.TaskName -TaskPath $lt.TaskPath -Confirm:$false -ErrorAction SilentlyContinue | Out-Null
+                        Log-Message "Purged Lenovo task: $($lt.TaskPath)$($lt.TaskName)" "SUCCESS"
                     }
                 }
+                # Method B: Direct schtasks deletion for nested and GUID-named tasks (e.g. ImController\TimeBasedEvents)
+                $knownLenovoTasks = @(
+                    "\Lenovo\BatteryGauge\*",
+                    "\Lenovo\ImController\Plugins\LenovoSystemUpdatePlugin_DailySchedule",
+                    "\Lenovo\ImController\Plugins\*",
+                    "\Lenovo\ImController\TimeBasedEvents\*",
+                    "\Lenovo\Power Manager\*",
+                    "\Lenovo\Vantage\*"
+                )
+                try {
+                    $rawSch = schtasks.exe /query /fo csv 2>$null | ConvertFrom-Csv
+                    foreach ($row in $rawSch) {
+                        $tn = $row.TaskName
+                        if ($tn -and $tn -like "\Lenovo*") {
+                            schtasks.exe /change /tn "$tn" /disable 2>$null | Out-Null
+                            schtasks.exe /delete /tn "$tn" /f 2>$null | Out-Null
+                            Log-Message "schtasks forced deletion: $tn" "SUCCESS"
+                        }
+                    }
+                } catch {}
+                # Method C: Delete empty Lenovo task folders
+                $lenovoTaskFolders = @(
+                    "\Lenovo\ImController\Plugins",
+                    "\Lenovo\ImController\TimeBasedEvents",
+                    "\Lenovo\ImController",
+                    "\Lenovo\BatteryGauge",
+                    "\Lenovo\Power Manager",
+                    "\Lenovo"
+                )
+                foreach ($ltf in $lenovoTaskFolders) {
+                    schtasks.exe /delete /tn "$ltf" /f 2>$null | Out-Null
+                }
             } catch {}
+
+            # 3.1 Purge Lenovo autostart registry entries
+            $lenovoRunVals = @("Lenovo Vantage", "LenovoVantage", "Lenovo Hotkeys", "Lenovo Quick Clean", "Lenovo Welcome", "Lenovo Vantage Toolbar", "ImController")
+            foreach ($rk in @("HKCU:\Software\Microsoft\Windows\CurrentVersion\Run", "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run", "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run")) {
+                foreach ($val in $lenovoRunVals) {
+                    Remove-ItemProperty -Path $rk -Name $val -Force -ErrorAction SilentlyContinue
+                }
+            }
 
             # 4. Remove directories if not Lenovo (or ImController on Lenovo)
             if (-not $isLenovo) {
@@ -5104,6 +5297,86 @@ $executeOptimization = {
                     Log-Message "Purged ImController bloat folder on Lenovo device." "SUCCESS"
                 }
             }
+        }}
+    }
+
+    if ($controls["chk_srv_startup_apps_clean"].IsChecked) {
+        $actions += @{ Name = "Hardcore Purge of Third-Party Autostart Programs (Manual Launch Only)"; Script = {
+            Log-Message "Auditing and purging third-party programs from Run keys & Startup folders..." "INFO"
+
+            # Whitelist: NEVER touch Vladimir's tools, remote access, or core security tray
+            $whitelistPattern = '^(GIN|AntiGravity|RustDesk|SecurityHealth|WindowsDefender|GIN-)'
+
+            # 1. Clean Registry Run & RunOnce keys
+            $runKeyPaths = @(
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+                "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run",
+                "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce",
+                "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
+                "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+            )
+
+            # Third-party bloat patterns in Run keys to eradicate
+            $bloatPatterns = @(
+                'Lenovo', 'Vantage', 'ImController',
+                'OfficeSyncProcess', 'Lync', 'Teams', 'OneDrive', 'OneNote',
+                'Driver Booster', 'IObit', 'CCleaner',
+                'Adobe', 'Acrobat', 'CCXProcess', 'AGMService',
+                'Discord', 'Spotify', 'Steam', 'EpicGames', 'Skype', 'Viber', 'Telegram',
+                'Chrome', 'GoogleUpdate', 'Edge', 'MicrosoftEdge', 'Opera',
+                'Waves', 'MaxxAudio', 'Intel Graphics', 'igfx'
+            )
+
+            foreach ($rk in $runKeyPaths) {
+                if (Test-Path $rk) {
+                    $props = (Get-Item -Path $rk -ErrorAction SilentlyContinue).Property
+                    foreach ($p in $props) {
+                        if ($p -match $whitelistPattern) { continue }
+                        $val = try { (Get-ItemProperty -Path $rk -Name $p -ErrorAction SilentlyContinue).$p } catch { "" }
+
+                        $isBloat = $false
+                        foreach ($bp in $bloatPatterns) {
+                            if ($p -match $bp -or ($val -and $val -match $bp)) {
+                                $isBloat = $true
+                                break
+                            }
+                        }
+                        if ($isBloat) {
+                            Remove-ItemProperty -Path $rk -Name $p -Force -ErrorAction SilentlyContinue
+                            Log-Message "Purged autostart entry [$rk]: $p" "SUCCESS"
+                        }
+                    }
+                }
+            }
+
+            # 2. Clean Startup folders (.lnk / .bat / .cmd)
+            $startupFolders = @(
+                "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup",
+                "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
+            )
+            Get-ChildItem -Path "C:\Users" -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+                $uStartup = "$($_.FullName)\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
+                if (Test-Path $uStartup) { $startupFolders += $uStartup }
+            }
+            $startupFolders = $startupFolders | Select-Object -Unique
+
+            foreach ($sf in $startupFolders) {
+                if (Test-Path $sf) {
+                    Get-ChildItem -Path $sf -File -ErrorAction SilentlyContinue | ForEach-Object {
+                        $fName = $_.Name
+                        if ($fName -match $whitelistPattern) { return }
+                        foreach ($bp in $bloatPatterns) {
+                            if ($fName -match $bp) {
+                                Remove-Item -Path $_.FullName -Force -ErrorAction SilentlyContinue
+                                Log-Message "Purged startup shortcut: $($_.FullName)" "SUCCESS"
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+            Log-Message "Third-party autostart programs purged successfully (Manual launch only)." "SUCCESS"
         }}
     }
 
@@ -5526,7 +5799,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v055. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v057. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 

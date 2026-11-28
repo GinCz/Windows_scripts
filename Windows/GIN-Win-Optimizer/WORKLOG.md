@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-11-28 — GIN-Win-Optimizer v057 Release: Critical Hardware Thermal Safeguard & APU Power Scheme Normalization
+- **Task**: Eliminate GPU throttling and UI stuttering on laptops (Lenovo ThinkPad/IdeaPad) caused by inadvertent disabling of hardware thermal/power management services, and prevent duplicate power plan proliferation.
+- **Root Cause Analysis**:
+  1. Generic OEM service disabling matched `Lenovo*` and disabled `LITSSVC` (Lenovo Notebook ITS Service) and `IBMPMSVC` (Lenovo PM Service). On ThinkPads with AMD APUs (Ryzen 7 4700U), this triggered emergency EC throttling, capping the Radeon GPU to 200–400 MHz and causing frame drops on DWM, transparent docks, and Start menu.
+  2. Repeated execution of `powercfg -duplicatescheme` created dozens of duplicate schemes pinning CPU boost clocks and starving the GPU of wattage.
+- **Architectural Implementation**:
+  1. Hardcoded `$criticalWhitelist = @('LITSSVC', 'IBMPMSVC', 'IBMPMDRV', 'LenovoFnAndFunctionKeys', 'LPlatSvc')` ensuring hardware ITS and ACPI services remain Automatic and Running.
+  2. Integrated chassis detection to activate "Balanced" plan on mobile APUs, safeguarding GPU TDP headroom.
+  3. Rebuilt `GIN-Win-Optimizer_v057.cmd` with Windows CRLF line endings.
+  4. Deployed to Flash drive (`D:\MEGA\WIN-FLASH\Util-WINDOWS\`) and Desktop (`D:\MEGA\DOCS\desktop\`). Retained strictly `v056` and `v057`, purged `v055`.
+- **Verification**: Verified via `validate_release.py`: 0 BOM, 100% CRLF line endings, 0 PowerShell syntax errors.
+
+
 ## 2026-11-19 — GIN-Win-Optimizer v056 Release: Hardcore Autostart, Scheduled Tasks & Windows License Purge
 - **Task**: Deep purge of autostart programs and task scheduler items after installed software (Lenovo Vantage, Microsoft Office, Driver Booster, Intel PTT EK, browser updaters, Windows Update scanner tasks, and Windows license verification tasks), ensuring all user applications launch only when manually invoked.
 - **User Feedback & Requirements**:
