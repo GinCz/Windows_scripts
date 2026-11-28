@@ -1,5 +1,22 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v053] — 2026-11-28
+### 🚀 Dock Flicker Elimination & Icon-Only RocketDock Mode
+- **Eliminated Dock Blinking & Show-Hide Loop (`WatchdogTimer_Tick`)**:
+  - Diagnosed root cause: In v052, horizontal centering moved the dock away from the top-left corner. When the cursor activated the dock from the hot corner, subsequent 50ms watchdog ticks found the cursor outside the centered panel bounds, triggering a hide after 200ms and restarting an infinite Show-Hide cycle.
+  - Implemented persistent visibility lock: `bool keepVisible = overDock || overDropDown || inHotCorner;` resetting `_outOfBoundsTicks = 0` while the cursor resides in the hot corner or top activation strip, completely preventing flicker.
+  - Expanded top activation strip across the entire top edge of the centered dock shelf.
+- **Configurable 'Show Item Labels' (Icon-Only Mode)**:
+  - Added boolean property `ShowItemLabels` to `DockConfig` with JSON serialization.
+  - Integrated `ShowItemLabels` checkbox into `SettingsForm` (Dock Tab) with localized labels (`ShowItemLabels` in EN, RU, CS).
+  - When disabled, folder and shortcut button titles are hidden (`Text = ""`), rendering compact square floating icons (like classic RocketDock) with tooltip popups on mouse hover.
+- **Geometry & Alignment Polish**:
+  - Re-spaced dock items panel to prevent brand button overlap and ensure precise centering across all displays.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v053_Setup.exe` (SHA-256: `240f1ac5b5bf6087194735ba8ba605a17ca75007f6d0149bec15ff3a174340f7`).
+  - Delivered to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v053_Setup.exe` (purged `v052`, strictly 1 latest version).
+  - Delivered to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v053_Setup.exe` (purged `v051`, strictly 2 versions: `v052` and `v053`).
+
 ## [v052] — 2026-11-28
 ### 🚀 RocketDock Visual Parity & Downward Folder Dropdown Stacks
 - **RocketDock Aesthetic Glass Shelf**:

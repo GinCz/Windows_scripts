@@ -1,4 +1,4 @@
-# ⚡ GIN-Desktop `v052` (Universal Release)
+# ⚡ GIN-Desktop `v053` (Universal Release)
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 <br/>
 
-[Download GIN-Desktop v052 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v052_Setup.exe)
+[Download GIN-Desktop v053 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v053_Setup.exe)
 
 </div>
 

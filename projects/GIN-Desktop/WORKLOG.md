@@ -1,3 +1,18 @@
+## Update: v053 (2026-11-28)
+- **Eliminated Dock Blinking & Show-Hide Loop (`WatchdogTimer_Tick`)**:
+  - Diagnosed root cause: In v052, horizontal centering (`screen.Bounds.Left + (screen.Bounds.Width - width) / 2`) decoupled the dock's position from the top-left hot corner. When activated from the corner, subsequent 50ms watchdog ticks found the cursor outside `this.Bounds`, initiating an auto-hide countdown and restarting an infinite Show-Hide cycle.
+  - Implemented persistent visibility lock: `bool keepVisible = overDock || overDropDown || inHotCorner;` resetting `_outOfBoundsTicks = 0` whenever the cursor is inside the hot corner or top activation strip, completely preventing flicker.
+  - Expanded top activation strip across the entire top edge of the centered dock shelf.
+- **Toggleable Icon-Only RocketDock Mode (`ShowItemLabels`)**:
+  - Added boolean property `ShowItemLabels` to `DockConfig` with JSON serialization.
+  - Added `ShowItemLabels` checkbox to `SettingsForm` (Dock Tab) with localized labels (`ShowItemLabels` in EN, RU, CS).
+  - When disabled, folder and shortcut button titles are hidden (`Text = ""`), rendering compact square floating icons (like classic RocketDock) with tooltip popups on mouse hover.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled `GIN-Desktop.exe` (181,760 bytes), `Uninstall.exe` (49,152 bytes), and packaged `GIN-Desktop_v053_Setup.exe` (775,680 bytes, SHA-256: `240f1ac5b5bf6087194735ba8ba605a17ca75007f6d0149bec15ff3a174340f7`).
+  - Deployed to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v053_Setup.exe` (purged `v052`, strictly 1 latest version).
+  - Deployed to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v053_Setup.exe` (purged `v051`, strictly 2 versions: `v052` and `v053`).
+  - Mirrored release artifacts to `GIN-Wallpaper` and `Windows_scripts/GIN-Desktop`.
+
 ## Update: v052 (2026-11-28)
 - **RocketDock Visual Parity & Downward Folder Dropdown Stack**:
   - Centered top dock bar geometry across all multi-monitor configurations.
