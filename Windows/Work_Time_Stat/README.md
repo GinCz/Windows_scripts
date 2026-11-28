@@ -4,7 +4,11 @@
 
 <img src="assets/logo.png" alt="Work Time Stat Logo" width="360" />
 
-<br/><br/>
+<br/>
+
+[← Back to Windows Suite](../README.md) &nbsp;•&nbsp; [Features](FEATURES.md) &nbsp;•&nbsp; [Technical Overview](TECHNICAL_OVERVIEW.md) &nbsp;•&nbsp; [Installation](INSTALLATION.md) &nbsp;•&nbsp; [Pricing](PRICING.md) &nbsp;•&nbsp; [Security](SECURITY.md)
+
+<br/>
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20%7C%20Windows%20Server-0078D4?logo=windows&logoColor=white)
 ![Mobile](https://img.shields.io/badge/Mobile-Android%20APK%20(Native)-3DDC84?logo=android&logoColor=white)
