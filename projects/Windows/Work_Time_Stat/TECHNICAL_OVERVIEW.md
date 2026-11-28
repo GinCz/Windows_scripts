@@ -10,44 +10,73 @@
 
 ## 🏗️ High-Level System Architecture
 
-**Work Time Stat** is engineered with a modular, resilient multi-tier architecture designed to run reliably in both isolated corporate LANs and distributed enterprise networks.
+**Work Time Stat** is engineered with a modular, resilient multi-tier architecture designed to run reliably in both isolated corporate LANs and globally accessible enterprise networks.
 
 ```mermaid
 flowchart TD
-    subgraph Endpoint_Tier ["🖥️ Client Endpoint Tier (Windows Fleet)"]
-        subgraph Agent_Internal ["Endpoint Daemon"]
-            Win32_Poll["Native Win32 API Hook<br/>• GetLastInputInfo()<br/>• GetForegroundWindow()<br/>• GetWindowText()"]
-            Time_Engine["Activity State Evaluator<br/>• Active / Idle State Transition<br/>• Duration Accumulator<br/>• Process Normalization"]
-            Local_Store["Resilient Local Store<br/>%ProgramData% Cache"]
+    subgraph Corporate_LAN ["🏢 Corporate Office Local Network"]
+        Router["🌐 Office Router / Switch<br/>• Unified Local Subnet<br/>• Static DHCP IP Reservations"]
+        
+        subgraph Fleet ["💻 Monitored Workstations (Win 10/11)"]
+            W1["🖥️ Workstation 1<br/>agent.ps1 (Win32 Hook)"]
+            W2["🖥️ Workstation 2<br/>agent.ps1 (Win32 Hook)"]
+            WN["🖥️ Workstation N<br/>agent.ps1 (Win32 Hook)"]
+        end
+
+        subgraph Master_Node ["🖥️ Master Host PC (Designated Server)"]
+            Master_Srv["⚙️ Central Collector Engine<br/>• Local Telemetry Buffer<br/>• Daily JSON & Event Logs<br/>• In-Memory Presence Aggregator"]
         end
     end
 
-    subgraph Transport_Tier ["🔀 Resilient Dual Transport Tier"]
-        direction TB
-        SMB_Path["📁 On-Premise SMB Mode<br/>• Direct LAN File Share<br/>• Zero Internet Exposure<br/>• Air-Gapped Resiliency"]
-        HTTPS_Path["🛡️ Secure REST Gateway Mode<br/>• Encrypted TLS 1.3 Push<br/>• Token-Authenticated REST API<br/>• Central Gateway Daemon"]
+    subgraph Distribution ["🌍 Global Remote Distribution"]
+        Web_Remote["🌐 Worldwide Executive Web Dashboard<br/>(TLS 1.3 / Reverse Proxy)"]
+        Android_APK["📱 Native Android Mobile APK<br/>(Biometric Unlock + Pull-to-Refresh)"]
     end
 
-    subgraph Data_Tier ["📂 Storage & Aggregation Tier"]
-        Log_Mirror["Structured Time-Series Logs<br/>• Daily JSON & Event Logs<br/>• Workstation Presence States<br/>• Application Duration Indices"]
-    end
+    W1 -->|5s Win32 Telemetry| Router
+    W2 -->|5s Win32 Telemetry| Router
+    WN -->|5s Win32 Telemetry| Router
+    Router --> Master_Node
 
-    subgraph Presentation_Tier ["📊 Analytics & Executive Console"]
-        Web_Console["Single-Page Application (SPA)<br/>• Responsive Desktop / Mobile Layout<br/>• Live Presence Sentinel<br/>• Multi-Date Range Engine<br/>• Interactive Timeline Renderer"]
-    end
-
-    Win32_Poll --> Time_Engine
-    Time_Engine --> Local_Store
-    Local_Store -->|LAN Network Transport| SMB_Path
-    Local_Store -->|Cloud REST Transport| HTTPS_Path
-    SMB_Path --> Log_Mirror
-    HTTPS_Path --> Log_Mirror
-    Log_Mirror --> Web_Console
+    Master_Node -->|Encrypted REST Stream| Web_Remote
+    Master_Node -->|Real-Time Push Sync| Android_APK
 ```
 
 ---
 
-## 1. Client Endpoint Agent Architecture
+## 1. Network Topology & Router Requirements
+
+In a corporate environment where multiple computers are monitored, the network infrastructure must adhere to a clean engineering standard:
+
+- **Single Unified Subnet:** All monitored endpoints must reside within the same physical or virtual corporate network (single LAN subnet, e.g. `192.168.1.0/24`, or properly routed corporate VLANs).
+- **Router & Switch Configuration:**
+  - **Static DHCP Reservations:** Routers are configured with IP reservations or static bindings for all monitored workstations and the master server.
+  - **Internal Firewall Permissions:** Local communication between workstations and the master host PC must be permitted on internal telemetry ports (SMB file sharing port 445 or internal HTTP port 8099).
+- **Master Collector Server (Designated Host PC):**
+  - Exactly **one computer** in the local office network is selected to act as the **Master Server**.
+  - All workstations stream their telemetry to this designated machine.
+  - The master server acts as the central data vault, aggregating daily work logs, calculating idle thresholds, and serving analytics to remote clients.
+
+---
+
+## 2. Global Remote Management & Android Mobile APK
+
+From the central master server, monitoring is distributed across two primary interfaces:
+
+### A. Worldwide Executive Web Dashboard
+- Executives can securely log into the monitoring console from any location in the world.
+- Protected by administrative token authentication, TLS 1.3 encryption, and optional IP allowlisting.
+- Fully responsive across desktop workstations, laptops, and tablets.
+
+### B. Native Android APK Application
+- Custom Android mobile application designed for executive smartphones and tablets.
+- **Biometric Security:** Fingerprint and PIN lock to ensure confidential access on personal devices.
+- **Pull-to-Refresh:** Instant swipe-down gesture to trigger a live telemetry refresh across all office PCs.
+- **Offline Cache:** Embedded local assets allow viewing historical logs even when traveling or temporarily disconnected.
+
+---
+
+## 3. Client Endpoint Agent Architecture
 
 The client agent is designed for maximum stealth, operational stability, and minimal hardware consumption:
 
@@ -60,50 +89,44 @@ The client agent is designed for maximum stealth, operational stability, and min
   - **Memory Footprint:** Typically 15–25 MB working set.
   - **Disk I/O:** Batched local writes ensure negligible disk activity.
 - **Process Supervision & Concurrency:** The agent enforces a strict single-instance mutex. Upon startup or scheduled invocation, any lingering or duplicate agent instances are automatically terminated.
-- **Resilient Offline Buffering:** If the target SMB share or HTTPS gateway becomes unreachable due to network disruptions, the agent buffers telemetry locally on the workstation drive. Once connectivity is restored, all queued events are pushed without data loss.
+- **Resilient Offline Buffering:** If the master server becomes temporarily unreachable, the agent buffers telemetry locally on the workstation drive (`%ProgramData%`). Once network connectivity is restored, all queued events are delivered without data loss.
 
 ---
 
-## 2. Dual Data Transport Strategies
+## 4. Tri-Mode Ergonomic Theme Architecture
 
-To accommodate diverse corporate security postures, Work Time Stat provides two primary deployment modes:
+To maximize visual comfort and adapt to diverse ambient lighting conditions, Work Time Stat implements a dynamic CSS variable engine:
 
-### Mode A: Air-Gapped / Isolated On-Premise LAN (SMB)
-- **Concept:** Endpoints write telemetry directly to a secure network share located on an internal server.
-- **Characteristics:**
-  - 100% operational without external internet connectivity.
-  - No external ports, proxies, or cloud servers required.
-  - Executive dashboard can be executed locally from the shared directory via a direct file path or internal web server.
+```css
+/* Night Mode (Default Deep Dark) */
+body.theme-night {
+    --bg-main: #0f172a;
+    --bg-card: #1e293b;
+    --border: #334155;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
 
-### Mode B: Encrypted Cloud / Multi-Site REST Gateway
-- **Concept:** Endpoints transmit compressed JSON payloads to an administrative REST endpoint over TLS 1.3 / HTTPS.
-- **Characteristics:**
-  - Ideal for multi-branch organizations, remote workers, or centralized cloud management.
-  - Secured via custom HTTP API authentication tokens.
-  - Central server aggregates workstation logs and serves the executive dashboard via an encrypted web portal.
+/* Day Mode (Crisp High-Contrast Light) */
+body.theme-day {
+    --bg-main: #f1f5f9;
+    --bg-card: #ffffff;
+    --border: #cbd5e1;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+}
 
----
+/* Evening Mode (Warm Dusk / Sunset) */
+body.theme-evening {
+    --bg-main: #18121e;
+    --bg-card: #261b2d;
+    --border: #4a3356;
+    --text-main: #fdf4ff;
+    --text-muted: #d8b4e2;
+}
+```
 
-## 3. Data Processing & Aggregation
-
-The data aggregation engine normalizes workstation telemetry into structured daily work sessions:
-
-- **Canonical Hostname & User Resolution:** Resolves raw Windows computer names (e.g. `DESKTOP-8K21`, `PC-04`) to standardized employee identities, department groupings, and workstation codes.
-- **Idle State Segmentation:** Sequences raw polling events into discrete chronological intervals:
-  - *Active Interval:* Continuous input detected within the inactivity threshold.
-  - *Idle Interval:* Time span where inactivity exceeds the threshold, tracking away time.
-- **Application Grouping & Normalization:** Extracts application names, associates them with window titles, aggregates cumulative runtimes, and calculates percentage shares of total active time.
-
----
-
-## 4. Presentation & Executive Web Interface
-
-The executive console is built as a responsive, zero-dependency Single-Page Application (SPA):
-
-- **Zero Heavy Framework Bloat:** Built with clean modern HTML5, CSS3 variables, and vanilla JavaScript for sub-second loading speed on any workstation or mobile browser.
-- **Asynchronous Live Updates:** Automatically polls for workstation updates without requiring manual page refreshes.
-- **Interactive Multi-Day Archive:** Dynamically loads historical datasets, allowing executives to inspect team performance across customizable time horizons (daily, weekly, monthly).
-- **Responsive Visual Timelines:** Renders color-coded chronological timelines showing activity patterns throughout the working day.
+Themes are managed through `setTheme(theme)`, stored in `localStorage`, and exposed to the native Android bridge via JavaScript interface (`window.setTheme(theme)`), enabling instant visual synchronization across web and mobile.
 
 ---
 

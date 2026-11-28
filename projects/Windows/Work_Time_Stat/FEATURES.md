@@ -28,19 +28,40 @@ mindmap
       Software Process Ranking
       Document / Tab Tracking
       Usage Percentage of Day
-    Reporting & Dashboard
-      Multi-Workstation Grid
-      Chronological Timelines
-      Multi-Day Range Archive
-    Deployment & Delivery
-      Silent Background Daemon
-      Air-Gapped SMB Support
-      Encrypted HTTPS Gateway
+    Network & Master Host
+      Unified Office LAN Subnet
+      Router Port & IP Config
+      Single Central Collector PC
+      Global Remote Management
+      Native Android Mobile APK
+    Ergonomic Visuals
+      Day Theme Light
+      Evening Theme Warm Dusk
+      Night Theme Deep Dark
+      Multilingual EN RU UK CS
 ```
 
 ---
 
-## 1. Employee Computer Activity Monitoring
+## 1. Unified Local Network & Master Host Architecture
+
+- **Single Subnet Fleet Grouping:** All office workstations communicate over a unified corporate local area network (properly configured router/switch with static DHCP assignments).
+- **Single Master Collector Computer:** Exactly one designated PC or server in the local network collects, normalizes, and archives the telemetry stream from all endpoints.
+- **Worldwide Remote Management:** Distributes live status, activity timelines, and executive reports to authorized managers anywhere across the globe.
+- **Native Android APK Integration:** Direct telemetry feed to a dedicated mobile Android application with biometric fingerprint/PIN security and pull-to-refresh.
+
+---
+
+## 2. Tri-Mode Ergonomic Display Engine (Day, Evening, Night)
+
+- **☀️ Day Mode (Light):** High-clarity, clean white/slate contrast optimized for daylight hours and brightly lit offices.
+- **🌇 Evening Mode (Warm Dusk / Sunset):** Warm amber/plum palette engineered to reduce blue light eye strain during late afternoon and evening shifts.
+- **🌙 Night Mode (Deep Dark OLED):** Deep slate/midnight contrast designed for low-light environments, executive evening audits, and battery conservation on mobile OLED screens.
+- **Seamless Settings Integration:** Theme selection is located in the Settings panel (`⚙️`) alongside 4-language localization (English, Russian, Ukrainian, Czech) and is synchronized across browser and Android app sessions.
+
+---
+
+## 3. Employee Computer Activity Monitoring
 
 - **Precision Win32 Input Sampling:** The endpoint agent continuously polls low-level OS input events via native `GetLastInputInfo` Win32 API calls at customizable intervals (default: 5 seconds).
 - **Foreground Context Detection:** Identifies the exact application and window currently in focus using `GetForegroundWindow` and `GetWindowText` APIs.
@@ -49,7 +70,7 @@ mindmap
 
 ---
 
-## 2. Working Time Statistics & Presence Accounting
+## 4. Working Time Statistics & Presence Accounting
 
 - **First & Last Activity Detection:** Automatically logs the exact time of the user's initial interaction in the morning and final activity in the evening.
 - **Active Working Time:** Tracks continuous minutes and hours spent interacting with software applications.
@@ -59,7 +80,7 @@ mindmap
 
 ---
 
-## 3. Application Usage & Process Analytics
+## 5. Application Usage & Process Analytics
 
 - **Per-Application Duration Breakdown:** Computes the exact time spent in each distinct software application throughout the day.
 - **Window Title & Document Context:** Captures specific document names, active spreadsheets, CRM tickets, or web tabs to provide context on the work being performed.
@@ -69,36 +90,20 @@ mindmap
 
 ---
 
-## 4. Centralized Monitoring Dashboard
+## 6. Centralized Monitoring Dashboard
 
 - **Single-Pane Management Console:** Modern dark-themed web interface accessible from desktop and tablet browsers.
 - **Real-Time Workstation Status Badges:**
   - 🟢 **Active:** User currently interacting with business applications.
   - 🟡 **Idle / Away:** Workstation active but no keyboard/mouse input detected for over threshold duration.
   - ⚪ **Offline:** Workstation turned off, disconnected, or outside office hours.
-- **Interactive Multi-Day Archive:** Instant date filters:
-  - *Today*
-  - *Yesterday*
-  - *Last 3 Days*
-  - *Last 7 Days*
-  - *Last 30 Days*
-  - *Custom Date Range Selection*
+- **Interactive Multi-Day Archive:** Instant date filters (Today, Yesterday, Last 3 Days, Last 7 Days, Last 30 Days, Custom Date Range).
 - **Visual Activity Timelines:** Interactive chronological heatmaps showing the progression of work, breaks, and software switches from morning to evening.
-
----
-
-## 5. Administrative Management & Custom Deployment
-
-- **Canonical Workstation & User Mapping:** Allows assigning friendly employee names, departmental roles, and workstation numbers to hardware hostnames.
-- **Local Network (Air-Gapped) Mode:** Fully operational in restricted corporate LANs by writing and reading aggregated telemetry directly from a secured SMB network share.
-- **Secure Cloud Gateway Mode:** Supports multi-branch and remote setups by streaming encrypted payloads over HTTPS REST endpoints.
-- **Local Resilience Buffering:** Endpoints buffer telemetry locally in `ProgramData` during network outages, transmitting complete historical datasets once connectivity is restored.
-- **Zero Heavy Database Dependencies:** Designed with lightweight file-based data structures and fast in-memory aggregation, eliminating the cost and maintenance overhead of large SQL clusters.
 
 ---
 
 <div align="center">
 
-[← Return to Main Page](README.md) &nbsp;•&nbsp; [Explore Technical Architecture →](TECHNICAL_OVERVIEW.md)
+[← Return to Main Portfolio](README.md) &nbsp;•&nbsp; [Explore Technical Architecture →](TECHNICAL_OVERVIEW.md)
 
 </div>

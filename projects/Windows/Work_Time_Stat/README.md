@@ -7,7 +7,8 @@
 <br/><br/>
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20%7C%20Windows%20Server-0078D4?logo=windows&logoColor=white)
-![Architecture](https://img.shields.io/badge/Architecture-x64%20%7C%20x86-blue)
+![Mobile](https://img.shields.io/badge/Mobile-Android%20APK%20(Native)-3DDC84?logo=android&logoColor=white)
+![Architecture](https://img.shields.io/badge/Architecture-Master%20Host%20%2B%20Unified%20LAN-blue)
 ![Deployment](https://img.shields.io/badge/Deployment-Custom%20Administrative%20Rollout-orange)
 ![Security](https://img.shields.io/badge/Privacy-Non--Intrusive%20Telemetry-success)
 ![Status](https://img.shields.io/badge/License-Commercial%20%2F%20Custom%20Quotation-brightgreen)
@@ -42,12 +43,57 @@ Unlike off-the-shelf intrusive surveillance tools, **Work Time Stat** prioritize
 
 ## 🚀 Key Capabilities
 
+- **Unified Network & Master Server Architecture:** All monitored office workstations are grouped within a unified corporate network. A single designated computer serves as the **Master Collector Server**, gathering all workstation telemetry and distributing real-time analytics to executive remote dashboards worldwide and the native Android APK.
+- **Tri-Mode Ergonomic Visual Engine (Day / Evening / Night):** Instant theme switching in settings:
+  - ☀️ **Day (Light Mode):** Clean, crisp contrast tailored for bright office environments.
+  - 🌇 **Evening (Warm Dusk Mode):** Soothing amber/warm tone reducing blue light strain during late afternoon hours.
+  - 🌙 **Night (Deep OLED Dark Mode):** High-efficiency dark contrast for low-light management audits and mobile battery savings.
 - **Automated Working Time Accounting:** Automatically captures session start, finish, gross duration, net active work, and idle intervals without manual employee timecards.
 - **Application & Process Telemetry:** Tracks foreground applications, document titles, and runtime durations to deliver complete transparency into enterprise software utilization.
 - **Active vs. Idle Precision Analysis:** Uses native operating system input heuristics to differentiate between focused work and idle/away periods with customizable inactivity thresholds.
-- **Dual Transport Topology:** Fully functional in both air-gapped internal corporate subnets (via local SMB replication) and distributed multi-site networks (via secure HTTPS REST gateways).
-- **Executive Single-Pane Dashboard:** Modern, responsive dark-themed management console providing real-time team status badges, individual drill-downs, and historical analytics.
-- **Custom Corporate Provisioning:** Workstation aliases, organizational departments, polling intervals, and retention windows tailored specifically for each client environment.
+- **Cross-Platform Access:** Native executive access via responsive modern web browsers and dedicated Android APK with biometric fingerprint/PIN authentication and real-time pull-to-refresh.
+
+---
+
+## 🌐 Network Topology & Master Server Setup
+
+In multi-workstation office environments, the infrastructure operates under a structured network model:
+
+```mermaid
+flowchart TD
+    subgraph Corporate_LAN ["🏢 Unified Corporate Local Area Network (Router / Switch Subnet)"]
+        Router["🌐 Core Office Router / Managed Switch<br/>• Static DHCP IP Reservation<br/>• Internal Telemetry Ports Configured"]
+        
+        subgraph Monitored_Fleet ["💻 Monitored Workstation Fleet"]
+            WS1["🖥️ Workstation 01<br/>Silent Daemon Agent"]
+            WS2["🖥️ Workstation 02<br/>Silent Daemon Agent"]
+            WSN["🖥️ Workstation N<br/>Silent Daemon Agent"]
+        end
+
+        subgraph Master_Tier ["🖥️ Master Host PC / On-Premise Server"]
+            Master["⚙️ Central Collector Master Server<br/>• Single Designated Hub Machine<br/>• Local Telemetry Aggregator<br/>• Offline SMB Archive / HTTP Gateway"]
+        end
+    end
+
+    subgraph Distribution_Tier ["🌍 Worldwide Executive Distribution"]
+        Remote_Web["🌐 Remote Control & Oversight<br/>(Accessible Worldwide over Secure TLS)"]
+        Android_App["📱 Native Android Mobile APK<br/>(Biometric Lock + Pull-to-Refresh)"]
+    end
+
+    WS1 -->|Telemetry Stream| Router
+    WS2 -->|Telemetry Stream| Router
+    WSN -->|Telemetry Stream| Router
+    Router --> Master
+
+    Master -->|Encrypted Remote Bridge| Remote_Web
+    Master -->|Direct Live Sync| Android_App
+```
+
+1. **Unified Network Requirement:** All monitored computers must be connected within the same local corporate network (or routed office VLAN). The corporate router and network switches must be properly configured with static IP reservations or local DHCP mappings to ensure reliable inter-node communication.
+2. **Designated Master Server:** Exactly **one computer** in the local network is chosen as the **Master Server**. This machine acts as the authoritative aggregator, receiving telemetry streams from all client workstations.
+3. **Global Distribution & Android APK:** From this central master server, monitoring is securely distributed:
+   - **Worldwide Remote Management:** Executives can view live office presence, productivity graphs, and detailed application logs from anywhere in the world.
+   - **Native Android APK:** Real-time mobile visibility via Android smartphone/tablet app with biometric protection.
 
 ---
 
@@ -75,41 +121,17 @@ Comparative team matrices, department productivity benchmarks, and schedule adhe
 
 ---
 
-## ⚙️ How the System Operates
+## 🎨 Tri-Mode Ergonomic Visual Engine
 
-```mermaid
-flowchart LR
-    subgraph Corporate_Fleet ["💻 Corporate Workstations"]
-        W1["🖥️ Workstation 1<br/>Silent Daemon Agent"]
-        W2["🖥️ Workstation 2<br/>Silent Daemon Agent"]
-        WN["🖥️ Workstation N<br/>Silent Daemon Agent"]
-    end
+Located directly in the Settings modal (`⚙️`) alongside multilingual localization (English, Russian, Ukrainian, Czech):
 
-    subgraph Data_Routing ["🔀 Secure Data Transport Layer"]
-        SMB["📁 On-Premise Storage<br/>(Air-Gapped SMB Share)"]
-        API["🛡️ Central Gateway<br/>(TLS 1.3 / HTTPS REST)"]
-    end
+| Theme Mode | Visual Palette | Recommended Environment | Key Benefit |
+| :--- | :--- | :--- | :--- |
+| ☀️ **Day (Light)** | `#f1f5f9` background, `#ffffff` cards, crisp `#0f172a` text | Bright corporate offices, daylight hours | Maximum readability under high ambient light |
+| 🌇 **Evening (Warm Dusk)** | `#18121e` plum background, `#261b2d` warm cards, `#fdf4ff` text | Sunset, late afternoon, dim lighting | Reduces blue light eye strain and fatigue |
+| 🌙 **Night (Deep Dark)** | `#0f172a` slate background, `#1e293b` cards, `#f8fafc` text | Night shifts, executive late-hour audits | Optimal contrast, minimal glare, mobile battery savings |
 
-    subgraph Presentation ["📊 Executive Analytics Layer"]
-        Dash["📈 Work Time Stat Console<br/>• Real-Time Presence Status<br/>• Chronological Timelines<br/>• Application Duration Audits<br/>• Multi-Date Archives"]
-    end
-
-    W1 -->|Local Buffer / 5s Poll| SMB
-    W2 -->|Local Buffer / 5s Poll| SMB
-    WN -->|Local Buffer / 5s Poll| SMB
-
-    W1 -.->|Secure Push / 10s| API
-    W2 -.->|Secure Push / 10s| API
-    WN -.->|Secure Push / 10s| API
-
-    SMB --> Dash
-    API --> Dash
-```
-
-1. **Lightweight Agent Execution:** A background service daemon runs quietly on target Windows endpoints. It queries native Win32 API endpoints every 5 seconds to detect user activity and foreground window titles.
-2. **Local Resiliency Buffer:** Telemetry is buffered in local non-volatile storage (`ProgramData`) to ensure zero data loss during corporate network disconnects.
-3. **Transport & Aggregation:** Data is transmitted either to an internal corporate network share or through an encrypted HTTPS endpoint.
-4. **Instant Analytical Rendering:** The management dashboard renders live workstation statuses, calculates idle vs. productive metrics, and provides historical data analysis across custom date windows (Today, Yesterday, Last 7 Days, Last 30 Days).
+Both the browser-based dashboard and the native Android APK synchronize theme settings instantly and persist user preferences across sessions.
 
 ---
 
@@ -121,10 +143,10 @@ flowchart LR
 - **Resource Footprint:** Less than 0.1% CPU consumption; less than 25 MB RAM.
 - **User Permissions:** Administrative rights required once during initial setup; runs seamlessly in background under local system or standard user context.
 
-### Central Collection & Management Layer
-- **Local Network Deployment (Air-Gapped):** Standard Windows Server or Linux Samba SMB share with appropriate read/write share permissions.
-- **Cloud / Distributed Deployment:** Linux or Windows host with HTTPS support and reverse proxy (Nginx / Cloudflare SSL).
-- **Client Access:** Modern web browser (Chrome, Edge, Firefox, Safari) with responsive desktop and tablet support.
+### Master Collector Server (Central Host PC)
+- **Role:** Dedicated computer or server designated in the local office network to aggregate fleet telemetry.
+- **Operating System:** Windows 10/11, Windows Server, or Linux (Debian / Ubuntu / Rocky).
+- **Network Interface:** Static IP on the office subnet; router configured for internal telemetry traffic and external HTTPS gateway if remote access is required.
 
 ---
 

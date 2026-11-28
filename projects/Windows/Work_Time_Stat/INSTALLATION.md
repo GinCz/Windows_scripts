@@ -19,35 +19,39 @@ Unlike mass-market monitoring applications that bundle generic bloatware or clou
 
 ---
 
-## 🛠️ Typical Professional Rollout Lifecycle
+## 🛠️ Corporate Deployment Lifecycle
 
 ```mermaid
 flowchart TD
-    A["1. Infrastructure Assessment<br/>• Fleet Audit (Win 10/11/Server)<br/>• Topology (LAN vs Cloud)<br/>• Privacy & Threshold Policies"] --> B["2. Tailored Configuration<br/>• Workstation Canonical Mapping<br/>• Polling Intervals (3s - 15s)<br/>• Idle Timeout Calibration (30s - 180s)"]
-    B --> C["3. Administrative Rollout<br/>• Automated Endpoint Provisioning<br/>• Active Directory / GPO / RMM<br/>• Silent Background Service Setup"]
-    C --> D["4. Central Gateway & Storage<br/>• Secure SMB Share Configuration OR<br/>• Dedicated TLS 1.3 REST Server<br/>• Access Control & Authentication"]
-    D --> E["5. Verification & Handover<br/>• Telemetry Validation Tests<br/>• Executive Dashboard Onboarding<br/>• Maintenance & SLA Agreement"]
+    A["1. Network & Router Setup<br/>• Unified LAN Subnet Validation<br/>• Router DHCP IP Reservations<br/>• Internal Port Clearance"] --> B["2. Master Server Selection<br/>• Designating Central Host PC<br/>• Provisioning Local Collector Hub<br/>• Storage Access Permissions"]
+    B --> C["3. Endpoint Fleet Rollout<br/>• Silent Background Win32 Daemons<br/>• Active Directory / GPO / Intune<br/>• Local Cache Validation"]
+    C --> D["4. Remote & Mobile Distribution<br/>• Secure Worldwide Web Gateway Setup<br/>• Native Android APK Deployment<br/>• Biometric Authentication Config"]
+    D --> E["5. Verification & Handover<br/>• End-to-End Telemetry Audit<br/>• Executive Dashboard Onboarding<br/>• SLA & Maintenance Agreement"]
 ```
 
 ---
 
-## 1. Stage 1: Preliminary Environment Assessment
-Prior to deployment, our engineering team conducts an initial review with the customer's IT leadership:
-- **Workstation Fleet Audit:** Verification of endpoint counts, hardware architectures (x64 / x86), and Windows operating system versions.
-- **Network Topology Review:** Deciding between **Mode A (On-Premise Air-Gapped LAN)** and **Mode B (Dedicated HTTPS REST Gateway)**.
-- **Policy Definition:** Aligning on business hours, employee aliases, departmental hierarchies, and idle time thresholds.
+## 1. Stage 1: Network & Router Preparation
+
+When monitoring multiple computers within an office, network cohesion is paramount:
+- **Unified Network Subnet:** All monitored workstations must be grouped on a single corporate network (same local subnet or routed VLAN).
+- **Router & Switch Configuration:**
+  - Office routers must be configured with **DHCP static reservations** for all workstation MAC addresses and the designated master server to prevent IP drift.
+  - Internal network traffic between endpoints and the master host must be unobstructed by internal desktop firewalls.
 
 ---
 
-## 2. Stage 2: Custom Configuration & Hardening
-The agent and dashboard are tailored specifically for the customer's operational parameters:
-- **Canonical Identity Mapping:** Pre-populating configuration maps so computer hostnames automatically resolve to employee names and departments.
-- **Timing Parameters:** Configuring polling frequencies, network push intervals, and buffer thresholds.
-- **Security Hardening:** Provisioning unique API tokens, directory permissions, and data isolation controls.
+## 2. Stage 2: Designating the On-Premise Master Server
+
+Exactly **one computer** in the local office fleet is chosen as the **Master Server**:
+- **Selection Criteria:** A workstation or server with high uptime during business hours, adequate disk space for historical logs, and stable network connectivity.
+- **Role:** Serves as the central collection hub, accumulating real-time telemetry from all other computers and maintaining the authoritative audit trail.
+- **Data Repository:** Configured with structured file storage or internal HTTP listener with strict Windows ACL security permissions.
 
 ---
 
-## 3. Stage 3: Controlled Administrative Deployment
+## 3. Stage 3: Controlled Endpoint Fleet Rollout
+
 Endpoint deployment is executed with zero user interruption using standard administrative tooling:
 - **Active Directory Group Policy (GPO):** Silent installation and startup configuration pushed across corporate domain computers.
 - **Microsoft Intune / RMM:** Deployed remotely through corporate Endpoint Management platforms.
@@ -56,13 +60,16 @@ Endpoint deployment is executed with zero user interruption using standard admin
 
 ---
 
-## 4. Stage 4: Central Storage & Dashboard Setup
-- **On-Premise LAN:** Setup of a secured internal network folder with access control lists (ACLs) restricting access exclusively to the administrative monitoring service and designated management users.
-- **Dedicated Cloud Gateway:** Provisioning of a dedicated Linux or Windows gateway server equipped with automated SSL/TLS certificate renewal, reverse proxy, and IP filtering.
+## 4. Stage 4: Worldwide Remote Management & Android APK Setup
+
+Once the master server is aggregating local telemetry, distribution is established:
+- **Global Remote Management:** For executives requiring oversight from outside the office, the master server is paired with a secured reverse proxy (Nginx / TLS 1.3), enabling access from **any location worldwide** over encrypted HTTPS.
+- **Native Android APK Deployment:** The custom mobile application is installed on executive smartphones and tablets, featuring biometric fingerprint/PIN authentication, live pull-to-refresh, and theme customization (Day / Evening / Night).
 
 ---
 
-## 5. Stage 5: Handover, Executive Training & Support
+## 5. Stage 5: Handover, Training & Maintenance
+
 - Full end-to-end telemetry verification across all endpoints.
 - Executive briefing on dashboard navigation, filter usage, and interpretation of working time metrics.
 - Establishing ongoing maintenance agreements, health audits, and service level agreements (SLA).
