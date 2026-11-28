@@ -1,7 +1,7 @@
 # ⚡ GIN-Win-Optimizer — Windows 7 / 8 / 10 / 11 Ultimate Optimizer
 
 [![Download Latest Production Release](https://img.shields.io/badge/📥_DOWNLOAD-GIN--Win--Optimizer_v056.cmd_(LATEST)-00C853?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd)
-[![View Script on GitHub](https://img.shields.io/badge/💻_VIEW_ON_GITHUB-GIN--Win--Optimizer_v056.cmd-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd)
+[![View Script on GitHub](https://img.shields.io/badge/💻_VIEW_ON_GITHUB-GIN--Win--Optimizer_v056.cmd-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/GinCz/Windows_scripts/blob/main/projects/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd)
 
 [![Version](https://img.shields.io/badge/Version-v056_(Latest_Production)-00E676.svg?style=flat-square)](https://github.com/GinCz/Windows_scripts/tree/main/Windows/GIN-Win-Optimizer)
 [![Platform](https://img.shields.io/badge/Platform-Windows_7_|_8.1_|_10_|_11_|_Server-0078D6.svg?style=flat-square&logo=windows&logoColor=white)](https://microsoft.com/windows)
@@ -16,7 +16,7 @@
 > **Target Operating Systems:** Windows 7 / 8 / 8.1 / 10 / 11 / Windows Server (32-bit x86 & 64-bit x64, all editions)  
 > **Current Version:** `v056` (Active Production)  
 > **Active Retention Policy:** Strictly **2 latest production versions** (`GIN-Win-Optimizer_v056.cmd` and `GIN-Win-Optimizer_v055.cmd`)  
-> **Release History:** Complete technical changelog available in [CHANGELOG.md](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/CHANGELOG.md)
+> **Release History:** Complete technical changelog available in [CHANGELOG.md](https://github.com/GinCz/Windows_scripts/blob/main/projects/Windows/GIN-Win-Optimizer/CHANGELOG.md)
 
 ---
 
@@ -33,8 +33,8 @@
 
 | Release | File | Size | Direct Download Button | Web UI |
 | :--- | :--- | :---: | :---: | :---: |
-| 🟢 **Latest (Recommended)** | `GIN-Win-Optimizer_v056.cmd` | ~294 KB | [**📥 Download v055**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd) | [View v055 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd) |
-| ⚪ **Previous Stable** | `GIN-Win-Optimizer_v054.cmd` | ~290 KB | [**📥 Download v054**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v054.cmd) | [View v054 Code](https://github.com/GinCz/Windows_scripts/blob/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v054.cmd) |
+| 🟢 **Latest (Recommended)** | `GIN-Win-Optimizer_v056.cmd` | ~294 KB | [**📥 Download v055**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd) | [View v055 Code](https://github.com/GinCz/Windows_scripts/blob/main/projects/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v056.cmd) |
+| ⚪ **Previous Stable** | `GIN-Win-Optimizer_v054.cmd` | ~290 KB | [**📥 Download v054**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v054.cmd) | [View v054 Code](https://github.com/GinCz/Windows_scripts/blob/main/projects/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v054.cmd) |
 
 ---
 

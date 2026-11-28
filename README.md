@@ -53,14 +53,14 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 
 ## Table of Contents
 
-- [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
-  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](Windows/Work_Time_Stat/README.md)
-  - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](Windows/GIN-Voice/README.md)
-  - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](Windows/GIN-NetSpeed/README.md)
-  - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
-  - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](Windows/VPN/GIN-VPN/README.md)
-  - [MEGA Drive — Universal Standalone Cloud Mount Engine](Windows/MEGA/README.md)
-  - [Xray VPN Suite — Automated Installers & Dynamic Tray Shield](Windows/VPN/README.md)
+- [Windows Applications & Executable Suite (.exe) ➔](projects/Windows/README.md)
+  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](projects/Windows/Work_Time_Stat/README.md)
+  - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](projects/Windows/GIN-Voice/README.md)
+  - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](projects/Windows/GIN-NetSpeed/README.md)
+  - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](projects/Windows/GIN-NetScan/README.md)
+  - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](projects/Windows/GIN-VPN/README.md)
+  - [MEGA Drive — Universal Standalone Cloud Mount Engine](projects/Windows/MEGA/README.md)
+  - [Xray VPN Suite — Automated Installers & Dynamic Tray Shield](projects/Windows/VPN/README.md)
 - [Scripts Overview](#scripts-overview)
   - [System Optimization & Sweepers](#system-optimization--sweepers)
   - [Diagnostics & Security Audit](#diagnostics--security-audit)
@@ -74,7 +74,7 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
   - [System_Security_Miner_Audit.cmd — Advanced Security & Cryptominer Deep Audit](#5-system_security_miner_auditcmd--advanced-security--cryptominer-deep-audit)
 - [SMB Network Drives — SMB_Connect](#smb-network-drives--smb_connect)
 - [Requirements & Usage](#requirements--usage)
-- [Deployment Rules & Standards (MEGA Desktop Auto-Sync)](RULES.md)
+- [Deployment Rules & Standards (MEGA Desktop Auto-Sync)](tools/docs/RULES.md)
 - [Code Conventions](#code-conventions)
 - [Author](#author)
 
@@ -85,19 +85,19 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 All native Windows applications are developed with zero external runtime dependencies, standalone architecture, and compiled with custom embedded Windows PE icons.
 
 > [!IMPORTANT]
-> **MEGA Desktop Auto-Sync Standard (Ironclad Rule):** The version number must **strictly increment upon every change or feature addition** (`vXXX`). The installer filename strictly includes the version (`<AppName>_vXXX_Setup.exe`). Upon compilation, every installer is **automatically deployed to the user's Desktop via cloud folder `/MEGA/DOCS/desktop/` (`D:\MEGA\DOCS\desktop\`)**. Strictly the 2 latest versions are maintained on the desktop. See [RULES.md](RULES.md) and [AGENTS.md](AGENTS.md).
+> **MEGA Desktop Auto-Sync Standard (Ironclad Rule):** The version number must **strictly increment upon every change or feature addition** (`vXXX`). The installer filename strictly includes the version (`<AppName>_vXXX_Setup.exe`). Upon compilation, every installer is **automatically deployed to the user's Desktop via cloud folder `/MEGA/DOCS/desktop/` (`D:\MEGA\DOCS\desktop\`)**. Strictly the 2 latest versions are maintained on the desktop. See [RULES.md](tools/docs/RULES.md) and [AGENTS.md](tools/docs/AGENTS.md).
 
 | Application / Package | Binary (.exe) / Launcher | Description & Key Architecture | Release & Status |
 | :--- | :--- | :--- | :---: |
-| 🖥️ **[GIN-Desktop](GIN-Desktop/)** | [**`GIN-Desktop_v043_Setup.exe`**](https://github.com/GinCz/Windows_scripts/raw/main/GIN-Desktop/GIN-Desktop_v043_Setup.exe) | Unified lightweight desktop companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Live Hardware Monitor (CPU/RAM/GPU), Real-Time Weather HUD (Open-Meteo/wttr.in) & 00:03 midnight refresh. | 🟢 **`v043`** |
-| 🎙️ **[GIN-Voice](Windows/GIN-Voice/README.md)** | [**`GIN-Voice.exe` (v032)**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe) | Ultra-fast native Win32 voice typing with Groq Whisper Large v3 + Qwen 27B AI Code-Switching post-processor. 0.15s latency, multilingual transliteration auto-repair (Czech/English/Russian), live customizable HUD typography, 0% CPU. | 🟢 **`v032`** |
-| 🌐 **[GIN-NetScan](Windows/GIN-NetScan/README.md)** | `GIN-NetScan_v025.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v025`** |
-| 🛡️ **[GIN-VPN](Windows/VPN/GIN-VPN/README.md)** | `GIN-VPN_v013.exe`<br>`GIN-VPN.ps1` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v013`** |
-| ☁️ **[MEGA Drive](Windows/MEGA/README.md)** | `MEGA_Drive_Universal.cmd` | Standalone universal cloud drive mount engine (`M:`) with 2FA support and auto-reconnect. | 🟢 **Stable** |
-| 🛡️ **[Xray VPN Suite](Windows/VPN/README.md)** | `XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` | Universal automated Xray installer for Windows 7/10/11 with GDI+ dynamic tray shield. | 🟢 **Stable** |
-| 🤖 **[CODEX ChatGPT](Windows/CODEX_ChatGPT/README.md)** | `Install_ChatGPT_Codex_Universal.cmd` | Direct MS Store CDN bypass installer for ChatGPT Desktop & Codex. | 🟢 **Stable** |
+| 🖥️ **[GIN-Desktop](projects/GIN-Desktop/)** | [**`GIN-Desktop_v051_Setup.exe`**](https://github.com/GinCz/Windows_scripts/raw/main/projects/GIN-Desktop/GIN-Desktop_v051_Setup.exe) | Unified lightweight desktop companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Live Hardware Monitor (CPU/RAM/GPU), Real-Time Weather HUD (Open-Meteo/wttr.in) & 00:03 midnight refresh. | 🟢 **`v051`** |
+| 🎙️ **[GIN-Voice](projects/Windows/GIN-Voice/README.md)** | [**`GIN-Voice.exe` (v041)**](https://github.com/GinCz/Windows_scripts/raw/main/projects/Windows/GIN-Voice/GIN-Voice.exe) | Ultra-fast native Win32 voice typing with Groq Whisper Large v3 + Qwen 27B AI Code-Switching post-processor. 0.15s latency, multilingual transliteration auto-repair (Czech/English/Russian), live customizable HUD typography, 0% CPU. | 🟢 **`v041`** |
+| 🌐 **[GIN-NetScan](projects/Windows/GIN-NetScan/README.md)** | `GIN-NetScan.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v036`** |
+| 🛡️ **[GIN-VPN](projects/Windows/GIN-VPN/README.md)** | `GIN-VPN.exe` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v094`** |
+| ☁️ **[MEGA Drive](projects/Windows/MEGA/README.md)** | `MEGA_Drive_Universal.cmd` | Standalone universal cloud drive mount engine (`M:`) with 2FA support and auto-reconnect. | 🟢 **Stable** |
+| 🛡️ **[Xray VPN Suite](projects/Windows/VPN/README.md)** | `XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` | Universal automated Xray installer for Windows 7/10/11 with GDI+ dynamic tray shield. | 🟢 **Stable** |
+| 🤖 **[CODEX ChatGPT](projects/Windows/CODEX_ChatGPT/README.md)** | `Install_ChatGPT_Codex_Universal.cmd` | Direct MS Store CDN bypass installer for ChatGPT Desktop & Codex. | 🟢 **Stable** |
 
-👉 **[Explore Full Windows Applications Catalog & Documentation ➔](Windows/README.md)**
+👉 **[Explore Full Windows Applications Catalog & Documentation ➔](projects/Windows/README.md)**
 
 ---
 
@@ -133,7 +133,7 @@ All native Windows applications are developed with zero external runtime depende
 | 12 | `TeraBox_Setup.bat` | Downloads and launches TeraBox PC installer | no |
 | 13 | `Google_Drive_Setup.bat` | Downloads and launches Google Drive for Desktop installer | no |
 | 14 | `Heaven_Benchmark_Setup.bat` | Downloads and launches UNIGINE Heaven Benchmark 4.0 GPU stress test | no |
-| 15 | [`Install_ChatGPT_Codex_Universal.cmd`](Windows/CODEX_ChatGPT/README.md) | Universal zero-dependency installer for **ChatGPT Desktop & Codex AI Agent** (direct Store CDN bypass) | **YES** |
+| 15 | [`Install_ChatGPT_Codex_Universal.cmd`](projects/Windows/CODEX_ChatGPT/README.md) | Universal zero-dependency installer for **ChatGPT Desktop & Codex AI Agent** (direct Store CDN bypass) | **YES** |
 
 ### SMB Network Drives
 
@@ -338,6 +338,12 @@ See the full server-side setup in 👉 [GinCz/Linux_Server_Public](https://githu
 <br/>
 
 ---
+
+<br/>
+
+## 🏷️ Keywords, Topics & Search Metadata
+
+          
 
 <br/>
 

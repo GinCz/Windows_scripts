@@ -14,7 +14,7 @@
 
 <br/>
 
-[Download GIN-Desktop v051 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/GIN-Desktop/GIN-Desktop_v051_Setup.exe)
+[Download GIN-Desktop v051 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v051_Setup.exe)
 
 </div>
 
