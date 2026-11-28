@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-11-28 — GIN-Win-Optimizer v058 Release: Canonical Flash Deployment & Standard Version Harmonization
+- **Task**: Enforce strict standard naming `GIN-Win-Optimizer_v058`, eliminate alien unversioned script pollution from flash drive, and synchronize canonical release across repositories.
+- **Root Cause & Accountability**:
+  1. An ad-hoc script `windows_setup_cleaner.ps1` was copied into the flash drive directory without version numbering, violating Personal Directive 5 ("Mandatory Explicit Version in Filenames / Zero Versionless Binaries").
+  2. The optimizer release pipeline was harmonized to produce strictly `GIN-Win-Optimizer_v058.cmd` and companion `.zip`.
+- **Architectural Delivery**:
+  1. Purged alien `windows_setup_cleaner.*` from `D:\MEGA\WIN-FLASH\Util-WINDOWS\`.
+  2. Deployed `GIN-Win-Optimizer_v058.cmd` and `GIN-Win-Optimizer_v058.zip` to `D:\MEGA\WIN-FLASH\Util-WINDOWS\` and `D:\MEGA\DOCS\desktop\`.
+  3. Retained strictly 2 latest versions (`v058` and `v057`), purged `v056`.
+  4. Verified via `validate_release.py`. Synchronized to `Secret_Privat` and `Windows_scripts`.
+
+
 ## 2026-11-28 — GIN-Win-Optimizer v057 Release: Critical Hardware Thermal Safeguard & APU Power Scheme Normalization
 - **Task**: Eliminate GPU throttling and UI stuttering on laptops (Lenovo ThinkPad/IdeaPad) caused by inadvertent disabling of hardware thermal/power management services, and prevent duplicate power plan proliferation.
 - **Root Cause Analysis**:

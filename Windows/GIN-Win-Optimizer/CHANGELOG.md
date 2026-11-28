@@ -6,6 +6,14 @@ The project strictly follows semantic engineering discipline: every new feature,
 
 ---
 
+## [v058] - 2026-11-28
+### Canonical Standard Version Harmonization & Flash Drive Clean Deployment
+- **Canonical Release Architecture**: Synchronized and promoted master release to `GIN-Win-Optimizer_v058.cmd` and `GIN-Win-Optimizer_v058.zip`.
+- **Eradication of Alien Script Names**: Purged all ad-hoc, versionless scripts (`windows_setup_cleaner.*`) from flash drive directories, restoring 100% compliance with Vladimir's canonical naming standards.
+- **Strict 2-Version Policy**: Retained strictly `v058` and `v057` in both `D:\MEGA\WIN-FLASH\Util-WINDOWS\` and `D:\MEGA\DOCS\desktop\`, completely purging older builds.
+- **Verification**: Verified via `validate_release.py`: 0 BOM, 100% CRLF line endings, 0 PowerShell syntax errors.
+
+
 ## [v057] - 2026-11-28
 ### Critical Hardware Thermal Safeguard & APU Power Scheme Normalization
 - **Critical Lenovo Thermal & Power Service Whitelist (`chk_srv_oem_lenovo`)**:

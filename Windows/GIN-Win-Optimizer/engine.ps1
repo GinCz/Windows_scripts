@@ -1,5 +1,5 @@
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v057
+#  GIN-WIN-OPTIMIZER PLUS                                          v058
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -668,9 +668,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v057
+#  GIN-WIN-OPTIMIZER PLUS                                          v058
 
-#  Rule: Strict Version Increment Mandate (v032 -> v057)
+#  Rule: Strict Version Increment Mandate (v032 -> v058)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -723,11 +723,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -1009,9 +1009,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -1293,11 +1293,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v057 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -2688,7 +2688,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v057 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v058 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -5675,7 +5675,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v057. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v058. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 

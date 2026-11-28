@@ -1,7 +1,7 @@
 <# :
 @echo off
 setlocal DisableDelayedExpansion
-title GIN-Win-Optimizer v056 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
+title GIN-Win-Optimizer v058 - Windows 7/8/10/11 Ultimate Optimizer [ VladiMIR ^& Antigravity ]
 
 :: Detect PowerShell location (supports x86, x64, Sysnative on 32-bit processes in 64-bit OS)
 set "PS_EXE=powershell.exe"
@@ -10,10 +10,10 @@ if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "PS_
 :: Auto-Elevation: Ensure Full Administrator Privileges on Windows 7 / 8 / 10 / 11 (32-bit and 64-bit)
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [*] Elevating to Administrator privileges for GIN-Win-Optimizer v056...
-    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v056.cmd" >nul 2>&1
-    if exist "%TEMP%\GIN-Win-Optimizer_v056.cmd" (
-        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v056.cmd""' -Verb RunAs"
+    echo [*] Elevating to Administrator privileges for GIN-Win-Optimizer v058...
+    copy /y "%~f0" "%TEMP%\GIN-Win-Optimizer_v058.cmd" >nul 2>&1
+    if exist "%TEMP%\GIN-Win-Optimizer_v058.cmd" (
+        "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%TEMP%\GIN-Win-Optimizer_v058.cmd""' -Verb RunAs"
     ) else (
         "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd.exe -ArgumentList '/c ""%~f0""' -Verb RunAs"
     )
@@ -123,7 +123,7 @@ start "" "%PS_EXE%" -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden 
 exit /b
 #>
 # ==============================================================================
-#  GIN-WIN-OPTIMIZER PLUS                                          v056
+#  GIN-WIN-OPTIMIZER PLUS                                          v058
 #  Windows 7/8/10/11 Ultimate Optimizer & Deep Cleaner
 #  Author: Vladimir Bulantsev (GinCz) & AI [VladiMIR + AI]
 #  License: Freeware (Lifetime Free for Personal & Business Use)
@@ -792,9 +792,9 @@ try {
 
 # ==============================================================================
 
-#  GIN-WIN-OPTIMIZER PLUS                                          v056
+#  GIN-WIN-OPTIMIZER PLUS                                          v058
 
-#  Rule: Strict Version Increment Mandate (v032 -> v056)
+#  Rule: Strict Version Increment Mandate (v032 -> v058)
 
 #  Trilingual: [1] English | [2] Čeština | [3] Русский
 
@@ -847,11 +847,11 @@ $t = @{
 
     "en" = @{
 
-        "Title" = "GIN-Win-Optimizer v056 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HeaderTitle" = "Computer Information"
 
-        "HeaderSub" = "GIN-Win-Optimizer v056 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Device: {0} | Windows: {1} | IP: {2}"
 
@@ -1133,9 +1133,9 @@ $t = @{
 
     "cs" = @{
 
-        "Title" = "GIN-Win-Optimizer v056 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
         "HeaderTitle" = "Údaje o počítači"
-        "HeaderSub" = "GIN-Win-Optimizer v056 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Zařízení: {0} | Windows: {1} | IP: {2}"
 
@@ -1417,11 +1417,11 @@ $t = @{
 
     "ru" = @{
 
-        "Title" = "GIN-Win-Optimizer v056 [VladiMIR + AI]"
+        "Title" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HeaderTitle" = "Данные о компьютере"
 
-        "HeaderSub" = "GIN-Win-Optimizer v056 [VladiMIR + AI]"
+        "HeaderSub" = "GIN-Win-Optimizer v058 [VladiMIR + AI]"
 
         "HostFormat" = "Host: local | Устройство: {0} | Windows: {1} | IP: {2}"
 
@@ -2812,7 +2812,7 @@ $rebootAction = {
         "cs" { "Opravdu chcete nyní restartovat počítač?" }
         "ru" { "Вы действительно хотите перезагрузить компьютер прямо сейчас?" }
     }
-    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v056 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
+    $res = [System.Windows.MessageBox]::Show($confirmMsg, "GIN-Win-Optimizer v058 [VladiMIR + AI]", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Question)
     if ($res -eq [System.Windows.MessageBoxResult]::Yes) {
         Log-Message "System restart initiated by user. Restarting in 2 seconds..." "WARN"
         Start-Process shutdown.exe -ArgumentList "/r /t 2 /c `"GIN-Win-Optimizer: Reboot requested by user`""
@@ -4924,19 +4924,39 @@ $executeOptimization = {
     }
 
     if ($controls["chk_srv_power_plan"].IsChecked) {
+        $actions += @{ Name = "Configure Optimal Power Plan (Balanced for Laptops, High Perf for Desktops)"; Script = {
+            $balancedGuid = "381b4222-f694-41f0-9685-ff5bb260df2e"
+            $highGuid     = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"
+            $ultimateGuid = "e9a42b02-d5df-448d-aa00-03f14749eb61"
 
-        $actions += @{ Name = "Activate Ultimate Performance Plan"; Script = {
+            $chassis = (Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue).ChassisTypes
+            $isLaptop = ($chassis -match "8|9|10|11|12|14|18|21|30|31|32" -or (Get-CimInstance Win32_Battery -ErrorAction SilentlyContinue))
 
-            $pOut = powercfg.exe -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 2>$null
-
-            if ($pOut -match '([0-9a-fA-F-]{36})') {
-
-                powercfg.exe -setactive $matches[1] 2>$null | Out-Null
-
+            # Purge any redundant duplicated schemes
+            $allPlans = powercfg.exe /list | Where-Object { $_ -match "GUID схемы питания:\s+([a-f0-9\-]+)" }
+            foreach ($pLine in $allPlans) {
+                if ($pLine -match "GUID схемы питания:\s+([a-f0-9\-]+)") {
+                    $g = $matches[1].Trim()
+                    if ($g -ne $balancedGuid -and $g -ne $highGuid -and $g -ne $ultimateGuid) {
+                        powercfg.exe /delete $g 2>$null | Out-Null
+                    }
+                }
             }
 
+            if ($isLaptop) {
+                powercfg.exe -setactive $balancedGuid 2>$null | Out-Null
+                Log-Message "Laptop/APU detected: Activated Balanced power plan to ensure full GPU TDP headroom." "SUCCESS"
+            } else {
+                $curList = powercfg.exe /list
+                if ($curList -match $highGuid) {
+                    powercfg.exe -setactive $highGuid 2>$null | Out-Null
+                    Log-Message "Desktop workstation: Activated High Performance power plan." "SUCCESS"
+                } else {
+                    powercfg.exe -setactive $balancedGuid 2>$null | Out-Null
+                    Log-Message "Desktop workstation: Activated Balanced power plan." "SUCCESS"
+                }
+            }
         }}
-
     }
 
     if ($controls["chk_srv_power_sleep_screen"].IsChecked) {
@@ -5176,11 +5196,19 @@ $executeOptimization = {
             # 1. Terminate all Lenovo processes
             Stop-Process -Name "Lenovo.Modern.ImController*", "LenovoVantage*", "ClientBrokerAgent*" -Force -ErrorAction SilentlyContinue
 
-            # 2. Process Lenovo services
+            # 2. Process Lenovo services with Critical Hardware & Thermal Whitelist
+            $criticalWhitelist = @('LITSSVC', 'IBMPMSVC', 'IBMPMDRV', 'LenovoFnAndFunctionKeys', 'LPlatSvc')
             $lenovoServices = Get-Service -ErrorAction SilentlyContinue | Where-Object {
                 $_.Name -match '^Lenovo|^ImController' -or $_.DisplayName -match 'Lenovo|ImController|System Interface Foundation'
             }
             foreach ($svc in $lenovoServices) {
+                if ($svc.Name -in $criticalWhitelist -or $svc.DisplayName -match 'ITS|Thermal Solution|Power Management|Fn and function') {
+                    Set-Service -Name $svc.Name -StartupType Automatic -ErrorAction SilentlyContinue
+                    Start-Service -Name $svc.Name -ErrorAction SilentlyContinue
+                    Log-Message "Preserved critical Lenovo thermal/power service: $($svc.Name)" "INFO"
+                    continue
+                }
+
                 Stop-Service -Name $svc.Name -Force -ErrorAction SilentlyContinue
                 if (-not $isLenovo) {
                     sc.exe delete $svc.Name 2>$null | Out-Null
@@ -5771,7 +5799,7 @@ $executeOptimization = {
 
     Log-Message "====================================================================" "INFO"
 
-    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v056. Total tasks selected: $total" "INFO"
+    Log-Message "STARTING GIN-WIN-OPTIMIZER ENGINE v058. Total tasks selected: $total" "INFO"
 
     Log-Message "====================================================================" "INFO"
 

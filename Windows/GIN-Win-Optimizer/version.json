@@ -1,10 +1,10 @@
 {
     "project": "GIN-Win-Optimizer",
-    "current_version": "v057",
+    "current_version": "v058",
     "updated_at": "2026-11-28",
     "active_versions": [
-        "GIN-Win-Optimizer_v057.cmd",
-        "GIN-Win-Optimizer_v056.cmd"
+        "GIN-Win-Optimizer_v058.cmd",
+        "GIN-Win-Optimizer_v057.cmd"
     ],
     "sync_targets": {
         "github_privat": "Windows/GIN-Win-Optimizer/",
@@ -13,6 +13,11 @@
         "desktop_copy": true
     },
     "changelog": [
+        {
+            "version": "v058",
+            "date": "2026-11-28",
+            "changes": "Canonical Flash Deployment & Standard Version Harmonization: 1) Enforced canonical naming GIN-Win-Optimizer_v058 across all deployment targets; 2) Completely eliminated legacy ad-hoc alien scripts from flash directory; 3) Integrated full Lenovo ITS/Power Management whitelist and mobile APU Balanced power profile into official release; 4) Retained strictly 2 latest versions (v058 and v057) in D:\\MEGA\\WIN-FLASH\\Util-WINDOWS\\ and D:\\MEGA\\DOCS\\desktop\\; 5) Gatekeeper verified 100% CRLF, 0 BOM, 0 syntax errors."
+        },
         {
             "version": "v057",
             "date": "2026-11-28",
