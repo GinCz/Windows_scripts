@@ -53,6 +53,7 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 ## Table of Contents
 
 - [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
+  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](Windows/Work%20Time%20Stat/README.md)
   - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](Windows/GIN-Voice/README.md)
   - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](Windows/GIN-NetSpeed/README.md)
   - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
