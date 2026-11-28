@@ -31,12 +31,12 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 | Application | Version | Direct Download | Platform | Key Architecture |
 | :--- | :---: | :--- | :--- | :--- |
 | 🤖 **[GIN-Agent](projects/GIN-Agent/)** | `v043` | [⬇️ **Download GIN-Agent.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd) • [ZIP](https://github.com/GinCz/Windows_scripts/raw/main/projects/GIN-Agent/GIN-Agent_Windows_v043.zip) | Win 10/11 / Server | Autonomous remote systems management agent, multi-tier self-updater |
-| 🎙️ **[GIN-Voice](projects/Windows/GIN-Voice/)** | `v041` | [⬇️ **Download GIN-Voice.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-Voice/GIN-Voice.exe) • [Setup](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-Voice/GIN-Voice_Setup.exe) | Win 10/11 x64 | Ultra-fast multilingual voice-to-text, whisper AI code-switching engine |
-| 🔍 **[GIN-NetScan](projects/Windows/GIN-NetScan/)** | `v036` | [⬇️ **Download GIN-NetScan.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-NetScan/GIN-NetScan.exe) | Win 10/11 x64/x86 | High-speed multi-threaded Win32 LAN host discovery & TCP port scanner |
-| 📊 **[GIN-NetSpeed](projects/Windows/GIN-NetSpeed/)** | `v003` | [⬇️ **Download GIN-NetSpeed_v003.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-NetSpeed/GIN-NetSpeed_v003.exe) | Win 10/11 x64 | 100% Portable per-app bandwidth monitor, 15-min multi-app graph & Cloud Speed Benchmark |
-| 🛡️ **[GIN-VPN](projects/Windows/GIN-VPN/)** | `v094` | [⬇️ **Download GIN-VPN.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-VPN/GIN-VPN.exe) • [Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-VPN/GIN-VPN_Installer.exe) | Win 10/11 x64 | Standalone Xray VLESS-Reality client with dynamic tray sentinel & killswitch |
+| 🎙️ **[GIN-Voice](Windows/GIN-Voice/)** | `v041` | [⬇️ **Download GIN-Voice.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice.exe) • [Setup](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice_Setup.exe) | Win 10/11 x64 | Ultra-fast multilingual voice-to-text, whisper AI code-switching engine |
+| 🔍 **[GIN-NetScan](Windows/GIN-NetScan/)** | `v036` | [⬇️ **Download GIN-NetScan.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetScan/GIN-NetScan.exe) | Win 10/11 x64/x86 | High-speed multi-threaded Win32 LAN host discovery & TCP port scanner |
+| 📊 **[GIN-NetSpeed](Windows/GIN-NetSpeed/)** | `v003` | [⬇️ **Download GIN-NetSpeed_v003.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetSpeed/GIN-NetSpeed_v003.exe) | Win 10/11 x64 | 100% Portable per-app bandwidth monitor, 15-min multi-app graph & Cloud Speed Benchmark |
+| 🛡️ **[GIN-VPN](Windows/GIN-VPN/)** | `v094` | [⬇️ **Download GIN-VPN.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe) • [Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_Installer.exe) | Win 10/11 x64 | Standalone Xray VLESS-Reality client with dynamic tray sentinel & killswitch |
 | 🎨 **[GIN-Wallpaper](projects/GIN-Wallpaper/)** | `v012` | [⬇️ **Download GIN-Wallpaper.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/GIN-Wallpaper/GIN-Wallpaper-Calend.exe) | Win 10/11 x64 | Dynamic desktop wallpaper switcher with live embedded calendar |
-| ⚡ **[GIN-Win-Optimizer](projects/Windows/GIN-Win-Optimizer/)** | `v045` | [⬇️ **Download GIN-Win-Optimizer.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v045.cmd) | Win 10/11 / Server | Enterprise Windows debloater, telemetry disable, and RAM footprint optimizer |
+| ⚡ **[GIN-Win-Optimizer](Windows/GIN-Win-Optimizer/)** | `v045` | [⬇️ **Download GIN-Win-Optimizer.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v045.cmd) | Win 10/11 / Server | Enterprise Windows debloater, telemetry disable, and RAM footprint optimizer |
 
 ### ⚡ Essential System & Administration Scripts
 | Script | Category | 1-Click Download / Execution | Description |
@@ -53,14 +53,14 @@ Direct download links for the latest standalone Windows binaries (.exe) and one-
 
 ## Table of Contents
 
-- [Windows Applications & Executable Suite (.exe) ➔](projects/Windows/README.md)
-  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](projects/Windows/Work_Time_Stat/README.md)
-  - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](projects/Windows/GIN-Voice/README.md)
-  - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](projects/Windows/GIN-NetSpeed/README.md)
-  - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](projects/Windows/GIN-NetScan/README.md)
-  - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](projects/Windows/GIN-VPN/README.md)
-  - [MEGA Drive — Universal Standalone Cloud Mount Engine](projects/Windows/MEGA/README.md)
-  - [Xray VPN Suite — Automated Installers & Dynamic Tray Shield](projects/Windows/VPN/README.md)
+- [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
+  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](Windows/Work_Time_Stat/README.md)
+  - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](Windows/GIN-Voice/README.md)
+  - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](Windows/GIN-NetSpeed/README.md)
+  - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
+  - [GIN-VPN — High-Speed Native Xray VLESS-Reality Client](Windows/GIN-VPN/README.md)
+  - [MEGA Drive — Universal Standalone Cloud Mount Engine](Windows/MEGA/README.md)
+  - [Xray VPN Suite — Automated Installers & Dynamic Tray Shield](Windows/VPN/README.md)
 - [Scripts Overview](#scripts-overview)
   - [System Optimization & Sweepers](#system-optimization--sweepers)
   - [Diagnostics & Security Audit](#diagnostics--security-audit)
@@ -90,14 +90,14 @@ All native Windows applications are developed with zero external runtime depende
 | Application / Package | Binary (.exe) / Launcher | Description & Key Architecture | Release & Status |
 | :--- | :--- | :--- | :---: |
 | 🖥️ **[GIN-Desktop](projects/GIN-Desktop/)** | [**`GIN-Desktop_v051_Setup.exe`**](https://github.com/GinCz/Windows_scripts/raw/main/projects/GIN-Desktop/GIN-Desktop_v051_Setup.exe) | Unified lightweight desktop companion: Hot-Corner Top Dock Bar, 4K Wallpaper Engine, Calendar HUD, Live Hardware Monitor (CPU/RAM/GPU), Real-Time Weather HUD (Open-Meteo/wttr.in) & 00:03 midnight refresh. | 🟢 **`v051`** |
-| 🎙️ **[GIN-Voice](projects/Windows/GIN-Voice/README.md)** | [**`GIN-Voice.exe` (v041)**](https://github.com/GinCz/Windows_scripts/raw/main/projects/Windows/GIN-Voice/GIN-Voice.exe) | Ultra-fast native Win32 voice typing with Groq Whisper Large v3 + Qwen 27B AI Code-Switching post-processor. 0.15s latency, multilingual transliteration auto-repair (Czech/English/Russian), live customizable HUD typography, 0% CPU. | 🟢 **`v041`** |
-| 🌐 **[GIN-NetScan](projects/Windows/GIN-NetScan/README.md)** | `GIN-NetScan.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v036`** |
-| 🛡️ **[GIN-VPN](projects/Windows/GIN-VPN/README.md)** | `GIN-VPN.exe` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v094`** |
-| ☁️ **[MEGA Drive](projects/Windows/MEGA/README.md)** | `MEGA_Drive_Universal.cmd` | Standalone universal cloud drive mount engine (`M:`) with 2FA support and auto-reconnect. | 🟢 **Stable** |
-| 🛡️ **[Xray VPN Suite](projects/Windows/VPN/README.md)** | `XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` | Universal automated Xray installer for Windows 7/10/11 with GDI+ dynamic tray shield. | 🟢 **Stable** |
-| 🤖 **[CODEX ChatGPT](projects/Windows/CODEX_ChatGPT/README.md)** | `Install_ChatGPT_Codex_Universal.cmd` | Direct MS Store CDN bypass installer for ChatGPT Desktop & Codex. | 🟢 **Stable** |
+| 🎙️ **[GIN-Voice](Windows/GIN-Voice/README.md)** | [**`GIN-Voice.exe` (v041)**](https://github.com/GinCz/Windows_scripts/raw/main/Windows/GIN-Voice/GIN-Voice.exe) | Ultra-fast native Win32 voice typing with Groq Whisper Large v3 + Qwen 27B AI Code-Switching post-processor. 0.15s latency, multilingual transliteration auto-repair (Czech/English/Russian), live customizable HUD typography, 0% CPU. | 🟢 **`v041`** |
+| 🌐 **[GIN-NetScan](Windows/GIN-NetScan/README.md)** | `GIN-NetScan.exe` | Standalone native Win32 GUI network discovery & port scanner. Hardware `SendARP`, mDNS Bonjour, deep Apple model decoding, colorful owner-drawn buttons (`BS_OWNERDRAW`), native PE icon resource. | 🟢 **`v036`** |
+| 🛡️ **[GIN-VPN](Windows/GIN-VPN/README.md)** | `GIN-VPN.exe` | High-speed native Xray VLESS-Reality client with 3D Glassmorphism UI, real-time telemetry, auto-update & official Windows uninstaller. | 🟢 **`v094`** |
+| ☁️ **[MEGA Drive](Windows/MEGA/README.md)** | `MEGA_Drive_Universal.cmd` | Standalone universal cloud drive mount engine (`M:`) with 2FA support and auto-reconnect. | 🟢 **Stable** |
+| 🛡️ **[Xray VPN Suite](Windows/VPN/README.md)** | `XRAY-VPN_VladiMIR__Win-ALL_109_&&&.bat` | Universal automated Xray installer for Windows 7/10/11 with GDI+ dynamic tray shield. | 🟢 **Stable** |
+| 🤖 **[CODEX ChatGPT](Windows/CODEX_ChatGPT/README.md)** | `Install_ChatGPT_Codex_Universal.cmd` | Direct MS Store CDN bypass installer for ChatGPT Desktop & Codex. | 🟢 **Stable** |
 
-👉 **[Explore Full Windows Applications Catalog & Documentation ➔](projects/Windows/README.md)**
+👉 **[Explore Full Windows Applications Catalog & Documentation ➔](Windows/README.md)**
 
 ---
 
@@ -133,7 +133,7 @@ All native Windows applications are developed with zero external runtime depende
 | 12 | `TeraBox_Setup.bat` | Downloads and launches TeraBox PC installer | no |
 | 13 | `Google_Drive_Setup.bat` | Downloads and launches Google Drive for Desktop installer | no |
 | 14 | `Heaven_Benchmark_Setup.bat` | Downloads and launches UNIGINE Heaven Benchmark 4.0 GPU stress test | no |
-| 15 | [`Install_ChatGPT_Codex_Universal.cmd`](projects/Windows/CODEX_ChatGPT/README.md) | Universal zero-dependency installer for **ChatGPT Desktop & Codex AI Agent** (direct Store CDN bypass) | **YES** |
+| 15 | [`Install_ChatGPT_Codex_Universal.cmd`](Windows/CODEX_ChatGPT/README.md) | Universal zero-dependency installer for **ChatGPT Desktop & Codex AI Agent** (direct Store CDN bypass) | **YES** |
 
 ### SMB Network Drives
 
