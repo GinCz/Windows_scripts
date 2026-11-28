@@ -1,3 +1,18 @@
+## Update: v052 (2026-11-28)
+- **RocketDock Visual Parity & Downward Folder Dropdown Stack**:
+  - Centered top dock bar geometry across all multi-monitor configurations.
+  - Implemented Win32 `CreateRoundRectRgn` capsule rounded corners (20px radius).
+  - Custom GDI+ `OnPaint` drawing translucent dark glass shelf (`Color.FromArgb(220, 18, 20, 26)`) with subtle 1.2px top white light reflection.
+  - Pure floating transparent icon buttons with hover zoom.
+  - Downward dropdown stack menus for folder shortcuts using custom `ModernDarkMenuRenderer`.
+- **Windows .NET 4.0 Native Compilation**:
+  - Replaced C# 7 syntax (`is Type var`, `out var`) with C# 5 syntax for 100% native compilation via Windows `csc.exe`.
+- **Dual Target Deployment**:
+  - Compiled and packaged `GIN-Desktop_v052_Setup.exe`.
+  - Deployed to `D:\MEGA\WIN-FLASH\Util-WINDOWS\Graphics\GIN-Desktop_v052_Setup.exe`.
+  - Deployed to `D:\MEGA\DOCS\desktop\GIN-Desktop_v052_Setup.exe`.
+  - Purged obsolete `v050`, retaining strictly `v051` and `v052`.
+
 ## Update: v051 (2026-11-21)
 - **Full Multi-Language Dynamic Localization & Weather HUD UI Fix**:
   - Fixed dynamic translation switching across all UI controls including Weather HUD (`Weather:`, `Enable Weather`, `City:`), Hardware Monitor, and SettingsForm title bar.

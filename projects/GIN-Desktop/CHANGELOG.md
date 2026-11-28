@@ -1,5 +1,22 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v052] — 2026-11-28
+### 🚀 RocketDock Visual Parity & Downward Folder Dropdown Stacks
+- **RocketDock Aesthetic Glass Shelf**:
+  - Horizontal centering: The top dock bar is dynamically centered on the active screen (`screen.Bounds.Left + (screen.Bounds.Width - width) / 2`).
+  - Rounded capsule corners: Applied Win32 `CreateRoundRectRgn(0, 0, width, height, 20, 20)` and `SetWindowRgn` for authentic RocketDock curved geometry.
+  - Translucent glass shelf background: Custom `OnPaint` rendering using `Color.FromArgb(220, 18, 20, 26)` with a 1.2px top white glass highlight line (`ARGB 85, 255, 255, 255`) and subtle border.
+  - Floating transparent icon buttons: Borderless icons with hover zoom and instant tooltip display.
+- **Interactive Downward Folder Dropdown Menus**:
+  - Clicking or hovering folder shortcuts opens a sleek dark stack menu (`ModernDarkMenuRenderer`) downwards, listing folder contents and child subdirectories directly on screen.
+- **Windows .NET Framework 4.0 Compatibility**:
+  - Refactored C# pattern matching to ensure zero-dependency native compilation with Windows .NET Framework 4.0 `csc.exe` (`C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe`).
+- **Turnkey Dual-Target Deployment & 2-Version Retention**:
+  - Built `GIN-Desktop_v052_Setup.exe` (SHA-256: `6a03123f451f46642751402ee0fa6c589087d7d771e9cce635f8a8e064774e33`).
+  - Deployed to Flash drive: `D:\MEGA\WIN-FLASH\Util-WINDOWS\Graphics\GIN-Desktop_v052_Setup.exe`.
+  - Deployed to Desktop: `D:\MEGA\DOCS\desktop\GIN-Desktop_v052_Setup.exe`.
+  - Purged obsolete `v050`, strictly retaining the 2 latest versions (`v051` and `v052`).
+
 ## [v051] — 2026-11-21
 ### 🌐 Full Multi-Language Dynamic Localization & Weather HUD UI Fix
 - **Dynamic Translation Switching for Weather & Hardware**:
