@@ -14,14 +14,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v055")]
-[assembly: AssemblyDescription("GIN-Desktop_v055")]
+[assembly: AssemblyTitle("GIN-Desktop_v056")]
+[assembly: AssemblyDescription("GIN-Desktop_v056")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v055")]
+[assembly: AssemblyProduct("GIN-Desktop_v056")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.55.0.0")]
-[assembly: AssemblyFileVersion("0.55.0.0")]
+[assembly: AssemblyVersion("0.56.0.0")]
+[assembly: AssemblyFileVersion("0.56.0.0")]
 
 namespace GINDesktop {
 
@@ -210,7 +210,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -623,7 +623,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v055" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v056" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -752,7 +752,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v055" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v056" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -881,7 +881,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v055" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v056" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1352,6 +1352,211 @@ namespace GINDesktop {
     // ==========================================
     // SHELL & ICON UTILITIES
     // ==========================================
+    // ==========================================
+    // NATIVE WINDOWS SHELL CONTEXT MENU (IContextMenu)
+    // ==========================================
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("000214e4-0000-0000-c000-000000000046")]
+    public interface IContextMenu {
+        [PreserveSig]
+        int QueryContextMenu(IntPtr hmenu, uint indexMenu, uint idCmdFirst, uint idCmdLast, uint uFlags);
+        [PreserveSig]
+        int InvokeCommand(ref CMINVOKECOMMANDINFOEX pici);
+        [PreserveSig]
+        int GetCommandString(UIntPtr idcmd, uint uflags, IntPtr reserved, StringBuilder commandstring, int cch);
+    }
+
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("000214f4-0000-0000-c000-000000000046")]
+    public interface IContextMenu2 : IContextMenu {
+        [PreserveSig]
+        new int QueryContextMenu(IntPtr hmenu, uint indexMenu, uint idCmdFirst, uint idCmdLast, uint uFlags);
+        [PreserveSig]
+        new int InvokeCommand(ref CMINVOKECOMMANDINFOEX pici);
+        [PreserveSig]
+        new int GetCommandString(UIntPtr idcmd, uint uflags, IntPtr reserved, StringBuilder commandstring, int cch);
+        [PreserveSig]
+        int HandleMenuMsg(uint uMsg, IntPtr wParam, IntPtr lParam);
+    }
+
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("bcfce0a0-ec17-11d0-8d10-00a0c90f2719")]
+    public interface IContextMenu3 : IContextMenu2 {
+        [PreserveSig]
+        new int QueryContextMenu(IntPtr hmenu, uint indexMenu, uint idCmdFirst, uint idCmdLast, uint uFlags);
+        [PreserveSig]
+        new int InvokeCommand(ref CMINVOKECOMMANDINFOEX pici);
+        [PreserveSig]
+        new int GetCommandString(UIntPtr idcmd, uint uflags, IntPtr reserved, StringBuilder commandstring, int cch);
+        [PreserveSig]
+        new int HandleMenuMsg(uint uMsg, IntPtr wParam, IntPtr lParam);
+        [PreserveSig]
+        int HandleMenuMsg2(uint uMsg, IntPtr wParam, IntPtr lParam, ref IntPtr plResult);
+    }
+
+    [ComImport]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    [Guid("000214E6-0000-0000-C000-000000000046")]
+    public interface IShellFolder {
+        void ParseDisplayName(IntPtr hwnd, IntPtr pbc, [MarshalAs(UnmanagedType.LPWStr)] string pszDisplayName, ref uint pchEaten, out IntPtr ppidl, ref uint pdwAttributes);
+        void EnumObjects(IntPtr hwnd, uint grfFlags, out IntPtr ppenumIDList);
+        void BindToObject(IntPtr pidl, IntPtr pbc, [In] ref Guid riid, out IntPtr ppv);
+        void BindToStorage(IntPtr pidl, IntPtr pbc, [In] ref Guid riid, out IntPtr ppv);
+        [PreserveSig]
+        int CompareIDs(IntPtr lParam, IntPtr pidl1, IntPtr pidl2);
+        void CreateViewObject(IntPtr hwndOwner, [In] ref Guid riid, out IntPtr ppv);
+        void GetAttributesOf(uint cidl, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] IntPtr[] apidl, ref uint rgfInOut);
+        [PreserveSig]
+        int GetUIObjectOf(IntPtr hwndOwner, uint cidl, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] IntPtr[] apidl, [In] ref Guid riid, ref uint rgfReserved, out IntPtr ppv);
+        void GetDisplayNameOf(IntPtr pidl, uint uFlags, IntPtr lpName);
+        void SetNameOf(IntPtr hwnd, IntPtr pidl, [MarshalAs(UnmanagedType.LPWStr)] string pszName, uint uFlags, out IntPtr ppidlOut);
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct CMINVOKECOMMANDINFOEX {
+        public uint cbSize;
+        public uint fMask;
+        public IntPtr hwnd;
+        public IntPtr lpVerb;
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string lpParameters;
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string lpDirectory;
+        public int nShow;
+        public uint dwHotKey;
+        public IntPtr hIcon;
+        [MarshalAs(UnmanagedType.LPStr)]
+        public string lpTitle;
+        public IntPtr lpVerbW;
+        [MarshalAs(UnmanagedType.LPWStr)]
+        public string lpParametersW;
+        [MarshalAs(UnmanagedType.LPWStr)]
+        public string lpDirectoryW;
+        [MarshalAs(UnmanagedType.LPWStr)]
+        public string lpTitleW;
+        public POINT ptInvoke;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT {
+        public int x;
+        public int y;
+    }
+
+    public static class ShellMenuHelper {
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, ExactSpelling = true)]
+        public static extern int SHParseDisplayName([MarshalAs(UnmanagedType.LPWStr)] string pszName, IntPtr pbc, out IntPtr ppidl, uint sfgaoIn, out uint psfgaoOut);
+
+        [DllImport("shell32.dll", ExactSpelling = true)]
+        public static extern int SHBindToParent(IntPtr pidl, [In] ref Guid riid, out IntPtr ppv, out IntPtr pidlLast);
+
+        [DllImport("ole32.dll", ExactSpelling = true)]
+        public static extern void CoTaskMemFree(IntPtr pv);
+
+        [DllImport("user32.dll", ExactSpelling = true)]
+        public static extern IntPtr CreatePopupMenu();
+
+        [DllImport("user32.dll", ExactSpelling = true)]
+        public static extern bool DestroyMenu(IntPtr hMenu);
+
+        [DllImport("user32.dll", ExactSpelling = true)]
+        public static extern uint TrackPopupMenuEx(IntPtr hmenu, uint fuFlags, int x, int y, IntPtr hwnd, IntPtr lptpm);
+
+        public const uint CMF_NORMAL = 0x00000000;
+        public const uint CMF_EXPLORE = 0x00000004;
+        public const uint TPM_RETURNCMD = 0x0100;
+        public const uint TPM_RIGHTBUTTON = 0x0002;
+        public const int SW_SHOWNORMAL = 1;
+        public const uint CMIC_MASK_UNICODE = 0x00004000;
+        public const uint CMIC_MASK_PTINVOKE = 0x20000000;
+
+        private class HookNativeWindow : NativeWindow {
+            private IContextMenu2 _ctx2;
+            private IContextMenu3 _ctx3;
+
+            public HookNativeWindow(IContextMenu ctx) {
+                _ctx2 = ctx as IContextMenu2;
+                _ctx3 = ctx as IContextMenu3;
+            }
+
+            protected override void WndProc(ref Message m) {
+                if (_ctx3 != null) {
+                    IntPtr lResult = IntPtr.Zero;
+                    if (_ctx3.HandleMenuMsg2((uint)m.Msg, m.WParam, m.LParam, ref lResult) == 0) {
+                        m.Result = lResult;
+                        return;
+                    }
+                } else if (_ctx2 != null) {
+                    if (_ctx2.HandleMenuMsg((uint)m.Msg, m.WParam, m.LParam) == 0) {
+                        m.Result = IntPtr.Zero;
+                        return;
+                    }
+                }
+                base.WndProc(ref m);
+            }
+        }
+
+        public static void ShowShellContextMenu(string path, Point screenPoint, IWin32Window parent) {
+            if (string.IsNullOrEmpty(path) || (!File.Exists(path) && !Directory.Exists(path))) return;
+
+            IntPtr pidlFull = IntPtr.Zero;
+            IntPtr pParentFolder = IntPtr.Zero;
+            IntPtr pContextMenu = IntPtr.Zero;
+            IntPtr hMenu = IntPtr.Zero;
+            uint sfgaoOut = 0;
+
+            try {
+                int hr = SHParseDisplayName(path, IntPtr.Zero, out pidlFull, 0, out sfgaoOut);
+                if (hr != 0 || pidlFull == IntPtr.Zero) return;
+
+                Guid iidShellFolder = new Guid("000214E6-0000-0000-C000-000000000046");
+                IntPtr pidlRelative = IntPtr.Zero;
+                hr = SHBindToParent(pidlFull, ref iidShellFolder, out pParentFolder, out pidlRelative);
+                if (hr != 0 || pParentFolder == IntPtr.Zero || pidlRelative == IntPtr.Zero) return;
+
+                IShellFolder parentFolder = (IShellFolder)Marshal.GetObjectForIUnknown(pParentFolder);
+                Guid iidContextMenu = new Guid("000214e4-0000-0000-c000-000000000046");
+                uint reserved = 0;
+                hr = parentFolder.GetUIObjectOf(parent != null ? parent.Handle : IntPtr.Zero, 1, new IntPtr[] { pidlRelative }, ref iidContextMenu, ref reserved, out pContextMenu);
+                if (hr != 0 || pContextMenu == IntPtr.Zero) return;
+
+                IContextMenu ctx = (IContextMenu)Marshal.GetObjectForIUnknown(pContextMenu);
+                hMenu = CreatePopupMenu();
+                if (hMenu == IntPtr.Zero) return;
+
+                ctx.QueryContextMenu(hMenu, 0, 1, 0x7FFF, CMF_NORMAL | CMF_EXPLORE);
+
+                HookNativeWindow hook = new HookNativeWindow(ctx);
+                IntPtr ownerHwnd = parent != null ? parent.Handle : IntPtr.Zero;
+                hook.AssignHandle(ownerHwnd);
+
+                uint cmd = TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_RIGHTBUTTON, screenPoint.X, screenPoint.Y, ownerHwnd, IntPtr.Zero);
+                hook.ReleaseHandle();
+
+                if (cmd > 0 && cmd <= 0x7FFF) {
+                    CMINVOKECOMMANDINFOEX cmi = new CMINVOKECOMMANDINFOEX();
+                    cmi.cbSize = (uint)Marshal.SizeOf(typeof(CMINVOKECOMMANDINFOEX));
+                    cmi.fMask = CMIC_MASK_UNICODE | CMIC_MASK_PTINVOKE;
+                    cmi.hwnd = ownerHwnd;
+                    cmi.lpVerb = (IntPtr)(cmd - 1);
+                    cmi.lpVerbW = (IntPtr)(cmd - 1);
+                    cmi.nShow = SW_SHOWNORMAL;
+                    cmi.ptInvoke = new POINT { x = screenPoint.X, y = screenPoint.Y };
+                    ctx.InvokeCommand(ref cmi);
+                }
+            } catch {
+            } finally {
+                if (hMenu != IntPtr.Zero) DestroyMenu(hMenu);
+                if (pContextMenu != IntPtr.Zero) Marshal.Release(pContextMenu);
+                if (pParentFolder != IntPtr.Zero) Marshal.Release(pParentFolder);
+                if (pidlFull != IntPtr.Zero) CoTaskMemFree(pidlFull);
+            }
+        }
+    }
+
     public static class ShellHelper {
         private static readonly Dictionary<string, Image> _iconCache = new Dictionary<string, Image>(StringComparer.OrdinalIgnoreCase);
 
@@ -1880,7 +2085,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1902,7 +2107,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1926,7 +2131,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2592,6 +2797,7 @@ namespace GINDesktop {
         private ToolTip _toolTip;
         private FileSystemWatcher _fsWatcher;
         private Action _openSettingsAction;
+        private bool _isShellMenuOpen = false;
 
         private const int WS_EX_NOACTIVATE = 0x08000000;
         private const int WS_EX_TOOLWINDOW = 0x00000080;
@@ -2803,7 +3009,15 @@ namespace GINDesktop {
                     }
                 };
                 btn.MouseUp += (s, e) => {
-                    if (e.Button == MouseButtons.Right) ShowMainMenu(btn);
+                    if (e.Button == MouseButtons.Right) {
+                        Point pt = btn.PointToScreen(new Point(e.X, e.Y));
+                        _isShellMenuOpen = true;
+                        try {
+                            ShellMenuHelper.ShowShellContextMenu(fItem.FullPath, pt, this);
+                        } finally {
+                            _isShellMenuOpen = false;
+                        }
+                    }
                 };
 
                 _dockControls.Add(btn);
@@ -2869,7 +3083,15 @@ namespace GINDesktop {
                     HideDock();
                 };
                 btn.MouseUp += (s, e) => {
-                    if (e.Button == MouseButtons.Right) ShowMainMenu(btn);
+                    if (e.Button == MouseButtons.Right) {
+                        Point pt = btn.PointToScreen(new Point(e.X, e.Y));
+                        _isShellMenuOpen = true;
+                        try {
+                            ShellMenuHelper.ShowShellContextMenu(scItem.FullPath, pt, this);
+                        } finally {
+                            _isShellMenuOpen = false;
+                        }
+                    }
                 };
 
                 _dockControls.Add(btn);
@@ -3155,6 +3377,10 @@ namespace GINDesktop {
         }
 
         private void WatchdogTimer_Tick(object sender, EventArgs e) {
+            if (_isShellMenuOpen) {
+                _outOfBoundsTicks = 0;
+                return;
+            }
             if (!_config.EnableDock) {
                 if (_isDockVisible) HideDock();
                 return;
@@ -3288,7 +3514,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v055");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v056");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -4363,7 +4589,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v055", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v056", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -4420,7 +4646,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v055",
+                Text = "v056",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -4872,7 +5098,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v055";
+        public const string CURRENT_VERSION = "v056";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -5107,7 +5333,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v055");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v056");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;

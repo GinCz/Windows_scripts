@@ -1,5 +1,19 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v056] — 2026-11-28
+### 🖱️ Native Windows Shell Context Menu on Right-Click
+- **Standard Windows Explorer Context Menu for Shortcuts & Folders**:
+  - Implemented `ShellMenuHelper` using native Windows Shell COM interfaces (`IContextMenu`, `IContextMenu2`, `IContextMenu3`, `IShellFolder`) and `TrackPopupMenuEx`.
+  - Right-clicking any dock icon (folder or shortcut) immediately invokes the standard Windows shell menu.
+  - Full support for all shell actions: «Свойства» (Properties), «Переименовать» (Rename), «Отправить» (Send to), «Запуск от имени администратора» (Run as administrator), «Расположение файла» (Open file location), «Вырезать/Копировать» (Cut/Copy), «Удалить» (Delete), and shell extension submenus.
+  - Submenu message pump: Custom `NativeWindow` hooks handle `WM_INITMENUPOPUP`, `WM_DRAWITEM`, `WM_MEASUREITEM`, and `WM_MENUCHAR` to support cascading submenus (Send to, Open with, etc.).
+  - Watchdog guard: `_isShellMenuOpen` lock prevents the dock bar from auto-hiding while the user is interacting with the Windows context menu.
+  - Dock background right-click remains assigned to `ShowMainMenu` for instant access to GIN-Desktop Settings, Reload, and Exit.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v056_Setup.exe` (819,712 bytes, SHA-256: `e1c389a6cd5fefe859feb9ce217cb1da5653cec9b8da6c9b09a39336585ba21c`).
+  - Deployed to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v056_Setup.exe` (purged `v055`, strictly 1 active latest version).
+  - Deployed to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v056_Setup.exe` (purged `v054`, strictly 2 versions: `v055` and `v056`).
+
 ## [v055] — 2026-11-28
 ### 🎨 RocketDock Visual Styles & Smooth Hover Magnification Zoom
 - **6 Signature Dock Visual Styles (RocketDock Parity Skins)**:

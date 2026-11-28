@@ -1,3 +1,16 @@
+## Update: v056 (2026-11-28)
+- **Native Windows Shell Context Menu on Right-Click**:
+  - Implemented `ShellMenuHelper` with native Windows Shell COM interfaces (`IContextMenu`, `IContextMenu2`, `IContextMenu3`, `IShellFolder`) and `TrackPopupMenuEx`.
+  - Right-clicking any dock icon (folder or shortcut) immediately invokes the standard Windows Explorer shell menu («Свойства», «Переименовать», «Отправить», «Запуск от имени администратора», «Расположение файла», «Вырезать/Копировать», «Удалить»).
+  - Submenu message pump: Custom `NativeWindow` hooks handle `WM_INITMENUPOPUP`, `WM_DRAWITEM`, `WM_MEASUREITEM`, and `WM_MENUCHAR` to support cascading submenus (Send to, Open with, etc.).
+  - Watchdog guard: `_isShellMenuOpen` lock prevents the dock bar from auto-hiding while the user is interacting with the Windows context menu.
+  - Dock background right-click remains assigned to `ShowMainMenu` for instant access to GIN-Desktop Settings, Reload, and Exit.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v056_Setup.exe` (819,712 bytes, SHA-256: `e1c389a6cd5fefe859feb9ce217cb1da5653cec9b8da6c9b09a39336585ba21c`).
+  - Deployed to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v056_Setup.exe` (purged `v055`, strictly 1 active latest version).
+  - Deployed to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v056_Setup.exe` (purged `v054`, strictly 2 versions: `v055` and `v056`).
+  - Mirrored release artifacts to `GIN-Wallpaper` and `Windows_scripts/GIN-Desktop`.
+
 ## Update: v055 (2026-11-28)
 - **6 Signature Dock Visual Styles (RocketDock Parity Skins)**:
   - Added support for 6 visual dock shelf skins selectable directly in Settings -> Dock Bar (`TabDock`):
