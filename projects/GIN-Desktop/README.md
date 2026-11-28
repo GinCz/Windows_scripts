@@ -1,4 +1,4 @@
-# ⚡ GIN-Desktop `v057` (Universal Release)
+# ⚡ GIN-Desktop `v058` (Universal Release)
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 <br/>
 
-[Download GIN-Desktop v057 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v057_Setup.exe)
+[Download GIN-Desktop v058 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v058_Setup.exe)
 
 </div>
 
@@ -35,14 +35,16 @@
 
 ---
 
-## 🚀 What's New in v057
+## 🚀 What's New in v058
 
+- **Clean Opaque Dock Buffer Rendering (Zero Static Noise & Ghosting)**: Resolved double-buffer static noise ("помехи") and window ghosting artifacts during hover magnification by setting `ControlStyles.Opaque, true` and completely filling dock button rectangles with solid shelf background before drawing pills, icons, and text.
+- **Graceful Modern Icon Fallback**: Replaced legacy brown block fallback with sleek rounded frosted placeholder glyph when icons fail to resolve.
 - **Configurable Dock Placement (Top, Left, Right)**: Easily choose your preferred dock position directly in Settings (Tab «Докер») with instant orientation adaptation (horizontal at the top, vertical on the left or right edge).
 - **Directional Folder Menus**: Folder popup menus intelligently orient themselves based on dock placement (downwards for top dock, rightwards for left dock, leftwards for right dock).
 - **Native Windows Shell Context Menu on Right-Click**: Right-clicking any shortcut or folder on the dock bar immediately opens the standard native Windows Explorer context menu with full functionality («Свойства», «Переименовать», «Отправить», «Запуск от имени администратора», «Расположение файла», «Вырезать/Копировать», «Удалить»).
 - **6 Signature Dock Visual Styles (RocketDock Parity Skins)**: Choose between Aero Glass, macOS Frosted, Dark Stealth, Crystal Clear, Classic Metal, and Neon Cyber directly in Settings.
 - **Interactive RocketDock Hover Magnification Zoom**: Moving the cursor over dock icons activates smooth, animated magnification (1.2x, 1.35x, 1.5x) with high-quality bicubic resampling and style-specific glow capsule pills.
-- **Single Versioned Setup on Desktop**: Retains strictly 1 versioned installer (`GIN-Desktop_v057_Setup.exe`) on MEGA Desktop.
+- **Single Versioned Setup on Desktop**: Retains strictly 1 versioned installer (`GIN-Desktop_v058_Setup.exe`) on MEGA Desktop.
 
 - **Native Windows Shell Context Menu on Right-Click**: Right-clicking any shortcut or folder on the dock bar immediately opens the standard native Windows Explorer context menu with full functionality («Свойства», «Переименовать», «Отправить», «Запуск от имени администратора», «Расположение файла», «Вырезать/Копировать», «Удалить»).
 - **6 Signature Dock Visual Styles (RocketDock Parity Skins)**: Choose between Aero Glass (glossy dark glass), macOS Frosted (light frosted glass), Dark Stealth (OLED matte carbon), Crystal Clear (floating dock), Classic Metal (3D brushed aluminum bevel), and Neon Cyber (cyberpunk neon glow) directly in Settings.

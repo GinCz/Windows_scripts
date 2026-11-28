@@ -1,5 +1,20 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v058] — 2026-11-28
+### 🛡️ Clean Opaque Dock Buffer Rendering (Zero Static Noise & Ghosting Fix)
+- **Root Cause Resolution (Uninitialized Double-Buffer Elimination)**:
+  - Fixed visual interference and RGB static noise ("помехи") where `DockButton` controls running with `ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer` without calling `base.OnPaint` left the double-buffered graphics surface uninitialized.
+  - Eliminated ghosting artifacts where background window content (such as the "Применить" button in the Settings form) showed through unpainted dock button areas.
+- **Solid Shelf Color Fill & Opaque Pipeline (`DockButton.OnPaint`)**:
+  - `DockButton` now sets `ControlStyles.Opaque, true` and explicitly fills its client rectangle with the theme's opaque shelf background color (`GetShelfBackgroundColor`) before rendering hover pills, folder pills, icons, and text labels.
+  - Hover pills now blend smoothly and cleanly on top of the solid shelf color without static speckles or noise halos.
+- **Graceful Fallback Icon Rendering (`ShellHelper.GetIconImage`)**:
+  - Replaced the legacy raw brown fill (`Color.FromArgb(140, 95, 45)`) with an elegant, modern frosted application placeholder icon (antialiased rounded outline and translucent glyph) whenever an icon extraction fails or shortcut target is unresolvable.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v058_Setup.exe` (828,928 bytes, SHA-256: `7dbe19f038aca624160c5adef1b0b9922485f3897d8331c1605773439141ef81`).
+  - Deployed to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v058_Setup.exe` (purged `v057`, strictly 1 active latest version).
+  - Deployed to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v058_Setup.exe` (purged `v056`, strictly 2 versions: `v057` and `v058`).
+
 ## [v057] — 2026-11-28
 ### 📍 Configurable Dock Screen Placement (Top, Left, Right)
 - **Position Selection in Settings (`SettingsForm`)**:
