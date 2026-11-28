@@ -1,5 +1,30 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v055] — 2026-11-28
+### 🎨 RocketDock Visual Styles & Smooth Hover Magnification Zoom
+- **6 Signature Dock Visual Styles (RocketDock Parity Skins)**:
+  - Added support for 6 visual dock shelf skins selectable directly in Settings -> Dock Bar (`TabDock`):
+    1. **Aero Glass (Глянцевое стекло)**: Translucent smoky glass shelf (`Color.FromArgb(220, 18, 20, 26)`) with crisp 1.5px top white reflection line and subtle 3D border.
+    2. **macOS Frosted (Матовое стекло)**: Translucent frosted light glass shelf (`Color.FromArgb(220, 238, 242, 248)`) with high-contrast text and glossy top reflection line.
+    3. **Dark Stealth (Тёмный карбон)**: Deep OLED matte black shelf (`Color.FromArgb(245, 12, 13, 16)`) with subtle graphite border and minimalist styling.
+    4. **Crystal Clear (Парящий док)**: Ultra-transparent floating dock shelf (`Color.FromArgb(50, 10, 12, 18)`) for pure floating icon aesthetics.
+    5. **Classic Metal (3D Металл)**: Classic RocketDock 3D brushed metallic shelf with vertical linear gradient, top bevel highlight, and bottom shadow.
+    6. **Neon Cyber (Неоновый кибер)**: Deep night violet shelf (`Color.FromArgb(235, 14, 10, 26)`) with neon cyan top line and magenta accent border.
+- **RocketDock Hover Magnification & Smooth Icon Zoom (`DockButton`)**:
+  - Implemented high-performance double-buffered `DockButton : Button` control replacing standard WinForms buttons.
+  - Smooth dynamic icon magnification on hover: Icons expand seamlessly to 1.2x, 1.35x (default), or 1.5x with a 15ms animation timer interpolating scales across 4-5 frames.
+  - High-Quality Bicubic rendering (`InterpolationMode.HighQualityBicubic` and `PixelOffsetMode.HighQuality`) ensures razor-sharp icons at all magnification levels.
+  - Style-aware hover capsule pills: Each style features custom rounded hover indicators (frosted white capsule for macOS, glass glow for Aero, dark slate pill for Stealth, embossed 3D bevel for Classic Metal, neon cyan glow for Cyberpunk).
+  - Clean state reset on dock hide: When the dock auto-hides or loses focus, all icon zoom scales reset cleanly to 1.0x.
+- **Settings Form Enhancements (`SettingsForm`)**:
+  - Added visual Dock Style selector card buttons on Tab «Докер».
+  - Added toggleable checkbox: «Увеличение иконок при наведении (эффект RocketDock)» (`EnableDockZoom`).
+  - Added 3 zoom factor buttons: 1.2x, 1.35x, 1.5x (`DockZoomFactor`).
+  - Full dynamic localization across English, Russian, and Czech.
+- **Dual-Target Delivery & Version Rotation**:
+  - Delivered `GIN-Desktop_v055_Setup.exe` to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v055_Setup.exe` (purged `v054`, strictly 1 active latest version).
+  - Delivered `GIN-Desktop_v055_Setup.exe` to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v055_Setup.exe` (purged `v053`, strictly 2 active versions: `v054` and `v055`).
+
 ## [v054] — 2026-11-28
 ### 🚀 Pure RocketDock Floating Aesthetic & Clean Shortcut Icon Extraction
 - **Removed Left Dock Brand Button**:

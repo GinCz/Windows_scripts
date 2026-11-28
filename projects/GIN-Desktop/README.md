@@ -1,4 +1,4 @@
-# ⚡ GIN-Desktop `v054` (Universal Release)
+# ⚡ GIN-Desktop `v055` (Universal Release)
 
 <div align="center">
 
@@ -9,12 +9,12 @@
 
 <br/>
 
-### 🌟 Unified Windows Desktop Companion: Hot-Corner Dock Bar, 4K Wallpaper Engine, Calendar HUD, Live Hardware Monitor & Real-Time Weather
+### 🌟 Unified Windows Desktop Companion: Hot-Corner Dock Bar with 6 Visual Themes & RocketDock Hover Zoom, 4K Wallpaper Engine, Calendar HUD, Live Hardware Monitor & Real-Time Weather
 **Universal 32/64-bit • Native WinAPI • Independent Modular ON/OFF Engines • 12 Signature Themes • 12 Languages**
 
 <br/>
 
-[Download GIN-Desktop v054 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v054_Setup.exe)
+[Download GIN-Desktop v055 Setup.exe](https://github.com/GinCz/Windows_scripts/blob/main/projects/GIN-Desktop/GIN-Desktop_v055_Setup.exe)
 
 </div>
 
@@ -25,7 +25,7 @@
 **GIN-Desktop** is an ultra-lightweight, high-performance Windows desktop companion built in native C# with pure WinAPI and GDI+ (~2–4 MB RAM idle).
 
 ### Key Integrated Modules:
-1. **Top Hot-Corner Dock Bar**: An auto-hiding application launcher that slides smoothly from the top of the monitor when the cursor moves to the top-left corner. Supports folder trees, shortcuts, drag & drop, and customized brand icons.
+1. **Top Hot-Corner Dock Bar**: An auto-hiding application launcher that slides smoothly from the top of the monitor when the cursor moves to the top-left corner. Features 6 signature visual skins (Aero Glass, macOS Frosted, Dark Stealth, Crystal Clear, Classic Metal, Neon Cyber) and interactive RocketDock hover magnification zoom (1.2x, 1.35x, 1.5x). Supports folder trees, shortcuts, drag & drop, and customized brand icons.
 2. **Dynamic 4K Wallpaper & Calendar HUD**: Multi-tier 4K background downloader with automatic daily midnight refresh at 00:03, 24 curated typefaces, and dual alternating desktop buffers.
 3. **Celestial Shimmer Audio Engine**: Signature peaceful velvet bells chime (from GIN-Wallpaper) on every wallpaper transition and sound activation.
 4. **Hardware Monitor Under Weather Badge**: Real-time metrics badge rendered directly onto the desktop wallpaper below the Weather pill displaying CPU %, RAM %, GPU %, and GPU Temperature (°C).
@@ -35,7 +35,12 @@
 
 ---
 
-## 🚀 What's New in v050
+## 🚀 What's New in v055
+
+- **6 Signature Dock Visual Styles (RocketDock Parity Skins)**: Choose between Aero Glass (glossy dark glass), macOS Frosted (light frosted glass), Dark Stealth (OLED matte carbon), Crystal Clear (floating dock), Classic Metal (3D brushed aluminum bevel), and Neon Cyber (cyberpunk neon glow) directly in Settings.
+- **Interactive RocketDock Hover Magnification Zoom**: Moving the cursor over dock icons activates smooth, animated magnification (1.2x, 1.35x, 1.5x) with high-quality bicubic resampling and style-specific glow capsule pills.
+- **Custom DockButton Double-Buffered WinAPI Engine**: 100% flicker-free rendering with smooth transitions and automatic scale reset on dock auto-hide.
+- **Single Versioned Setup on Desktop**: Retains strictly 1 versioned installer (`GIN-Desktop_v055_Setup.exe`) on MEGA Desktop.
 
 - **Critical Windows .NET Framework Installer Launch Fix**: Resolved root cause where `GIN-Desktop_vXXX_Setup.exe` failed to launch or install silently on clean Windows workstations (`MissingMethodException` on Mono's single-char `Trim(char)` overload). Enforced explicit `char[]` overloads across all modules.
 - **Single Clean Start Menu Shortcut**: Installer writes strictly ONE direct shortcut (`GIN Desktop.lnk`) into the Windows Start Menu Programs root, purging legacy folders and eliminating clutter.

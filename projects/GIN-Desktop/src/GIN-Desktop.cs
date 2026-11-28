@@ -14,14 +14,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v054")]
-[assembly: AssemblyDescription("GIN-Desktop_v054")]
+[assembly: AssemblyTitle("GIN-Desktop_v055")]
+[assembly: AssemblyDescription("GIN-Desktop_v055")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v054")]
+[assembly: AssemblyProduct("GIN-Desktop_v055")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.54.0.0")]
-[assembly: AssemblyFileVersion("0.54.0.0")]
+[assembly: AssemblyVersion("0.55.0.0")]
+[assembly: AssemblyFileVersion("0.55.0.0")]
 
 namespace GINDesktop {
 
@@ -210,7 +210,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -623,7 +623,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v054" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v055" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -699,6 +699,16 @@ namespace GINDesktop {
                 { "SortDateModified", "By Date Modified" },
                 { "ShowLabels", "Show Item Labels:" },
                 { "ShowItemLabels", "Show item labels (icons only when disabled)" },
+                { "DockStyle", "Dock Bar Style:" },
+                { "StyleAeroGlass", "Aero Glass (Glossy Shelf)" },
+                { "StyleMacFrosted", "macOS Frosted (Matte Glass)" },
+                { "StyleDarkStealth", "Dark Stealth (Carbon Matte)" },
+                { "StyleCrystalClear", "Crystal Clear (Floating Dock)" },
+                { "StyleClassicMetal", "Classic Metal (3D Bevel)" },
+                { "StyleNeonCyber", "Neon Cyber (Glow Accent)" },
+                { "DockEffectsHeader", "RocketDock Effects & Animation:" },
+                { "EnableDockZoom", "Icon zoom on mouse hover (RocketDock effect)" },
+                { "DockZoomFactor", "Zoom Scale:" },
                 { "LabelsFoldersOnly", "Folders Only" },
                 { "LabelsAll", "All Items" },
                 { "LabelsNone", "Icons Only (No Text)" },
@@ -742,7 +752,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v054" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v055" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -818,6 +828,16 @@ namespace GINDesktop {
                 { "SortDateModified", "По дате изменения" },
                 { "ShowLabels", "Подписи значков:" },
                 { "ShowItemLabels", "Отображать названия (только иконки при выключении)" },
+                { "DockStyle", "Внешний вид докера (стиль оформления):" },
+                { "StyleAeroGlass", "Aero Glass (Глянцевое стекло)" },
+                { "StyleMacFrosted", "macOS Frosted (Матовое стекло)" },
+                { "StyleDarkStealth", "Dark Stealth (Тёмный карбон)" },
+                { "StyleCrystalClear", "Crystal Clear (Парящий док)" },
+                { "StyleClassicMetal", "Classic Metal (3D Металл)" },
+                { "StyleNeonCyber", "Neon Cyber (Неоновый кибер)" },
+                { "DockEffectsHeader", "Эффекты и анимация RocketDock:" },
+                { "EnableDockZoom", "Увеличение иконок при наведении (эффект RocketDock)" },
+                { "DockZoomFactor", "Масштаб:" },
                 { "LabelsFoldersOnly", "Только у папок" },
                 { "LabelsAll", "У всех значков" },
                 { "LabelsNone", "Без текста (только иконки)" },
@@ -861,7 +881,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v054" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v055" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -937,6 +957,16 @@ namespace GINDesktop {
                 { "SortDateModified", "Podle data změny" },
                 { "ShowLabels", "Zobrazení popisků:" },
                 { "ShowItemLabels", "Zobrazovat popisky (pouze ikony při vypnutí)" },
+                { "DockStyle", "Vzhled doku (styl zobrazení):" },
+                { "StyleAeroGlass", "Aero Glass (Lesklé sklo)" },
+                { "StyleMacFrosted", "macOS Frosted (Matné sklo)" },
+                { "StyleDarkStealth", "Dark Stealth (Tmavý karbon)" },
+                { "StyleCrystalClear", "Crystal Clear (Plovoucí dok)" },
+                { "StyleClassicMetal", "Classic Metal (3D Kov)" },
+                { "StyleNeonCyber", "Neon Cyber (Neonový akcent)" },
+                { "DockEffectsHeader", "Efekty a animace RocketDock:" },
+                { "EnableDockZoom", "Zvětšení ikon při najetí myší (RocketDock efekt)" },
+                { "DockZoomFactor", "Měřítko:" },
                 { "LabelsFoldersOnly", "Pouze pro složky" },
                 { "LabelsAll", "Pro všechny položky" },
                 { "LabelsNone", "Pouze ikony bez textu" },
@@ -1030,6 +1060,9 @@ namespace GINDesktop {
         public string SortingMode = "AlphaAZ";
         public string ShowLabels = "FoldersOnly";
         public bool ShowItemLabels = true;
+        public string DockStyle = "AeroGlass";
+        public bool EnableDockZoom = true;
+        public float DockZoomFactor = 1.35f;
         public int AutoHideDelayMs = 450;
         public int HotCornerWidth = 15;
         public int HotCornerHeight = 15;
@@ -1154,6 +1187,9 @@ namespace GINDesktop {
                     cfg.SortingMode = GetString(json, "SortingMode", cfg.SortingMode);
                     cfg.ShowLabels = GetString(json, "ShowLabels", cfg.ShowLabels);
                     cfg.ShowItemLabels = GetBool(json, "ShowItemLabels", cfg.ShowItemLabels);
+                cfg.DockStyle = GetString(json, "DockStyle", cfg.DockStyle);
+                cfg.EnableDockZoom = GetBool(json, "EnableDockZoom", cfg.EnableDockZoom);
+                cfg.DockZoomFactor = GetFloat(json, "DockZoomFactor", cfg.DockZoomFactor);
                     cfg.AutoHideDelayMs = GetInt(json, "AutoHideDelayMs", cfg.AutoHideDelayMs);
                     cfg.HotCornerWidth = GetInt(json, "HotCornerWidth", cfg.HotCornerWidth);
                     cfg.HotCornerHeight = GetInt(json, "HotCornerHeight", cfg.HotCornerHeight);
@@ -1206,6 +1242,9 @@ namespace GINDesktop {
                 sb.AppendLine("  \"SortingMode\": \"" + Escape(SortingMode) + "\",");
                 sb.AppendLine("  \"ShowLabels\": \"" + Escape(ShowLabels) + "\",");
                 sb.AppendLine("  \"ShowItemLabels\": " + (ShowItemLabels ? "true" : "false") + ",");
+            sb.AppendLine("  \"DockStyle\": \"" + Escape(DockStyle) + "\",");
+            sb.AppendLine("  \"EnableDockZoom\": " + (EnableDockZoom ? "true" : "false") + ",");
+            sb.AppendLine("  \"DockZoomFactor\": " + DockZoomFactor.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",");
                 sb.AppendLine("  \"AutoHideDelayMs\": " + AutoHideDelayMs + ",");
                 sb.AppendLine("  \"HotCornerWidth\": " + HotCornerWidth + ",");
                 sb.AppendLine("  \"HotCornerHeight\": " + HotCornerHeight + ",");
@@ -1841,7 +1880,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1863,7 +1902,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1887,7 +1926,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v055 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2302,6 +2341,239 @@ namespace GINDesktop {
         public override Color SeparatorLight { get { return Color.Transparent; } }
     }
 
+    // ==========================================
+    // ROCKETDOCK STYLE HOVER BUTTON
+    // ==========================================
+    public class DockButton : Button {
+        private DockItem _item;
+        private Config _config;
+        private ColorTheme _theme;
+        private bool _isFolder;
+        private float _currentScale = 1.0f;
+        private float _targetScale = 1.0f;
+        private System.Windows.Forms.Timer _animTimer;
+        private bool _isHovered = false;
+
+        public DockItem Item { get { return _item; } }
+        public bool IsFolder { get { return _isFolder; } }
+        public bool IsHovered { get { return _isHovered; } }
+        public float CurrentScale { get { return _currentScale; } }
+
+        public DockButton(DockItem item, bool isFolder, Config config, ColorTheme theme) {
+            _item = item;
+            _isFolder = isFolder;
+            _config = config;
+            _theme = theme;
+
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
+            this.DoubleBuffered = true;
+            this.Cursor = Cursors.Hand;
+            this.FlatStyle = FlatStyle.Flat;
+            this.FlatAppearance.BorderSize = 0;
+            this.BackColor = Color.Transparent;
+
+            _animTimer = new System.Windows.Forms.Timer();
+            _animTimer.Interval = 15;
+            _animTimer.Tick += AnimTimer_Tick;
+        }
+
+        public void UpdateTheme(ColorTheme theme) {
+            _theme = theme;
+            Invalidate();
+        }
+
+        public void ResetZoom() {
+            _isHovered = false;
+            _targetScale = 1.0f;
+            _currentScale = 1.0f;
+            if (_animTimer != null && _animTimer.Enabled) _animTimer.Stop();
+            Invalidate();
+        }
+
+        private void AnimTimer_Tick(object sender, EventArgs e) {
+            float step = 0.08f;
+            if (Math.Abs(_currentScale - _targetScale) <= step) {
+                _currentScale = _targetScale;
+                _animTimer.Stop();
+            } else {
+                if (_currentScale < _targetScale) _currentScale += step;
+                else _currentScale -= step;
+            }
+            Invalidate();
+        }
+
+        protected override void OnMouseEnter(EventArgs e) {
+            base.OnMouseEnter(e);
+            _isHovered = true;
+            if (_config.EnableDockZoom) {
+                _targetScale = Math.Max(1.1f, Math.Min(1.6f, _config.DockZoomFactor));
+                _animTimer.Start();
+            } else {
+                Invalidate();
+            }
+        }
+
+        protected override void OnMouseLeave(EventArgs e) {
+            base.OnMouseLeave(e);
+            _isHovered = false;
+            if (_config.EnableDockZoom) {
+                _targetScale = 1.0f;
+                _animTimer.Start();
+            } else {
+                Invalidate();
+            }
+        }
+
+        protected override void OnPaint(PaintEventArgs pevent) {
+            Graphics g = pevent.Graphics;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+
+            Rectangle rect = this.ClientRectangle;
+            string style = _config.DockStyle ?? "AeroGlass";
+
+            // 1. Draw Hover Pill if hovered
+            if (_isHovered) {
+                Rectangle pill = new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4);
+                int radius = 10;
+                switch (style) {
+                    case "MacFrosted":
+                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(170, 255, 255, 255))) {
+                            FillRoundedRectangle(g, pb, pill, radius);
+                        }
+                        using (Pen pp = new Pen(Color.FromArgb(120, 180, 190, 205), 1f)) {
+                            DrawRoundedRectangle(g, pp, pill, radius);
+                        }
+                        break;
+                    case "DarkStealth":
+                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(140, 45, 48, 58))) {
+                            FillRoundedRectangle(g, pb, pill, radius);
+                        }
+                        using (Pen pp = new Pen(Color.FromArgb(70, 255, 255, 255), 1f)) {
+                            DrawRoundedRectangle(g, pp, pill, radius);
+                        }
+                        break;
+                    case "CrystalClear":
+                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(70, 255, 255, 255))) {
+                            FillRoundedRectangle(g, pb, pill, radius);
+                        }
+                        break;
+                    case "ClassicMetal":
+                        using (LinearGradientBrush mb = new LinearGradientBrush(pill, Color.FromArgb(190, 255, 255, 255), Color.FromArgb(120, 160, 165, 175), LinearGradientMode.Vertical)) {
+                            FillRoundedRectangle(g, mb, pill, radius);
+                        }
+                        using (Pen pp = new Pen(Color.FromArgb(180, 40, 45, 55), 1f)) {
+                            DrawRoundedRectangle(g, pp, pill, radius);
+                        }
+                        break;
+                    case "NeonCyber":
+                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(80, 0, 220, 255))) {
+                            FillRoundedRectangle(g, pb, pill, radius);
+                        }
+                        using (Pen pp = new Pen(Color.FromArgb(200, 0, 240, 255), 1.2f)) {
+                            DrawRoundedRectangle(g, pp, pill, radius);
+                        }
+                        break;
+                    case "AeroGlass":
+                    default:
+                        using (SolidBrush pb = new SolidBrush(Color.FromArgb(65, 255, 255, 255))) {
+                            FillRoundedRectangle(g, pb, pill, radius);
+                        }
+                        using (Pen pp = new Pen(Color.FromArgb(90, 255, 255, 255), 1f)) {
+                            DrawRoundedRectangle(g, pp, pill, radius);
+                        }
+                        break;
+                }
+            } else if (_isFolder) {
+                Rectangle pill = new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4);
+                int radius = 8;
+                if (style == "MacFrosted") {
+                    using (SolidBrush pb = new SolidBrush(Color.FromArgb(60, 255, 255, 255))) {
+                        FillRoundedRectangle(g, pb, pill, radius);
+                    }
+                    using (Pen pp = new Pen(Color.FromArgb(60, 160, 170, 185), 1f)) {
+                        DrawRoundedRectangle(g, pp, pill, radius);
+                    }
+                } else {
+                    using (SolidBrush pb = new SolidBrush(_theme.CardBackground)) {
+                        FillRoundedRectangle(g, pb, pill, radius);
+                    }
+                    using (Pen pp = new Pen(_theme.Border, 1f)) {
+                        DrawRoundedRectangle(g, pp, pill, radius);
+                    }
+                }
+            }
+
+            // 2. Draw Icon (with zoom scale if hovered)
+            int baseIconSz = Math.Max(16, Math.Min(64, _config.DockIconSize));
+            int targetIconSz = (int)(baseIconSz * _currentScale);
+            Image icon = _item.GetIcon(Math.Max(baseIconSz, (int)(baseIconSz * 1.5f)));
+
+            bool showLabel = _config.ShowItemLabels;
+            int iconX, iconY;
+
+            if (showLabel) {
+                iconX = rect.X + 6;
+                iconY = rect.Y + (rect.Height - targetIconSz) / 2;
+            } else {
+                iconX = rect.X + (rect.Width - targetIconSz) / 2;
+                iconY = rect.Y + (rect.Height - targetIconSz) / 2;
+            }
+
+            if (icon != null) {
+                g.DrawImage(icon, new Rectangle(iconX, iconY, targetIconSz, targetIconSz));
+            }
+
+            // 3. Draw Text Label (if enabled)
+            if (showLabel) {
+                Color textColor = (style == "MacFrosted") ? Color.FromArgb(28, 32, 42) : _theme.TextPrimary;
+                using (SolidBrush textBrush = new SolidBrush(textColor)) {
+                    int textX = iconX + targetIconSz + 6;
+                    string labelText = _isFolder ? (_item.Name + " ▾") : _item.Name;
+                    int textY = rect.Y + (rect.Height - (int)this.Font.GetHeight(g)) / 2;
+                    g.DrawString(labelText, this.Font, textBrush, textX, textY);
+                }
+            }
+        }
+
+        private void FillRoundedRectangle(Graphics g, Brush brush, Rectangle r, int d) {
+            using (GraphicsPath path = CreateRoundedRectPath(r, d)) {
+                g.FillPath(brush, path);
+            }
+        }
+
+        private void DrawRoundedRectangle(Graphics g, Pen pen, Rectangle r, int d) {
+            using (GraphicsPath path = CreateRoundedRectPath(r, d)) {
+                g.DrawPath(pen, path);
+            }
+        }
+
+        private GraphicsPath CreateRoundedRectPath(Rectangle r, int d) {
+            GraphicsPath path = new GraphicsPath();
+            if (d <= 0) {
+                path.AddRectangle(r);
+                return path;
+            }
+            int d2 = Math.Min(d, Math.Min(r.Width, r.Height));
+            path.AddArc(r.X, r.Y, d2, d2, 180, 90);
+            path.AddArc(r.Right - d2, r.Y, d2, d2, 270, 90);
+            path.AddArc(r.Right - d2, r.Bottom - d2, d2, d2, 0, 90);
+            path.AddArc(r.X, r.Bottom - d2, d2, d2, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
+
+        protected override void Dispose(bool disposing) {
+            if (disposing && _animTimer != null) {
+                _animTimer.Stop();
+                _animTimer.Dispose();
+                _animTimer = null;
+            }
+            base.Dispose(disposing);
+        }
+    }
+
     public class DockBarForm : Form {
         private Config _config;
         private List<DockItem> _folders = new List<DockItem>();
@@ -2466,8 +2738,10 @@ namespace GINDesktop {
             bool isTop = (_config.DockPosition == "Top");
             int cursor = 0;
             int iconSz = Math.Max(16, Math.Min(64, _config.DockIconSize));
-            int itemSpan = Math.Max(38, iconSz + 12);
-            int barSize = Math.Max(42, iconSz + 16);
+            float maxZoom = _config.EnableDockZoom ? Math.Max(1.1f, Math.Min(1.6f, _config.DockZoomFactor)) : 1.0f;
+            int zoomedIconSz = (int)(iconSz * maxZoom);
+            int itemSpan = Math.Max(42, zoomedIconSz + 10);
+            int barSize = Math.Max(46, itemSpan + 8);
             _config.BarHeight = barSize;
 
             if (isTop) {
@@ -2482,41 +2756,26 @@ namespace GINDesktop {
             Font itemFont = new Font(_config.DockItemFontFamily ?? "Segoe UI", _config.DockItemFontSize, FontStyle.Regular);
 
             foreach (DockItem folder in _folders) {
-                Button btn = new Button();
-                btn.FlatStyle = FlatStyle.Flat;
-                btn.FlatAppearance.BorderSize = 1;
-                btn.FlatAppearance.BorderColor = theme.Border;
-                btn.BackColor = theme.CardBackground;
-                btn.ForeColor = theme.TextPrimary;
+                DockButton btn = new DockButton(folder, true, _config, theme);
                 btn.Font = folderFont;
-                btn.Cursor = Cursors.Hand;
-                btn.Image = folder.GetIcon(iconSz);
-                btn.ImageAlign = ContentAlignment.MiddleLeft;
-                btn.TextAlign = ContentAlignment.MiddleLeft;
-                btn.TextImageRelation = TextImageRelation.ImageBeforeText;
+                btn.Tag = cursor;
 
                 bool showLabel = _config.ShowItemLabels;
                 if (isTop) {
                     btn.Height = itemSpan;
                     if (showLabel) {
                         btn.Text = " " + folder.Name + " ▾";
-                        btn.ImageAlign = ContentAlignment.MiddleLeft;
-                        btn.TextAlign = ContentAlignment.MiddleLeft;
-                        btn.TextImageRelation = TextImageRelation.ImageBeforeText;
                         using (Graphics g = btn.CreateGraphics()) {
                             SizeF size = g.MeasureString(btn.Text, btn.Font);
-                            btn.Width = (int)size.Width + iconSz + 24;
+                            btn.Width = (int)size.Width + zoomedIconSz + 24;
                         }
                     } else {
                         btn.Text = "";
-                        btn.ImageAlign = ContentAlignment.MiddleCenter;
-                        btn.TextAlign = ContentAlignment.MiddleCenter;
-                        btn.TextImageRelation = TextImageRelation.Overlay;
-                        btn.Width = iconSz + 16;
+                        btn.Width = Math.Max(itemSpan, zoomedIconSz + 12);
                     }
                 } else {
                     btn.Width = itemSpan;
-                    btn.Height = showLabel ? (iconSz + 20) : (iconSz + 16);
+                    btn.Height = showLabel ? (zoomedIconSz + 20) : itemSpan;
                     btn.Text = showLabel ? folder.Name : "";
                 }
 
@@ -2525,7 +2784,6 @@ namespace GINDesktop {
                 DockItem fItem = folder;
                 _folderMap[btn] = fItem;
 
-                // STABLE HOVER OPEN (NO FLICKER)
                 btn.MouseEnter += (s, e) => {
                     if (_hoveredFolder != fItem) {
                         OpenFolderDropDown(btn, fItem);
@@ -2536,12 +2794,6 @@ namespace GINDesktop {
                         OpenFolderDropDown(btn, fItem);
                     }
                 };
-                btn.MouseLeave += (s, e) => {
-                    if (_hoveredFolder != fItem) {
-                        btn.BackColor = theme.CardBackground;
-                        btn.ForeColor = theme.TextPrimary;
-                    }
-                };
                 btn.MouseDown += (s, e) => {
                     if (e.Button == MouseButtons.Middle || (e.Button == MouseButtons.Left && Control.ModifierKeys == Keys.Control)) {
                         ShellHelper.OpenInExplorer(fItem.TargetFolder);
@@ -2550,8 +2802,10 @@ namespace GINDesktop {
                         OpenFolderDropDown(btn, fItem);
                     }
                 };
+                btn.MouseUp += (s, e) => {
+                    if (e.Button == MouseButtons.Right) ShowMainMenu(btn);
+                };
 
-                btn.Tag = cursor;
                 _dockControls.Add(btn);
                 _itemsPanel.Controls.Add(btn);
                 cursor += (isTop ? btn.Width : btn.Height) + 4;
@@ -2566,7 +2820,14 @@ namespace GINDesktop {
                     sep.Height = 2;
                     sep.Width = itemSpan;
                 }
-                sep.BackColor = theme.Separator;
+                string dockStyle = _config.DockStyle ?? "AeroGlass";
+                if (dockStyle == "MacFrosted") {
+                    sep.BackColor = Color.FromArgb(160, 175, 190);
+                } else if (dockStyle == "NeonCyber") {
+                    sep.BackColor = Color.FromArgb(0, 220, 255);
+                } else {
+                    sep.BackColor = theme.Separator;
+                }
                 sep.Tag = cursor;
                 _dockControls.Add(sep);
                 _itemsPanel.Controls.Add(sep);
@@ -2574,38 +2835,26 @@ namespace GINDesktop {
             }
 
             foreach (DockItem item in _shortcuts) {
-                Button btn = new Button();
-                btn.FlatStyle = FlatStyle.Flat;
-                btn.FlatAppearance.BorderSize = 0;
-                btn.BackColor = Color.Transparent;
-                btn.Cursor = Cursors.Hand;
-                btn.Image = item.GetIcon(iconSz);
-                btn.ImageAlign = ContentAlignment.MiddleCenter;
+                DockButton btn = new DockButton(item, false, _config, theme);
                 btn.Font = itemFont;
-                btn.ForeColor = theme.TextPrimary;
+                btn.Tag = cursor;
 
                 bool showLabel = _config.ShowItemLabels;
                 if (isTop) {
                     btn.Height = itemSpan;
                     if (showLabel) {
                         btn.Text = " " + item.Name;
-                        btn.ImageAlign = ContentAlignment.MiddleLeft;
-                        btn.TextAlign = ContentAlignment.MiddleLeft;
-                        btn.TextImageRelation = TextImageRelation.ImageBeforeText;
                         using (Graphics g = btn.CreateGraphics()) {
                             SizeF size = g.MeasureString(btn.Text, btn.Font);
-                            btn.Width = (int)size.Width + iconSz + 24;
+                            btn.Width = (int)size.Width + zoomedIconSz + 24;
                         }
                     } else {
                         btn.Text = "";
-                        btn.ImageAlign = ContentAlignment.MiddleCenter;
-                        btn.TextAlign = ContentAlignment.MiddleCenter;
-                        btn.TextImageRelation = TextImageRelation.Overlay;
-                        btn.Width = iconSz + 16;
+                        btn.Width = Math.Max(itemSpan, zoomedIconSz + 12);
                     }
                 } else {
                     btn.Width = itemSpan;
-                    btn.Height = showLabel ? (iconSz + 20) : (iconSz + 16);
+                    btn.Height = showLabel ? (zoomedIconSz + 20) : itemSpan;
                     btn.Text = showLabel ? item.Name : "";
                 }
 
@@ -2613,18 +2862,16 @@ namespace GINDesktop {
 
                 DockItem scItem = item;
                 btn.MouseEnter += (s, e) => {
-                    btn.BackColor = theme.CardBackground;
                     CloseActiveDropDown();
-                };
-                btn.MouseLeave += (s, e) => {
-                    btn.BackColor = Color.Transparent;
                 };
                 btn.Click += (s, e) => {
                     ShellHelper.Launch(scItem.FullPath);
                     HideDock();
                 };
+                btn.MouseUp += (s, e) => {
+                    if (e.Button == MouseButtons.Right) ShowMainMenu(btn);
+                };
 
-                btn.Tag = cursor;
                 _dockControls.Add(btn);
                 _itemsPanel.Controls.Add(btn);
                 cursor += (isTop ? btn.Width : btn.Height) + 3;
@@ -2641,18 +2888,102 @@ namespace GINDesktop {
             base.OnPaint(e);
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 
-            // Translucent glass shelf background
-            using (SolidBrush bg = new SolidBrush(Color.FromArgb(220, 18, 20, 26))) {
-                g.FillRectangle(bg, this.ClientRectangle);
-            }
-            // 1.2px subtle white glass reflection across top
-            using (Pen topPen = new Pen(Color.FromArgb(85, 255, 255, 255), 1.2f)) {
-                g.DrawLine(topPen, 15, 1, this.Width - 15, 1);
-            }
-            // Subtle 1px shelf border
-            using (Pen borderPen = new Pen(Color.FromArgb(45, 255, 255, 255), 1f)) {
-                g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+            Rectangle bounds = this.ClientRectangle;
+            string style = _config.DockStyle ?? "AeroGlass";
+
+            switch (style) {
+                case "MacFrosted":
+                    // Soft frosted white/silver matte shelf
+                    using (SolidBrush bg = new SolidBrush(Color.FromArgb(220, 238, 242, 248))) {
+                        g.FillRectangle(bg, bounds);
+                    }
+                    // Crisp top reflection line
+                    using (Pen topPen = new Pen(Color.FromArgb(210, 255, 255, 255), 1.5f)) {
+                        g.DrawLine(topPen, 15, 1, this.Width - 15, 1);
+                    }
+                    // Delicate silver-gray border
+                    using (Pen borderPen = new Pen(Color.FromArgb(120, 160, 170, 185), 1f)) {
+                        g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                    }
+                    break;
+
+                case "DarkStealth":
+                    // Deep OLED carbon matte shelf
+                    using (SolidBrush bg = new SolidBrush(Color.FromArgb(245, 12, 13, 16))) {
+                        g.FillRectangle(bg, bounds);
+                    }
+                    // Ultra-subtle graphite border
+                    using (Pen borderPen = new Pen(Color.FromArgb(50, 255, 255, 255), 1f)) {
+                        g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                    }
+                    break;
+
+                case "CrystalClear":
+                    // Ultra-transparent floating dock shelf
+                    using (SolidBrush bg = new SolidBrush(Color.FromArgb(50, 10, 12, 18))) {
+                        g.FillRectangle(bg, bounds);
+                    }
+                    // Faint ethereal border
+                    using (Pen borderPen = new Pen(Color.FromArgb(25, 255, 255, 255), 1f)) {
+                        g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                    }
+                    break;
+
+                case "ClassicMetal":
+                    // Classic RocketDock 3D brushed metallic shelf with top bevel and bottom shadow
+                    using (LinearGradientBrush metalBrush = new LinearGradientBrush(bounds, Color.FromArgb(235, 120, 126, 136), Color.FromArgb(240, 48, 52, 60), LinearGradientMode.Vertical)) {
+                        g.FillRectangle(metalBrush, bounds);
+                    }
+                    // Top 3D bevel highlight
+                    using (Pen bevelPen = new Pen(Color.FromArgb(180, 255, 255, 255), 2f)) {
+                        g.DrawLine(bevelPen, 12, 1, this.Width - 12, 1);
+                    }
+                    // Bottom 3D bezel shadow
+                    using (Pen shadowPen = new Pen(Color.FromArgb(170, 18, 20, 25), 2f)) {
+                        g.DrawLine(shadowPen, 12, this.Height - 2, this.Width - 12, this.Height - 2);
+                    }
+                    // Outer metal border
+                    using (Pen borderPen = new Pen(Color.FromArgb(70, 255, 255, 255), 1f)) {
+                        g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                    }
+                    break;
+
+                case "NeonCyber":
+                    // Deep neon cyberpunk shelf
+                    using (SolidBrush bg = new SolidBrush(Color.FromArgb(235, 14, 10, 26))) {
+                        g.FillRectangle(bg, bounds);
+                    }
+                    // Glowing neon cyan top line
+                    using (Pen neonTop = new Pen(Color.FromArgb(220, 0, 245, 255), 2f)) {
+                        g.DrawLine(neonTop, 15, 1, this.Width - 15, 1);
+                    }
+                    // Magenta bottom accent
+                    using (Pen neonBottom = new Pen(Color.FromArgb(190, 255, 0, 128), 1.5f)) {
+                        g.DrawLine(neonBottom, 15, this.Height - 2, this.Width - 15, this.Height - 2);
+                    }
+                    // Subtle neon border
+                    using (Pen borderPen = new Pen(Color.FromArgb(120, 0, 220, 255), 1f)) {
+                        g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                    }
+                    break;
+
+                case "AeroGlass":
+                default:
+                    // Translucent glass shelf background
+                    using (SolidBrush bg = new SolidBrush(Color.FromArgb(220, 18, 20, 26))) {
+                        g.FillRectangle(bg, bounds);
+                    }
+                    // 1.5px subtle white glass reflection across top
+                    using (Pen topPen = new Pen(Color.FromArgb(95, 255, 255, 255), 1.5f)) {
+                        g.DrawLine(topPen, 15, 1, this.Width - 15, 1);
+                    }
+                    // Subtle 1px shelf border
+                    using (Pen borderPen = new Pen(Color.FromArgb(45, 255, 255, 255), 1f)) {
+                        g.DrawRectangle(borderPen, 0, 0, this.Width - 1, this.Height - 1);
+                    }
+                    break;
             }
         }
 
@@ -2957,7 +3288,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v054");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v055");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -3388,6 +3719,12 @@ namespace GINDesktop {
         private TrackBar _tbDelay;
         private Label _lblIconSize;
         private List<Button> _iconSizeButtons = new List<Button>();
+        private Label _lblDockStyle;
+        private List<Button> _dockStyleButtons = new List<Button>();
+        private Label _lblDockZoomHeader;
+        private CheckBox _chkDockZoom;
+        private Label _lblZoomFactor;
+        private List<Button> _zoomFactorButtons = new List<Button>();
         private Label _lblFolderFontSize;
         private TrackBar _tbFolderFontSize;
         private Label _lblItemFontSize;
@@ -3880,23 +4217,25 @@ namespace GINDesktop {
             _tbDelay = new TrackBar { Location = new Point(25, 134), Width = 310, Minimum = 200, Maximum = 1500, TickFrequency = 100, Value = Math.Max(200, Math.Min(1500, _config.AutoHideDelayMs)) };
             _tbDelay.ValueChanged += (s, e) => _lblDelay.Text = I18n.T("AutoHideDelay") + " (" + _tbDelay.Value + " ms)";
 
-            _lblIconSize = new Label { Location = new Point(20, 190), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _lblIconSize = new Label { Location = new Point(365, 116), AutoSize = true, Font = new Font("Segoe UI", 9f) };
             int[] sizes = new int[] { 16, 24, 32, 48, 64 };
             for (int i = 0; i < sizes.Length; i++) {
                 int sz = sizes[i];
                 Button bSz = new Button {
-                    Text = sz + " px",
+                    Text = sz + "px",
                     Tag = sz,
-                    Size = new Size(130, 28),
-                    Location = new Point(25 + i * 136, 212),
+                    Size = new Size(58, 26),
+                    Location = new Point(370 + i * 64, 134),
                     FlatStyle = FlatStyle.Flat,
                     Cursor = Cursors.Hand,
-                    Font = new Font("Segoe UI", 9f)
+                    Font = new Font("Segoe UI", 8.5f)
                 };
                 bSz.Click += (s, e) => {
                     _config.DockIconSize = (int)((Button)s).Tag;
                     _config.Save();
                     UpdateIconSizeButtonStyles();
+            UpdateDockStyleButtonStyles();
+            UpdateZoomFactorButtonStyles();
                     if (_onConfigChanged != null) _onConfigChanged();
                     PlayClickSound();
                 };
@@ -3904,17 +4243,107 @@ namespace GINDesktop {
                 _tabDock.Controls.Add(bSz);
             }
 
+            // Separator 1: Dock Styles Section
+            Panel sepDock1 = new Panel { Location = new Point(25, 175), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sepDock1);
+            _tabDock.Controls.Add(sepDock1);
+
+            // Dock Styles (RocketDock Skins)
+            _lblDockStyle = new Label { Location = new Point(20, 185), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _tabDock.Controls.Add(_lblDockStyle);
+
+            string[] styleKeys = new string[] { "AeroGlass", "MacFrosted", "DarkStealth", "CrystalClear", "ClassicMetal", "NeonCyber" };
+            string[] styleI18n = new string[] { "StyleAeroGlass", "StyleMacFrosted", "StyleDarkStealth", "StyleCrystalClear", "StyleClassicMetal", "StyleNeonCyber" };
+
+            for (int i = 0; i < styleKeys.Length; i++) {
+                int col = i % 3;
+                int row = i / 3;
+                string sKey = styleKeys[i];
+                Button bStyle = new Button {
+                    Text = I18n.T(styleI18n[i]),
+                    Tag = sKey,
+                    Size = new Size(218, 30),
+                    Location = new Point(25 + col * 228, 208 + row * 36),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand,
+                    Font = new Font("Segoe UI", 8.5f)
+                };
+                bStyle.Click += (s, e) => {
+                    _config.DockStyle = (string)((Button)s).Tag;
+                    _config.Save();
+                    UpdateDockStyleButtonStyles();
+                    if (_onConfigChanged != null) _onConfigChanged();
+                    PlayClickSound();
+                };
+                _dockStyleButtons.Add(bStyle);
+                _tabDock.Controls.Add(bStyle);
+            }
+
+            // Separator 2: RocketDock Animation & Zoom Section
+            Panel sepDock2 = new Panel { Location = new Point(25, 288), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sepDock2);
+            _tabDock.Controls.Add(sepDock2);
+
+            _lblDockZoomHeader = new Label { Location = new Point(20, 298), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _tabDock.Controls.Add(_lblDockZoomHeader);
+
+            _chkDockZoom = new CheckBox {
+                Text = I18n.T("EnableDockZoom"),
+                Checked = _config.EnableDockZoom,
+                Location = new Point(25, 322),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 9.5f)
+            };
+            _chkDockZoom.CheckedChanged += (s, e) => {
+                _config.EnableDockZoom = _chkDockZoom.Checked;
+                _config.Save();
+                if (_onConfigChanged != null) _onConfigChanged();
+            };
+            _tabDock.Controls.Add(_chkDockZoom);
+
+            _lblZoomFactor = new Label { Location = new Point(430, 324), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _tabDock.Controls.Add(_lblZoomFactor);
+
+            float[] zoomVals = new float[] { 1.2f, 1.35f, 1.5f };
+            string[] zoomNames = new string[] { "1.2x", "1.35x", "1.5x" };
+            for (int i = 0; i < zoomVals.Length; i++) {
+                float zVal = zoomVals[i];
+                Button bZoom = new Button {
+                    Text = zoomNames[i],
+                    Tag = zVal,
+                    Size = new Size(54, 26),
+                    Location = new Point(510 + i * 60, 320),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand,
+                    Font = new Font("Segoe UI", 8.5f)
+                };
+                bZoom.Click += (s, e) => {
+                    _config.DockZoomFactor = (float)((Button)s).Tag;
+                    _config.Save();
+                    UpdateZoomFactorButtonStyles();
+                    if (_onConfigChanged != null) _onConfigChanged();
+                    PlayClickSound();
+                };
+                _zoomFactorButtons.Add(bZoom);
+                _tabDock.Controls.Add(bZoom);
+            }
+
+            // Separator 3: Typography Section
+            Panel sepDock3 = new Panel { Location = new Point(25, 362), Size = new Size(678, 1), BackColor = theme.Separator };
+            _separatorLines.Add(sepDock3);
+            _tabDock.Controls.Add(sepDock3);
+
             // Typography sliders
-            _lblFolderFontSize = new Label { Location = new Point(20, 256), AutoSize = true, Font = new Font("Segoe UI", 9f) };
-            _tbFolderFontSize = new TrackBar { Location = new Point(25, 274), Width = 310, Minimum = 7, Maximum = 16, Value = Math.Max(7, Math.Min(16, (int)_config.DockFolderFontSize)) };
+            _lblFolderFontSize = new Label { Location = new Point(20, 372), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _tbFolderFontSize = new TrackBar { Location = new Point(25, 392), Width = 310, Minimum = 7, Maximum = 16, Value = Math.Max(7, Math.Min(16, (int)_config.DockFolderFontSize)) };
             _tbFolderFontSize.ValueChanged += (s, e) => {
                 _lblFolderFontSize.Text = I18n.T("FolderFontSize") + " (" + _tbFolderFontSize.Value + " pt)";
                 _config.DockFolderFontSize = _tbFolderFontSize.Value;
                 if (_onConfigChanged != null) _onConfigChanged();
             };
 
-            _lblItemFontSize = new Label { Location = new Point(365, 256), AutoSize = true, Font = new Font("Segoe UI", 9f) };
-            _tbItemFontSize = new TrackBar { Location = new Point(370, 274), Width = 315, Minimum = 7, Maximum = 16, Value = Math.Max(7, Math.Min(16, (int)_config.DockItemFontSize)) };
+            _lblItemFontSize = new Label { Location = new Point(365, 372), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _tbItemFontSize = new TrackBar { Location = new Point(370, 392), Width = 315, Minimum = 7, Maximum = 16, Value = Math.Max(7, Math.Min(16, (int)_config.DockItemFontSize)) };
             _tbItemFontSize.ValueChanged += (s, e) => {
                 _lblItemFontSize.Text = I18n.T("ItemFontSize") + " (" + _tbItemFontSize.Value + " pt)";
                 _config.DockItemFontSize = _tbItemFontSize.Value;
@@ -3934,7 +4363,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v054", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v055", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3991,7 +4420,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v054",
+                Text = "v055",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -4165,6 +4594,8 @@ namespace GINDesktop {
             
             // Icon size buttons
             UpdateIconSizeButtonStyles();
+            UpdateDockStyleButtonStyles();
+            UpdateZoomFactorButtonStyles();
 
             // Inputs
             _txtRoot.BackColor = theme.Background;
@@ -4246,6 +4677,24 @@ namespace GINDesktop {
 
 
 
+        private void UpdateDockStyleButtonStyles() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            string curStyle = _config.DockStyle ?? "AeroGlass";
+            foreach (Button b in _dockStyleButtons) {
+                bool isActive = string.Equals((string)b.Tag, curStyle, StringComparison.OrdinalIgnoreCase);
+                StyleToggleButton(b, isActive, theme);
+            }
+        }
+
+        private void UpdateZoomFactorButtonStyles() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            float curZoom = _config.DockZoomFactor;
+            foreach (Button b in _zoomFactorButtons) {
+                bool isActive = Math.Abs((float)b.Tag - curZoom) < 0.05f;
+                StyleToggleButton(b, isActive, theme);
+            }
+        }
+
         private void UpdateIconSizeButtonStyles() {
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
             int curSz = _config.DockIconSize;
@@ -4325,6 +4774,15 @@ namespace GINDesktop {
 
             _lblDelay.Text = I18n.T("AutoHideDelay") + " (" + _tbDelay.Value + " ms)";
             _lblIconSize.Text = "🔍 " + I18n.T("DockIconSize");
+            if (_lblDockStyle != null) _lblDockStyle.Text = "🎨 " + I18n.T("DockStyle");
+            if (_lblDockZoomHeader != null) _lblDockZoomHeader.Text = "⚡ " + I18n.T("DockEffectsHeader");
+            if (_chkDockZoom != null) _chkDockZoom.Text = I18n.T("EnableDockZoom");
+            if (_lblZoomFactor != null) _lblZoomFactor.Text = I18n.T("DockZoomFactor");
+
+                        string[] styleI18nR = new string[] { "StyleAeroGlass", "StyleMacFrosted", "StyleDarkStealth", "StyleCrystalClear", "StyleClassicMetal", "StyleNeonCyber" };
+            for (int i = 0; i < _dockStyleButtons.Count && i < styleI18nR.Length; i++) {
+                _dockStyleButtons[i].Text = I18n.T(styleI18nR[i]);
+            }
 
             _lblFolderFontSize.Text = I18n.T("FolderFontSize") + " (" + _tbFolderFontSize.Value + " pt)";
             _lblItemFontSize.Text = I18n.T("ItemFontSize") + " (" + _tbItemFontSize.Value + " pt)";
@@ -4385,6 +4843,7 @@ namespace GINDesktop {
             }
 
             _config.AutoHideDelayMs = _tbDelay.Value;
+            if (_chkDockZoom != null) _config.EnableDockZoom = _chkDockZoom.Checked;
             _config.DockFolderFontSize = _tbFolderFontSize.Value;
             _config.DockItemFontSize = _tbItemFontSize.Value;
 
@@ -4413,7 +4872,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v054";
+        public const string CURRENT_VERSION = "v055";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -4648,7 +5107,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v054");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v055");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
