@@ -4,11 +4,11 @@
 
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows&logoColor=white)
 ![Language](https://img.shields.io/badge/Language-Batch%20%2F%20PowerShell-4D4D4D?logo=windowsterminal&logoColor=white)
-![Version](https://img.shields.io/badge/Version-v2026--08--16-brightgreen)
+![Version](https://img.shields.io/badge/Version-v2026--11-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-blue)
-![Scripts](https://img.shields.io/badge/Scripts-15-orange)
+![Scripts](https://img.shields.io/badge/Status-Production%20Ready-orange)
 
-**= Rooted by VladiMIR + AI | v.2026.08.16 | github.com/GinCz =**
+**= Rooted by VladiMIR + AI | v.2026.11 | github.com/GinCz =**
 
 A production-grade collection of self-elevating Windows utility scripts for system optimization,
 deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network drive management**.
@@ -27,33 +27,34 @@ deep cache cleaning, Windows Update repair, diagnostics, and **Samba SMB network
 
 Direct download links for the latest standalone Windows binaries (.exe) and one-click execution commands:
 
-### 🪟 Standalone Executables (.exe)
-| Application | Version | Direct Download (.exe) | Platform | Key Architecture |
+### 🪟 Standalone Executables & Flagship Products (.exe / .cmd)
+| Application | Version | Direct Download | Platform | Key Architecture |
 | :--- | :---: | :--- | :--- | :--- |
-| 🎙️ **[GIN-Voice](Windows/GIN-Voice/)** | `v041` | [⬇️ **Download GIN-Voice.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice.exe) • [Setup](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Voice/GIN-Voice_Setup.exe) | Win 10/11 x64 | Ultra-fast multilingual voice-to-text, whisper AI code-switching engine |
-| 🔍 **[GIN-NetScan](Windows/GIN-NetScan/)** | `v002` | [⬇️ **Download GIN-NetScan.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetScan/GIN-NetScan.exe) | Win 10/11 x64/x86 | High-speed multi-threaded Win32 LAN host discovery & TCP port scanner |
-| 📊 **[GIN-NetSpeed](Windows/GIN-NetSpeed/)** | `v003` | [⬇️ **Download GIN-NetSpeed_v003.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-NetSpeed/GIN-NetSpeed_v003.exe) | Win 10/11 x64 | 100% Portable per-app bandwidth monitor, 15-min multi-app graph & Cloud Speed Benchmark |
-| 🛡️ **[GIN-VPN](Windows/GIN-VPN/)** | `v094` | [⬇️ **Download GIN-VPN.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN.exe) • [Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-VPN/GIN-VPN_Installer.exe) | Win 10/11 x64 | Standalone Xray VLESS-Reality client with dynamic tray sentinel & killswitch |
-| 🎨 **[GIN-Wallpaper](GIN-Wallpaper/)** | `v012` | [⬇️ **Download GIN-Wallpaper.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Wallpaper/GIN-Wallpaper-Calend.exe) | Win 10/11 x64 | Dynamic desktop wallpaper switcher with live embedded calendar |
-| ⚡ **[GIN-Win-Optimizer](Windows/GIN-Win-Optimizer/)** | `v045` | [⬇️ **Download GIN-Win-Optimizer.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v045.cmd) | Win 10/11 / Server | Enterprise Windows debloater, telemetry disable, and RAM footprint optimizer |
+| 🤖 **[GIN-Agent](projects/GIN-Agent/)** | `v043` | [⬇️ **Download GIN-Agent.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Agent_Windows.cmd) • [ZIP](https://github.com/GinCz/Windows_scripts/raw/main/projects/GIN-Agent/GIN-Agent_Windows_v043.zip) | Win 10/11 / Server | Autonomous remote systems management agent, multi-tier self-updater |
+| 🎙️ **[GIN-Voice](projects/Windows/GIN-Voice/)** | `v041` | [⬇️ **Download GIN-Voice.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-Voice/GIN-Voice.exe) • [Setup](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-Voice/GIN-Voice_Setup.exe) | Win 10/11 x64 | Ultra-fast multilingual voice-to-text, whisper AI code-switching engine |
+| 🔍 **[GIN-NetScan](projects/Windows/GIN-NetScan/)** | `v036` | [⬇️ **Download GIN-NetScan.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-NetScan/GIN-NetScan.exe) | Win 10/11 x64/x86 | High-speed multi-threaded Win32 LAN host discovery & TCP port scanner |
+| 📊 **[GIN-NetSpeed](projects/Windows/GIN-NetSpeed/)** | `v003` | [⬇️ **Download GIN-NetSpeed_v003.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-NetSpeed/GIN-NetSpeed_v003.exe) | Win 10/11 x64 | 100% Portable per-app bandwidth monitor, 15-min multi-app graph & Cloud Speed Benchmark |
+| 🛡️ **[GIN-VPN](projects/Windows/GIN-VPN/)** | `v094` | [⬇️ **Download GIN-VPN.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-VPN/GIN-VPN.exe) • [Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-VPN/GIN-VPN_Installer.exe) | Win 10/11 x64 | Standalone Xray VLESS-Reality client with dynamic tray sentinel & killswitch |
+| 🎨 **[GIN-Wallpaper](projects/GIN-Wallpaper/)** | `v012` | [⬇️ **Download GIN-Wallpaper.exe**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/GIN-Wallpaper/GIN-Wallpaper-Calend.exe) | Win 10/11 x64 | Dynamic desktop wallpaper switcher with live embedded calendar |
+| ⚡ **[GIN-Win-Optimizer](projects/Windows/GIN-Win-Optimizer/)** | `v045` | [⬇️ **Download GIN-Win-Optimizer.cmd**](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/Windows/GIN-Win-Optimizer/GIN-Win-Optimizer_v045.cmd) | Win 10/11 / Server | Enterprise Windows debloater, telemetry disable, and RAM footprint optimizer |
 
 ### ⚡ Essential System & Administration Scripts
 | Script | Category | 1-Click Download / Execution | Description |
 | :--- | :--- | :--- | :--- |
-| 🧹 **`CLEAN.cmd`** | Maintenance | [⬇️ Download CLEAN.cmd](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/CLEAN.cmd) | Deep junk cleaner: Temp, Prefetch, SoftwareDistribution, browser caches |
-| 🚀 **`WIN_Optimize.bat`** | Optimization | [⬇️ Download WIN_Optimize.bat](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/WIN_Optimize.bat) | DPC latency tuner, background service debloater, timer resolution fix |
-| 🛡️ **`System_Security_Miner_Audit.cmd`** | Security | [⬇️ Download Audit Tool](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/System_Security_Miner_Audit.cmd) | Cryptominer detection, malicious scheduled task & autorun deep audit |
-| 🔧 **`Error_80070002_AI.cmd`** | Windows Update | [⬇️ Download Fix Script](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Error_80070002_AI.cmd) | One-click Windows Update repair: resets BITS, wuauserv, and clears CBS store |
-| 📦 **`Install_7zip_Universal.bat`** | Software | [⬇️ Download 7-Zip Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/Install_7zip_Universal.bat) | Universal silent 7-Zip deployer with auto-architecture detection |
-| 💾 **`SMB_Connect.bat`** | Storage | [⬇️ Download SMB_Connect.bat](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/SMB_Connect.bat) | Multi-threaded parallel Samba network drive mounter |
-| 🛠️ **`WinUtil`** | Maintenance | `iwr -useb https://raw.githubusercontent.com/GinCz/Windows_scripts/main/WinUtil_VladiMIR/winutil.ps1 | iex` | Standalone modular Windows utility suite |
+| 🧹 **`CLEAN.cmd`** | Maintenance | [⬇️ Download CLEAN.cmd](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/tools/system/CLEAN.cmd) | Deep junk cleaner: Temp, Prefetch, SoftwareDistribution, browser caches |
+| 🚀 **`WIN_Optimize.bat`** | Optimization | [⬇️ Download WIN_Optimize.bat](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/tools/system/WIN_Optimize.bat) | DPC latency tuner, background service debloater, timer resolution fix |
+| 🛡️ **`System_Security_Miner_Audit.cmd`** | Security | [⬇️ Download Audit Tool](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/tools/system/System_Security_Miner_Audit.cmd) | Cryptominer detection, malicious scheduled task & autorun deep audit |
+| 🔧 **`Error_80070002_AI.cmd`** | Windows Update | [⬇️ Download Fix Script](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/tools/system/Error_80070002_AI.cmd) | One-click Windows Update repair: resets BITS, wuauserv, and clears CBS store |
+| 📦 **`Install_7zip_Universal.bat`** | Software | [⬇️ Download 7-Zip Installer](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/tools/apps/Install_7zip_Universal.bat) | Universal silent 7-Zip deployer with auto-architecture detection |
+| 💾 **`SMB_Connect.bat`** | Storage | [⬇️ Download SMB_Connect.bat](https://raw.githubusercontent.com/GinCz/Windows_scripts/main/tools/network/SMB_Connect.bat) | Multi-threaded parallel Samba network drive mounter |
+| 🛠️ **`WinUtil`** | Maintenance | `iwr -useb https://raw.githubusercontent.com/GinCz/Windows_scripts/main/projects/WinUtil_VladiMIR/winutil.ps1 | iex` | Standalone modular Windows utility suite |
 
 ---
 
 ## Table of Contents
 
 - [Windows Applications & Executable Suite (.exe) ➔](Windows/README.md)
-  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](Windows/Work%20Time%20Stat/README.md)
+  - [🏢 Work Time Stat — Enterprise Employee Activity & Working Time Analytics](Windows/Work_Time_Stat/README.md)
   - [🎙️ GIN-Voice — Ultra-Fast Multilingual Voice-to-Text & AI Code-Switching Engine](Windows/GIN-Voice/README.md)
   - [📊 GIN-NetSpeed — Live Per-Application Bandwidth Monitor, 15-Min Graph & Cloud Storage Speed Benchmark](Windows/GIN-NetSpeed/README.md)
   - [GIN-NetScan — High-Speed Native Win32 LAN Discovery & Port Scanner](Windows/GIN-NetScan/README.md)
@@ -306,7 +307,25 @@ See the full server-side setup in 👉 [GinCz/Linux_Server_Public](https://githu
 * 🐧 Linux Server Repositories: [GinCz/Linux_Server_Public](https://github.com/GinCz/Linux_Server_Public)
 * 💼 Windows Automation: [GinCz/Windows_scripts](https://github.com/GinCz/Windows_scripts)
 
-`= Rooted by VladiMIR | AI = | v.2026.08.16 | github.com/GinCz =`
+---
+
+## 📋 Version History & Changelog
+
+<details>
+<summary><b>Click to expand full suite changelog</b></summary>
+
+### v2026-11 (Latest)
+* **Root Restructuring:** Reorganized root directory to strictly 5 top-level entries (`README.md`, `GIN-Agent_Windows.cmd`, `version.txt`, `projects/`, `tools/`).
+* **Modular Categorization:** Grouped 40+ loose utility scripts into modular subdirectories (`tools/apps/`, `tools/network/`, `tools/remote/`, `tools/system/`).
+* **GIN-Agent v043:** Standalone polyglot agent with companion `.zip` package and multi-tier auto-updater.
+* **Documentation & Releases:** 100% English documentation and dedicated READMEs for every project and tool category.
+
+### v2026-08
+* Introduced multi-threaded GIN-NetScan v036 and portable GIN-NetSpeed v003.
+* Added native Xray VLESS-Reality GIN-VPN client v094.
+* Updated Windows Update CBS reset script `Error_80070002_AI.cmd`.
+
+</details>
 
 ---
 
@@ -331,8 +350,6 @@ See the full server-side setup in 👉 [GinCz/Linux_Server_Public](https://githu
 <a href="https://github.com/GinCz" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white" alt="GitHub" /></a>
 &nbsp;&nbsp;<b>|||</b>&nbsp;&nbsp;
 <a href="https://www.linkedin.com/in/gincz/" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white" alt="LinkedIn" /></a>
-&nbsp;&nbsp;<b>|||</b>&nbsp;&nbsp;
-<a href="https://uslugi.yandex.ru/profile/VladimirBulantsev-1756893" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Yandex.Services-FC3F1D?style=flat&logo=yandex&logoColor=white" alt="Yandex.Services" /></a>
 
 <br/><br/>
 
