@@ -14,14 +14,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v056")]
-[assembly: AssemblyDescription("GIN-Desktop_v056")]
+[assembly: AssemblyTitle("GIN-Desktop_v057")]
+[assembly: AssemblyDescription("GIN-Desktop_v057")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v056")]
+[assembly: AssemblyProduct("GIN-Desktop_v057")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.56.0.0")]
-[assembly: AssemblyFileVersion("0.56.0.0")]
+[assembly: AssemblyVersion("0.57.0.0")]
+[assembly: AssemblyFileVersion("0.57.0.0")]
 
 namespace GINDesktop {
 
@@ -210,7 +210,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v057 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -623,7 +623,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v056" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v057" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -709,6 +709,10 @@ namespace GINDesktop {
                 { "DockEffectsHeader", "RocketDock Effects & Animation:" },
                 { "EnableDockZoom", "Icon zoom on mouse hover (RocketDock effect)" },
                 { "DockZoomFactor", "Zoom Scale:" },
+                { "DockPosition", "Dock Placement:" },
+                { "PosTop", "Top" },
+                { "PosLeft", "Left" },
+                { "PosRight", "Right" },
                 { "LabelsFoldersOnly", "Folders Only" },
                 { "LabelsAll", "All Items" },
                 { "LabelsNone", "Icons Only (No Text)" },
@@ -752,7 +756,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v056" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v057" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -838,6 +842,10 @@ namespace GINDesktop {
                 { "DockEffectsHeader", "Эффекты и анимация RocketDock:" },
                 { "EnableDockZoom", "Увеличение иконок при наведении (эффект RocketDock)" },
                 { "DockZoomFactor", "Масштаб:" },
+                { "DockPosition", "Положение панели:" },
+                { "PosTop", "Сверху" },
+                { "PosLeft", "Слева" },
+                { "PosRight", "Справа" },
                 { "LabelsFoldersOnly", "Только у папок" },
                 { "LabelsAll", "У всех значков" },
                 { "LabelsNone", "Без текста (только иконки)" },
@@ -881,7 +889,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v056" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v057" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -967,6 +975,10 @@ namespace GINDesktop {
                 { "DockEffectsHeader", "Efekty a animace RocketDock:" },
                 { "EnableDockZoom", "Zvětšení ikon při najetí myší (RocketDock efekt)" },
                 { "DockZoomFactor", "Měřítko:" },
+                { "DockPosition", "Umístění panelu:" },
+                { "PosTop", "Nahoře" },
+                { "PosLeft", "Vlevo" },
+                { "PosRight", "Vpravo" },
                 { "LabelsFoldersOnly", "Pouze pro složky" },
                 { "LabelsAll", "Pro všechny položky" },
                 { "LabelsNone", "Pouze ikony bez textu" },
@@ -1178,7 +1190,10 @@ namespace GINDesktop {
                     cfg.CheckUpdatesOnStartup = GetBool(json, "CheckUpdatesOnStartup", cfg.CheckUpdatesOnStartup);
                     cfg.EnableSound = GetBool(json, "EnableSound", cfg.EnableSound);
 
-                    cfg.DockPosition = "Top"; // strictly Top
+                    cfg.DockPosition = GetString(json, "DockPosition", "Top");
+                if (cfg.DockPosition != "Top" && cfg.DockPosition != "Left" && cfg.DockPosition != "Right") {
+                    cfg.DockPosition = "Top";
+                }
                     cfg.DockIconSize = GetInt(json, "DockIconSize", cfg.DockIconSize);
                     cfg.DockFolderFontFamily = GetString(json, "DockFolderFontFamily", cfg.DockFolderFontFamily);
                     cfg.DockFolderFontSize = GetFloat(json, "DockFolderFontSize", cfg.DockFolderFontSize);
@@ -1233,7 +1248,7 @@ namespace GINDesktop {
                 sb.AppendLine("  \"CheckUpdatesOnStartup\": " + (CheckUpdatesOnStartup ? "true" : "false") + ",");
                 sb.AppendLine("  \"EnableSound\": " + (EnableSound ? "true" : "false") + ",");
 
-                sb.AppendLine("  \"DockPosition\": \"Top\",");
+                sb.AppendLine("  \"DockPosition\": \"" + Escape(DockPosition) + "\",");
                 sb.AppendLine("  \"DockIconSize\": " + DockIconSize + ",");
                 sb.AppendLine("  \"DockFolderFontFamily\": \"" + Escape(DockFolderFontFamily) + "\",");
                 sb.AppendLine("  \"DockFolderFontSize\": " + DockFolderFontSize.ToString(CultureInfo.InvariantCulture) + ",");
@@ -2085,7 +2100,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v057 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -2107,7 +2122,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v057 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2131,7 +2146,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v056 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v057 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -3213,23 +3228,45 @@ namespace GINDesktop {
             Screen screen = Screen.PrimaryScreen;
             int barSize = Math.Max(44, _config.BarHeight);
 
-            bool isTop = (_config.DockPosition == "Top");
-            int desiredWidth = _totalItemsLength + 24;
-            if (desiredWidth > screen.Bounds.Width - 30) desiredWidth = screen.Bounds.Width - 30;
-            if (desiredWidth < 120) desiredWidth = 120;
+            if (_config.DockPosition == "Top") {
+                int desiredWidth = _totalItemsLength + 24;
+                if (desiredWidth > screen.Bounds.Width - 30) desiredWidth = screen.Bounds.Width - 30;
+                if (desiredWidth < 120) desiredWidth = 120;
 
-            this.Width = desiredWidth;
-            this.Height = barSize + 8;
+                this.Width = desiredWidth;
+                this.Height = barSize + 8;
 
-            if (isTop) {
                 int posX = screen.Bounds.Left + (screen.Bounds.Width - desiredWidth) / 2;
                 int posY = screen.Bounds.Top;
                 this.Location = new Point(posX, posY);
                 _itemsPanel.Location = new Point(12, 4);
                 _itemsPanel.Width = this.Width - 24;
                 _itemsPanel.Height = barSize;
-            } else {
-                this.Location = new Point(screen.Bounds.Left, screen.Bounds.Top + (screen.Bounds.Height - this.Height) / 2);
+            } else if (_config.DockPosition == "Right") {
+                int desiredHeight = _totalItemsLength + 24;
+                if (desiredHeight > screen.Bounds.Height - 30) desiredHeight = screen.Bounds.Height - 30;
+                if (desiredHeight < 120) desiredHeight = 120;
+
+                this.Width = barSize + 8;
+                this.Height = desiredHeight;
+
+                int posX = screen.Bounds.Right - this.Width;
+                int posY = screen.Bounds.Top + (screen.Bounds.Height - desiredHeight) / 2;
+                this.Location = new Point(posX, posY);
+                _itemsPanel.Location = new Point(4, 12);
+                _itemsPanel.Width = barSize;
+                _itemsPanel.Height = this.Height - 24;
+            } else { // "Left"
+                int desiredHeight = _totalItemsLength + 24;
+                if (desiredHeight > screen.Bounds.Height - 30) desiredHeight = screen.Bounds.Height - 30;
+                if (desiredHeight < 120) desiredHeight = 120;
+
+                this.Width = barSize + 8;
+                this.Height = desiredHeight;
+
+                int posX = screen.Bounds.Left;
+                int posY = screen.Bounds.Top + (screen.Bounds.Height - desiredHeight) / 2;
+                this.Location = new Point(posX, posY);
                 _itemsPanel.Location = new Point(4, 12);
                 _itemsPanel.Width = barSize;
                 _itemsPanel.Height = this.Height - 24;
@@ -3310,7 +3347,9 @@ namespace GINDesktop {
 
             if (_config.DockPosition == "Top") {
                 dropDown.Show(anchor, new Point(0, anchor.Height + 1));
-            } else {
+            } else if (_config.DockPosition == "Right") {
+                dropDown.Show(anchor, new Point(-dropDown.Width - 1, 0));
+            } else { // "Left"
                 dropDown.Show(anchor, new Point(anchor.Width + 1, 0));
             }
         }
@@ -3391,10 +3430,22 @@ namespace GINDesktop {
             Rectangle bounds = screen.Bounds;
             int cornerW = Math.Max(80, _config.HotCornerWidth * 4);
             int cornerH = Math.Max(40, _config.HotCornerHeight * 2);
-            bool inHotCorner = (cursor.X >= bounds.Left && cursor.X <= bounds.Left + cornerW &&
-                                cursor.Y >= bounds.Top && cursor.Y <= bounds.Top + cornerH) ||
-                               (cursor.Y <= bounds.Top + 3 && cursor.X >= bounds.Left && cursor.X <= bounds.Left + 200) ||
-                               (cursor.Y <= bounds.Top + 3 && cursor.X >= this.Bounds.Left && cursor.X <= this.Bounds.Right);
+
+            bool inHotCorner = false;
+            if (_config.DockPosition == "Left") {
+                inHotCorner = (cursor.X <= bounds.Left + cornerW && cursor.Y >= bounds.Top && cursor.Y <= bounds.Top + cornerH) ||
+                              (cursor.X <= bounds.Left + 3 && cursor.Y >= bounds.Top && cursor.Y <= bounds.Bottom) ||
+                              (this.Bounds.Height > 0 && cursor.X <= bounds.Left + 3 && cursor.Y >= this.Bounds.Top && cursor.Y <= this.Bounds.Bottom);
+            } else if (_config.DockPosition == "Right") {
+                inHotCorner = (cursor.X >= bounds.Right - cornerW && cursor.Y >= bounds.Top && cursor.Y <= bounds.Top + cornerH) ||
+                              (cursor.X >= bounds.Right - 3 && cursor.Y >= bounds.Top && cursor.Y <= bounds.Bottom) ||
+                              (this.Bounds.Height > 0 && cursor.X >= bounds.Right - 3 && cursor.Y >= this.Bounds.Top && cursor.Y <= this.Bounds.Bottom);
+            } else { // "Top"
+                inHotCorner = (cursor.X >= bounds.Left && cursor.X <= bounds.Left + cornerW &&
+                               cursor.Y >= bounds.Top && cursor.Y <= bounds.Top + cornerH) ||
+                              (cursor.Y <= bounds.Top + 3 && cursor.X >= bounds.Left && cursor.X <= bounds.Left + 200) ||
+                              (this.Bounds.Width > 0 && cursor.Y <= bounds.Top + 3 && cursor.X >= this.Bounds.Left && cursor.X <= this.Bounds.Right);
+            }
 
             if (!_isDockVisible) {
                 if (inHotCorner) {
@@ -3453,8 +3504,17 @@ namespace GINDesktop {
             this.BringToFront();
             try {
                 Screen sc = Screen.PrimaryScreen;
-                int px = (_config.DockPosition == "Top") ? sc.Bounds.Left + (sc.Bounds.Width - this.Width) / 2 : sc.Bounds.Left;
-                int py = (_config.DockPosition == "Top") ? sc.Bounds.Top : sc.Bounds.Top + (sc.Bounds.Height - this.Height) / 2;
+                int px, py;
+                if (_config.DockPosition == "Top") {
+                    px = sc.Bounds.Left + (sc.Bounds.Width - this.Width) / 2;
+                    py = sc.Bounds.Top;
+                } else if (_config.DockPosition == "Right") {
+                    px = sc.Bounds.Right - this.Width;
+                    py = sc.Bounds.Top + (sc.Bounds.Height - this.Height) / 2;
+                } else { // "Left"
+                    px = sc.Bounds.Left;
+                    py = sc.Bounds.Top + (sc.Bounds.Height - this.Height) / 2;
+                }
                 this.Location = new Point(px, py);
                 NativeMethods.SetWindowPos(this.Handle, new IntPtr(-1), px, py, this.Width, this.Height, 0x0040);
             } catch { }
@@ -3514,7 +3574,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v056");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v057");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -3951,6 +4011,8 @@ namespace GINDesktop {
         private CheckBox _chkDockZoom;
         private Label _lblZoomFactor;
         private List<Button> _zoomFactorButtons = new List<Button>();
+        private Label _lblDockPos;
+        private List<Button> _dockPosButtons = new List<Button>();
         private Label _lblFolderFontSize;
         private TrackBar _tbFolderFontSize;
         private Label _lblItemFontSize;
@@ -4420,15 +4482,42 @@ namespace GINDesktop {
                 _config.RootFolder = _txtRoot.Text.Trim();
             };
 
-            // Sorting & Labels
+            // Sorting & Dock Position
             _lblSort = new Label { Location = new Point(20, 68), AutoSize = true, Font = new Font("Segoe UI", 9f) };
             _cmbSort = new ComboBox { Location = new Point(25, 88), Width = 310, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9f) };
 
-            _lblShowLabels = new Label { Location = new Point(365, 68), AutoSize = true, Font = new Font("Segoe UI", 9f) };
+            _lblDockPos = new Label { Location = new Point(365, 68), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
+            _tabDock.Controls.Add(_lblDockPos);
+
+            string[] posKeys = new string[] { "Top", "Left", "Right" };
+            string[] posI18n = new string[] { "PosTop", "PosLeft", "PosRight" };
+            for (int i = 0; i < posKeys.Length; i++) {
+                string pKey = posKeys[i];
+                Button bPos = new Button {
+                    Text = I18n.T(posI18n[i]),
+                    Tag = pKey,
+                    Size = new Size(102, 28),
+                    Location = new Point(370 + i * 108, 86),
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand,
+                    Font = new Font("Segoe UI", 9f)
+                };
+                bPos.Click += (s, e) => {
+                    _config.DockPosition = (string)((Button)s).Tag;
+                    _config.Save();
+                    UpdateDockPosButtonStyles();
+                    if (_onConfigChanged != null) _onConfigChanged();
+                    PlayClickSound();
+                };
+                _dockPosButtons.Add(bPos);
+                _tabDock.Controls.Add(bPos);
+            }
+
+            _lblShowLabels = new Label { Location = new Point(20, 350), AutoSize = true, Font = new Font("Segoe UI", 9f), Visible = false };
             _chkShowLabels = new CheckBox {
                 Text = I18n.T("ShowItemLabels"),
                 Checked = _config.ShowItemLabels,
-                Location = new Point(370, 88),
+                Location = new Point(25, 350),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 9.5f)
             };
@@ -4437,6 +4526,7 @@ namespace GINDesktop {
                 _config.Save();
                 if (_onConfigChanged != null) _onConfigChanged();
             };
+            _tabDock.Controls.Add(_chkShowLabels);
 
             // Delay & Icon Sizes
             _lblDelay = new Label { Location = new Point(20, 116), AutoSize = true, Font = new Font("Segoe UI", 9f) };
@@ -4461,6 +4551,7 @@ namespace GINDesktop {
                     _config.Save();
                     UpdateIconSizeButtonStyles();
             UpdateDockStyleButtonStyles();
+            UpdateDockPosButtonStyles();
             UpdateZoomFactorButtonStyles();
                     if (_onConfigChanged != null) _onConfigChanged();
                     PlayClickSound();
@@ -4498,6 +4589,7 @@ namespace GINDesktop {
                     _config.DockStyle = (string)((Button)s).Tag;
                     _config.Save();
                     UpdateDockStyleButtonStyles();
+            UpdateDockPosButtonStyles();
                     if (_onConfigChanged != null) _onConfigChanged();
                     PlayClickSound();
                 };
@@ -4589,7 +4681,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v056", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v057", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -4646,7 +4738,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v056",
+                Text = "v057",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -4821,6 +4913,7 @@ namespace GINDesktop {
             // Icon size buttons
             UpdateIconSizeButtonStyles();
             UpdateDockStyleButtonStyles();
+            UpdateDockPosButtonStyles();
             UpdateZoomFactorButtonStyles();
 
             // Inputs
@@ -4902,6 +4995,15 @@ namespace GINDesktop {
         }
 
 
+
+                private void UpdateDockPosButtonStyles() {
+            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
+            string curPos = _config.DockPosition ?? "Top";
+            foreach (Button b in _dockPosButtons) {
+                bool isActive = string.Equals((string)b.Tag, curPos, StringComparison.OrdinalIgnoreCase);
+                StyleToggleButton(b, isActive, theme);
+            }
+        }
 
         private void UpdateDockStyleButtonStyles() {
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
@@ -5000,6 +5102,11 @@ namespace GINDesktop {
 
             _lblDelay.Text = I18n.T("AutoHideDelay") + " (" + _tbDelay.Value + " ms)";
             _lblIconSize.Text = "🔍 " + I18n.T("DockIconSize");
+            if (_lblDockPos != null) _lblDockPos.Text = "📍 " + I18n.T("DockPosition");
+            string[] posI18nR = new string[] { "PosTop", "PosLeft", "PosRight" };
+            for (int i = 0; i < _dockPosButtons.Count && i < posI18nR.Length; i++) {
+                _dockPosButtons[i].Text = I18n.T(posI18nR[i]);
+            }
             if (_lblDockStyle != null) _lblDockStyle.Text = "🎨 " + I18n.T("DockStyle");
             if (_lblDockZoomHeader != null) _lblDockZoomHeader.Text = "⚡ " + I18n.T("DockEffectsHeader");
             if (_chkDockZoom != null) _chkDockZoom.Text = I18n.T("EnableDockZoom");
@@ -5098,7 +5205,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v056";
+        public const string CURRENT_VERSION = "v057";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -5333,7 +5440,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v056");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v057");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;

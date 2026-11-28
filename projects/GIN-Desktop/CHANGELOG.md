@@ -1,5 +1,26 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v057] — 2026-11-28
+### 📍 Configurable Dock Screen Placement (Top, Left, Right)
+- **Position Selection in Settings (`SettingsForm`)**:
+  - Restored and enhanced interactive Dock Placement buttons on Tab «Докер»: «Сверху» (`Top`), «Слева» (`Left`), «Справа» (`Right`).
+  - Active position button is highlighted with the current theme accent color.
+  - Seamless orientation switching: Horizontal bar when placed at the Top; sleek vertical bar when placed on the Left or Right edge of the screen.
+- **Directional Folder Popup Menus (`OpenFolderDropDown`)**:
+  - Top position: Folder stack menus expand downwards directly onto the desktop.
+  - Left position: Folder stack menus expand cleanly to the right into the monitor viewport.
+  - Right position: Folder stack menus expand cleanly to the left into the monitor viewport.
+- **Position-Aware Edge Activation & Flicker Prevention (`WatchdogTimer_Tick`)**:
+  - Dynamically activates when the cursor reaches the respective screen edge or corner:
+    - Top: Top-left hot corner and upper screen edge.
+    - Left: Left screen edge and top-left hot corner.
+    - Right: Right screen edge and top-right hot corner.
+  - `keepVisible` detection adapts to the active edge, completely preventing any show/hide blinking.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v057_Setup.exe` (826,368 bytes, SHA-256: `5dbe6f39d9519381cc255d8deccfe994fb3524a5606c52b5ec63754baa6c2f01`).
+  - Deployed to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v057_Setup.exe` (purged `v056`, strictly 1 active latest version).
+  - Deployed to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v057_Setup.exe` (purged `v055`, strictly 2 versions: `v056` and `v057`).
+
 ## [v056] — 2026-11-28
 ### 🖱️ Native Windows Shell Context Menu on Right-Click
 - **Standard Windows Explorer Context Menu for Shortcuts & Folders**:

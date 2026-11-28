@@ -10,7 +10,7 @@ import subprocess
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
-VERSION = "v056"
+VERSION = "v057"
 IS_WINDOWS = (os.name == 'nt')
 
 if IS_WINDOWS:
@@ -35,14 +35,14 @@ print("==> Bumping version strings in installer_setup.cs and Uninstall.cs...")
 with open(INSTALLER_SRC, "r", encoding="utf-8") as f:
     inst_txt = f.read()
 
-inst_txt = inst_txt.replace('AssemblyTitle("GIN-Desktop_v055")', 'AssemblyTitle("GIN-Desktop_v056")')
-inst_txt = inst_txt.replace('AssemblyDescription("GIN-Desktop_v055 Setup")', 'AssemblyDescription("GIN-Desktop_v056 Setup")')
-inst_txt = inst_txt.replace('AssemblyProduct("GIN-Desktop_v055")', 'AssemblyProduct("GIN-Desktop_v056")')
-inst_txt = inst_txt.replace('AssemblyVersion("0.55.0.0")', 'AssemblyVersion("0.56.0.0")')
-inst_txt = inst_txt.replace('AssemblyFileVersion("0.55.0.0")', 'AssemblyFileVersion("0.56.0.0")')
-inst_txt = inst_txt.replace('"GIN Desktop v055"', '"GIN Desktop v056"')
-inst_txt = inst_txt.replace('"DisplayVersion", "v055"', '"DisplayVersion", "v056"')
-inst_txt = inst_txt.replace('GIN Desktop v055 has been successfully installed!', 'GIN Desktop v056 has been successfully installed!')
+inst_txt = inst_txt.replace('AssemblyTitle("GIN-Desktop_v056")', 'AssemblyTitle("GIN-Desktop_v057")')
+inst_txt = inst_txt.replace('AssemblyDescription("GIN-Desktop_v056 Setup")', 'AssemblyDescription("GIN-Desktop_v057 Setup")')
+inst_txt = inst_txt.replace('AssemblyProduct("GIN-Desktop_v056")', 'AssemblyProduct("GIN-Desktop_v057")')
+inst_txt = inst_txt.replace('AssemblyVersion("0.56.0.0")', 'AssemblyVersion("0.57.0.0")')
+inst_txt = inst_txt.replace('AssemblyFileVersion("0.56.0.0")', 'AssemblyFileVersion("0.57.0.0")')
+inst_txt = inst_txt.replace('"GIN Desktop v056"', '"GIN Desktop v057"')
+inst_txt = inst_txt.replace('"DisplayVersion", "v056"', '"DisplayVersion", "v057"')
+inst_txt = inst_txt.replace('GIN Desktop v056 has been successfully installed!', 'GIN Desktop v057 has been successfully installed!')
 
 with open(INSTALLER_SRC, "w", encoding="utf-8") as f:
     f.write(inst_txt)
@@ -50,11 +50,11 @@ with open(INSTALLER_SRC, "w", encoding="utf-8") as f:
 with open(UNINST_SRC, "r", encoding="utf-8") as f:
     uninst_txt = f.read()
 
-uninst_txt = uninst_txt.replace('AssemblyTitle("GIN-Desktop_v055")', 'AssemblyTitle("GIN-Desktop_v056")')
-uninst_txt = uninst_txt.replace('AssemblyDescription("GIN-Desktop_v055")', 'AssemblyDescription("GIN-Desktop_v056")')
-uninst_txt = uninst_txt.replace('AssemblyProduct("GIN-Desktop_v055")', 'AssemblyProduct("GIN-Desktop_v056")')
-uninst_txt = uninst_txt.replace('AssemblyVersion("0.55.0.0")', 'AssemblyVersion("0.56.0.0")')
-uninst_txt = uninst_txt.replace('AssemblyFileVersion("0.55.0.0")', 'AssemblyFileVersion("0.56.0.0")')
+uninst_txt = uninst_txt.replace('AssemblyTitle("GIN-Desktop_v056")', 'AssemblyTitle("GIN-Desktop_v057")')
+uninst_txt = uninst_txt.replace('AssemblyDescription("GIN-Desktop_v056")', 'AssemblyDescription("GIN-Desktop_v057")')
+uninst_txt = uninst_txt.replace('AssemblyProduct("GIN-Desktop_v056")', 'AssemblyProduct("GIN-Desktop_v057")')
+uninst_txt = uninst_txt.replace('AssemblyVersion("0.56.0.0")', 'AssemblyVersion("0.57.0.0")')
+uninst_txt = uninst_txt.replace('AssemblyFileVersion("0.56.0.0")', 'AssemblyFileVersion("0.57.0.0")')
 
 with open(UNINST_SRC, "w", encoding="utf-8") as f:
     f.write(uninst_txt)
@@ -127,7 +127,7 @@ with open(INSTALLER_SRC, "w", encoding="utf-8") as f:
     f.write(inst_code)
 print(f"    Injected base64 payload into {INSTALLER_SRC}")
 
-# Step 5: Compile GIN-Desktop_v056_Setup.exe
+# Step 5: Compile GIN-Desktop_v057_Setup.exe
 print(f"==> [4/4] Compiling {SETUP_EXE}...")
 cmd3 = COMPILER + [
     "/nologo" if IS_WINDOWS else "-nologo",
@@ -155,13 +155,14 @@ v_data = {
     "version": VERSION,
     "name": "GIN-Desktop",
     "installer": f"GIN-Desktop_{VERSION}_Setup.exe",
-    "description": "Unified Windows Desktop Companion: RocketDock Parity Top Dock Bar with 6 Visual Themes & Smooth Hover Magnification Zoom, Native Windows Shell Context Menu on Right-Click, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
+    "description": "Unified Windows Desktop Companion: RocketDock Parity Dock Bar with 6 Visual Themes, Smooth Hover Magnification Zoom, Configurable Screen Placement (Top, Left, Right), Native Windows Shell Context Menu on Right-Click, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
     "author": "GinCz / Vladimir Bulantsev & Antigravity",
     "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Desktop",
     "date": "2026-11-28",
     "sha256": setup_sha256,
     "download_url": f"https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_{VERSION}_Setup.exe",
     "features": [
+        "Configurable Dock Placement on Screen (Top, Left, Right): Selectable directly in Settings -> Dock Bar with seamless vertical/horizontal orientation, directional folder popup stack menus, and position-aware edge trigger detection",
         "Native Windows Shell Context Menu on Right-Click: Right-clicking any dock shortcut or folder opens the standard native Windows Explorer context menu (Properties, Rename, Send to, Open, Run as Administrator, Cut, Copy, Delete) with full submenu support (IContextMenu, IContextMenu2, IContextMenu3 WinAPI)",
         "RocketDock Parity Dock Visual Styles: 6 signature visual skins (Aero Glass, macOS Frosted, Dark Stealth, Crystal Clear, Classic Metal, Neon Cyber) selectable in Settings -> Dock Bar",
         "Interactive RocketDock Magnification & Hover Zoom: Smooth icon zoom (1.2x, 1.35x, 1.5x) on hover with dynamic animated scaling and style-specific glow capsule pills",
@@ -170,8 +171,7 @@ v_data = {
         "Toggleable Icon-Only RocketDock Mode: Added 'ShowItemLabels' checkbox in SettingsForm (Dock tab) allowing pure square floating icons with full tooltip labels on hover",
         "Centered Dock Shelf Geometry: Enhanced width calculation and padding isolating brand button and item panel for seamless centering",
         "Floating Transparent Dock Icons: Pure borderless floating app and folder icons with smooth hover zoom effects and instant tooltip labels",
-        "Interactive Downward Folder Dropdown Menus: Clicking or hovering folder shortcuts expands a sleek downward dark stack menu displaying folder items directly on screen",
-        "Top-Only Fluid Hot-Corner Dock Bar: Dedicated top position activated strictly on hover at top-left hot corner with zero visual clutter",
+        "Interactive Downward & Lateral Folder Dropdown Menus: Clicking or hovering folder shortcuts expands a sleek stack menu displaying folder items directly on screen",
         "Full Multi-Language Dynamic Localization: Dynamic translation switching across all UI controls including Weather HUD, Hardware Monitor, and Form title bar",
         "Localized City Name in Weather HUD: Weather badge under the Calendar HUD displays live localized city name (e.g. Прага: ☀ +18°C · Ясно / Praha / Prague)",
         "Silent Tray HUD Auto-Updater: Zero-popup quiet update workflow with subtle non-activating HUD toast near system tray and gentle pure-sine audio blips",
@@ -190,7 +190,7 @@ with open(VERSION_JSON, "w", encoding="utf-8") as f:
     json.dump(v_data, f, indent=2, ensure_ascii=False)
 print(f"==> Updated {VERSION_JSON}")
 
-allowed_versions = ["v055", "v056"]
+allowed_versions = ["v056", "v057"]
 
 # Step 6: Deploy to Target 1 (Flash) and Target 2 (Desktop)
 if IS_WINDOWS:
@@ -235,17 +235,17 @@ else:
     print("==> [Target 2: Desktop] Uploading via mega-put to /MEGA/DOCS/desktop/...")
     subprocess.run(["mega-put", "-c", SETUP_EXE, "/MEGA/DOCS/desktop/"], check=True)
 
-    # Purge older version from Desktop (strictly 1 active latest: v056)
+    # Purge older version from Desktop (strictly 1 active latest: v057)
     try:
-        subprocess.run(["mega-rm", "/MEGA/DOCS/desktop/GIN-Desktop_v055_Setup.exe"], capture_output=True)
-        print("    [Desktop] Purged older release v055 via mega-rm (strictly 1 active version)")
+        subprocess.run(["mega-rm", "/MEGA/DOCS/desktop/GIN-Desktop_v056_Setup.exe"], capture_output=True)
+        print("    [Desktop] Purged older release v056 via mega-rm (strictly 1 active version)")
     except Exception as e:
         print("    [Desktop] mega-rm:", e)
 
-    # Purge obsolete v054 from Flash (strictly 2 active versions: v055, v056)
+    # Purge obsolete v055 from Flash (strictly 2 active versions: v056, v057)
     try:
-        subprocess.run(["mega-rm", "/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v054_Setup.exe"], capture_output=True)
-        print("    [Flash] Purged obsolete release v054 via mega-rm (strictly 2 active versions)")
+        subprocess.run(["mega-rm", "/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v055_Setup.exe"], capture_output=True)
+        print("    [Flash] Purged obsolete release v055 via mega-rm (strictly 2 active versions)")
     except Exception as e:
         print("    [Flash] mega-rm:", e)
 
