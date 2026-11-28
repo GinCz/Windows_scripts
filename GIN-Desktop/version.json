@@ -1,13 +1,13 @@
 {
-  "version": "v053",
+  "version": "v054",
   "name": "GIN-Desktop",
-  "installer": "GIN-Desktop_v053_Setup.exe",
+  "installer": "GIN-Desktop_v054_Setup.exe",
   "description": "Unified Windows Desktop Companion: RocketDock Parity Top Dock Bar with Downward Folder Menus, 4K Wallpaper Engine, Calendar HUD, Hardware Monitor & Real-Time Weather",
   "author": "GinCz / Vladimir Bulantsev & Antigravity",
   "github": "https://github.com/GinCz/Windows_scripts/tree/main/GIN-Desktop",
   "date": "2026-11-28",
-  "sha256": "240f1ac5b5bf6087194735ba8ba605a17ca75007f6d0149bec15ff3a174340f7",
-  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v053_Setup.exe",
+  "sha256": "0a237474e46610c687b43a64a29daf7119a3b2c79eabecc82e4990f243832028",
+  "download_url": "https://raw.githubusercontent.com/GinCz/Windows_scripts/main/GIN-Desktop/GIN-Desktop_v054_Setup.exe",
   "features": [
     "Eliminated Dock Flicker & Show-Hide Loop: Resolved timer conflict where centered dock bar hid after 200ms when cursor remained in top-left hot corner; keepVisible flag locks dock visibility while in activation zone",
     "Toggleable Icon-Only RocketDock Mode: Added 'ShowItemLabels' checkbox in SettingsForm (Dock tab) allowing pure square floating icons with full tooltip labels on hover",

@@ -1,5 +1,26 @@
 # 📋 CHANGELOG — GIN-Desktop
 
+## [v054] — 2026-11-28
+### 🚀 Pure RocketDock Floating Aesthetic & Clean Shortcut Icon Extraction
+- **Removed Left Dock Brand Button**:
+  - Eliminated the redundant left brand button (`_brandBtn`) from the dock bar for a clean, pure floating icon aesthetic.
+  - The dock bar is now purely composed of shortcuts and folders, dynamically and symmetrically centered with 12px padding.
+  - Added universal right-click context menu: Right-clicking anywhere on the dock bar shelf or background panel opens the main menu.
+- **Removed Brand Button Icon Selector in Settings**:
+  - Removed `_lblBrandIconTitle` and the 20 emoji/icon buttons from `SettingsForm` (Tab «Докер»), leaving the dock configuration clean, modern, and focused.
+- **Eliminated Windows Shortcut Arrow Overlay Badge**:
+  - Diagnosed root cause: `SHGetFileInfo` called on `.lnk` files instructed the Windows Shell to composite the default shortcut arrow overlay in the bottom-left corner, covering and obscuring up to 30% of the icon.
+  - Implemented multi-tier clean icon extraction in `ShellHelper.GetIconImage`:
+    1. Resolves `.lnk` shortcuts using `WScript.Shell` and `Shell.Application` to obtain the underlying `TargetPath` and custom `IconLocation`.
+    2. For custom `.ico` or PE resources (`.exe`/`.dll`), extracts clean icons via `ExtractIconEx` with zero overlay.
+    3. For executable targets, extracts pristine original high-resolution icons directly from PE headers via `Icon.ExtractAssociatedIcon(targetPath)`.
+    4. For folders and non-executable targets, calls `SHGetFileInfo` on the clean target path.
+    5. Completely eliminates the shortcut arrow badge across all dock shortcuts.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v054_Setup.exe` (SHA-256: `0a237474e46610c687b43a64a29daf7119a3b2c79eabecc82e4990f243832028`).
+  - Delivered to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v054_Setup.exe` (purged `v053`, strictly 1 latest version).
+  - Delivered to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v054_Setup.exe` (purged `v052`, strictly 2 versions: `v053` and `v054`).
+
 ## [v053] — 2026-11-28
 ### 🚀 Dock Flicker Elimination & Icon-Only RocketDock Mode
 - **Eliminated Dock Blinking & Show-Hide Loop (`WatchdogTimer_Tick`)**:

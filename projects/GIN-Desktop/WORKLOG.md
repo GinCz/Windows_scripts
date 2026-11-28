@@ -1,3 +1,20 @@
+## Update: v054 (2026-11-28)
+- **Removed Left Dock Brand Button**:
+  - Removed `_brandBtn` from `DockBarForm`, eliminating the redundant left icon button.
+  - The dock bar now floats strictly with shortcuts and folders on the dark glass shelf, symmetrically centered with 12px margins.
+  - Added right-click context menu handlers on `DockBarForm` and `_itemsPanel` (`ShowMainMenu`), providing instant menu access anywhere on the dock.
+- **Removed Brand Button Icon Selector in Settings**:
+  - Cleaned up `SettingsForm` (Tab «Докер»): removed `_lblBrandIconTitle` and the 20 emoji buttons, as well as `UpdateBrandIconStyles`.
+- **Eliminated Windows Shortcut Arrow Badge from Icons**:
+  - Diagnosed that `SHGetFileInfo` on `.lnk` files caused the Windows Shell to overlay the shortcut arrow in the bottom-left corner.
+  - Implemented multi-tier clean icon extraction in `ShellHelper`: resolved shortcut targets and custom icon locations via `WScript.Shell`/`Shell.Application`, extracting pristine PE icons directly via `Icon.ExtractAssociatedIcon(targetPath)` and `ExtractIconEx`.
+  - Result: 100% clean, crisp icons with zero shortcut overlay arrows.
+- **Dual-Target Delivery & Version Rotation**:
+  - Compiled and packaged `GIN-Desktop_v054_Setup.exe` (778,752 bytes, SHA-256: `0a237474e46610c687b43a64a29daf7119a3b2c79eabecc82e4990f243832028`).
+  - Deployed to Vladimir's Desktop via MEGA: `/MEGA/DOCS/desktop/GIN-Desktop_v054_Setup.exe` (purged `v053`, strictly 1 latest version).
+  - Deployed to Flash Drive via MEGA: `/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v054_Setup.exe` (purged `v052`, strictly 2 versions: `v053` and `v054`).
+  - Mirrored release artifacts to `GIN-Wallpaper` and `Windows_scripts/GIN-Desktop`.
+
 ## Update: v053 (2026-11-28)
 - **Eliminated Dock Blinking & Show-Hide Loop (`WatchdogTimer_Tick`)**:
   - Diagnosed root cause: In v052, horizontal centering (`screen.Bounds.Left + (screen.Bounds.Width - width) / 2`) decoupled the dock's position from the top-left hot corner. When activated from the corner, subsequent 50ms watchdog ticks found the cursor outside `this.Bounds`, initiating an auto-hide countdown and restarting an infinite Show-Hide cycle.

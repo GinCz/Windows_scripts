@@ -14,14 +14,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("GIN-Desktop_v053")]
-[assembly: AssemblyDescription("GIN-Desktop_v053")]
+[assembly: AssemblyTitle("GIN-Desktop_v054")]
+[assembly: AssemblyDescription("GIN-Desktop_v054")]
 [assembly: AssemblyCompany("VladiMIR+AI")]
 [assembly: AssemblyTrademark("VladiMIR+AI")]
-[assembly: AssemblyProduct("GIN-Desktop_v053")]
+[assembly: AssemblyProduct("GIN-Desktop_v054")]
 [assembly: AssemblyCopyright("VladiMIR+AI")]
-[assembly: AssemblyVersion("0.53.0.0")]
-[assembly: AssemblyFileVersion("0.53.0.0")]
+[assembly: AssemblyVersion("0.54.0.0")]
+[assembly: AssemblyFileVersion("0.54.0.0")]
 
 namespace GINDesktop {
 
@@ -62,6 +62,9 @@ namespace GINDesktop {
 
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        public static extern int ExtractIconEx(string szFileName, int nIconIndex, IntPtr[] phiconLarge, IntPtr[] phiconSmall, int nIcons);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool DestroyIcon(IntPtr hIcon);
@@ -207,7 +210,7 @@ namespace GINDesktop {
 
             try {
                 using (WebClient wc = new WebClient()) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v053 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
                     wc.Encoding = Encoding.UTF8;
 
                     if (string.Equals(source, "wttr.in", StringComparison.OrdinalIgnoreCase)) {
@@ -620,7 +623,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Wallpaper & Calendar" },
                 { "TabDock", "⚡ Dock Bar" },
                 { "TabAbout", "About" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v053" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v054" },
                 { "AboutDesc", "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD" },
                 { "GitHubRepo", "🌐 GitHub Open Source Repository" },
                 { "DockTop", "Top" },
@@ -739,7 +742,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Обои и Календарь" },
                 { "TabDock", "⚡ Панель Докер" },
                 { "TabAbout", "О программе" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v053" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v054" },
                 { "AboutDesc", "Автор: Владимир Буланцев (@GinCz) и Antigravity\nOpen Source / Лицензия MIT\nУниверсальная 32/64-битная архитектура для Windows 10 и 11\nПлатформа: Native WinAPI и GDI+ (~2-4 МБ ОЗУ в фоне)\n\nДва интегрированных движка:\n• Выезжающая панель Dock для папок и приложений из горячего угла\n• Автозагрузчик 4K обоев с живым полупрозрачным календарем HUD" },
                 { "GitHubRepo", "🌐 Открытый репозиторий на GitHub" },
                 { "DockTop", "Вверху" },
@@ -858,7 +861,7 @@ namespace GINDesktop {
                 { "TabWallpaper", "🖼️ Tapeta a Kalendář" },
                 { "TabDock", "⚡ Panel Dock" },
                 { "TabAbout", "O aplikaci" },
-                { "AboutTitle", "⚡ GIN Dock Wallpaper v053" },
+                { "AboutTitle", "⚡ GIN Dock Wallpaper v054" },
                 { "AboutDesc", "Autor: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / Licence MIT\nUniverzální 32/64-bitová architektura pro Windows 10 a 11\nPlatforma: Native WinAPI a GDI+ (~2-4 MB RAM na pozadí)\n\nDva integrované motory:\n• Vysouvací dokovací panel pro složky a aplikace z aktivního rohu\n• Stahovač 4K tapet s živým poloprůhledným kalendářem HUD" },
                 { "GitHubRepo", "🌐 Otevřený repozitář na GitHubu" },
                 { "DockTop", "Nahoře" },
@@ -1319,6 +1322,19 @@ namespace GINDesktop {
             }
         }
 
+        private static Bitmap ScaleBitmap(Bitmap raw, int targetSize) {
+            if (raw == null) return null;
+            if (raw.Width == targetSize && raw.Height == targetSize) return raw;
+            Bitmap scaled = new Bitmap(targetSize, targetSize);
+            using (Graphics g = Graphics.FromImage(scaled)) {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.DrawImage(raw, 0, 0, targetSize, targetSize);
+            }
+            return scaled;
+        }
+
         public static Image GetIconImage(string path, int targetSize) {
             bool large = targetSize >= 32;
             string key = path + "_" + targetSize;
@@ -1327,28 +1343,81 @@ namespace GINDesktop {
             }
 
             Image img = null;
-            try {
-                NativeMethods.SHFILEINFO shinfo = new NativeMethods.SHFILEINFO();
-                uint flags = NativeMethods.SHGFI_ICON | (large ? NativeMethods.SHGFI_LARGEICON : NativeMethods.SHGFI_SMALLICON);
-                IntPtr res = NativeMethods.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), flags);
-                if (shinfo.hIcon != IntPtr.Zero) {
-                    using (Icon ico = (Icon)Icon.FromHandle(shinfo.hIcon).Clone()) {
-                        Bitmap raw = ico.ToBitmap();
-                        if (raw.Width != targetSize || raw.Height != targetSize) {
-                            Bitmap scaled = new Bitmap(targetSize, targetSize);
-                            using (Graphics g = Graphics.FromImage(scaled)) {
-                                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                g.SmoothingMode = SmoothingMode.HighQuality;
-                                g.DrawImage(raw, 0, 0, targetSize, targetSize);
+            string targetPath = path;
+            string customIconPath = null;
+            int customIconIndex = 0;
+
+            if (path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) {
+                ResolveLnk(path, out targetPath, out customIconPath, out customIconIndex);
+            }
+
+            // 1. Try custom icon from shortcut if specified (ZERO shortcut arrow overlay)
+            if (!string.IsNullOrEmpty(customIconPath) && File.Exists(customIconPath)) {
+                try {
+                    if (customIconPath.EndsWith(".ico", StringComparison.OrdinalIgnoreCase)) {
+                        using (Icon ico = new Icon(customIconPath, targetSize, targetSize)) {
+                            img = ScaleBitmap(ico.ToBitmap(), targetSize);
+                        }
+                    } else {
+                        IntPtr[] hLarge = new IntPtr[1];
+                        IntPtr[] hSmall = new IntPtr[1];
+                        int count = NativeMethods.ExtractIconEx(customIconPath, customIconIndex, hLarge, hSmall, 1);
+                        if (count > 0) {
+                            IntPtr hIco = large ? (hLarge[0] != IntPtr.Zero ? hLarge[0] : hSmall[0]) : (hSmall[0] != IntPtr.Zero ? hSmall[0] : hLarge[0]);
+                            if (hIco != IntPtr.Zero) {
+                                using (Icon ico = (Icon)Icon.FromHandle(hIco).Clone()) {
+                                    img = ScaleBitmap(ico.ToBitmap(), targetSize);
+                                }
                             }
-                            img = scaled;
-                        } else {
-                            img = raw;
+                            if (hLarge[0] != IntPtr.Zero) NativeMethods.DestroyIcon(hLarge[0]);
+                            if (hSmall[0] != IntPtr.Zero) NativeMethods.DestroyIcon(hSmall[0]);
                         }
                     }
-                    NativeMethods.DestroyIcon(shinfo.hIcon);
-                }
-            } catch { }
+                } catch { }
+            }
+
+            // 2. If target is an executable, extract pristine application icon directly from PE headers (ZERO shortcut arrow overlay!)
+            if (img == null && !string.IsNullOrEmpty(targetPath)) {
+                try {
+                    if (File.Exists(targetPath) && targetPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
+                        using (Icon ico = Icon.ExtractAssociatedIcon(targetPath)) {
+                            if (ico != null) {
+                                img = ScaleBitmap(ico.ToBitmap(), targetSize);
+                            }
+                        }
+                    }
+                } catch { }
+            }
+
+            // 3. Try SHGetFileInfo on targetPath (clean file or directory icon, NO shortcut arrow!)
+            if (img == null && !string.IsNullOrEmpty(targetPath) && (File.Exists(targetPath) || Directory.Exists(targetPath))) {
+                try {
+                    NativeMethods.SHFILEINFO shinfo = new NativeMethods.SHFILEINFO();
+                    uint flags = NativeMethods.SHGFI_ICON | (large ? NativeMethods.SHGFI_LARGEICON : NativeMethods.SHGFI_SMALLICON);
+                    IntPtr res = NativeMethods.SHGetFileInfo(targetPath, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), flags);
+                    if (shinfo.hIcon != IntPtr.Zero) {
+                        using (Icon ico = (Icon)Icon.FromHandle(shinfo.hIcon).Clone()) {
+                            img = ScaleBitmap(ico.ToBitmap(), targetSize);
+                        }
+                        NativeMethods.DestroyIcon(shinfo.hIcon);
+                    }
+                } catch { }
+            }
+
+            // 4. Fallback to original path
+            if (img == null) {
+                try {
+                    NativeMethods.SHFILEINFO shinfo = new NativeMethods.SHFILEINFO();
+                    uint flags = NativeMethods.SHGFI_ICON | (large ? NativeMethods.SHGFI_LARGEICON : NativeMethods.SHGFI_SMALLICON);
+                    IntPtr res = NativeMethods.SHGetFileInfo(path, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), flags);
+                    if (shinfo.hIcon != IntPtr.Zero) {
+                        using (Icon ico = (Icon)Icon.FromHandle(shinfo.hIcon).Clone()) {
+                            img = ScaleBitmap(ico.ToBitmap(), targetSize);
+                        }
+                        NativeMethods.DestroyIcon(shinfo.hIcon);
+                    }
+                } catch { }
+            }
 
             if (img == null) {
                 Bitmap bmp = new Bitmap(targetSize, targetSize);
@@ -1364,20 +1433,57 @@ namespace GINDesktop {
             return img;
         }
 
+        public static void ResolveLnk(string lnkPath, out string targetPath, out string iconPath, out int iconIndex) {
+            targetPath = null;
+            iconPath = null;
+            iconIndex = 0;
+            try {
+                Type wshType = Type.GetTypeFromProgID("WScript.Shell");
+                if (wshType != null) {
+                    dynamic wsh = Activator.CreateInstance(wshType);
+                    dynamic sc = wsh.CreateShortcut(lnkPath);
+                    targetPath = (string)sc.TargetPath;
+                    string iconLoc = (string)sc.IconLocation;
+                    if (!string.IsNullOrEmpty(iconLoc)) {
+                        string[] parts = iconLoc.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 0) {
+                            iconPath = parts[0].Trim();
+                            if (parts.Length > 1) int.TryParse(parts[1].Trim(), out iconIndex);
+                        }
+                    }
+                }
+            } catch { }
+
+            if (string.IsNullOrEmpty(targetPath)) {
+                targetPath = ResolveLnkTarget(lnkPath);
+            }
+        }
+
         public static string ResolveLnkTarget(string lnkPath) {
+            try {
+                Type wshType = Type.GetTypeFromProgID("WScript.Shell");
+                if (wshType != null) {
+                    dynamic wsh = Activator.CreateInstance(wshType);
+                    dynamic sc = wsh.CreateShortcut(lnkPath);
+                    string target = (string)sc.TargetPath;
+                    if (!string.IsNullOrEmpty(target)) return target;
+                }
+            } catch { }
+
             try {
                 string dir = Path.GetDirectoryName(lnkPath);
                 string file = Path.GetFileName(lnkPath);
                 Type shellType = Type.GetTypeFromProgID("Shell.Application");
-                dynamic shell = Activator.CreateInstance(shellType);
-                dynamic folder = shell.Namespace(dir);
-                dynamic folderItem = folder.ParseName(file);
-                dynamic link = folderItem.GetLink;
-                string target = (string)link.Target.Path;
-                return target;
-            } catch {
-                return null;
-            }
+                if (shellType != null) {
+                    dynamic shell = Activator.CreateInstance(shellType);
+                    dynamic folder = shell.Namespace(dir);
+                    dynamic folderItem = folder.ParseName(file);
+                    dynamic link = folderItem.GetLink;
+                    string target = (string)link.Target.Path;
+                    return target;
+                }
+            } catch { }
+            return null;
         }
 
         public static void Launch(string path) {
@@ -1735,7 +1841,7 @@ namespace GINDesktop {
             // Tier 1: Wallhaven Search API
             try {
                 using (TimeoutWebClient wc = new TimeoutWebClient(8000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v053 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
                     string json = wc.DownloadString(apiUrl);
                     int pIdx = json.IndexOf("\"path\":\"");
                     if (pIdx != -1) {
@@ -1757,7 +1863,7 @@ namespace GINDesktop {
                 int seedVal = new Random().Next(1, 100000);
                 string picsumUrl = "https://picsum.photos/seed/" + seedVal + "/2560/1440";
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v053 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
                     wc.DownloadFile(picsumUrl, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -1781,7 +1887,7 @@ namespace GINDesktop {
             try {
                 string randUnsplash = unsplashPool[new Random().Next(unsplashPool.Length)];
                 using (TimeoutWebClient wc = new TimeoutWebClient(10000)) {
-                    wc.Headers.Add("User-Agent", "GIN-Desktop/v053 (Windows; WinAPI)");
+                    wc.Headers.Add("User-Agent", "GIN-Desktop/v054 (Windows; WinAPI)");
                     wc.DownloadFile(randUnsplash, targetJpg);
                     if (File.Exists(targetJpg) && new FileInfo(targetJpg).Length > 25000) {
                         return targetJpg;
@@ -2204,7 +2310,6 @@ namespace GINDesktop {
         private Dictionary<Button, DockItem> _folderMap = new Dictionary<Button, DockItem>();
         private DockItem _hoveredFolder = null;
 
-        private Button _brandBtn;
         private Panel _itemsPanel;
         private ToolStripDropDown _activeDropDown = null;
         private System.Windows.Forms.Timer _watchdogTimer;
@@ -2243,19 +2348,16 @@ namespace GINDesktop {
             _toolTip.InitialDelay = 300;
             _toolTip.ReshowDelay = 100;
 
-            _brandBtn = new Button();
-            _brandBtn.FlatStyle = FlatStyle.Flat;
-            _brandBtn.FlatAppearance.BorderSize = 0;
-            _brandBtn.Text = _config.DockBrandIcon ?? "⊞";
-            _brandBtn.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
-            _brandBtn.Cursor = Cursors.Hand;
-            _brandBtn.Click += (s, e) => ShowMainMenu(_brandBtn);
-            _toolTip.SetToolTip(_brandBtn, "GIN Dock Wallpaper v053 | Click for Menu");
-            this.Controls.Add(_brandBtn);
+            this.MouseUp += (s, e) => {
+                if (e.Button == MouseButtons.Right) ShowMainMenu(this);
+            };
 
             _itemsPanel = new Panel();
             _itemsPanel.BackColor = Color.Transparent;
             _itemsPanel.MouseWheel += ItemsPanel_MouseWheel;
+            _itemsPanel.MouseUp += (s, e) => {
+                if (e.Button == MouseButtons.Right) ShowMainMenu(_itemsPanel);
+            };
             this.Controls.Add(_itemsPanel);
 
             this.MouseWheel += ItemsPanel_MouseWheel;
@@ -2368,17 +2470,11 @@ namespace GINDesktop {
             int barSize = Math.Max(42, iconSz + 16);
             _config.BarHeight = barSize;
 
-            _brandBtn.BackColor = theme.Accent;
-            _brandBtn.ForeColor = Color.Black;
             if (isTop) {
-                _brandBtn.Size = new Size(68, barSize - 10);
-                _brandBtn.Location = new Point(5, 5);
-                _itemsPanel.Location = new Point(78, 0);
+                _itemsPanel.Location = new Point(12, 4);
                 _itemsPanel.Height = barSize;
             } else {
-                _brandBtn.Size = new Size(barSize - 10, 36);
-                _brandBtn.Location = new Point(5, 5);
-                _itemsPanel.Location = new Point(0, 46);
+                _itemsPanel.Location = new Point(4, 12);
                 _itemsPanel.Width = barSize;
             }
 
@@ -2565,9 +2661,9 @@ namespace GINDesktop {
             int barSize = Math.Max(44, _config.BarHeight);
 
             bool isTop = (_config.DockPosition == "Top");
-            int desiredWidth = 82 + _totalItemsLength + 20;
+            int desiredWidth = _totalItemsLength + 24;
             if (desiredWidth > screen.Bounds.Width - 30) desiredWidth = screen.Bounds.Width - 30;
-            if (desiredWidth < 220) desiredWidth = 220;
+            if (desiredWidth < 120) desiredWidth = 120;
 
             this.Width = desiredWidth;
             this.Height = barSize + 8;
@@ -2576,14 +2672,14 @@ namespace GINDesktop {
                 int posX = screen.Bounds.Left + (screen.Bounds.Width - desiredWidth) / 2;
                 int posY = screen.Bounds.Top;
                 this.Location = new Point(posX, posY);
-                _itemsPanel.Location = new Point(76, 4);
-                _itemsPanel.Width = this.Width - 82;
+                _itemsPanel.Location = new Point(12, 4);
+                _itemsPanel.Width = this.Width - 24;
                 _itemsPanel.Height = barSize;
             } else {
                 this.Location = new Point(screen.Bounds.Left, screen.Bounds.Top + (screen.Bounds.Height - this.Height) / 2);
-                _itemsPanel.Location = new Point(4, 44);
+                _itemsPanel.Location = new Point(4, 12);
                 _itemsPanel.Width = barSize;
-                _itemsPanel.Height = this.Height - 50;
+                _itemsPanel.Height = this.Height - 24;
             }
 
             try {
@@ -2847,18 +2943,11 @@ namespace GINDesktop {
                                 _dockGlowAlpha -= 25;
                                 if (_dockGlowAlpha <= 40) { _dockGlowAlpha = 40; _dockGlowRising = true; }
                             }
-                            if (_brandBtn != null) {
-                                _brandBtn.BackColor = Color.FromArgb(_dockGlowAlpha, 56, 189, 248);
-                            }
                         };
                     }
                     _dockGlowTimer.Start();
                 } else {
                     if (_dockGlowTimer != null) _dockGlowTimer.Stop();
-                    ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
-                    if (_brandBtn != null) {
-                        _brandBtn.BackColor = theme.BrandBadge;
-                    }
                 }
             } catch { }
         }
@@ -2868,7 +2957,7 @@ namespace GINDesktop {
             ContextMenuStrip menu = new ContextMenuStrip();
             menu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v053");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v054");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;
@@ -3273,8 +3362,6 @@ namespace GINDesktop {
         private Button _btnScaleHuge;
         private Button _btnNextWall;
         private Button _btnSavePic;
-        private Label _lblBrandIconTitle;
-        private List<Button> _brandIconButtons = new List<Button>();
 
         // Weather HUD & Hardware
         private Label _lblWeatherTitle;
@@ -3810,7 +3897,6 @@ namespace GINDesktop {
                     _config.DockIconSize = (int)((Button)s).Tag;
                     _config.Save();
                     UpdateIconSizeButtonStyles();
-                    UpdateBrandIconStyles();
                     if (_onConfigChanged != null) _onConfigChanged();
                     PlayClickSound();
                 };
@@ -3835,39 +3921,6 @@ namespace GINDesktop {
                 if (_onConfigChanged != null) _onConfigChanged();
             };
 
-            // Brand Button Icons
-            _lblBrandIconTitle = new Label { Location = new Point(20, 332), AutoSize = true, Font = new Font("Segoe UI", 9.5f, FontStyle.Bold) };
-            _tabDock.Controls.Add(_lblBrandIconTitle);
-
-            string[] brandIcons = new string[] {
-                "⊞", "🚀", "⚡", "💎", "🌟", "🏠", "⚙️", "🧭", "🍀", "🔥",
-                "👑", "🎯", "🛸", "🛡️", "🎮", "💻", "💡", "✨", "🌀", "⚓"
-            };
-
-            for (int i = 0; i < brandIcons.Length; i++) {
-                string ic = brandIcons[i];
-                int col = i % 10;
-                int row = i / 10;
-                Button bIcon = new Button {
-                    Text = ic,
-                    Tag = ic,
-                    Size = new Size(62, 28),
-                    Location = new Point(25 + col * 68, 354 + row * 32),
-                    FlatStyle = FlatStyle.Flat,
-                    Cursor = Cursors.Hand,
-                    Font = new Font("Segoe UI", 11f, FontStyle.Bold)
-                };
-                bIcon.Click += (s, e) => {
-                    _config.DockBrandIcon = (string)((Button)s).Tag;
-                    _config.Save();
-                    UpdateBrandIconStyles();
-                    if (_onConfigChanged != null) _onConfigChanged();
-                    PlayClickSound();
-                };
-                _brandIconButtons.Add(bIcon);
-                _tabDock.Controls.Add(bIcon);
-            }
-
             _tabDock.Controls.AddRange(new Control[] {
                 _lblRoot, _txtRoot, _btnBrowse,
                 _lblSort, _cmbSort, _lblShowLabels, _chkShowLabels,
@@ -3881,7 +3934,7 @@ namespace GINDesktop {
             // =====================================
             _tabAbout = new TabPage { Text = I18n.T("TabAbout") };
 
-            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v053", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
+            _lblAboutTitle = new Label { Text = "⚡ GIN Dock Wallpaper v054", Font = new Font("Segoe UI", 13f, FontStyle.Bold), Location = new Point(25, 25), AutoSize = true, ForeColor = theme.Accent };
             _lblAboutDesc = new Label {
                 Text = "Author: Vladimir Bulantsev (@GinCz) & Antigravity\nOpen Source / MIT License\nUniversal 32/64-bit Architecture for Windows 10 & 11\nPlatform: Native WinAPI & GDI+ (~2-4 MB RAM in idle)\n\nDual Integrated Engine:\n• Auto-hiding hot-corner Application & Folder Dock Bar\n• Dynamic 4K Wallpaper Downloader with semi-transparent Calendar HUD",
                 Location = new Point(25, 70),
@@ -3938,7 +3991,7 @@ namespace GINDesktop {
             };
 
             _lblVer = new Label {
-                Text = "v053",
+                Text = "v054",
                 Location = new Point(666, 9),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
@@ -4193,15 +4246,6 @@ namespace GINDesktop {
 
 
 
-        private void UpdateBrandIconStyles() {
-            ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
-            string curIcon = _config.DockBrandIcon ?? "⊞";
-            foreach (Button b in _brandIconButtons) {
-                bool isActive = string.Equals((string)b.Tag, curIcon, StringComparison.Ordinal);
-                StyleToggleButton(b, isActive, theme);
-            }
-        }
-
         private void UpdateIconSizeButtonStyles() {
             ColorTheme theme = ThemeManager.GetTheme(_config.ThemeName, _config.DayEveningNightMode);
             int curSz = _config.DockIconSize;
@@ -4256,7 +4300,6 @@ namespace GINDesktop {
             if (_btnScaleLarge != null) _btnScaleLarge.Text = I18n.T("CalScaleLarge");
             if (_btnScaleHuge != null) _btnScaleHuge.Text = I18n.T("CalScaleHuge");
             if (_btnSavePic != null) _btnSavePic.Text = "💾 " + I18n.T("BtnSaveWall");
-            if (_lblBrandIconTitle != null) _lblBrandIconTitle.Text = "🔘 " + I18n.T("DockBrandIcon");
             _lblIntervalTitle.Text = "⏱️ " + I18n.T("WallpaperInterval");
             _lblFontsHeader.Text = "🔤 " + I18n.T("SelectFontWithPreview");
             if (_btnNextWall != null) _btnNextWall.Text = "🖼️ " + I18n.T("NextWallpaper");
@@ -4370,7 +4413,7 @@ namespace GINDesktop {
             } catch { }
         }
 
-        public const string CURRENT_VERSION = "v053";
+        public const string CURRENT_VERSION = "v054";
 
         private static int ParseVersionDigits(string v) {
             if (string.IsNullOrEmpty(v)) return 0;
@@ -4538,7 +4581,7 @@ namespace GINDesktop {
             _dockForm = new DockBarForm(_config, ShowSettings);
 
             _trayIcon = new NotifyIcon();
-            _trayIcon.Text = "GIN Dock Wallpaper v053";
+            _trayIcon.Text = "GIN Dock Wallpaper v054";
 
             try {
                 string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.ico");
@@ -4605,7 +4648,7 @@ namespace GINDesktop {
             ContextMenuStrip trayMenu = new ContextMenuStrip();
             trayMenu.Renderer = new DynamicMenuRenderer(theme);
 
-            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v053");
+            ToolStripMenuItem title = new ToolStripMenuItem("⚡ GIN Dock Wallpaper v054");
             title.Enabled = false;
             title.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             title.ForeColor = theme.Accent;

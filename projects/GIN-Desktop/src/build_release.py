@@ -10,7 +10,7 @@ import subprocess
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
-VERSION = "v053"
+VERSION = "v054"
 IS_WINDOWS = (os.name == 'nt')
 
 if IS_WINDOWS:
@@ -35,14 +35,14 @@ print("==> Bumping version strings in installer_setup.cs and Uninstall.cs...")
 with open(INSTALLER_SRC, "r", encoding="utf-8") as f:
     inst_txt = f.read()
 
-inst_txt = inst_txt.replace('AssemblyTitle("GIN-Desktop_v052")', 'AssemblyTitle("GIN-Desktop_v053")')
-inst_txt = inst_txt.replace('AssemblyDescription("GIN-Desktop_v052 Setup")', 'AssemblyDescription("GIN-Desktop_v053 Setup")')
-inst_txt = inst_txt.replace('AssemblyProduct("GIN-Desktop_v052")', 'AssemblyProduct("GIN-Desktop_v053")')
-inst_txt = inst_txt.replace('AssemblyVersion("0.52.0.0")', 'AssemblyVersion("0.53.0.0")')
-inst_txt = inst_txt.replace('AssemblyFileVersion("0.52.0.0")', 'AssemblyFileVersion("0.53.0.0")')
-inst_txt = inst_txt.replace('"GIN Desktop v052"', '"GIN Desktop v053"')
-inst_txt = inst_txt.replace('"DisplayVersion", "v052"', '"DisplayVersion", "v053"')
-inst_txt = inst_txt.replace('GIN Desktop v052 has been successfully installed!', 'GIN Desktop v053 has been successfully installed!')
+inst_txt = inst_txt.replace('AssemblyTitle("GIN-Desktop_v053")', 'AssemblyTitle("GIN-Desktop_v054")')
+inst_txt = inst_txt.replace('AssemblyDescription("GIN-Desktop_v053 Setup")', 'AssemblyDescription("GIN-Desktop_v054 Setup")')
+inst_txt = inst_txt.replace('AssemblyProduct("GIN-Desktop_v053")', 'AssemblyProduct("GIN-Desktop_v054")')
+inst_txt = inst_txt.replace('AssemblyVersion("0.53.0.0")', 'AssemblyVersion("0.54.0.0")')
+inst_txt = inst_txt.replace('AssemblyFileVersion("0.53.0.0")', 'AssemblyFileVersion("0.54.0.0")')
+inst_txt = inst_txt.replace('"GIN Desktop v053"', '"GIN Desktop v054"')
+inst_txt = inst_txt.replace('"DisplayVersion", "v053"', '"DisplayVersion", "v054"')
+inst_txt = inst_txt.replace('GIN Desktop v053 has been successfully installed!', 'GIN Desktop v054 has been successfully installed!')
 
 with open(INSTALLER_SRC, "w", encoding="utf-8") as f:
     f.write(inst_txt)
@@ -50,11 +50,11 @@ with open(INSTALLER_SRC, "w", encoding="utf-8") as f:
 with open(UNINST_SRC, "r", encoding="utf-8") as f:
     uninst_txt = f.read()
 
-uninst_txt = uninst_txt.replace('AssemblyTitle("GIN-Desktop_v052")', 'AssemblyTitle("GIN-Desktop_v053")')
-uninst_txt = uninst_txt.replace('AssemblyDescription("GIN-Desktop_v052")', 'AssemblyDescription("GIN-Desktop_v053")')
-uninst_txt = uninst_txt.replace('AssemblyProduct("GIN-Desktop_v052")', 'AssemblyProduct("GIN-Desktop_v053")')
-uninst_txt = uninst_txt.replace('AssemblyVersion("0.52.0.0")', 'AssemblyVersion("0.53.0.0")')
-uninst_txt = uninst_txt.replace('AssemblyFileVersion("0.52.0.0")', 'AssemblyFileVersion("0.53.0.0")')
+uninst_txt = uninst_txt.replace('AssemblyTitle("GIN-Desktop_v053")', 'AssemblyTitle("GIN-Desktop_v054")')
+uninst_txt = uninst_txt.replace('AssemblyDescription("GIN-Desktop_v053")', 'AssemblyDescription("GIN-Desktop_v054")')
+uninst_txt = uninst_txt.replace('AssemblyProduct("GIN-Desktop_v053")', 'AssemblyProduct("GIN-Desktop_v054")')
+uninst_txt = uninst_txt.replace('AssemblyVersion("0.53.0.0")', 'AssemblyVersion("0.54.0.0")')
+uninst_txt = uninst_txt.replace('AssemblyFileVersion("0.53.0.0")', 'AssemblyFileVersion("0.54.0.0")')
 
 with open(UNINST_SRC, "w", encoding="utf-8") as f:
     f.write(uninst_txt)
@@ -187,7 +187,7 @@ with open(VERSION_JSON, "w", encoding="utf-8") as f:
     json.dump(v_data, f, indent=2, ensure_ascii=False)
 print(f"==> Updated {VERSION_JSON}")
 
-allowed_versions = ["v052", "v053"]
+allowed_versions = ["v053", "v054"]
 
 # Step 6: Deploy to Target 1 (Flash) and Target 2 (Desktop)
 if IS_WINDOWS:
@@ -234,15 +234,15 @@ else:
 
     # Purge older version from Desktop (strictly 1 active latest)
     try:
-        subprocess.run(["mega-rm", "/MEGA/DOCS/desktop/GIN-Desktop_v052_Setup.exe"], capture_output=True)
-        print("    [Desktop] Purged older release v052 via mega-rm (strictly 1 active version)")
+        subprocess.run(["mega-rm", "/MEGA/DOCS/desktop/GIN-Desktop_v053_Setup.exe"], capture_output=True)
+        print("    [Desktop] Purged older release v053 via mega-rm (strictly 1 active version)")
     except Exception as e:
         print("    [Desktop] mega-rm:", e)
 
-    # Purge obsolete v051 from Flash (strictly 2 active versions: v052, v053)
+    # Purge obsolete v052 from Flash (strictly 2 active versions: v053, v054)
     try:
-        subprocess.run(["mega-rm", "/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v051_Setup.exe"], capture_output=True)
-        print("    [Flash] Purged obsolete release v051 via mega-rm (strictly 2 active versions)")
+        subprocess.run(["mega-rm", "/MEGA/WIN-FLASH/Util-WINDOWS/Graphics/GIN-Desktop_v052_Setup.exe"], capture_output=True)
+        print("    [Flash] Purged obsolete release v052 via mega-rm (strictly 2 active versions)")
     except Exception as e:
         print("    [Flash] mega-rm:", e)
 
